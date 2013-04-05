@@ -32,38 +32,38 @@ function originIsAllowed(origin) {
 }
 
 wsServer.on('request', function(request) {
-    console.log('start');
-    if (!originIsAllowed(request.origin)) {
-      // Make sure we only accept requests from an allowed origin
-      request.reject();
-      console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
-      return;
+  if (!originIsAllowed(request.origin)) {
+    // Make sure we only accept requests from an allowed origin
+    request.reject();
+    console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
+    return;
+  }
+
+  var connection = request.accept('connect', request.origin);
+
+  connections.push(connection);
+  
+  var ci = connections.indexOf(connection);
+  connection.sendUTF('{"action":"connected","payload":{"cid":'+ci+'}}');
+
+  connection.on('message', function(message) {
+    if (message.type === 'utf8') {
+      connections.forEach(function(destination) {
+        destination.sendUTF(message.utf8Data);
+      });
     }
+  });
 
-    var connection = request.accept('connect', request.origin);
-      connections.push(connection);
-      console.log(connections.length);
-      var ci = connections.indexOf(connection);
-      connection.sendUTF('{"action":"connected","payload":{"cid":'+ci+'}}');
-      connection.on('message', function(message) {
-      if (message.type === 'utf8') {
-        connections.forEach(function(destination) {
-          destination.sendUTF(message.utf8Data);
-        });
-      }
-    });
-
-    connection.on('close', function() {
-      console.log(connection.remoteAddress + " disconnected");
-        var index = connections.indexOf(connection);
-        if (index !== -1) {
-            // remove the connection from the pool
-          connections.splice(index, 1);
-          connections.forEach(function(destination) {
-            //alert the other peers
-            var ci = connections.indexOf(destination);
-            destination.sendUTF('{"action":"peerGone","payload":{"peerCid":'+index+',"newCid":'+ci+'}}');
-          });
-        }
-    });
+  connection.on('close', function() {
+    var index = connections.indexOf(connection);
+    if (index !== -1) {
+      // remove the connection from the pool
+      connections.splice(index, 1);
+      connections.forEach(function(destination) {
+        //alert the other peers
+        var ci = connections.indexOf(destination);
+        destination.sendUTF('{"action":"peerGone","payload":{"peerCid":'+index+',"newCid":'+ci+'}}');
+      });
+    }
+  });
 });
