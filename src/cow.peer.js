@@ -1,0 +1,200 @@
+$.Cow.Peer.prototype = {
+	
+	/*	var self = this;
+	this.core = core;
+	this.options = options;
+	this.uid = options.uid;
+	*/
+	//SMO: moet er wel een extent() functie zijn?
+	extent: function(bbox) {
+		var self = this;
+		switch(arguments.length) {
+        case 0:
+            return this._getExtent();
+        case 1:
+            if (!$.isArray(bbox)) {
+                return this._setExtent(bbox);
+            }
+            else {
+				throw('wrong argument number, only one extent allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+	},
+	_getExtent: function() {
+		return this.bbox;
+	},
+	_setExtent: function(bbox) {
+		this.options.extent = bbox;
+		this.bbox = bbox;
+		this.view(bbox);
+		
+	},
+	
+	view: function(bbox) {
+		var self = this;
+		switch(arguments.length) {
+        case 0:
+            return this._getView();
+        case 1:
+            if (!$.isArray(bbox)) {
+                return this._setView(bbox);
+            }
+            else {
+				throw('wrong argument number, only one extent allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+	},
+	_getView: function() {
+		return this.viewfeature;
+	},
+	_setView: function(bbox) {	
+		
+		
+		
+		if(bbox.type !==undefined){
+			 this.viewfeature = bbox;
+		}
+		else this.viewfeature = this._bbox2view(bbox);	
+		if(this.params.feature !== undefined) {
+			this._drawExtent()
+		}
+		
+		//TODO: trigger een redraw van de polygon?
+		//console.log('view: '+JSON.stringify(this.viewfeature));
+	},
+	_drawExtent: function() {
+		var geojson_format = new OpenLayers.Format.GeoJSON();
+		this.core.viewLayer.removeFeatures(this.params.feature);
+		this.core.viewLayer.removeFeatures(this.params.point);
+		var feature = geojson_format.read(this.viewfeature);
+		this.params.feature = feature;		
+		var p = { "type": "Feature",
+							"geometry": {
+								"type": "Point",
+								"coordinates": this.view().geometry.coordinates[0][1]
+					},
+					"properties": {
+						"uid": this.uid,
+						"label": this.options.owner
+					}
+			}			
+		var point = geojson_format.read(p);			
+		this.params.point = point;
+		this.core.viewLayer.addFeatures(feature);		
+		this.core.viewLayer.addFeatures(point);	
+	},
+	
+	_bbox2view: function(bbox) {
+		var b = [bbox.left,bbox.bottom,bbox.right,bbox.top];
+		var feature = { "type": "Feature",
+						"geometry": {
+						"type": "Polygon",
+						"coordinates": [
+							[ [b[0], b[1]],[b[0],b[3]],[b[2],b[3]],[b[2],b[1]],[b[0],b[1]]
+							]
+						]
+					},
+					"properties": {
+						"uid":this.uid,
+						"owner": this.options.owner,
+						"label":""
+					}
+				}
+		return feature;
+	},
+	_onMoved: function(evt,payload) {
+		var self = evt.data.widget;
+		console.log('peerupdated');
+		self.core.trigger('peerupdated');
+		//TODO: options worden niet automatisch bijgewerkt
+		self.options.owner = payload.owner;
+		self.extent(payload.extent);	
+	},
+	drawPosition: function(position){
+		
+		var uid = this.uid;		
+		var f =	self.core.mylocationLayer.getFeaturesByAttribute('uid', uid);
+		this.core.mylocationLayer.removeFeatures(f);
+		if (uid == self.core.UID){
+			name = self.core.MYLOCATION;
+			icon = self.core.MYLOCATION_ICON;
+		}
+		else
+		{
+			name = this.options.owner;
+			icon = self.core.LOCATION_ICON;
+		}
+		var proj = new OpenLayers.Projection("EPSG:4326");
+		var point = new OpenLayers.Geometry.Point(position.coords.longitude,position.coords.latitude);
+		var attributes = {uid: uid, owner: name, time: position.timestamp, icon: icon};
+		point.transform(proj, self.core.map.getProjectionObject());
+		var pointfeature = new OpenLayers.Feature.Vector(point, attributes);
+		this.core.mylocationLayer.addFeatures([pointfeature]);
+		
+		this.options.position = position;
+	},
+	_onLocationChanged: function(evt, payload){
+		//when I change my location, redraw my point
+		var position = payload.position;
+		var self = evt.data.widget;
+		self.drawPosition(position);
+	},
+	bind: function(types, data, fn) {
+        var self = this;
+
+        // A map of event/handle pairs, wrap each of them
+        if(arguments.length===1) {
+            var wrapped = {};
+            $.each(types, function(type, fn) {
+                wrapped[type] = function() {
+                    return fn.apply(self, arguments);
+                };
+            });
+            this.events.bind.apply(this.events, [wrapped]);
+        }
+        else {
+            var args = [types];
+            // Only callback given, but no data (types, fn), hence
+            // `data` is the function
+            if(arguments.length===2) {
+                fn = data;
+            }
+            else {
+                if (!$.isFunction(fn)) {
+                    throw('bind: you might have a typo in the function name');
+                }
+                // Callback and data given (types, data, fn), hence include
+                // the data in the argument list
+                args.push(data);
+            }
+
+            args.push(function() {
+                return fn.apply(self, arguments);
+            });
+
+            this.events.bind.apply(this.events, args);
+        }
+
+       
+        return this;
+    },
+	trigger: function() {
+        // There is no point in using trigger() insted of triggerHandler(), as
+        // we don't fire native events
+        this.events.triggerHandler.apply(this.events, arguments);
+        return this;
+    },
+    // Basically a trigger that returns the return value of the last listener
+    _triggerReturn: function() {
+        return this.events.triggerHandler.apply(this.events, arguments);
+    }
+	
+};
+
+
