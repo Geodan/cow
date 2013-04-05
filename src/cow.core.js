@@ -4,7 +4,7 @@ $.Cow = $.Cow || {};
 
 /**
 #Cow.Core
-
+tst
 The Cow.Core object. It is automatically constructed from the options
 given in the `cow([options])` constructor. 
  */
