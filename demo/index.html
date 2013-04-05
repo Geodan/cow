@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <title>Concurrent Online Webgis</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+  <link href='http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css' rel='stylesheet' type='text/css'>
+  <link href='http://fonts.googleapis.com/css?family=Dosis:300,500' rel='stylesheet' type='text/css'>
+  
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>	
+  <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js" type="text/javascript"></script>  
+  <script src="../lib/jquery.indexeddb/jquery.indexeddb.js" type="text/javascript"></script>
+  
+  <script src="http://openlayers.org/api/OpenLayers.js" type="text/javascript"></script>    
+  <script src="http://maps.stamen.com/js/tile.stamen.js?v1.1.3"></script>
+  
+  <link rel="stylesheet" type="text/css" href="css/cow.css" />	
+  <link rel="stylesheet" type="text/css" media="screen" href="css/screen.css" />
+
+  
+  <script src="../src/cow.core.js" type="text/javascript"></script>
+  <script src="../src/cow.websocket.js" type="text/javascript"></script>
+  <script src="../src/cow.peer.js" type="text/javascript"></script>
+  <script src="../src/cow.item.js" type="text/javascript"></script>
+  <script src="../src/cow.featurestore.js" type="text/javascript"></script>
+  <script src="../src/cow.localdbase.js" type="text/javascript"></script>
+  <script src="../src/cow.geolocator.js" type="text/javascript"></script>
+  
+  <script src="scripts/peerwidget.js" type="text/javascript"></script>
+  <script src="scripts/featurewidget.js" type="text/javascript"></script>
+  <script src="scripts/newfeaturewidget.js" type="text/javascript"></script>
+  <script src="scripts/connectwidget.js" type="text/javascript"></script>
+  <script src="scripts/helpwidget.js" type="text/javascript"></script>
+  <script src="scripts/layout.js" type="text/javascript"></script>
+   
+   
+   <style>
+   
+    </style>
+
+<script type="text/javascript">
+
+function WebSocketTest()
+{
+  if ("WebSocket" in window)
+  {
+   
+    
+  }
+  else
+  {
+    alert("Sorry, your browser doesn't support websockets, so this site doesn't do anything magical");
+  }
+}
+WebSocketTest();
+var UID = 0;
+var myname = "Anonymous";
+//global map vars
+var map, layer, vLayer, drawControls, editlayer;
+
+var extents = { "type": "FeatureCollection","features": []};
+var labelpoints = { "type": "FeatureCollection","features": []};
+var geojson_format = new OpenLayers.Format.GeoJSON();
+
+//TODO TT: aaargh, this has to be incorporated into core
+function editfeature(){
+  var feature = core.editLayer.selectedFeatures[0];
+  controls.modify.mode = OpenLayers.Control.ModifyFeature.RESHAPE;
+  controls.modify.standalone = true;
+  controls.modify.activate();
+  controls.modify.selectFeature(feature);
+}//this too...
+function deletefeature(){
+  var feature = core.editLayer.selectedFeatures[0];
+  var key = feature.attributes.key;
+  core.map.removePopup(core.map.popups[0]);
+  core.getFeaturestoreByName("store1").removeItem(key);
+  console.log('storeChanged');
+  core.trigger('storeChanged');
+  }//this too....
+function changeFeature(string){
+  var feature = core.editLayer.selectedFeatures[0];
+  feature.attributes.name = string;
+  feature.popup.destroy();
+  core.getFeaturestoreByName("store1").updateLocalFeat(feature);
+}//this too....
+function purgeLocaldb(){
+  $.indexedDB("sharedMap3").objectStore("featureStore1").clear();
+}
+
+var s = new OpenLayers.StyleMap({
+      'strokeColor':  '#00397C',
+      'fillColor':  '#00397C',
+      strokeWidth: 2,
+      fillOpacity: 0.05,
+      label: "${label}",
+      labelAlign: "lb",
+      fontColor: '#00397C'
+});
+var extent;
+               
+function init_map(){
+    //openlayers stuff
+  
+  map = new OpenLayers.Map("map");
+  var osmlayer = new OpenLayers.Layer.OSM("OpenStreetMap", null, {
+       transitionEffect: 'resize'
+    });
+    
+    map.addLayer(layer = new OpenLayers.Layer.Stamen("toner-lite", {opacity:0.5}));
+  map.addLayer(osmlayer);
+    map.setCenter(new OpenLayers.LonLat(540000, 6870000), 10);
+  map.addControl(new OpenLayers.Control.LayerSwitcher());
+    
+}
+/*Obs
+function enableEdit(){
+  for(var key in drawControls) {
+    map.addControl(drawControls[key]);
+  }
+}
+*/
+var core;
+  
+$(document).ready(function(){
+  init_map();
+  $('#cow').cow({
+    websocket: {url: 'wss://websocket.geodan.nl:443/'},
+    featurestore: {name: "store1"},
+    localdbase: {name: "dbase1"},
+    geolocator: {name: "locator1"}
+  });
+  //TODO: core shouldn't be global
+  core =$('#cow').data('cow');
+  $('#connect').ConnectWidget({core: '#cow'});
+  $('#help').HelpWidget({core: '#cow'});
+  $('#peers').PeersWidget({core: '#cow',name:'#myname'});
+  $('#features').FeaturesWidget({core: '#cow'});
+  $('#newfeatpanel').NewFeatureWidget({core: '#cow'});
+  //TODO TT: only for testing:
+  controls.select.activate();	     
+});
+ 
+
+</script>
+  </head>
+  <body>	 
+  <div id="top"><span id="connect" title="click to change connection status"></span><span class="copyright">design/code <a href='http://creativecommons.org/licenses/by/3.0/'>CC-BY</a>/<a href="http://opensource.org/licenses/BSD-2-Clause">BSD</a> by <a href="http://research.geodan.nl">Geodan Research</a></span><span class="welcome">Welcome <input id="myname"/ name="myname" title="click to change your name" value="anonymous" size="13"/></span></div>
+  <div id="content">
+  <div id="col-map" class="column big">
+    <div class="col-content">
+      <div class="title"><div class="titel">Map</div></div>
+      <div class="col-body">
+        <div id="map" class="map"></div>
+      </div>
+    </div>
+  </div>
+    <div id="col-newfeature" class="column small o1st">
+    <div class="col-content">
+      <div class="title"><div class="titel">Add&nbsp;a&nbsp;feature</div></div>
+      <div class="col-body">
+        <div id="newfeatpanel"></div>
+      </div>
+    </div>
+  </div>	
+
+  
+  <div id="col-feature" class="column hidden o2nd">
+    <div class="col-content">		
+      <div class="title"><div class="titel">Deleted&nbsp;features</div></div>
+      <div class="col-body">
+        <div id="features"></div>
+      </div>
+    </div>
+  </div>
+  <div id="col-peer" class="column hidden o3rd">
+    <div class="col-content">
+      <div class="title"><div class="titel">Peers</div></div>
+      <div class="col-body">
+        <div id="peers"></div>
+      </div>
+    </div>
+  </div> 
+
+  </div>
+  <div id="cow"></div>	
+  <div id="help" ></div>	
+  </body>
+</html>
+
+

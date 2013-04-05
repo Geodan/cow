@@ -1,0 +1,322 @@
+/*default stuff*/
+#content {
+	position: absolute;
+	right: 0px;
+	top: 20px;
+	left: 0px;	
+	bottom: 0px;	
+	overflow: show;
+}
+.col-content {
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	right: 0px;
+	bottom: 10px;
+	
+}
+	
+#col-map {
+height: 100%;
+
+}
+.column {
+	display: inline-block;	
+	top: 0px;
+	bottom: 0px;
+	position: relative;
+	float: left;
+} 
+.big {
+border: solid 1px white;
+}
+.o1st {
+border: solid 1px white;
+}
+.o2nd {
+border: solid 1px white;
+}
+.o3rd {
+border: solid 1px white;
+}
+
+/* Large desktop */
+@media (min-width: 979px) {
+#content {
+	padding-right: 220px;
+}
+.big {
+	width: 100%;
+	
+}
+.small {	
+	width: 180px;
+	margin-right: -210px;	
+	bottom: 10px;
+	height: 100%;
+}
+.small .col-content {
+overflow: auto;
+}
+.hidden {
+	width: 20px;
+	margin-right: -25px;
+	overflow: hidden;
+	border: solid 1px black;
+	height: 100px !important;
+	right: 0px;
+	left: 190px;
+	background: #eeeeec;
+}
+.hidden .col-content {
+	margin: 0px;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+}
+.hidden .title {
+	height: 100px;
+}
+.hidden .titel {
+	-webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+  transform: rotate(90deg);
+
+  /* also accepts left, right, top, bottom coordinates; not required, but a good idea for styling */
+  -webkit-transform-origin: 50% 50%;
+  -moz-transform-origin: 50% 50%;
+  -ms-transform-origin: 50% 50%;
+  -o-transform-origin: 50% 50%;
+  transform-origin: 50% 50%;
+}
+.hidden .col-body {
+	display:none;
+}
+.o2nd {
+margin-top: 10px;
+}
+.o3rd {
+margin-top: 120px;
+}
+.big .title , .small .title{
+	font-size: 28px;
+	margin-top: -10px;
+	font-weight: 500;
+}
+}
+ 
+/* Portrait tablet to landscape and desktop */
+@media (min-width: 768px) and (max-width: 979px) { 
+#content {
+	padding-right: 175px;
+}
+.big {
+	width: 100%
+}
+.small {
+	width: 150px;
+	margin-right: -175px;
+	bottom: 10px;
+	height: 100%;
+}
+.big .title , .small .title{
+	font-size: 24px;
+	margin-top: -6px;
+	font-weight: 500;
+}
+.small .col-content {
+overflow: auto;
+}
+.hidden {
+	width: 15px;
+	margin-right: -20px;
+	overflow: hidden;
+	border: solid 1px black;
+	height: 100px !important;
+	right: 0px;
+	left: 155px;
+	background: #eeeeec;
+}
+ .hidden .col-content {
+	top: 2px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+}
+.hidden .title {
+	height: 100px;
+}
+.hidden .titel {
+
+	-webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+  transform: rotate(90deg);
+
+  /* also accepts left, right, top, bottom coordinates; not required, but a good idea for styling */
+  -webkit-transform-origin: 50% 50%;
+  -moz-transform-origin: 50% 50%;
+  -ms-transform-origin: 50% 50%;
+  -o-transform-origin: 50% 50%;
+  transform-origin: 50% 50%;
+  font-size: 10px;
+}
+.hidden .col-body {
+	display:none;
+}
+.o2nd {
+margin-top: 10px;
+}
+.o3rd {
+margin-top: 120px;
+}
+}
+
+/* Landscape phone to portrait tablet */
+@media (max-width: 767px) {
+#content {
+	padding-right: 30px;
+}
+.big {
+	width: 100%;
+}
+.small {
+	width: 15px;
+	overflow: hidden;
+	margin-right: -20px;
+	border: solid 1px black;
+	height: 70px !important;
+	left: 5px;
+	background: #eeeeec;
+}
+.small .title {
+	height: 70px;
+}
+.hidden {
+	width: 15px;
+	overflow: hidden;
+	margin-right: -20px;
+	border: solid 1px black;
+	height: 70px !important;
+	left: 5px;
+	background: #eeeeec;
+	
+}
+.hidden .title {
+	height: 70px;
+}
+.small .col-content , .hidden .col-content {
+	top: 2px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+}
+.hidden .titel , .small .titel {
+
+	-webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+  transform: rotate(90deg);
+
+  /* also accepts left, right, top, bottom coordinates; not required, but a good idea for styling */
+  -webkit-transform-origin: 50% 50%;
+  -moz-transform-origin: 50% 50%;
+  -ms-transform-origin: 50% 50%;
+  -o-transform-origin: 50% 50%;
+  transform-origin: 50% 50%;
+  font-size: 10px;
+}
+.hidden .col-body , .small .col-body{
+	display:none;
+}
+.o1st {
+margin-top: 5px;
+}
+.o2nd {
+margin-top: 85px;
+}
+.o3rd {
+margin-top: 165px;
+}
+
+}
+
+/* Landscape phones and down */
+@media (max-width: 480px) { 
+#content {
+	padding-right: 30px;
+}
+.big {
+	width: 100%;
+}
+.small {
+	width: 15px;
+	overflow: hidden;
+	margin-right: -20px;
+	border: solid 1px black;
+	height: 70px !important;
+	left: 5px;
+	background: #eeeeec;
+}
+.small .title {
+	height: 70px;
+}
+.hidden {
+	width: 15px;
+	overflow: hidden;
+	margin-right: -20px;
+	border: solid 1px black;
+	height: 70px !important;
+	left: 5px;
+	background: #eeeeec;
+	
+}
+.small .col-content , .hidden .col-content {
+	top: 2px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+}
+.hidden .title {
+	height: 70px;
+}
+.hidden .titel , .small .titel {
+
+	-webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+  transform: rotate(90deg);
+
+  /* also accepts left, right, top, bottom coordinates; not required, but a good idea for styling */
+  -webkit-transform-origin: 50% 50%;
+  -moz-transform-origin: 50% 50%;
+  -ms-transform-origin: 50% 50%;
+  -o-transform-origin: 50% 50%;
+  transform-origin: 50% 50%;
+  font-size: 10px;
+}
+.hidden .col-body , .small .col-body{
+	display:none;
+}
+.o1st {
+margin-top: 5px;
+}
+.o2nd {
+margin-top: 85px;
+}
+.o3rd {
+margin-top: 165px;
+}
+.copyright {
+	display: none;
+}
+
+}
+
+

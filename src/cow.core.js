@@ -159,8 +159,8 @@ $.Cow.LocalDbase = function(core, options) {
 		iteration.done(function(result, event){
 				//TODO TT: nu pas data syncen
 		});
-		iteration.fail(function(error, event){
-				alert('Fail to read from localdbase. ' + event.message);
+		iteration.fail(function(error){
+				alert('Fail to read from localdbase. ' + error.message);
 		});
 	});
 	                     
