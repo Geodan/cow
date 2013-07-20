@@ -79,13 +79,15 @@ $.Cow.Websocket.prototype = {
 			case 'newFeature':
 				if(uid != UID) {
 					var item = JSON.parse(payload);
-					core.getFeaturestoreByName("store1").updateItem(item);
+					var store = item.feature.properties.store || "store1";
+					core.getFeaturestoreByName(store).updateItem(item);
 				}
 			break;
 			case 'updateFeature':
 				if(uid != UID) {
 					var item = JSON.parse(payload);
-					core.getFeaturestoreByName("store1").updateItem(item);
+					var store = item.feature.properties.store || "store1";
+					core.getFeaturestoreByName(store).updateItem(item);
 				}
 			break;
 		}
@@ -98,8 +100,11 @@ $.Cow.Websocket.prototype = {
 		this.close();
 		this.obj.core.trigger('disconnected');	
 		//TODO: doe iets slimmers, hij hangt nu af van de global variable 'core'....
-		setTimeout("core.ws.openws('wss://websocket.geodan.nl:443/')",10000);
-		//setTimeout(restart,10000);
+		var restart = function(){
+			core.ws.closews();
+			core.ws.openws(this.obj.options.url);
+		}
+		setTimeout(restart,10000);
 	},
 	_onError: function(event, error) {
 		alert(error);
@@ -127,18 +132,23 @@ $.Cow.Websocket.prototype = {
 		options.uid = this.core.UID;
 		options.cid = payload.cid;		
 		options.owner = name;
+		options.family = 'alpha'; //used to check if client is able to act as alpha peer
 		var me = this.core.peers(options);
 		console.log('nr peers: '+this.core.peers().length);
 		this.core.trigger('connected');		
 		this.sendData(options,'newPeer');
-		//TODO TT: hier moet nog een mooie oplossing voor komen
+		
 		var sendFidList = function(){
-			var store=self.core.getFeaturestoreByName("store1")
-			var fids = store.getIdList();
-			var message = fids;
-			self.core.websocket().sendData(message, "newPeerFidList");
+			$.each(core.featurestores(),function(i, store){
+				var fids = store.getIdList();
+				var message = {};
+				message.fids = fids;
+				message.storename = store.name;
+				self.core.websocket().sendData(message, "newPeerFidList");
+			});
 		}
-		if (this.core.getFeaturestoreByName("store1").loaded == true)
+		//TODO TT: at the moment we only check for 1 store to be loaded
+		if (this.core.featurestores()[0].loaded == true)
 			sendFidList();
 		else
 			setTimeout(sendFidList, 2000);
@@ -167,11 +177,46 @@ $.Cow.Websocket.prototype = {
 		}
 		else console.log('badpeer');
 	},
+	_amIAlpha: function(id){ //find out wether I am alpha 
+		if (this.core.me().options.cid == id) //yes, I certainly am 
+			return true;
+		else { //check again if lower peer turns out not to be from alpha family
+			id++;
+			var nextpeer = this.core.getPeerByCid(id);
+			if (nextpeer.options.family && nextpeer.options.family != 'alpha')
+				this._amIAlpha(id);	//I might still be alpha
+		}
+		return false;
+	},
 	_onNewPeerFidList: function(payload, uid) {
-		if (this.core.me().options.cid == 0){ //Check wether I'm alpha
-				var message = this.core.getFeaturestoreByName("store1").compareIdList(payload); 
+		var self = this;
+		if (this._amIAlpha(0)){ //Check wether I'm alpha
+			console.log('I am alpha');
+			var storename = payload.storename || "store1";
+			var data = this.core.getFeaturestoreByName(storename).compareIdList(payload.fids);
+			var message = {};
+			//First the requestlist
+			message.requestlist = data.requestlist;
+			message.pushlist = []; //empty
+			message.storename = payload.storename;
+			this.sendData(message,'syncPeer',uid);
+			//Now the pushlist bit by bit
+			message.requestlist = []; //empty
+			var i = 0;
+			$.each(data.pushlist, function(id, item){
+					message.pushlist.push(item);
+					i++;
+					if (i >= 1) { //max 1 feat every time
+						i = 0;
+						self.sendData(message,'syncPeer',uid);
+						message.pushlist = []; //empty
+					}
+			});
+			//sent the remainder of the list
+			if (i > 0)
 				this.sendData(message,'syncPeer',uid);
-			}
+			
+		}
 	},
 	
 	//The alpha peer sends a sync message including a list with new features and 
@@ -179,10 +224,13 @@ $.Cow.Websocket.prototype = {
 	_onSyncPeer: function(payload,uid) {
 		var requested_fids = payload.requestlist;
 		var pushed_feats = payload.pushlist;
-		var store = this.core.getFeaturestoreByName("store1");
+		var storename = payload.storename || "store1";
+		var store = this.core.getFeaturestoreByName(storename);
 		//First sent the features that are asked for
 		if (requested_fids.length > 0){
-			var message = store.requestFeatures(requested_fids);
+			var message = {};
+			message.features = store.requestFeatures(requested_fids);
+			message.storename = payload.storename;
 			this.sendData(message, 'requestedFeats');
 		}
 		//Now add the features that have been sent to the featurestore
@@ -193,7 +241,8 @@ $.Cow.Websocket.prototype = {
 	//Peer sends back requested features, now store them
 	_onRequestedFeats: function(payload,uid) {
 		var requested_feats = payload;
-		var store = this.core.getFeaturestoreByName("store1");
+		var storename = payload.storename || "store1";
+		var store = this.core.getFeaturestoreByName(storename);
 		if (requested_feats.length > 0){
 			store.putFeatures(requested_feats);
 		}
@@ -205,7 +254,7 @@ $.Cow.Websocket.prototype = {
 		var newCid = payload.newCid;		
 		this.core.removePeer(peerGone);		
 		this.core.me().options.cid = newCid;
-		this.core.trigger('peerGone',payload);	
+		//this.core.trigger('peerGone',payload);	
 		var message = {};
 		message.uid = this.core.me().uid;
 		message.connectionID = this.core.me().options.cid;

@@ -111,7 +111,7 @@ $.Cow.Peer.prototype = {
 	_onMoved: function(evt,payload) {
 		var self = evt.data.widget;
 		console.log('peerupdated');
-		self.core.trigger('peerupdated');
+		//self.core.trigger('peerupdated');
 		//TODO: options worden niet automatisch bijgewerkt
 		self.options.owner = payload.owner;
 		self.extent(payload.extent);	

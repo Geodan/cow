@@ -30,8 +30,7 @@ $.widget("cow.FeaturesWidget", {
 		 
 		element.delegate('.owner','click', function(){
 			var key = $(this).attr('owner');
-			self.core.getFeaturestoreByName("store1").removeItem(key);
-			console.log('storeChanged');
+			self.core.featureStores[0].removeItem(key);
 			self.core.trigger('storeChanged');
 			//controls.select.activate();
 			//TODO TT: auw, we moeten een fid proberen toe te kennen
@@ -51,13 +50,13 @@ $.widget("cow.FeaturesWidget", {
 		self._updateList(evt);
 	},
 	_onNewFeature: function(evt) {
-	console.log('_onNewFeature');
+		//console.log('_onNewFeature');
 		var self = evt.data.widget;
 		self._updateList(evt);
 	},
 	_updateList: function(evt) {		
 		var self = evt.data.widget;
-		var features = self.core.getFeaturestoreByName("store1").getAllFeatures();
+		var features = core.featureStores[0].getAllFeatures();		//TT: we only use 1 store anyway... 
         var element = self.element;
 		var names = '';
 		

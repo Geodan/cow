@@ -1,16 +1,21 @@
 /** TODO: complete rewrite **/
 
+/**Thanks to jquery-indexeddb.js:
+https://github.com/axemclion/jquery-indexeddb/blob/gh-pages/docs/README.md
+**/
+
+
 //var localdbase = {
 $.Cow.LocalDbase.prototype = {
-	init_db: function(){
+	init_db: function(dbname, tablename){
 		// Simply open the database once so that it is created with the required tables
-		var dbOpenPromise = $.indexedDB("sharedMap3", {
-			"version": 1,
+		var dbOpenPromise = $.indexedDB(dbname, {
+			//"version": 1,
 			"upgrade": function(transaction){
 			},
 			"schema": {
 				"1": function(versionTransaction){
-					var catalog = versionTransaction.createObjectStore("featureStore1",{
+					var catalog = versionTransaction.createObjectStore(tablename,{
 							"autoIncrement" : false,
 							"keyPath": "key"
 					});
@@ -18,15 +23,14 @@ $.Cow.LocalDbase.prototype = {
 				}
 			}
 		});
-		dbOpenPromise.fail(function(error, event){
-			alert('error: ' + event);
-		});
 		return dbOpenPromise;
 	},	
 	// Transfers features from database to arrays
 	loadFromDB: function(){
 		var core = this.core;
-		var store = $.indexedDB("sharedMap3").objectStore("featureStore1"); 
+		var tablename = this.options.tablename;
+		var dbname = this.options.dbname;
+		var store = $.indexedDB(dbname).objectStore(tablename); 
 		var myFeatureList = [];
 		var iteration = store.each(function(elem){
 			//array for use in map
@@ -42,17 +46,17 @@ $.Cow.LocalDbase.prototype = {
 				myFeatureList.push(item);
 		});    
 		iteration.done(function(){
-			//TODO TT: rewrite to trigger
-			core.getFeaturestoreByName("store1").fill(myFeatureList);
+			//TODO TT: rewrite to trigger and remove storename
+			core.getFeaturestoreByName(tablename).fill(myFeatureList);
 		});
 		return iteration;
 	},
 	deleteDB: function(){
 	// Delete the database 
-		$.indexedDB("sharedMap3").deleteDatabase();
+		$.indexedDB(this.options.dbname).deleteDatabase();
 	},
 	emptyDB: function(table){
-		$.indexedDB("sharedMap3").objectStore("featureStore1").clear();
+		$.indexedDB(this.options.dbname).objectStore(this.options.tablename).clear();
 	},
 	addFeat: function(evt){
 		var newRecord = {};
@@ -62,7 +66,8 @@ $.Cow.LocalDbase.prototype = {
 		newRecord.updated = evt.updated;
 		newRecord.status = evt.status;
 		newRecord.feature = evt.feature;
-		var store = $.indexedDB("sharedMap3").objectStore("featureStore1");
+		var db = $.indexedDB(this.options.dbname);
+		var store = db.objectStore(this.options.tablename);
 		//Advantage of putting is that we overwrite old features with same key
 		trans = store.put(newRecord);
 		trans.done(function(){
@@ -73,12 +78,12 @@ $.Cow.LocalDbase.prototype = {
 	},
 	// Delete an item from featurestore
 	deleteFeat: function(itemId){
-		$.indexedDB("sharedMap3").objectStore("featureStore1")["delete"](itemId).done(function(){
+		$.indexedDB(this.options.dbname).objectStore(this.options.tablename)["delete"](itemId).done(function(){
 				core.localdbase().loadFromDB();
 		});
 	},
 	update: function(item){
-		var store = $.indexedDB("sharedMap3").objectStore("featureStore1");
+		var store = $.indexedDB(this.options.dbname).objectStore(this.options.tablename);
 		store.each(function(elem) {
 			if (elem.key == item.key) {
 				elem.update(item);

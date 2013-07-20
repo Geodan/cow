@@ -4,8 +4,8 @@ getLocation - starts location polling and triggers a newlocation event
 
 ***/
 $.Cow.GeoLocator.prototype = {
-
-	parsePosition: function(nsidom_obj){
+	self: null,
+	_parsePosition: function(nsidom_obj){
 		var position = {};
 		position.coords = {};
 		position.coords.longitude = nsidom_obj.coords.longitude;
@@ -13,10 +13,8 @@ $.Cow.GeoLocator.prototype = {
 		position.timestamp = nsidom_obj.timestamp;
 		return position;
 	},
-	getLocation: function(){
-		var self = this;
-		var _showPosition = function(position){
-			position = self.parsePosition(position);
+	_showPosition: function(position){
+			position = self._parsePosition(position);
 			console.log('locationChange');
 			var peer = self.core.me();
 			var payload = {};
@@ -24,14 +22,7 @@ $.Cow.GeoLocator.prototype = {
 			payload.position = position;
 			peer.events.trigger('locationChange', [payload]);
 			self.core.trigger('locationChange', [payload]);
-		} 
-		if (navigator.geolocation)
-		{
-			navigator.geolocation.watchPosition(_showPosition, this._showError);
-		}
-	  else{alert("Geolocation is not supported by this browser.")}
 	},
-	
 	_showError: function(error){
 	  switch(error.code) 
 		{
@@ -48,9 +39,40 @@ $.Cow.GeoLocator.prototype = {
 		  innerHTML="An unknown error occurred."
 		  break;
 		}
-		//alert(innerHTML);
+		console.warn(innerHTML);
+	},
+	_setGeoLocation: function(){
+		console.log('Start polling geolocation');
+		var geolocationid = window.navigator.geolocation.watchPosition( 
+			this._showPosition, 
+			this._showError, 
+			{
+				enableHighAccuracy: true,
+				timeout: 10000,
+  				maximumAge: 5000
+			} 
+		);
+		//window.setTimeout( function () {
+		//		console.log('Stop polling geolocation');
+		//		window.navigator.geolocation.clearWatch( geolocationid ) 
+		//	}, 
+		//	5000 //stop checking after 10 seconds
+		//);
+	},
+	getLocation: function(){
+		self = this;
+		
+		if (navigator.geolocation)
+		{
+			this._setGeoLocation();//first one
+			//window.setTimeout( function () {
+			//	self._setGeoLocation();
+			//	}, 
+			//	10000 //check every 10 seconds
+			//);
+		}
+	  else{alert("Geolocation is not supported by this browser.")}
 	}
-	
 }
 
 

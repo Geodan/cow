@@ -118,6 +118,7 @@ When adding items, those are returned.
 			//feature.attributes.polycolor = self.core.current_polycolor;
 			item.key = self.core.UID + "#" + timestamp;
 			feature.attributes.key = item.key;
+			feature.attributes.storename = self.name;
 			item.uid = self.core.UID;
 			item.created = timestamp;
 			item.updated = timestamp;
@@ -144,6 +145,7 @@ When adding items, those are returned.
 		feature.attributes.polycolor = self.core.current_polycolor;
 		item.key = self.core.UID + "#" + timestamp;
 		feature.attributes.key = item.key;
+		feature.attributes.store = self.name;
 		item.uid = self.core.UID;
 		item.created = timestamp;
 		item.updated = timestamp;
@@ -177,6 +179,7 @@ When adding items, those are returned.
 		self.events.trigger('storeChanged');
 	},
 	
+	//finished with modifying a features geometry
 	_onFeatureModified: function(evt, feature){
 		var self = evt.data.widget;
 		//var items = this.items();
@@ -201,7 +204,9 @@ When adding items, those are returned.
 		$.each(itemlist, function(i,item){
 			//check if feature is new or updated
 			if (self.getItemByIid(item.key))
-				self.updateItem(item);
+				var localItem = self.getItemByIid(item.key);
+				if (localItem && item.updated > localItem.updated) //incoming item is newer
+					self.updateItem(item);
 			else
 				self._addItem(item);
 			core.localdbase().addFeat(item);
@@ -237,6 +242,24 @@ When adding items, those are returned.
 	getAllFeatures: function(){
 		return this.items();
 	},
+	deleteAllFeatures: function(){
+		var items = this.items();
+		var self = this;
+		$.each(items, function(i, item){
+				var d = new Date();
+				var timestamp = d.getTime();
+				if (item.options.status != 'deleted')
+				{
+					item.options.status = 'deleted';
+					item.options.updated = timestamp;
+				}
+				self.core.localdbase().update(item.options);
+		});
+		//TODO: need to notify other peers instantly about removal?
+		//Now it is delayed until next connection is made
+		self.events.trigger('storeChanged');
+
+	},
 	//return list with only keys and update time to inform other peers
 	getIdList: function(){
 		var idlist = [];
@@ -260,34 +283,36 @@ When adding items, those are returned.
 		syncMessage.requestlist = [];
 		syncMessage.pushlist = [];
 		//Prepare copy of remote fids as un-ticklist, but only for non-deleted items
-		$.each(fidlist, function(i,val){
-			if (val.status != 'deleted')
-				copyof_rem_list.push(val.key);	
-		});
-		$.each(this.items(), function(i,loc_val){
-				var local_item = loc_val.options;
-				var found = -1;
-				$.each(fidlist, function(j,rem_val){
-						//in both lists
-						if (rem_val.key == local_item.key){
-							found = 1;
-							//local is newer
-							if (rem_val.updated < local_item.updated)
-								syncMessage.pushlist.push(local_item);
-							//remote is newer
-							else if (rem_val.updated > local_item.updated)
-								syncMessage.requestlist.push(rem_val.key);
-							//remove from copyremotelist
-							var tmppos = $.inArray(local_item.key,copyof_rem_list);
-							if (tmppos >= 0)
-								copyof_rem_list.splice(tmppos,1);
-						}
-				});
-				//local but not remote and not deleted
-				if (found == -1 && local_item.status != 'deleted'){
-					syncMessage.pushlist.push(local_item);
-				}
-		});
+		if (fidlist){
+			$.each(fidlist, function(i,val){
+				if (val.status != 'deleted')
+					copyof_rem_list.push(val.key);	
+			});
+			$.each(this.items(), function(i,loc_val){
+					var local_item = loc_val.options;
+					var found = -1;
+					$.each(fidlist, function(j,rem_val){
+							//in both lists
+							if (rem_val.key == local_item.key){
+								found = 1;
+								//local is newer
+								if (rem_val.updated < local_item.updated)
+									syncMessage.pushlist.push(local_item);
+								//remote is newer
+								else if (rem_val.updated > local_item.updated)
+									syncMessage.requestlist.push(rem_val.key);
+								//remove from copyremotelist
+								var tmppos = $.inArray(local_item.key,copyof_rem_list);
+								if (tmppos >= 0)
+									copyof_rem_list.splice(tmppos,1);
+							}
+					});
+					//local but not remote and not deleted
+					if (found == -1 && local_item.status != 'deleted'){
+						syncMessage.pushlist.push(local_item);
+					}
+			});
+		}
 		//Add remainder of copyof_rem_list to requestlist
 		$.each(copyof_rem_list, function(i,val){
 			syncMessage.requestlist.push(val);	
@@ -295,36 +320,13 @@ When adding items, those are returned.
 		return syncMessage;
 	},
 	//Simply repopulate the openlayers layer with items from the featurestore
-	reloadLayer: function(){
-		var self=this;
-		self.editLayer.removeAllFeatures();
-		var store = self.getFeaturestoreByName("store1");
-		$.each(store.items(), function(i, object){
-			//var closeBox = true;
-			//var overflow = true;
-			//var popupClass = OpenLayers.Popup.Anchored;
-            //var popupContentHTML = 'Test';
+	reloadLayer: function(evt){
+		var self = evt.data.widget;
+		self.core.editLayer.removeAllFeatures();
+		$.each(self.itemList, function(i, object){
 			var feature = geojson_format.read(object.options.feature);
-			//feature.closeBox = closeBox;
-            //feature.popupClass = popupClass;
-            //feature.data.popupContentHTML = popupContentHTML;
-            //feature.data.overflow = (overflow) ? "auto" : "hidden";
-			//var featureClick = function (evt) {
-            //    if (this.popup == null) {
-            //        this.popup = this.createPopup(this.closeBox);
-            //        map.addPopup(this.popup);
-            //        this.popup.show();
-            //    } else {
-            //        this.popup.toggle();
-            //    }
-            //    currentPopup = this.popup;
-            //    OpenLayers.Event.stop(evt);
-            //};
-            //feature.events.register("mousedown", feature, featureClick);
 			if (object.options.status != 'deleted')
-				self.editLayer.addFeatures(feature);
+				self.core.editLayer.addFeatures(feature);
 		});
-		
-		
 	}
 };

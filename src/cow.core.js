@@ -150,8 +150,9 @@ $.Cow.LocalDbase = function(core, options) {
 	this.loaded = false;
 	this.core = core;
 	this.options = options;
-	var promise = this.init_db();
+	var promise = this.init_db(this.options.dbname, this.options.tablename);
 	promise.done(function(){
+	  window.setTimeout(function(){
 		self.loaded = true;
 		console.log('dbinitialized');
 		core.trigger('dbinitialized');
@@ -162,6 +163,7 @@ $.Cow.LocalDbase = function(core, options) {
 		iteration.fail(function(error){
 				alert('Fail to read from localdbase. ' + error.message);
 		});
+	  },200);
 	});
 	                     
 }
@@ -238,14 +240,27 @@ $.Cow.Core.prototype = {
 		}); 
 		var myLocationStyleMap = new OpenLayers.StyleMap(myLocationStyle);
 		var context = {
+			getStrokeWidth: function(feature) {
+				if (feature.layer && feature.layer.map.getZoom() > 15)
+					return 3;
+				return 1;
+			},
 			getLabel: function(feature) {
-				if (feature.attributes.name)
+				if (feature.attributes.name && feature.layer.map.getZoom() > 13)
                     return feature.attributes.name;
                 return "";
 			},
             getIcon: function(feature) {
-                if (feature.attributes.icon)
+            	if (feature.attributes.icon && feature.attributes.icon != null){
+            		//addition for larger scale icons IMOOV
+            		str = feature.attributes.icon;
+            		var patt=new RegExp("imoov");
+            		if (str && feature.layer && feature.layer.map.zoom < 15 && patt.test(str))
+            		{
+            			return str.replace(/-g.png/g,'k.png');
+            		}
                     return feature.attributes.icon;
+                }
                 return "./mapicons/notvisited.png";
             },
             getLineColor: function(feature){
@@ -274,12 +289,16 @@ $.Cow.Core.prototype = {
         
 		var template = {
 		  pointRadius: 20,
-		  strokeWidth: 3,
+		  strokeWidth: "${getStrokeWidth}",
 		  label: "${getLabel}",
-		  labelAlign: "lb",
+		  title: "${getLabel}",
+		  labelAlign: "tl",
 		  labelXOffset: "15",
           labelYOffset: "0",
 		  fontColor: '#00397C',
+		  fontSize: '12pt',
+		  labelOutlineColor: "white", 
+          labelOutlineWidth: 1,
 		  graphicZIndex: "${getZindex}",
 		  fillOpacity: "${getFillOpacity}",
 		  externalGraphic: "${getIcon}",
@@ -287,8 +306,8 @@ $.Cow.Core.prototype = {
 		  strokeColor: "${getLineColor}"
         };
         var selecttemplate = {
-        	pointRadius: 40,
-			strokeWidth:6,
+          pointRadius: 40,
+		  strokeWidth:6,
 		  graphicZIndex: "${getZindex}",
 		  fillOpacity: "${getFillOpacity}",
 		  externalGraphic: "${getIcon}",
@@ -326,8 +345,9 @@ $.Cow.Core.prototype = {
 						+ 'You can remove or change this feature using the buttons below<br/>'
 						+ 'Label: <input name="name" value ="'+name+'" onBlur="changeFeature(this.name,this.value);"><br/>'
 						+ 'Description: <br> <textarea name="desc" onBlur="changeFeature(this.name, this.value)" rows="4" cols="25">'+desc+'</textarea><br/>'
-						+ '<button onTouch="editfeature();" onClick="editfeature();" id="editButton" class="popupbutton">edit</button><br>'
-						+ '<button class="popupbutton" onTouch="deletefeature();" onClick="deletefeature();">delete</button>';
+						+ '<button class="popupbutton" onTouch="editfeature();" onClick="editfeature();" id="editButton">edit</button><br>'
+						+ '<button class="popupbutton" onTouch="deletefeature();" onClick="deletefeature();">delete</button>'
+						+ '<button class="popupbutton" onTouch="closepopup();" onClick="closepopup();">Done</button>';
 					var anchor = {'size': new OpenLayers.Size(0,0), 'offset': new OpenLayers.Pixel(100, -100)};
 					var popup = new OpenLayers.Popup.Anchored("popup",
 						OpenLayers.LonLat.fromString(feature.geometry.getCentroid().toShortString()),
@@ -347,19 +367,18 @@ $.Cow.Core.prototype = {
 				featureunselected:function(evt){
 					var feature = evt.feature;
 					//TODO TT: check first if feature attributes have been changed
-					if (feature.attributes.store)
-						var store = feature.attributes.store;
-					else
-						var store = "store1"; 
+					var store = feature.attributes.store || "store1";
 					core.getFeaturestoreByName(store).updateLocalFeat(feature);
 					map.removePopup(feature.popup);
+					//TODO TT: this goes wrong first time... 
+					//Uncaught TypeError: Cannot call method 'destroy' of null 
 					feature.popup.destroy();
 					feature.popup = null;
 					controls.modify.deactivate();
 					controls.select.activate();
 				}
 		}});
-		var mylocationlayer = new OpenLayers.Layer.Vector('Mylocation layer',{styleMap:myLocationStyleMap});
+		var mylocationlayer = new OpenLayers.Layer.Vector('My location',{styleMap:myLocationStyleMap});
 		
 		controls = {
 			modify: new OpenLayers.Control.ModifyFeature(editlayer),
@@ -486,6 +505,19 @@ When adding peers, those are returned.
 		var peer;
 		$.each(peers, function(){
 			if(this.uid == meuid) {			
+				peer = this;
+			}			
+		});
+		
+		return peer;
+	},
+	getPeerByCid: function(cid) {
+	
+		var mecid = cid;
+		var peers = this.peers();
+		var peer;
+		$.each(peers, function(){
+			if(this.options.cid == mecid) {			
 				peer = this;
 			}			
 		});

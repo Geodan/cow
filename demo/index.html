@@ -99,10 +99,8 @@ function closepopup(){
 	var feature = core.editLayer.selectedFeatures[0];
 	if (feature && feature.popup)
 		feature.popup.destroy();
-}//this too....
-function purgeLocaldb(){
-  $.indexedDB("sharedMap3").objectStore("featureStore1").clear();
 }
+
 
 var s = new OpenLayers.StyleMap({
       'strokeColor':  '#00397C',
@@ -118,24 +116,20 @@ var extent;
 function init_map(){
     //openlayers stuff
   
-  map = new OpenLayers.Map("map");
-  var osmlayer = new OpenLayers.Layer.OSM("OpenStreetMap", null, {
+    map = new OpenLayers.Map("map");
+    var osmlayer = new OpenLayers.Layer.OSM("OpenStreetMap", null, {
        transitionEffect: 'resize'
     });
     
     map.addLayer(layer = new OpenLayers.Layer.Stamen("toner-lite", {opacity:0.5}));
-  map.addLayer(osmlayer);
-    map.setCenter(new OpenLayers.LonLat(540000, 6870000), 10);
-  map.addControl(new OpenLayers.Control.LayerSwitcher());
+    map.addLayer(osmlayer);
+    //map.setCenter(new OpenLayers.LonLat(768708,6849389), 10);//Enschede
+    map.setCenter(new OpenLayers.LonLat(546467,6862526),10);//Amsterdam
+	map.addControl(new OpenLayers.Control.LayerSwitcher());
     
+	
 }
-/*Obs
-function enableEdit(){
-  for(var key in drawControls) {
-    map.addControl(drawControls[key]);
-  }
-}
-*/
+
 var core;
   
 $(document).ready(function(){
@@ -143,7 +137,7 @@ $(document).ready(function(){
   $('#cow').cow({
     websocket: {url: 'wss://websocket.geodan.nl:443/'},
     featurestore: {name: "store1"},
-    localdbase: {name: "dbase1"},
+    localdbase: {dbname: myproject, tablename: "store1"},
     geolocator: {name: "locator1"}
   });
   //TODO: core shouldn't be global
