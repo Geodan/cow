@@ -187,7 +187,7 @@ When adding items, those are returned.
 		var timestamp = d.getTime();
 		
 		$.each(self.itemList, function(i, obj){
-				if (obj.options.key == feature.properties.key){
+				if (obj.options.key == feature.attributes.key){
 					obj.options.feature = JSON.parse(geojson_format.write(feature));
 					obj.options.updated = timestamp;
 					self.core.localdbase().update(obj.options);
