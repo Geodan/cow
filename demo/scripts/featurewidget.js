@@ -46,7 +46,7 @@ $.widget("cow.FeaturesWidget", {
             .empty();
     },
 	_onLoaded: function(evt) {
-	console.log('_onLoaded');
+		//console.log('_onLoaded');
 		var self = evt.data.widget;
 		self._updateList(evt);
 	},

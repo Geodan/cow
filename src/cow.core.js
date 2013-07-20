@@ -346,7 +346,12 @@ $.Cow.Core.prototype = {
 				},
 				featureunselected:function(evt){
 					var feature = evt.feature;
-					core.getFeaturestoreByName("store1").updateLocalFeat(feature);
+					//TODO TT: check first if feature attributes have been changed
+					if (feature.attributes.store)
+						var store = feature.attributes.store;
+					else
+						var store = "store1"; 
+					core.getFeaturestoreByName(store).updateLocalFeat(feature);
 					map.removePopup(feature.popup);
 					feature.popup.destroy();
 					feature.popup = null;

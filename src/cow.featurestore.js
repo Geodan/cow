@@ -159,6 +159,24 @@ When adding items, those are returned.
 		//TODO TT: Open feature for editing
 		//controls.select.select(feature);
 	},
+	//feature attributes have been locally changed 
+	updateLocalFeat: function(feature){
+		var self = this;
+		//var items = this.items();
+		var d = new Date();
+		var timestamp = d.getTime();
+		$.each(self.itemList, function(i, obj){
+				if (obj.options.key == feature.attributes.key){
+					obj.options.feature = JSON.parse(geojson_format.write(feature));
+					obj.options.updated = timestamp;
+					self.core.localdbase().update(obj.options);
+					var message = JSON.stringify(obj.options);
+					self.core.websocket().sendData(message, "updateFeature");
+				}
+		});
+		self.events.trigger('storeChanged');
+	},
+	
 	_onFeatureModified: function(evt, feature){
 		var self = evt.data.widget;
 		//var items = this.items();

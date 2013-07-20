@@ -56,6 +56,7 @@ function WebSocketTest()
 WebSocketTest();
 var UID = 0;
 var myname = "Anonymous";
+var myproject = "demo";
 //global map vars
 var map, layer, vLayer, drawControls, editlayer;
 
@@ -65,25 +66,39 @@ var geojson_format = new OpenLayers.Format.GeoJSON();
 
 //TODO TT: aaargh, this has to be incorporated into core
 function editfeature(){
-  var feature = core.editLayer.selectedFeatures[0];
-  controls.modify.mode = OpenLayers.Control.ModifyFeature.RESHAPE;
-  controls.modify.standalone = true;
-  controls.modify.activate();
-  controls.modify.selectFeature(feature);
+	var feature = core.editLayer.selectedFeatures[0];
+	feature.popup.hide();
+	controls.modify.mode = OpenLayers.Control.ModifyFeature.RESHAPE;
+	controls.modify.standalone = true;
+	controls.modify.activate();
+	controls.modify.selectFeature(feature);
 }//this too...
 function deletefeature(){
-  var feature = core.editLayer.selectedFeatures[0];
-  var key = feature.attributes.key;
-  core.map.removePopup(core.map.popups[0]);
-  core.getFeaturestoreByName("store1").removeItem(key);
-  console.log('storeChanged');
-  core.trigger('storeChanged');
-  }//this too....
-function changeFeature(string){
-  var feature = core.editLayer.selectedFeatures[0];
-  feature.attributes.name = string;
-  feature.popup.destroy();
-  core.getFeaturestoreByName("store1").updateLocalFeat(feature);
+	var feature = core.editLayer.selectedFeatures[0];
+	feature.popup.destroy();
+	var key = feature.attributes.key;
+	var store = feature.attributes.store || "store1";
+	core.getFeaturestoreByName(store).removeItem(key);
+	console.log('storeChanged');
+	core.trigger('storeChanged');
+	}//this too....
+function changeFeature(key,string){
+	var feature = core.editLayer.selectedFeatures[0];
+	if (feature){
+		var store = feature.attributes.store || "store1";
+		 
+		if (key == "name")
+			feature.attributes.name = string;
+		if (key == "desc")
+			feature.attributes.desc = string;
+		feature.popup.destroy(); //we have to destroy since the next line triggers a reload of all features
+		core.getFeaturestoreByName(store).updateLocalFeat(feature);
+	}
+}//this too....
+function closepopup(){
+	var feature = core.editLayer.selectedFeatures[0];
+	if (feature && feature.popup)
+		feature.popup.destroy();
 }//this too....
 function purgeLocaldb(){
   $.indexedDB("sharedMap3").objectStore("featureStore1").clear();
