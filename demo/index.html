@@ -27,6 +27,7 @@
   <script src="../src/cow.localdbase.js" type="text/javascript"></script>
   <script src="../src/cow.geolocator.js" type="text/javascript"></script>
   
+  <script src="scripts/olmapwidget.js" type="text/javascript"></script>
   <script src="scripts/peerwidget.js" type="text/javascript"></script>
   <script src="scripts/featurewidget.js" type="text/javascript"></script>
   <script src="scripts/newfeaturewidget.js" type="text/javascript"></script>
@@ -101,7 +102,7 @@ function closepopup(){
 		feature.popup.destroy();
 }
 
-
+/*
 var s = new OpenLayers.StyleMap({
       'strokeColor':  '#00397C',
       'fillColor':  '#00397C',
@@ -111,30 +112,12 @@ var s = new OpenLayers.StyleMap({
       labelAlign: "lb",
       fontColor: '#00397C'
 });
+*/
 var extent;
-               
-function init_map(){
-    //openlayers stuff
-  
-    map = new OpenLayers.Map("map");
-    var osmlayer = new OpenLayers.Layer.OSM("OpenStreetMap", null, {
-       transitionEffect: 'resize'
-    });
-    
-    map.addLayer(layer = new OpenLayers.Layer.Stamen("toner-lite", {opacity:0.5}));
-    map.addLayer(osmlayer);
-    //map.setCenter(new OpenLayers.LonLat(768708,6849389), 10);//Enschede
-    map.setCenter(new OpenLayers.LonLat(546467,6862526),10);//Amsterdam
-	map.addControl(new OpenLayers.Control.LayerSwitcher());
-    
-	
-}
-
 var core;
   
 $(document).ready(function(){
-  init_map();
-  $('#cow').cow({
+    $('#cow').cow({
     websocket: {url: 'wss://websocket.geodan.nl:443/'},
     featurestore: {name: "store1"},
     localdbase: {dbname: myproject, tablename: "store1"},
@@ -142,13 +125,13 @@ $(document).ready(function(){
   });
   //TODO: core shouldn't be global
   core =$('#cow').data('cow');
+  $('#map').OlMapWidget({core: '#cow'});
   $('#connect').ConnectWidget({core: '#cow'});
   $('#help').HelpWidget({core: '#cow'});
   $('#peers').PeersWidget({core: '#cow',name:'#myname'});
   $('#features').FeaturesWidget({core: '#cow'});
   $('#newfeatpanel').NewFeatureWidget({core: '#cow'});
-  //TODO TT: only for testing:
-  controls.select.activate();	     
+     
 });
  
 

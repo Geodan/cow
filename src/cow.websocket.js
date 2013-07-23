@@ -6,7 +6,7 @@ $.Cow.Websocket.prototype = {
 	},
 	_onMessage: function(message) {
 		var core = this.obj.core;
-		//console.log('message: '+message.data);
+		console.log('message: '+message.data);
 		var data = JSON.parse(message.data);
 		var uid = data.uid;
 		var UID = core.UID; 
@@ -175,7 +175,7 @@ $.Cow.Websocket.prototype = {
 			this.sendData(message,'informPeer',uid);
 			this.core.trigger('newPeer');
 		}
-		else console.log('badpeer');
+		else console.warn('badpeer');
 	},
 	_amIAlpha: function(id){ //find out wether I am alpha 
 		if (this.core.me().options.cid == id) //yes, I certainly am 
@@ -262,12 +262,13 @@ $.Cow.Websocket.prototype = {
 	},
 	//Pure websocket function, only needed to keep the connection-ids in sync with the uids
 	__onUpdatePeer: function(payload,uid) {
-		var peer = this.core.getPeerByUid(uid);	
+		var peer = this.core.getPeerByUid(uid);
+		console.log('updatePeer');
 		if(peer !== undefined) {
 			var peerCid = payload.connectionID;
 			peer.options.cid = peerCid
 		}
-		else console.log('badpeer');
+		else console.warn('badpeer');
 	},
 	_onPeerMoved: function(payload,uid) {
 		var peer = this.core.getPeerByUid(uid);
@@ -275,16 +276,17 @@ $.Cow.Websocket.prototype = {
 			peer.events.trigger('peerMoved',payload);
 			console.log('peerMoved');
 		}
-		else console.log('badpeer');
+		else console.warn('badpeer');
 	},
 	//a peer has changed location, redraw its position on the map
 	_onPeerChangedLocation: function(payload, uid){
 		var peer = this.core.getPeerByUid(uid);
+		
 		if(peer !== undefined) {
 			peer.events.trigger('locationChange',payload);
 			console.log('locationChange');
 		}
-		else console.log('badpeer');
+		else console.warn('badpeer');
 	},
 	_onMapMoved: function(evt) {
 		var self = evt.data.widget;
