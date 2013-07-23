@@ -37,6 +37,7 @@
   <script src="../src/cow.geolocator.js" type="text/javascript"></script>
   
   <script src="scripts/olmapwidget.js" type="text/javascript"></script>
+  <script src="scripts/leaflmapwidget.js" type="text/javascript"></script>
   <script src="scripts/peerwidget.js" type="text/javascript"></script>
   <script src="scripts/featurewidget.js" type="text/javascript"></script>
   <script src="scripts/newfeaturewidget.js" type="text/javascript"></script>
@@ -85,8 +86,8 @@ $(document).ready(function(){
   });
   
   core =$('#cow').data('cow');
-  $('#map').OlMapWidget({core: '#cow'});
-  //$('#map').LeafLMapWidget({core: '#cow'});
+  //$('#map').OlMapWidget({core: '#cow'});
+  $('#map').LeafLMapWidget({core: '#cow'});
   $('#connect').ConnectWidget({core: '#cow'});
   $('#help').HelpWidget({core: '#cow'});
   $('#peers').PeersWidget({core: '#cow',name:'#myname'});

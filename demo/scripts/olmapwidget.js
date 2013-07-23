@@ -63,6 +63,7 @@ $.widget("cow.OlMapWidget", {
 			moveend: this.handlers.simple		
 		});
 		core.map = this.map; //Set global :(
+		controls.select.activate();
     },
     _destroy: function() {
         this.element.removeClass('ui-dialog ui-widget ui-widget-content ' +
@@ -218,11 +219,11 @@ $.widget("cow.OlMapWidget", {
 						//+'<input onBlur="">Title<br>'
 						//+'<textarea></textarea><br>'
 						+ 'You can remove or change this feature using the buttons below<br/>'
-						+ 'Label: <input name="name" value ="'+name+'" onBlur="changeFeature(this.name,this.value);"><br/>'
-						+ 'Description: <br> <textarea name="desc" onBlur="changeFeature(this.name, this.value)" rows="4" cols="25">'+desc+'</textarea><br/>'
-						+ '<button class="popupbutton" onTouch="editfeature();" onClick="editfeature();" id="editButton">edit</button><br>'
-						+ '<button class="popupbutton" onTouch="deletefeature();" onClick="deletefeature();">delete</button>'
-						+ '<button class="popupbutton" onTouch="closepopup();" onClick="closepopup();">Done</button>';
+						+ 'Label: <input id="titlefld" name="name" value ="'+name+'""><br/>'
+						+ 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+						+ '<button class="popupbutton" id="editButton">edit</button><br>'
+						+ '<button class="popupbutton" id="deleteButton"">delete</button>'
+						+ '<button class="popupbutton" id="closeButton"">Done</button>';
 					var anchor = {'size': new OpenLayers.Size(0,0), 'offset': new OpenLayers.Pixel(100, -100)};
 					var popup = new OpenLayers.Popup.Anchored("popup",
 						OpenLayers.LonLat.fromString(feature.geometry.getCentroid().toShortString()),
@@ -238,6 +239,19 @@ $.widget("cow.OlMapWidget", {
 					popup.fixedRelativePosition = true;
 					feature.popup = popup;
 					map.addPopup(popup);
+					var titlefld = document.getElementById('titlefld');
+					titlefld.addEventListener("blur", self.changeFeature, false);
+					var descfld = document.getElementById('descfld');
+					descfld.addEventListener("blur", self.changeFeature, false);
+					var editbtn = document.getElementById('editButton');
+					editbtn.addEventListener("touchstart", self.editfeature, false);
+					editbtn.addEventListener("click", self.editfeature, false);
+					var deletebtn = document.getElementById('deleteButton');
+					deletebtn.addEventListener("touchstart", self.deletefeature, false);
+					deletebtn.addEventListener("click", self.deletefeature, false);
+					var closebtn = document.getElementById('closeButton');
+					closebtn.addEventListener("touchstart", self.closepopup, false);
+					closebtn.addEventListener("click", self.closepopup, false);
 				},
 				featureunselected:function(evt){
 					var feature = evt.feature;
@@ -263,7 +277,7 @@ $.widget("cow.OlMapWidget", {
 		for(var key in controls) {
                 this.map.addControl(controls[key]);
         }
-        controls.select.activate();
+        
 		
 		this.map.addLayer(editlayer);
 		this.map.addLayer(mylocationlayer);
@@ -280,7 +294,44 @@ $.widget("cow.OlMapWidget", {
 		//this.editLayer.events.on({'featureselected': function(){
 		//		alert('Feat selected');
 		//}});
-		
+		controls.select.activate();
+	},
+	editfeature: function(){
+		var feature = core.editLayer.selectedFeatures[0];
+		feature.popup.hide();
+		controls.modify.mode = OpenLayers.Control.ModifyFeature.RESHAPE;
+		controls.modify.standalone = true;
+		controls.modify.activate();
+		controls.modify.selectFeature(feature);
+	},
+	deletefeature: function(){
+		var feature = core.editLayer.selectedFeatures[0];
+		feature.popup.destroy();
+		var key = feature.attributes.key;
+		var store = feature.attributes.store || "store1";
+		core.getFeaturestoreByName(store).removeItem(key);
+		console.log('storeChanged');
+		core.trigger('storeChanged');
+	},
+	changeFeature: function(evt){
+		var key = evt.currentTarget.name;
+		var value = evt.currentTarget.value;
+		var feature = core.editLayer.selectedFeatures[0];
+		if (feature){
+			var store = feature.attributes.store || "store1";
+			 
+			if (key == "name")
+				feature.attributes.name = value;
+			if (key == "desc")
+				feature.attributes.desc = value;
+			feature.popup.destroy(); //we have to destroy since the next line triggers a reload of all features
+			core.getFeaturestoreByName(store).updateLocalFeat(feature);
+		}
+	},
+	closepopup: function(){
+		var feature = core.editLayer.selectedFeatures[0];
+		if (feature && feature.popup)
+			feature.popup.destroy();
 	}
 	
 	
