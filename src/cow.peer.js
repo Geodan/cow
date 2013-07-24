@@ -131,9 +131,11 @@ $.Cow.Peer.prototype = {
 			icon = self.core.LOCATION_ICON;
 		}
 		var proj = new OpenLayers.Projection("EPSG:4326");
+		var toproj = new OpenLayers.Projection("EPSG:900913");
 		var point = new OpenLayers.Geometry.Point(position.coords.longitude,position.coords.latitude);
 		var attributes = {uid: uid, owner: name, time: position.timestamp, icon: icon};
-		point.transform(proj, self.core.map.getProjectionObject());
+		//point.transform(proj, self.core.map.getProjectionObject()); //Getting rid of references to map
+		point.transform(proj, toproj);
 		var pointfeature = new OpenLayers.Feature.Vector(point, attributes);
 		this.core.mylocationLayer.addFeatures([pointfeature]);
 		

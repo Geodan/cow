@@ -56,6 +56,9 @@ $.widget("cow.OlMapWidget", {
 		this.map.setCenter(new OpenLayers.LonLat(546467,6862526),10);//Amsterdam
 		this.map.addControl(new OpenLayers.Control.LayerSwitcher());
 		
+		$('#peers').bind("zoomToPeersview", function(evt, bbox){
+				self.map.zoomToExtent([bbox.left,bbox.bottom,bbox.right,bbox.top]);
+		});
 		
 		
 		this.handlers = {
@@ -63,6 +66,7 @@ $.widget("cow.OlMapWidget", {
 			// happened without any further processing
 			simple: function(data) {
 				var extent = data.object.getExtent();
+				self.core.me().extent(extent);
 				core.trigger(data.type, extent);
 			}
         };
@@ -73,7 +77,7 @@ $.widget("cow.OlMapWidget", {
 			scope: this,
 			moveend: this.handlers.simple		
 		});
-		core.map = this.map; //Set global :( TODO: try remove global
+		//core.map = this.map; //Set global :( TODO: try remove global
 		this.controls.select.activate();
     },
     _destroy: function() {
@@ -343,7 +347,7 @@ $.widget("cow.OlMapWidget", {
 	_onSketchComplete: function(evt, feature){
 		var core = evt.data.widget.core;
 		//Disable the draw control(s) after drawing a feature
-		var controls = core.map.getControlsByClass('OpenLayers.Control.DrawFeature');
+		var controls = evt.data.widget.map.getControlsByClass('OpenLayers.Control.DrawFeature');
 		$.each(controls,function(id,control){
 				control.deactivate();
 		});

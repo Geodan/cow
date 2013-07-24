@@ -33,7 +33,10 @@ $.widget("cow.PeersWidget", {
 			var owner = $(this).attr('owner');
 			var peer = core.getPeerByUid(owner);
 			var bbox = peer.extent();
-			self.core.map.zoomToExtent([bbox.left,bbox.bottom,bbox.right,bbox.top]);
+			self.element.trigger('zoomToPeersview', bbox);
+			/* TT: Moved to olmapwidget (by trigger)
+			//self.core.map.zoomToExtent([bbox.left,bbox.bottom,bbox.right,bbox.top]);
+			*/
 		});
 		$(this.options.name).change(function(){self._updateName({data:{widget: self,name: $(this).val()}})});
 

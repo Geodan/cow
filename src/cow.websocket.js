@@ -124,7 +124,9 @@ $.Cow.Websocket.prototype = {
 	_onConnect: function(payload) {
 		var self = this;
 		console.log('onConnect');
-		var extent = this.core.map.getExtent();
+		//TODO TT: Extent should not be taken from map object directly but from mapwidget
+		//var extent = this.core.map.getExtent();
+		var extent = {left: 0, bottom: 0, top: 1, right: 1};
 		var name = $('#'+this.core.options.namefield).val();
 		
 		var options = {};
