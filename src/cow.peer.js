@@ -86,7 +86,6 @@ $.Cow.Peer.prototype = {
 			}			
 		var point = geojson_format.read(p);			
 		this.params.point = point;
-		this.core.viewLayer.data(feature);
 		this.core.viewLayer.addFeatures(feature);		
 		this.core.viewLayer.addFeatures(point);	
 	},
