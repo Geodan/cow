@@ -62,7 +62,8 @@ $.widget("cow.OlMapWidget", {
 			// Triggers the jQuery events, after the OpenLayers events
 			// happened without any further processing
 			simple: function(data) {
-				core.trigger(data.type);
+				var extent = data.object.getExtent();
+				core.trigger(data.type, extent);
 			}
         };
 		this._createLayers(this.map);
@@ -72,7 +73,7 @@ $.widget("cow.OlMapWidget", {
 			scope: this,
 			moveend: this.handlers.simple		
 		});
-		core.map = this.map; //Set global :(
+		core.map = this.map; //Set global :( TODO: try remove global
 		this.controls.select.activate();
     },
     _destroy: function() {

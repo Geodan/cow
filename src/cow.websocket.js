@@ -288,11 +288,11 @@ $.Cow.Websocket.prototype = {
 		}
 		else console.warn('badpeer');
 	},
-	_onMapMoved: function(evt) {
+	_onMapMoved: function(evt,extent) {
 		var self = evt.data.widget;
 		//if you initialise the map it gives a mapmove event, but core.me() is not yet finished
 		if(self.core.me() !== undefined) {		
-			self.core.me().extent(self.core.map.getExtent());
+			self.core.me().extent(extent);
 			var message = {};
 			message.extent = self.core.me().extent();
 			message.owner = self.core.me().options.owner;
