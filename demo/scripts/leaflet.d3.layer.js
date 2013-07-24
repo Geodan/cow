@@ -3,6 +3,7 @@ function d3layer(layername, config){
 		this.f = f;
 		var _this = this;
 		var layername = layername;
+		this.freq = 100;
 		this.coolcircles = config.coolcircles || "false";
 		this.labels = config.labels || "false";
 		this.highlight = config.highlight || "false";
@@ -165,7 +166,7 @@ function d3layer(layername, config){
 				});
 				
 			locUpdate = loc
-				.transition().duration(freq + 100).ease("linear")			
+				.transition().duration(this.freq + 100).ease("linear")			
 				.attr("cx",function(d) { return map.latLngToLayerPoint(d.LatLng).x})
 				.attr("cy",function(d) { return map.latLngToLayerPoint(d.LatLng).y})
 				;

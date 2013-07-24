@@ -21,42 +21,19 @@ $.widget("cow.NewFeatureWidget", {
         var current_icon;
         core = $(this.options.core).data('cow');
 		this.core=core;
-		core.bind("sketchcomplete", {widget: self}, self._onSketchComplete);
-        
-		
-		var pointcontrol = new OpenLayers.Control.DrawFeature(core.editLayer,OpenLayers.Handler.Point);
-		var linecontrol = new OpenLayers.Control.DrawFeature(core.editLayer, OpenLayers.Handler.Path);
-		var polycontrol = new OpenLayers.Control.DrawFeature(core.editLayer, OpenLayers.Handler.Polygon);
-		core.map.addControl(pointcontrol);
-		core.map.addControl(linecontrol);
-		core.map.addControl(polycontrol);
-		
+
+		/* Listeners to be found in olmapwidget */ 		
 		element.delegate('.newpoint','click', function(){
-			linecontrol.deactivate();
-			polycontrol.deactivate();
-			pointcontrol.activate();
-			var layer = self.core.editLayer;
         	var key = $(this).attr('newpoint');
-        	core.current_icon = key;
+        	self.element.trigger("newpoint", key);
 		});
-		
 		element.delegate('.newline','click', function(){
-			pointcontrol.deactivate();
-			polycontrol.deactivate();
-			linecontrol.activate();
-			var layer = self.core.editLayer;
         	var key = $(this).attr('newline');
-        	core.current_linecolor = key;
+        	self.element.trigger("newline", key);
 		});
-		
 		element.delegate('.newpoly','click', function(){
-			linecontrol.deactivate();
-			pointcontrol.deactivate();
-			polycontrol.activate();
-			var layer = self.core.editLayer;
         	var key = $(this).attr('newpoly');
-        	core.current_linecolor = key;
-        	core.current_polycolor = key;
+        	self.element.trigger("newpoly", key);
 		});
 		
         var names = 'Select an icon or a color and start drawing on the map';
@@ -85,13 +62,6 @@ $.widget("cow.NewFeatureWidget", {
 			names = names + '<span newpoly="#f57900" class="peerlist newpoly" title="f57900 polygon"><div style="background:#f57900">&nbsp;</div></span></p>';
 			element.html(names);
 		});
-        
-			
-		
-		//controls.select.activate();
-		//TODO TT: auw, we moeten een fid proberen toe te kennen
-		//var feature = core.editLayer.getFeaturesByAttribute(key)[0];
-		//controls.select.select(feature);
 		
 		//$(this.options.name).change(function(){self._updateName({data:{widget: self,name: $(this).val()}})});
     },
@@ -104,15 +74,8 @@ $.widget("cow.NewFeatureWidget", {
 		console.log('_onLoaded');
 		var self = evt.data.widget;
 	
-	},
-	_onSketchComplete: function(evt, feature){
-		var core = evt.data.widget.core;
-		//Disable the draw control(s) after drawing a feature
-		var controls = core.map.getControlsByClass('OpenLayers.Control.DrawFeature');
-		$.each(controls,function(id,control){
-				control.deactivate();
-		});
 	}
+	
 	});
 })(jQuery);
 

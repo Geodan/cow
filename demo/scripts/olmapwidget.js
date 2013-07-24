@@ -14,13 +14,22 @@ _onConnect: function() {
 	TT: copied from featureswidget.js and adapted for map purpose
 **/
 
+
+
 (function($) {
-$.widget("cow.OlMapWidget", {
-	options: {
+
+var _defaultOptions = {
+        bbox: [-180, -85, 180, 85],
+        bboxMax: [-180, -85, 180, 85],
+        center: [0, 0],
         // The cow.core instance
         core: undefined
-    },
- _create: function() {
+};
+
+$.widget("cow.OlMapWidget", {
+	options: $.extend({}, _defaultOptions),
+	
+ 	_create: function() {
         var core;
         var self = this;		
         var element = this.element;
@@ -29,6 +38,7 @@ $.widget("cow.OlMapWidget", {
 		this.core=core;
         core.bind("dbloaded", {widget: self}, self._onLoaded);
 		core.bind("storeChanged", {widget: self}, self._onLoaded);
+		core.bind("sketchcomplete", {widget: self}, self._onSketchComplete);
 		element.delegate('.owner','click', function(){
 			var key = $(this).attr('owner');
 			self.core.featureStores[0].removeItem(key);
@@ -63,7 +73,7 @@ $.widget("cow.OlMapWidget", {
 			moveend: this.handlers.simple		
 		});
 		core.map = this.map; //Set global :(
-		controls.select.activate();
+		this.controls.select.activate();
     },
     _destroy: function() {
         this.element.removeClass('ui-dialog ui-widget ui-widget-content ' +
@@ -85,7 +95,12 @@ $.widget("cow.OlMapWidget", {
 		var features = core.featureStores[0].getAllFeatures();		//TT: we only use 1 store anyway... 
         var element = self.element;
 	},
-	//TODO: dit moet vast mooier kunnen, al die stylen kunnen vast elders
+	getExtent: function(){
+		return this.map.getExtent().toBBOX();
+	},
+	getControls: function(){
+		return this.controls;
+	},
 	_createLayers: function(map) {
 		var s = new OpenLayers.StyleMap({
 			'strokeColor':  '#00397C',
@@ -97,6 +112,7 @@ $.widget("cow.OlMapWidget", {
 			fontColor: '#00397C'
 		});
 		var viewlayer = new OpenLayers.Layer.Vector('Other views',{styleMap: s});
+		
 		map.addLayer(viewlayer);
 		this.viewLayer = viewlayer;
 		core.viewLayer = viewlayer;
@@ -211,7 +227,8 @@ $.widget("cow.OlMapWidget", {
 			rendererOptions: {zIndexing: true},
 			eventListeners:{
 				featureselected:function(evt){
-					
+					//TODO TT: This whole system of creating a popup is ugly!
+					//create something nicer...
 					var feature = evt.feature;
 					var name = feature.attributes.name || "";
 					var desc = feature.attributes.desc || "";
@@ -263,21 +280,47 @@ $.widget("cow.OlMapWidget", {
 					//Uncaught TypeError: Cannot call method 'destroy' of null 
 					feature.popup.destroy();
 					feature.popup = null;
-					controls.modify.deactivate();
-					controls.select.activate();
+					self.controls.modify.deactivate();
+					self.controls.select.activate();
 				}
 		}});
 		var mylocationlayer = new OpenLayers.Layer.Vector('My location',{styleMap:myLocationStyleMap});
 		
-		controls = {
+		this.controls = {
 			modify: new OpenLayers.Control.ModifyFeature(editlayer),
 			//add: new OpenLayers.Control.EditingToolbar(editlayer),
-			select: new OpenLayers.Control.SelectFeature(editlayer)
-		};
-		for(var key in controls) {
-                this.map.addControl(controls[key]);
+			select: new OpenLayers.Control.SelectFeature(editlayer),
+			pointcontrol: new OpenLayers.Control.DrawFeature(editlayer,OpenLayers.Handler.Point),
+			linecontrol:  new OpenLayers.Control.DrawFeature(editlayer, OpenLayers.Handler.Path),
+			polycontrol:  new OpenLayers.Control.DrawFeature(editlayer, OpenLayers.Handler.Polygon)
+		}
+		
+		for(var key in this.controls) {
+                this.map.addControl(this.controls[key]);
         }
         
+		$('#newfeatpanel').bind("newpoint", function(evt, key){
+			self.controls.linecontrol.deactivate();
+			self.controls.polycontrol.deactivate();
+			self.controls.pointcontrol.activate();
+			var layer = self.editLayer;
+			core.current_icon = key;
+		});
+		$('#newfeatpanel').bind("newline", function(evt, key){
+			self.controls.pointcontrol.deactivate();
+			self.controls.polycontrol.deactivate();
+			self.controls.linecontrol.activate();
+			var layer = self.editLayer;
+			core.current_linecolor = key;
+		});
+		$('#newfeatpanel').bind("newpoly", function(evt, key){
+			self.controls.linecontrol.deactivate();
+			self.controls.pointcontrol.deactivate();
+			self.controls.polycontrol.activate();
+			var layer = self.editLayer;
+			core.current_linecolor = key;
+        	core.current_polycolor = key;
+		});
 		
 		this.map.addLayer(editlayer);
 		this.map.addLayer(mylocationlayer);
@@ -294,11 +337,22 @@ $.widget("cow.OlMapWidget", {
 		//this.editLayer.events.on({'featureselected': function(){
 		//		alert('Feat selected');
 		//}});
-		controls.select.activate();
+		this.controls.select.activate();
 	},
-	editfeature: function(){
+	_onSketchComplete: function(evt, feature){
+		var core = evt.data.widget.core;
+		//Disable the draw control(s) after drawing a feature
+		var controls = core.map.getControlsByClass('OpenLayers.Control.DrawFeature');
+		$.each(controls,function(id,control){
+				control.deactivate();
+		});
+	},
+	
+	editfeature: function(evt,x){
 		var feature = core.editLayer.selectedFeatures[0];
 		feature.popup.hide();
+		//TODO: WHY can't I reach the controls of my own class?!
+		var controls = $('#map').OlMapWidget('getControls')
 		controls.modify.mode = OpenLayers.Control.ModifyFeature.RESHAPE;
 		controls.modify.standalone = true;
 		controls.modify.activate();
