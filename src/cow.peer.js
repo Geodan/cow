@@ -87,14 +87,7 @@ $.Cow.Peer.prototype = {
 			}			
 		var point = geojson_format.read(p);
 		this.params.point = point;
-		self.core.trigger("drawExtent", this.params);
-		self.core.viewlyr.data(core.getPeerCollection());
-	/******
-		this.core.viewLayer.removeFeatures(this.params.feature);
-		this.core.viewLayer.removeFeatures(this.params.point);
-		this.core.viewLayer.addFeatures(feature);		
-		this.core.viewLayer.addFeatures(point);
-	***/
+		self.core.trigger("drawExtent", core.getPeerCollection());
 	},
 	
 	_bbox2view: function(bbox) {

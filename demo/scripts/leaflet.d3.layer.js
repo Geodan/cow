@@ -46,7 +46,7 @@ function d3layer(layername, config){
 					.style("stroke-width","2")
 					.style("stroke","steelBlue")
 					.attr('fill',"none");
-				locUpdate = loc.transition().duration(100)
+				locUpdate = loc.transition().duration(500)
 					.attr("d",path);
 				loc.exit().remove();
 			}
@@ -95,8 +95,12 @@ function d3layer(layername, config){
         }
 		var reset = function() {
 		  console.log('Updating');
-		  var bottomLeft = _this.project(_this.bounds[0]),
-				topRight = _this.project(_this.bounds[1]);
+		  var extent = _this.map.getExtent();
+		  
+		  //var bottomLeft = _this.project(_this.bounds[0]),
+		  //	topRight = _this.project(_this.bounds[1]);
+		  var bottomLeft = _this.project([extent.left,extent.bottom]),
+				topRight = _this.project([extent.right,extent.top]);
 
 			svg.attr("width", topRight[0] - bottomLeft[0])
 				.attr("height", bottomLeft[1] - topRight[1])

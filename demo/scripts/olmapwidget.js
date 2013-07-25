@@ -40,7 +40,7 @@ $.widget("cow.OlMapWidget", {
 		core.bind("storeChanged", {widget: self}, self._onLoaded);
 		core.bind("sketchcomplete", {widget: self}, self._onSketchComplete);
 		
-		core.bind("drawExtent", self._drawExtent);
+		core.bind("drawExtent", {widget: self},self._drawExtent);
 		
 		
 		element.delegate('.owner','click', function(){
@@ -112,14 +112,10 @@ $.widget("cow.OlMapWidget", {
 		return this.controls;
 	},
 	
-	_drawExtent: function(evt, params) {
-		
-		/* Obs by d3 layer
-		this.viewLayer.removeFeatures(params.oldfeature);
-		this.viewLayer.removeFeatures(params.point);
-		this.viewLayer.addFeatures(params.feature);		
-		this.viewLayer.addFeatures(params.point);
-		*/
+	_drawExtent: function(evt, peerCollection) {
+		var self = evt.data.widget;
+		if (self.viewlyr)
+			self.viewlyr.data(peerCollection);
 	},
 	
 	_createLayers: function(map) {
@@ -130,7 +126,7 @@ $.widget("cow.OlMapWidget", {
 		myd3layer.afterAdd = function () {
 			var divid = myd3layer.div.id;
 			
-			self.core.viewlyr = new d3layer("viewlayer",{
+			self.viewlyr = new d3layer("viewlayer",{
 				divid:divid,
 				map: self.map,
 				type: "path"
