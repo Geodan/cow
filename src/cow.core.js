@@ -288,11 +288,20 @@ When adding peers, those are returned.
 		//peer.trigger('addpeer');
 		return peer;
 	},
-	//Return feature collection of peers
+	//Return feature collection of peer view extents
 	getPeerCollection: function() {
 		var collection = {"type":"FeatureCollection","features":[]};
 		$.each(core.peerList, function(){
 			collection.features.push(this.params.viewfeature);
+		});
+		return collection;
+	},
+	//Return feature collection of peer positions
+	getPeerPositions: function(){
+		var collection = {"type":"FeatureCollection","features":[]};
+		$.each(core.peerList, function(){
+			if (this.params.pointfeature)
+				collection.features.push(this.params.pointfeature);
 		});
 		return collection;
 	},
@@ -345,15 +354,13 @@ When adding peers, those are returned.
 				}
 			}			
 		});
-		/* Obs by d3layer
-		this.viewLayer.removeFeatures(feature);
-		this.viewLayer.removeFeatures(point);
-		*/
+		/* Obs by d3 layer
 		geolocation = self.core.mylocationLayer.getFeaturesByAttribute('uid', uid);		
 		this.mylocationLayer.removeFeatures(geolocation);
+		*/
 		if(delPeer >= 0) peers.splice(delPeer,1);
 		this.peerList = peers;		
-		
+		//TODO: remove peer from d3 layers
 		
 	},
 	removeAllPeers: function() {
@@ -362,9 +369,7 @@ When adding peers, those are returned.
 			peer = {};
 		});
 		this.peerList = [];
-		/* Obs by d3layer
-		this.viewLayer.removeAllFeatures();
-		*/
+		//TODO: remove peer from d3 layers
 	},
 		
 	/***

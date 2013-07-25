@@ -41,6 +41,7 @@ $.widget("cow.OlMapWidget", {
 		core.bind("sketchcomplete", {widget: self}, self._onSketchComplete);
 		
 		core.bind("drawExtent", {widget: self},self._drawExtent);
+		core.bind("drawPositions", {widget: self},self._drawPositions);
 		
 		
 		element.delegate('.owner','click', function(){
@@ -82,7 +83,6 @@ $.widget("cow.OlMapWidget", {
 			scope: this,
 			moveend: this.handlers.simple		
 		});
-		//core.map = this.map; //Set global :( TODO: try remove global
 		this.controls.select.activate();
     },
     _destroy: function() {
@@ -117,40 +117,47 @@ $.widget("cow.OlMapWidget", {
 		if (self.viewlyr)
 			self.viewlyr.data(peerCollection);
 	},
+	_drawPositions: function(evt, collection) {
+		var self = evt.data.widget;
+		if (self.locationlyr)
+			self.locationlyr.data(collection);
+	},
 	
 	_createLayers: function(map) {
 		var self = this;
-		var myd3layer = new OpenLayers.Layer.Vector('d3layer');
-		self.core.map = self.map;
+		var myd3layer = new OpenLayers.Layer.Vector('Extents layer');
 		// Add the container when the overlay is added to the map.
 		myd3layer.afterAdd = function () {
 			var divid = myd3layer.div.id;
-			
+
 			self.viewlyr = new d3layer("viewlayer",{
 				divid:divid,
 				map: self.map,
-				type: "path"
+				type: "path",
+				style: {
+					fill: "none",
+					stroke: "steelBlue",
+					'stroke-width': 4
+				}
 			});
 
 		};
 		map.addLayer(myd3layer);
 		
-		/* Obsolete by d3 layer
-		var s = new OpenLayers.StyleMap({
-			'strokeColor':  '#00397C',
-			'fillColor':  '#00397C',
-			strokeWidth: 0,
-			fillOpacity: 0.0,
-			label: "${label}",
-			labelAlign: "lb",
-			fontColor: '#00397C'
-		});
-		var viewLayer = new OpenLayers.Layer.Vector('Other views',{styleMap: s});
-		map.addLayer(viewLayer);
+		var myLocationLayer = new OpenLayers.Layer.Vector('d3layer');
+		myLocationLayer.afterAdd = function () {
+			var divid = myLocationLayer.div.id;
+			self.locationlyr = new d3layer("locationlayer",{
+				divid:divid,
+				map: self.map,
+				type: "marker",
+				style: {
+					
+				}
+			});
+		};
+		map.addLayer(myLocationLayer);
 		
-		this.viewLayer = viewLayer;
-		core.viewLayer = viewLayer;
-		*/
 		var self = this;
 		
 		var myLocationStyle = new OpenLayers.Style({
@@ -166,6 +173,8 @@ $.widget("cow.OlMapWidget", {
 		  fontColor: '#00397C'
 		}); 
 		var myLocationStyleMap = new OpenLayers.StyleMap(myLocationStyle);
+		var mylocationlayer = new OpenLayers.Layer.Vector('My location',{styleMap:myLocationStyleMap});
+		
 		var context = {
 			getStrokeWidth: function(feature) {
 				if (feature.layer && feature.layer.map.getZoom() > 15)
@@ -319,7 +328,7 @@ $.widget("cow.OlMapWidget", {
 					self.controls.select.activate();
 				}
 		}});
-		var mylocationlayer = new OpenLayers.Layer.Vector('My location',{styleMap:myLocationStyleMap});
+		
 		
 		this.controls = {
 			modify: new OpenLayers.Control.ModifyFeature(editlayer),

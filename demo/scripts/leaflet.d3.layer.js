@@ -7,12 +7,10 @@ function d3layer(layername, config){
 		this.freq = 100;
 		this.g = config.g;
 		this.map = config.map;
+		this.style = config.style;
 		this.coolcircles = config.coolcircles || "false";
 		this.labels = config.labels || "false";
 		this.highlight = config.highlight || "false";
-		this.fillcolor = config.fillcolor || "green";
-		this.strokecolor = config.strokecolor || "green";
-		this.strokewidth = config.strokewidth || 1;
 		this.scale = config.scale || 'px';
 		this.pointradius = config.pointradius || 5;
 		this.bounds = [[0,0],[1,1]];
@@ -33,8 +31,9 @@ function d3layer(layername, config){
 		var path = d3.geo.path().projection(this.project);
 		
 		f.data = function(collection){
-			_this.bounds = d3.geo.bounds(collection);
-            console.debug('Collection bounds: ' + _this.bounds);
+			
+            
+            
 			if (_this.type == "path"){
 				loc = g.selectAll("path")
 					.data(collection.features, function(d){
@@ -43,51 +42,44 @@ function d3layer(layername, config){
 				f.feature = loc.enter().append("path")
 					.attr("d", path)
 					.classed("zoomable",true)
-					.style("stroke-width","2")
-					.style("stroke","steelBlue")
-					.attr('fill',"none");
+
 				locUpdate = loc.transition().duration(500)
 					.attr("d",path);
+				
+				//Apply styles
+				for (var key in _this.style) {
+						f.feature.style(key,_this.style[key]);
+				};
+				
 				loc.exit().remove();
 			}
 			else if (_this.type == "marker"){
 				f.collection = this.collection;
 				/* Add a LatLng object to each item in the dataset */
-				f.collection.features && f.collection.features.forEach(function(d) {
-					d.LatLng = new L.LatLng(d.geometry.coordinates[1],d.geometry.coordinates[0])
+				collection.features && collection.features.forEach(function(d) {
+					//d.LatLng = new L.LatLng(d.geometry.coordinates[1],d.geometry.coordinates[0])
+					d.LatLng = new OpenLayers.LonLat(d.geometry.coordinates[1],d.geometry.coordinates[0]);
 				});
-				loc = g.selectAll("circle")
-				  .data(f.collection.features, function(d){return d.id;});
+				loc = g.selectAll("image")
+				  .data(collection.features, function(d){return d.id;});
 				 
-				 f.feature = loc.enter().append("circle")
-					.attr("cx",function(d) { return this.project(d.LatLng).x})
-					.attr("cy",function(d) { return this.project(d.LatLng).y})
-					.attr("r", 10)
+				 f.feature = loc.enter().append("image")
+				 	.attr("xlink:href", function(d){return d.properties.icon })
+				 	.attr("width", 30)
+				 	.attr("height", 30)
+					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0]})
+					.attr("y",function(d) { return _this.project(d.geometry.coordinates)[1]})
 					//.attr("class",layername)
 					.classed("zoomable",true)
-					.style("stroke-width",function(d){
-						if (d.strokewidth)
-							return d.strokewidth;
-						else
-							return _this.strokewidth;
-					})
-					.style("stroke", function(d){
-						if (d.strokecolor)
-							return d.strokecolor;
-						else
-							return _this.strokecolor;
-					})
-					.attr('fill',function(d){
-						if (d.color)
-							return d.color;
-						else
-							return _this.fillcolor;
-					});
+					//Apply styles
+					for (var key in _this.style) {
+							f.feature.style(key,_this.style[key]);
+					};
 					
 				locUpdate = loc
-					.transition().duration(this.freq + 100).ease("linear")			
-					.attr("cx",function(d) { return this.project(d.LatLng).x})
-					.attr("cy",function(d) { return this.project(d.LatLng).y})
+					.transition().duration(100).ease("linear")			
+					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0]})
+					.attr("y",function(d) { return _this.project(d.geometry.coordinates)[1]})
 					;
 				loc.exit().remove();
 			}
@@ -110,10 +102,9 @@ function d3layer(layername, config){
 		  if (_this.type == "marker"){
 			  g.selectAll(".zoomable")
 				/* Using leaflets projection function instead of d3's */
-				.transition().duration(1)
-				.attr("cx",function(d) { return _this.project(d.LatLng).x})
-				.attr("cy",function(d) { return _this.project(d.LatLng).y})
-				.attr("r",10);
+				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
+				.attr("y",function(d) { return _this.project(d.geometry.coordinates)[1];})
+				//.attr("r",10);
 		  }
 		  else{
 		  	  g.attr("transform", "translate(" + -bottomLeft[0] + "," + -topRight[1] + ")");

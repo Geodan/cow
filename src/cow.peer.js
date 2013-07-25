@@ -119,9 +119,11 @@ $.Cow.Peer.prototype = {
 	},
 	drawPosition: function(position){
 		
-		var uid = this.uid;		
+		var uid = this.uid;
+		/* Obs by d3layer		
 		var f =	self.core.mylocationLayer.getFeaturesByAttribute('uid', uid);
 		this.core.mylocationLayer.removeFeatures(f);
+		*/
 		if (uid == self.core.UID){
 			name = self.core.MYLOCATION;
 			icon = self.core.MYLOCATION_ICON;
@@ -137,10 +139,26 @@ $.Cow.Peer.prototype = {
 		var attributes = {uid: uid, owner: name, time: position.timestamp, icon: icon};
 		//point.transform(proj, self.core.map.getProjectionObject()); //Getting rid of references to map
 		point.transform(proj, toproj);
+		/*Obs by d3 layer
 		var pointfeature = new OpenLayers.Feature.Vector(point, attributes);
 		this.core.mylocationLayer.addFeatures([pointfeature]);
-		
+		*/
 		this.options.position = position;
+		
+		
+		//For d3 layer: create generic geojson point
+		this.params.pointfeature = { 
+			"id": this.uid,
+			"type": "Feature",
+			"geometry": {
+				"type": "Point",
+				"coordinates": [
+					point.x, point.y
+				]
+			},
+			"properties": attributes
+		};
+		self.core.trigger("drawPositions", core.getPeerPositions());
 	},
 	_onLocationChanged: function(evt, payload){
 		//when I change my location, redraw my point
