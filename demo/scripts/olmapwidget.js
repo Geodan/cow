@@ -129,18 +129,20 @@ $.widget("cow.OlMapWidget", {
 		// Add the container when the overlay is added to the map.
 		myd3layer.afterAdd = function () {
 			var divid = myd3layer.div.id;
-
 			self.viewlyr = new d3layer("viewlayer",{
 				divid:divid,
 				map: self.map,
 				type: "path",
+				labels: true,
+				labelconfig: {
+					field: "owner"
+				},
 				style: {
 					fill: "none",
 					stroke: "steelBlue",
-					'stroke-width': 4
+					'stroke-width': 2
 				}
 			});
-
 		};
 		map.addLayer(myd3layer);
 		
@@ -151,30 +153,21 @@ $.widget("cow.OlMapWidget", {
 				divid:divid,
 				map: self.map,
 				type: "marker",
+				labels: true,
+				labelconfig: {
+					field:"owner"
+				},
 				style: {
-					
+					fill: "steelBlue"
 				}
 			});
 		};
 		map.addLayer(myLocationLayer);
 		
+
 		var self = this;
 		
-		var myLocationStyle = new OpenLayers.Style({
-		  pointRadius: 15, 
-		  externalGraphic: "${icon}",
-		  fillColor: "blue",
-		  fillOpacity: 1, 
-		  strokeColor: "blue",
-		  label: "${owner}",
-		  labelAlign: "lb",
-		  labelXOffset: "15",
-          labelYOffset: "0",
-		  fontColor: '#00397C'
-		}); 
-		var myLocationStyleMap = new OpenLayers.StyleMap(myLocationStyle);
-		var mylocationlayer = new OpenLayers.Layer.Vector('My location',{styleMap:myLocationStyleMap});
-		
+	/** Here comes the big bad editlayer.. **/
 		var context = {
 			getStrokeWidth: function(feature) {
 				if (feature.layer && feature.layer.map.getZoom() > 15)
@@ -367,11 +360,8 @@ $.widget("cow.OlMapWidget", {
 		});
 		
 		this.map.addLayer(editlayer);
-		this.map.addLayer(mylocationlayer);
 		this.editLayer = editlayer;
 		core.editLayer = editlayer;
-		this.mylocationLayer = mylocationlayer;
-		core.mylocationLayer = mylocationlayer;
 		/*this.editLayer.events.on({
 			scope: this,
 			sketchcomplete: this.handlers.includeFeature//this.handlers.simple		
@@ -382,6 +372,7 @@ $.widget("cow.OlMapWidget", {
 		//		alert('Feat selected');
 		//}});
 		this.controls.select.activate();
+		/** End of the big bad editlayer **/
 	},
 	_onSketchComplete: function(evt, feature){
 		var core = evt.data.widget.core;
