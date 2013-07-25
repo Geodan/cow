@@ -39,6 +39,10 @@ $.widget("cow.OlMapWidget", {
         core.bind("dbloaded", {widget: self}, self._onLoaded);
 		core.bind("storeChanged", {widget: self}, self._onLoaded);
 		core.bind("sketchcomplete", {widget: self}, self._onSketchComplete);
+		
+		core.bind("drawExtent", self._drawExtent);
+		
+		
 		element.delegate('.owner','click', function(){
 			var key = $(this).attr('owner');
 			self.core.featureStores[0].removeItem(key);
@@ -50,7 +54,8 @@ $.widget("cow.OlMapWidget", {
 		var osmlayer = new OpenLayers.Layer.OSM("OpenStreetMap", null, {
 		   transitionEffect: 'resize'
 		});
-		this.map.addLayer(layer = new OpenLayers.Layer.Stamen("toner-lite", {opacity:0.5}));
+		
+		//this.map.addLayer(layer = new OpenLayers.Layer.Stamen("toner-lite", {opacity:0.5}));
 		this.map.addLayer(osmlayer);
 		//this.map.setCenter(new OpenLayers.LonLat(768708,6849389), 10);//Enschede
 		this.map.setCenter(new OpenLayers.LonLat(546467,6862526),10);//Amsterdam
@@ -106,21 +111,50 @@ $.widget("cow.OlMapWidget", {
 	getControls: function(){
 		return this.controls;
 	},
+	
+	_drawExtent: function(evt, params) {
+		
+		/* Obs by d3 layer
+		this.viewLayer.removeFeatures(params.oldfeature);
+		this.viewLayer.removeFeatures(params.point);
+		this.viewLayer.addFeatures(params.feature);		
+		this.viewLayer.addFeatures(params.point);
+		*/
+	},
+	
 	_createLayers: function(map) {
+		var self = this;
+		var myd3layer = new OpenLayers.Layer.Vector('d3layer');
+		self.core.map = self.map;
+		// Add the container when the overlay is added to the map.
+		myd3layer.afterAdd = function () {
+			var divid = myd3layer.div.id;
+			
+			self.core.viewlyr = new d3layer("viewlayer",{
+				divid:divid,
+				map: self.map,
+				type: "path"
+			});
+
+		};
+		map.addLayer(myd3layer);
+		
+		/* Obsolete by d3 layer
 		var s = new OpenLayers.StyleMap({
 			'strokeColor':  '#00397C',
 			'fillColor':  '#00397C',
-			strokeWidth: 2,
-			fillOpacity: 0.05,
+			strokeWidth: 0,
+			fillOpacity: 0.0,
 			label: "${label}",
 			labelAlign: "lb",
 			fontColor: '#00397C'
 		});
-		var viewlayer = new OpenLayers.Layer.Vector('Other views',{styleMap: s});
+		var viewLayer = new OpenLayers.Layer.Vector('Other views',{styleMap: s});
+		map.addLayer(viewLayer);
 		
-		map.addLayer(viewlayer);
-		this.viewLayer = viewlayer;
-		core.viewLayer = viewlayer;
+		this.viewLayer = viewLayer;
+		core.viewLayer = viewLayer;
+		*/
 		var self = this;
 		
 		var myLocationStyle = new OpenLayers.Style({
@@ -337,8 +371,8 @@ $.widget("cow.OlMapWidget", {
 			scope: this,
 			sketchcomplete: this.handlers.includeFeature//this.handlers.simple		
 		})*/;		
-		this.editLayer.events.register('sketchcomplete',{'self':this,layer:layer},function(evt){core.trigger('sketchcomplete',evt.feature)});
-		this.editLayer.events.register('afterfeaturemodified',{'self':this,layer:layer},function(evt){core.trigger('afterfeaturemodified',evt.feature)});
+		this.editLayer.events.register('sketchcomplete',{'self':this,layer:editlayer},function(evt){core.trigger('sketchcomplete',evt.feature)});
+		this.editLayer.events.register('afterfeaturemodified',{'self':this,layer:editlayer},function(evt){core.trigger('afterfeaturemodified',evt.feature)});
 		//this.editLayer.events.on({'featureselected': function(){
 		//		alert('Feat selected');
 		//}});

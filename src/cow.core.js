@@ -287,7 +287,15 @@ When adding peers, those are returned.
 		//TODO: enable peer.trigger
 		//peer.trigger('addpeer');
 		return peer;
-	},	
+	},
+	//Return feature collection of peers
+	getPeerCollection: function() {
+		var collection = {"type":"FeatureCollection","features":[]};
+		$.each(core.peerList, function(){
+			collection.features.push(this.params.viewfeature);
+		});
+		return collection;
+	},
 	getPeerByUid: function(uid) {
 	
 		var meuid = uid;
@@ -337,9 +345,10 @@ When adding peers, those are returned.
 				}
 			}			
 		});
-		
+		/* Obs by d3layer
 		this.viewLayer.removeFeatures(feature);
 		this.viewLayer.removeFeatures(point);
+		*/
 		geolocation = self.core.mylocationLayer.getFeaturesByAttribute('uid', uid);		
 		this.mylocationLayer.removeFeatures(geolocation);
 		if(delPeer >= 0) peers.splice(delPeer,1);
@@ -353,7 +362,9 @@ When adding peers, those are returned.
 			peer = {};
 		});
 		this.peerList = [];
+		/* Obs by d3layer
 		this.viewLayer.removeAllFeatures();
+		*/
 	},
 		
 	/***

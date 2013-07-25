@@ -51,16 +51,16 @@ $.Cow.Peer.prototype = {
         }
 	},
 	_getView: function() {
-		return this.viewfeature;
+		return this.params.viewfeature;
 	},
 	_setView: function(bbox) {	
 		
 		
 		
 		if(bbox.type !==undefined){
-			 this.viewfeature = bbox;
+			 this.params.viewfeature = bbox;
 		}
-		else this.viewfeature = this._bbox2view(bbox);	
+		else this.params.viewfeature = this._bbox2view(bbox);	
 		if(this.params.feature !== undefined) {
 			this._drawExtent()
 		}
@@ -69,38 +69,46 @@ $.Cow.Peer.prototype = {
 		//console.log('view: '+JSON.stringify(this.viewfeature));
 	},
 	_drawExtent: function() {
+		this.params.oldfeature = feature;
 		var geojson_format = new OpenLayers.Format.GeoJSON();
-		this.core.viewLayer.removeFeatures(this.params.feature);
-		this.core.viewLayer.removeFeatures(this.params.point);
-		var feature = geojson_format.read(this.viewfeature);
+		var feature = geojson_format.read(this.params.viewfeature);
+		
 		this.params.feature = feature;		
-		var p = { "type": "Feature",
-							"geometry": {
-								"type": "Point",
-								"coordinates": this.view().geometry.coordinates[0][1]
+		var p = {  "id": this.uid,
+				   "type": "Feature",
+				   "geometry": {
+						"type": "Point",
+						"coordinates": this.view().geometry.coordinates[0][1]
 					},
 					"properties": {
 						"uid": this.uid,
 						"label": this.options.owner
 					}
 			}			
-		var point = geojson_format.read(p);			
+		var point = geojson_format.read(p);
 		this.params.point = point;
+		self.core.trigger("drawExtent", this.params);
+		self.core.viewlyr.data(core.getPeerCollection());
+	/******
+		this.core.viewLayer.removeFeatures(this.params.feature);
+		this.core.viewLayer.removeFeatures(this.params.point);
 		this.core.viewLayer.addFeatures(feature);		
-		this.core.viewLayer.addFeatures(point);	
+		this.core.viewLayer.addFeatures(point);
+	***/
 	},
 	
 	_bbox2view: function(bbox) {
 		var b = [bbox.left,bbox.bottom,bbox.right,bbox.top];
-		var feature = { "type": "Feature",
+		var feature = { "id": this.uid,
+						"type": "Feature",
 						"geometry": {
-						"type": "Polygon",
-						"coordinates": [
-							[ [b[0], b[1]],[b[0],b[3]],[b[2],b[3]],[b[2],b[1]],[b[0],b[1]]
+							"type": "Polygon",
+							"coordinates": [
+								[ [b[0], b[1]],[b[0],b[3]],[b[2],b[3]],[b[2],b[1]],[b[0],b[1]]
+								]
 							]
-						]
-					},
-					"properties": {
+						},
+					 "properties": {
 						"uid":this.uid,
 						"owner": this.options.owner,
 						"label":""
