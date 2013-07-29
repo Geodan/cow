@@ -15,7 +15,7 @@ $.Cow.GeoLocator.prototype = {
 	},
 	_showPosition: function(position){
 			position = self._parsePosition(position);
-			console.log('locationChange');
+			//console.log('locationChange');
 			var peer = self.core.me();
 			if (peer) {
 				var payload = {};

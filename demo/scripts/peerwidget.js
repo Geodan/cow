@@ -38,7 +38,9 @@ $.widget("cow.PeersWidget", {
 			//self.core.map.zoomToExtent([bbox.left,bbox.bottom,bbox.right,bbox.top]);
 			*/
 		});
-		$(this.options.name).change(function(){self._updateName({data:{widget: self,name: $(this).val()}})});
+		$(this.options.name).change(function(){
+			self._updateName({data:{widget: self,name: $(this).val()}})
+		});
 
     },
     _destroy: function() {

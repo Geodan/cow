@@ -26,7 +26,7 @@ var _defaultOptions = {
         core: undefined
 };
 
-$.widget("cow.LeafLMapWidget", {
+$.widget("cow.OlMapWidget", {
 	options: $.extend({}, _defaultOptions),
 	
  	_create: function() {
@@ -39,22 +39,31 @@ $.widget("cow.LeafLMapWidget", {
         core.bind("dbloaded", {widget: self}, self._onLoaded);
 		core.bind("storeChanged", {widget: self}, self._onLoaded);
 		core.bind("sketchcomplete", {widget: self}, self._onSketchComplete);
+		
+		core.bind("drawExtent", {widget: self},self._drawExtent);
+		core.bind("drawPositions", {widget: self},self._drawPositions);
+		core.bind("updateSize", {widget: self},function(){
+			self.map.updateSize();
+		});
+		
+		
 		element.delegate('.owner','click', function(){
 			var key = $(this).attr('owner');
 			self.core.featureStores[0].removeItem(key);
 			self.core.trigger('storeChanged');
 		});
 		
-		this.map = L.map('map',{ zoomControl:false}).setView([52.083726,5.111282], 9);//Utrecht
+		//openlayers stuff
+		this.map = new OpenLayers.Map("map");
 		var osmlayer = new OpenLayers.Layer.OSM("OpenStreetMap", null, {
 		   transitionEffect: 'resize'
 		});
-		// create the tile layer with correct attribution
-		var osmUrl='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-		var osmlightUrl = 'http://{s}.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png';
-		var osmAttrib='Map data © OpenStreetMap contributors';
-		var osm = new L.TileLayer(osmlightUrl, {opacity: 0.3,minZoom: 8, maxZoom: 30, attribution: osmAttrib});
-		this.map.addLayer(osm);
+		
+		//this.map.addLayer(layer = new OpenLayers.Layer.Stamen("toner-lite", {opacity:0.5}));
+		this.map.addLayer(osmlayer);
+		//this.map.setCenter(new OpenLayers.LonLat(768708,6849389), 10);//Enschede
+		this.map.setCenter(new OpenLayers.LonLat(546467,6862526),10);//Amsterdam
+		this.map.addControl(new OpenLayers.Control.LayerSwitcher());
 		
 		$('#peers').bind("zoomToPeersview", function(evt, bbox){
 				self.map.zoomToExtent([bbox.left,bbox.bottom,bbox.right,bbox.top]);
@@ -66,19 +75,18 @@ $.widget("cow.LeafLMapWidget", {
 			// happened without any further processing
 			simple: function(data) {
 				var extent = data.object.getExtent();
-				self.core.me().extent(extent);
+				self.core.me() && self.core.me().extent(extent); //Set my own extent
 				core.trigger(data.type, extent);
 			}
         };
 		this._createLayers(this.map);
 		
 				
-		//this.map.events.on({
-		//	scope: this,
-		//	moveend: this.handlers.simple		
-		//});
-		
-		//this.controls.select.activate();
+		this.map.events.on({
+			scope: this,
+			moveend: this.handlers.simple		
+		});
+		this.controls.select.activate();
     },
     _destroy: function() {
         this.element.removeClass('ui-dialog ui-widget ui-widget-content ' +
@@ -106,55 +114,229 @@ $.widget("cow.LeafLMapWidget", {
 	getControls: function(){
 		return this.controls;
 	},
+	
+	_drawExtent: function(evt, peerCollection) {
+		var self = evt.data.widget;
+		if (self.viewlyr)
+			self.viewlyr.data(peerCollection);
+	},
+	_drawPositions: function(evt, collection) {
+		var self = evt.data.widget;
+		//apply some styling to collection
+		$.each(collection.features, function(i,d){
+			var style = {}; //TODO: this goes right on Chrome desktop but wrong on chrome Beta mobile?!
+			if (d.id == self.core.me().uid)
+				style.fill = "red";
+			else style.fill = "steelBlue";
+			d.style = style;
+		});
+			
+		if (self.locationlyr)
+			self.locationlyr.data(collection);
+	},
+	
 	_createLayers: function(map) {
-		var drawnItems = new L.FeatureGroup();
-		this.map.addLayer(drawnItems);
-
-		var drawControl = new L.Control.Draw({
-			draw: {
-				position: 'topleft',
-				polygon: {
-					title: 'Draw a sexy polygon!',
-					allowIntersection: false,
-					drawError: {
-						color: '#b00b00',
-						timeout: 1000
-					},
-					shapeOptions: {
-						color: '#bada55'
-					},
-					showArea: true
+		var self = this;
+		var myd3layer = new OpenLayers.Layer.Vector('Extents layer');
+		// Add the container when the overlay is added to the map.
+		myd3layer.afterAdd = function () {
+			var divid = myd3layer.div.id;
+			self.viewlyr = new d3layer("viewlayer",{
+				divid:divid,
+				map: self.map,
+				type: "path",
+				labels: true,
+				labelconfig: {
+					field: "owner"
 				},
-				circle: {
-					shapeOptions: {
-						color: '#662d91'
-					}
+				style: {
+					fill: "none",
+					stroke: "steelBlue",
+					'stroke-width': 2
 				}
+			});
+		};
+		map.addLayer(myd3layer);
+		self.core.viewlyr = self.viewlyr;//FOR DEBUG
+		
+		var myLocationLayer = new OpenLayers.Layer.Vector('d3layer');
+		myLocationLayer.afterAdd = function () {
+			var divid = myLocationLayer.div.id;
+			self.locationlyr = new d3layer("locationlayer",{
+				divid:divid,
+				map: self.map,
+				type: "circle",
+				labels: true,
+				labelconfig: {
+					field:"owner"
+				},
+				style: {
+					fill: "steelBlue"
+				}
+			});
+		};
+		map.addLayer(myLocationLayer);
+		
+
+		var self = this;
+		
+	/** Here comes the big bad editlayer.. **/
+		var context = {
+			getStrokeWidth: function(feature) {
+				if (feature.layer && feature.layer.map.getZoom() > 15)
+					return 3;
+				return 1;
 			},
-			edit: {
-				featureGroup: drawnItems
-			}
-		});
-		this.map.addControl(drawControl);
-		map.on('draw:created', function (e) {
-			var type = e.layerType,
-				layer = e.layer;
+			getLabel: function(feature) {
+				if (feature.attributes.name && feature.layer.map.getZoom() > 13)
+                    return feature.attributes.name;
+                return "";
+			},
+            getIcon: function(feature) {
+            	if (feature.attributes.icon && feature.attributes.icon != null){
+            		//addition for larger scale icons IMOOV
+            		str = feature.attributes.icon;
+            		var patt=new RegExp("imoov");
+            		if (str && feature.layer && feature.layer.map.zoom < 15 && patt.test(str))
+            		{
+            			return str.replace(/-g.png/g,'k.png');
+            		}
+                    return feature.attributes.icon;
+                }
+                return "./mapicons/notvisited.png";
+            },
+            getLineColor: function(feature){
+            	if (feature.attributes.linecolor)
+            		return feature.attributes.linecolor;
+            	return "black";
+            },
+            getPolyColor: function(feature){
+            	if (feature.attributes.polycolor)
+            		return feature.attributes.polycolor;
+            	return null;
+            },
+            getFillOpacity: function(feature){
+            	if (feature.geometry && feature.geometry.CLASS_NAME == 'OpenLayers.Geometry.Polygon')
+            		return 0.5;
+            	return 1;
+            },
+            getZindex: function(feature){
+            	if (feature.geometry && feature.geometry.CLASS_NAME == 'OpenLayers.Geometry.Polygon')
+            		return 0;
+            	if (feature.geometry && feature.geometry.CLASS_NAME == 'OpenLayers.Geometry.LineString')
+            		return 10;
+            	return 20;
+            }
+        };
+        
+		var template = {
+		  pointRadius: 20,
+		  strokeWidth: "${getStrokeWidth}",
+		  label: "${getLabel}",
+		  title: "${getLabel}",
+		  labelAlign: "tl",
+		  labelXOffset: "15",
+          labelYOffset: "0",
+		  fontColor: '#00397C',
+		  fontSize: '12pt',
+		  labelOutlineColor: "white", 
+          labelOutlineWidth: 1,
+		  graphicZIndex: "${getZindex}",
+		  fillOpacity: "${getFillOpacity}",
+		  externalGraphic: "${getIcon}",
+		  fillColor: "${getPolyColor}",
+		  strokeColor: "${getLineColor}"
+        };
+        var selecttemplate = {
+          pointRadius: 40,
+		  strokeWidth:6,
+		  graphicZIndex: "${getZindex}",
+		  fillOpacity: "${getFillOpacity}",
+		  externalGraphic: "${getIcon}",
+		  fillColor: "${getPolyColor}",
+		  strokeColor: "${getLineColor}"
+        };
+		var style = new OpenLayers.Style(template,{
+        		context: context
+        });
+        var selectstyle = new OpenLayers.Style(selecttemplate,{
+        		context: context
+        }); 
 
-			if (type === 'marker') {
-				layer.bindPopup('A popup!');
-			}
-
-			drawnItems.addLayer(layer);
+		
+		var editLayerStylemap = new OpenLayers.StyleMap({
+			default:style,
+			select: selectstyle 
 		});
+		var editlayer = new OpenLayers.Layer.Vector('Features layer',{
+			
+			styleMap:editLayerStylemap,
+			// add a special openlayers renderer extension that deals better with markers on touch devices
+			renderers: ["SVG"],
+			// enable the indexer by setting zIndexing to true
+			rendererOptions: {zIndexing: true},
+			eventListeners:{
+				featureselected:function(evt){
+					//TODO TT: This whole system of creating a popup is ugly!
+					//create something nicer...
+					var feature = evt.feature;
+					var name = feature.attributes.name || "";
+					var desc = feature.attributes.desc || "";
+					var innerHtml = ''
+						//+'<input onBlur="">Title<br>'
+						//+'<textarea></textarea><br>'
+						+ 'You can remove or change this feature using the buttons below<br/>'
+						+ 'Label: <input id="titlefld" name="name" value ="'+name+'""><br/>'
+						+ 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+						+ '<button class="popupbutton" id="editButton">edit</button><br>'
+						+ '<button class="popupbutton" id="deleteButton"">delete</button>'
+						+ '<button class="popupbutton" id="closeButton"">Done</button>';
+					var anchor = {'size': new OpenLayers.Size(0,0), 'offset': new OpenLayers.Pixel(100, -100)};
+					var popup = new OpenLayers.Popup.Anchored("popup",
+						OpenLayers.LonLat.fromString(feature.geometry.getCentroid().toShortString()),
+						null,
+						innerHtml,
+						anchor,
+						true,
+						null
+					);
+					popup.autoSize = true;
+					popup.maxSize = new OpenLayers.Size(800,1000);
+					popup.relativePosition = "br";
+					popup.fixedRelativePosition = true;
+					feature.popup = popup;
+					map.addPopup(popup);
+					var titlefld = document.getElementById('titlefld');
+					titlefld.addEventListener("blur", self.changeFeature, false);
+					var descfld = document.getElementById('descfld');
+					descfld.addEventListener("blur", self.changeFeature, false);
+					var editbtn = document.getElementById('editButton');
+					editbtn.addEventListener("touchstart", self.editfeature, false);
+					editbtn.addEventListener("click", self.editfeature, false);
+					var deletebtn = document.getElementById('deleteButton');
+					deletebtn.addEventListener("touchstart", self.deletefeature, false);
+					deletebtn.addEventListener("click", self.deletefeature, false);
+					var closebtn = document.getElementById('closeButton');
+					closebtn.addEventListener("touchstart", self.closepopup, false);
+					closebtn.addEventListener("click", self.closepopup, false);
+				},
+				featureunselected:function(evt){
+					var feature = evt.feature;
+					//TODO TT: check first if feature attributes have been changed
+					var store = feature.attributes.store || "store1";
+					core.getFeaturestoreByName(store).updateLocalFeat(feature);
+					map.removePopup(feature.popup);
+					//TODO TT: this goes wrong first time... 
+					//Uncaught TypeError: Cannot call method 'destroy' of null 
+					feature.popup.destroy();
+					feature.popup = null;
+					self.controls.modify.deactivate();
+					self.controls.select.activate();
+				}
+		}});
 		
-		var viewlayer = {};		
-		var editlayer = {};
-		var mylocationlayer = {};
 		
-		
-		
-				
-		/*this.controls = {
+		this.controls = {
 			modify: new OpenLayers.Control.ModifyFeature(editlayer),
 			//add: new OpenLayers.Control.EditingToolbar(editlayer),
 			select: new OpenLayers.Control.SelectFeature(editlayer),
@@ -191,19 +373,19 @@ $.widget("cow.LeafLMapWidget", {
 		});
 		
 		this.map.addLayer(editlayer);
-		this.map.addLayer(mylocationlayer);
 		this.editLayer = editlayer;
 		core.editLayer = editlayer;
-		this.mylocationLayer = mylocationlayer;
-		core.mylocationLayer = mylocationlayer;
-				
-		this.editLayer.events.register('sketchcomplete',{'self':this,layer:layer},function(evt){core.trigger('sketchcomplete',evt.feature)});
-		this.editLayer.events.register('afterfeaturemodified',{'self':this,layer:layer},function(evt){core.trigger('afterfeaturemodified',evt.feature)});
+		/*this.editLayer.events.on({
+			scope: this,
+			sketchcomplete: this.handlers.includeFeature//this.handlers.simple		
+		})*/;		
+		this.editLayer.events.register('sketchcomplete',{'self':this,layer:editlayer},function(evt){core.trigger('sketchcomplete',evt.feature)});
+		this.editLayer.events.register('afterfeaturemodified',{'self':this,layer:editlayer},function(evt){core.trigger('afterfeaturemodified',evt.feature)});
 		//this.editLayer.events.on({'featureselected': function(){
 		//		alert('Feat selected');
 		//}});
 		this.controls.select.activate();
-		*/
+		/** End of the big bad editlayer **/
 	},
 	_onSketchComplete: function(evt, feature){
 		var core = evt.data.widget.core;

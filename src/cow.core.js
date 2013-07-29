@@ -292,6 +292,7 @@ When adding peers, those are returned.
 	getPeerCollection: function() {
 		var collection = {"type":"FeatureCollection","features":[]};
 		$.each(core.peerList, function(){
+			if (this.params.viewfeature.id != self.core.me().uid)
 			collection.features.push(this.params.viewfeature);
 		});
 		return collection;

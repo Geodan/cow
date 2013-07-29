@@ -8,6 +8,7 @@ function d3layer(layername, config){
 		this.g = config.g;
 		this.map = config.map;
 		this.style = config.style;
+		this.chatboxes = config.chatboxes || "false";
 		this.coolcircles = config.coolcircles || "false";
 		this.labels = config.labels || "false";
 		this.labelconfig = config.labelconfig;
@@ -73,10 +74,29 @@ function d3layer(layername, config){
 					.data(collection.features, function(d){
 						return d.id;
 				});
+				
+					
+				var text = placeLabels.enter()
+					.append("svg:g")
+					.attr('class', 'place-label');
+					
 				//On new:	
-				placeLabels.enter()
-					.append('text')
-					.attr('class', 'place-label')
+				text
+					.append('svg:text')
+					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0] ;})
+					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
+					.attr('text-anchor', 'middle')
+					.style('stroke','white')
+					.style('stroke-width','3px')
+					.style('stroke-opacity',.8)
+					.text(function(d) {
+							if (_this.labelconfig.field)
+								return d.properties[_this.labelconfig.field];
+							else
+								return d.id; 
+					});
+				text
+					.append('svg:text')
 					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0] ;})
 					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
 					.attr('text-anchor', 'middle')
@@ -85,10 +105,12 @@ function d3layer(layername, config){
 								return d.properties[_this.labelconfig.field];
 							else
 								return d.id; 
-					});
+					})
+					
 					//TODO: how about styling the labels?
 				//On update:
-				placeLabels.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
+				placeLabels
+					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
 					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
 					
 				//On Exit:	
@@ -103,7 +125,15 @@ function d3layer(layername, config){
 				f.feature = loc.enter().append("path")
 					.attr("d", path)
 					.classed("zoomable",true)
-					.each(_this.styling);
+					.each(_this.styling)
+				
+				f.feature.append('foreignObject')
+				.attr("width", 480)
+				.attr("height", 500)
+					.append("xhtml:div")
+					.append('xhtml:p')
+					.style("font", "14px 'Helvetica Neue'")
+					.html('BPEPEPEPEPEPE!!!!');
 
 				
 				locUpdate = loc.transition().duration(500)
@@ -163,10 +193,14 @@ function d3layer(layername, config){
 		var reset = function() {
 			_this.set_svg();
 		 
-		  	svg.selectAll("text.place-label")
+		  	svg.selectAll(".place-label").selectAll("text")
 				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
 				.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
 
+			g.selectAll(".zoomable")
+				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
+				.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1];})
+				
 			g.selectAll("image.zoomable")
 				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
 				.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1];})
