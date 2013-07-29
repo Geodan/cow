@@ -71,8 +71,7 @@ $('.title').click(function(){
 		o3rd.after(big).after(o2nd).after(small);
 		}
 	}
-	map.updateSize();
-	
+	core.trigger('updateSize');
 });
 });
 

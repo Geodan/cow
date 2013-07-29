@@ -94,6 +94,7 @@ $.Cow.Websocket.prototype = {
 	},
 	_onClose: function(event) {
 		var code = event.code;
+		var self = this;
 		var reason = event.reason;
 		var wasClean = event.wasClean;
 		console.log('disconnected');
@@ -101,8 +102,13 @@ $.Cow.Websocket.prototype = {
 		this.obj.core.trigger('disconnected');	
 		//TODO: doe iets slimmers, hij hangt nu af van de global variable 'core'....
 		var restart = function(){
-			core.ws.closews();
-			core.ws.openws(this.obj.options.url);
+			try{
+				core.ws.closews();
+			}
+			catch(err){
+				console.warn(err);
+			}
+			core.ws.openws();
 		}
 		setTimeout(restart,10000);
 	},

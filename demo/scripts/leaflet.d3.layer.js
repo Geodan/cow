@@ -16,7 +16,7 @@ function d3layer(layername, config){
 		this.pointradius = config.pointradius || 5;
 		this.bounds = [[0,0],[1,1]];
 		var width, height,bottomLeft,topRight;
-		
+		//Getting the correct OpenLayers SVG. Probably not working with LeafLet this way.. 
 		var div = d3.selectAll("#" + config.divid);
 		div.selectAll("svg").remove();
 		var svg = div.append("svg");
@@ -42,31 +42,58 @@ function d3layer(layername, config){
 				.style("margin-top", topRight[1] + "px");
 		}
 		
-		
-		
 		this.set_svg();
-		
-		// Create a label for every marker
-		this.makelabels = function(x){
-			if (this.labels){
-				var txt = svg.append("text")
-					  .text(x.properties[ _this.labelconfig.field ])
-					  .attr("x",function(d) {return _this.project(x.geometry.coordinates)[0];})
-					  .attr("y",function(d) {return _this.project(x.geometry.coordinates)[1];})
-					  .attr("text-anchor", "middle")
-					  .classed("zoomable",true);
-				//Label style will be same as marker style
-				for (var key in _this.style) {
-					txt.style(key,_this.style[key]);
-				};
-			}
-		}
-		
+				
 		var path = d3.geo.path().projection(this.project);
-		this.force;
+		
+		this.styling = function(d){ //A per feature styling method
+			for (var key in _this.style) { //First check for generic layer style
+				d3.select(this).style(key,function(d){
+					if (d.style && d.style[key])
+						return d.style[key]; //Override with features style if present
+ 					else	
+						return _this.style[key]; //Apply generic style
+				});
+			};
+			//Now apply remaining styles of feature (possible doing a bit double work from previous loop)
+			if (d.style) { //If feature has style information
+				for (var key in d.style){ //run through the styles
+					d3.select(this).style(key,d.style[key]); //and apply them
+				}
+			}
+		};
 		
 		f.data = function(collection){
 			_this.set_svg();
+			
+			if (_this.labels){
+				// Append the place labels, setting their initial positions to
+				// the feature's centroid
+				var placeLabels = svg.selectAll('.place-label')
+					.data(collection.features, function(d){
+						return d.id;
+				});
+				//On new:	
+				placeLabels.enter()
+					.append('text')
+					.attr('class', 'place-label')
+					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0] ;})
+					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
+					.attr('text-anchor', 'middle')
+					.text(function(d) {
+							if (_this.labelconfig.field)
+								return d.properties[_this.labelconfig.field];
+							else
+								return d.id; 
+					});
+					//TODO: how about styling the labels?
+				//On update:
+				placeLabels.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
+					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
+					
+				//On Exit:	
+				placeLabels.exit().remove();
+			}
 			
 			if (_this.type == "path"){
 				loc = g.selectAll("path")
@@ -75,82 +102,54 @@ function d3layer(layername, config){
 					});
 				f.feature = loc.enter().append("path")
 					.attr("d", path)
-					.each(function(d,i){_this.makelabels(d);})
 					.classed("zoomable",true)
+					.each(_this.styling);
 
+				
 				locUpdate = loc.transition().duration(500)
 					.attr("d",path);
 				
-				//Apply styles
-				for (var key in _this.style) {
-						f.feature.style(key,_this.style[key]);
-				};
+				loc.exit().remove();
+			}
+			else if (_this.type == "circle"){
+				loc = g.selectAll("circle")
+				  .data(collection.features, function(d){return d.id;});
+				f.feature = loc.enter().append("circle")
+					.attr("cx",function(d) {return _this.project(d.geometry.coordinates)[0]})
+					.attr("cy",function(d) { return _this.project(d.geometry.coordinates)[1]})
+					.attr("r",10)
+					//.attr("class",layername)
+					.classed("zoomable",true)
+					.each(_this.styling)
 				
+				//Apply styles
+				//for (var key in _this.style) {
+				//		f.feature.style(key,_this.style[key]);
+				//};
+				
+				locUpdate = loc
+					.transition().duration(100).ease("linear")			
+					.attr("cx",function(d) {return _this.project(d.geometry.coordinates)[0]})
+					.attr("cy",function(d) { return _this.project(d.geometry.coordinates)[1]})
+					;
 				loc.exit().remove();
 			}
 			else if (_this.type == "marker"){
-				f.collection = this.collection;
-				
-				// Store the projected coordinates of the places for the foci and the labels
-				collection.features.forEach(function(d, i) {
-					var c = _this.project(d.geometry.coordinates);
-					d.dx = c[0];
-					d.dy = c[1];
-					d.x = c[0];
-					d.y = c[1];
-				});
-				// Create the force layout with a slightly weak charge
-				_this.force = d3.layout.force()
-					.nodes(collection.features)
-					.charge(-40)
-					.friction(0.5)
-					.gravity(0)
-					.size([width, height]);
-				// Append the place labels, setting their initial positions to
-				// the feature's centroid
-				var placeLabels = svg.selectAll('.place-label')
-					.data(collection.features)
-					.enter()
-					.append('text')
-					.attr('class', 'place-label')
-					.classed('zoomable',true)
-					.attr('x', function(d) { return d.x })
-					.attr('y', function(d) { return d.y; })
-					.attr('text-anchor', 'middle')
-					.text(function(d) { return d.properties.owner; });
-				_this.force.on("tick", function(e) {
-					var k = .1 * e.alpha;
-					collection.features.forEach(function(o, j) {
-						// The change in the position is proportional to the distance
-						// between the label and the corresponding place (foci)
-						o.y += (o.dy - o.y) * k;
-						o.x += (o.dx - o.x) * k;
-					});
-				
-					// Update the position of the text element
-					svg.selectAll("text.place-label")
-						.attr("x", function(d) { return d.x;})
-						.attr("y", function(d) { return d.y;});
-				});
-				//TT: force is not perfect yet, disabled for now..
-				//_this.force.start();
-				
+				//Obs? f.collection = this.collection;
 				loc = g.selectAll("image")
-				  .data(collection.features, function(d){return d.id;});
+					.data(collection.features, function(d){return d.id;});
 				 
-				 f.feature = loc.enter().append("image")
+				f.feature = loc.enter().append("image")
 				 	.attr("xlink:href", function(d){return d.properties.icon })
 				 	.attr("width", 30)
 				 	.attr("height", 30)
 					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0]})
 					.attr("y",function(d) { return _this.project(d.geometry.coordinates)[1]})
-					//.each(function(d,i){_this.makelabels(d);})
 					//.attr("class",layername)
 					.classed("zoomable",true)
-					//Apply styles
-					for (var key in _this.style) {
-							f.feature.style(key,_this.style[key]);
-					};
+					.each(_this.styling)
+				
+				
 					
 				locUpdate = loc
 					.transition().duration(100).ease("linear")			
@@ -162,34 +161,22 @@ function d3layer(layername, config){
 			return f;
         }
 		var reset = function() {
-		  _this.set_svg();
-			
-		  if (_this.type == "marker"){
-				svg.selectAll("text.place-label")
-					
-					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0]})
-					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1]})
-					
-					.each(function(d) {
-						var c = _this.project(d.geometry.coordinates);
-						d.dx = c[0];
-						d.dy = c[1];
-						d.x = c[0];
-						d.y = c[1];	
-					});
-			//if (_this.force) //Can be some delay..
-				//_this.force.start();
-				//_this.force.stop();
-			  g.selectAll(".zoomable")
+			_this.set_svg();
+		 
+		  	svg.selectAll("text.place-label")
 				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
-				.attr("y",function(d) { return _this.project(d.geometry.coordinates)[1];})
-		  }
-		  else{ //Not marker..
-			  g.attr("transform", "translate(" + -bottomLeft[0] + "," + -topRight[1] + ")");
-			  g.selectAll(".zoomable")
-			  	.attr("d", path)
+				.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
+
+			g.selectAll("image.zoomable")
+				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
+				.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1];})
+			g.selectAll("circle.zoomable")
+				.attr("cx",function(d) {return _this.project(d.geometry.coordinates)[0];})
+				.attr("cy",function(d) {return _this.project(d.geometry.coordinates)[1];})
+		  	//g.attr("transform", "translate(" + -bottomLeft[0] + "," + -topRight[1] + ")");
+			g.selectAll(".zoomable")
+				.attr("d", path)
 			  	
-		  }
 		}
 		
 		core.bind("moveend", reset); 

@@ -17,11 +17,13 @@ $.Cow.GeoLocator.prototype = {
 			position = self._parsePosition(position);
 			console.log('locationChange');
 			var peer = self.core.me();
-			var payload = {};
-			payload.uid = self.core.UID;
-			payload.position = position;
-			peer.events.trigger('locationChange', [payload]);
-			self.core.trigger('locationChange', [payload]);
+			if (peer) {
+				var payload = {};
+				payload.uid = self.core.UID;
+				payload.position = position;
+				peer.events.trigger('locationChange', [payload]);
+				self.core.trigger('locationChange', [payload]);
+			}
 	},
 	_showError: function(error){
 	  switch(error.code) 

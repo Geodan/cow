@@ -42,6 +42,9 @@ $.widget("cow.OlMapWidget", {
 		
 		core.bind("drawExtent", {widget: self},self._drawExtent);
 		core.bind("drawPositions", {widget: self},self._drawPositions);
+		core.bind("updateSize", {widget: self},function(){
+			self.map.updateSize();
+		});
 		
 		
 		element.delegate('.owner','click', function(){
@@ -72,7 +75,7 @@ $.widget("cow.OlMapWidget", {
 			// happened without any further processing
 			simple: function(data) {
 				var extent = data.object.getExtent();
-				self.core.me().extent(extent);
+				self.core.me() && self.core.me().extent(extent); //Set my own extent
 				core.trigger(data.type, extent);
 			}
         };
@@ -119,6 +122,15 @@ $.widget("cow.OlMapWidget", {
 	},
 	_drawPositions: function(evt, collection) {
 		var self = evt.data.widget;
+		//apply some styling to collection
+		$.each(collection.features, function(i,d){
+			var style = {}; //TODO: this goes right on Chrome desktop but wrong on chrome Beta mobile?!
+			if (d.id == self.core.me().uid)
+				style.fill = "red";
+			else style.fill = "steelBlue";
+			d.style = style;
+		});
+			
 		if (self.locationlyr)
 			self.locationlyr.data(collection);
 	},
@@ -145,6 +157,7 @@ $.widget("cow.OlMapWidget", {
 			});
 		};
 		map.addLayer(myd3layer);
+		self.core.viewlyr = self.viewlyr;//FOR DEBUG
 		
 		var myLocationLayer = new OpenLayers.Layer.Vector('d3layer');
 		myLocationLayer.afterAdd = function () {
@@ -152,7 +165,7 @@ $.widget("cow.OlMapWidget", {
 			self.locationlyr = new d3layer("locationlayer",{
 				divid:divid,
 				map: self.map,
-				type: "marker",
+				type: "circle",
 				labels: true,
 				labelconfig: {
 					field:"owner"
