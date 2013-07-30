@@ -57,11 +57,7 @@ $.widget("cow.OlMapWidget", {
 		
 		//Creating the leaflet map
 		this.map = L.map('map',{ zoomControl:false}).setView([52.083726,5.111282], 9);//Utrecht
-		//this.map = L.map('map',{
-		//	crs: L.CRS.EPSG900913
-		//});
-		tmp = this.map;
-		//this.map.setView([52.5, 5.5], 13);
+
 		// add an OpenStreetMap tile layer
 		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -163,12 +159,12 @@ $.widget("cow.OlMapWidget", {
 	
 	_createLayers: function(map) {
 		var self = this;
-/*
+
 		self.viewlyr = new d3layer("viewlayer",{
 			maptype: "Leaflet",
 			map: self,
 			type: "path",
-			labels: true,
+			labels: false,
 			labelconfig: {
 				field: "owner"
 			},
@@ -178,7 +174,7 @@ $.widget("cow.OlMapWidget", {
 				'stroke-width': 2
 			}
 		});
-*/
+
 		self.locationlyr = new d3layer("locationlayer",{
 			maptype: "Leaflet",
 			map: self,

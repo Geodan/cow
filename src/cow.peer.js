@@ -91,7 +91,7 @@ $.Cow.Peer.prototype = {
 	},
 	
 	_bbox2view: function(bbox) {
-		var b = [bbox.bottom,bbox.left,bbox.top,bbox.right];
+		var b = [bbox.left,bbox.bottom,bbox.right,bbox.top];
 		var feature = { "id": this.uid,
 						"type": "Feature",
 						"geometry": {

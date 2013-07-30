@@ -8,11 +8,10 @@ function d3layer(layername, config){
 		this.g = config.g;
 		this.map = config.map;
 		this.style = config.style;
-		this.chatboxes = config.chatboxes || "false";
-		this.coolcircles = config.coolcircles || "false";
-		this.labels = config.labels || "false";
+		this.coolcircles = config.coolcircles || false;
+		this.labels = config.labels || false;
 		this.labelconfig = config.labelconfig;
-		this.highlight = config.highlight || "false";
+		this.highlight = config.highlight || false;
 		this.scale = config.scale || 'px';
 		this.pointradius = config.pointradius || 5;
 		this.bounds = [[0,0],[1,1]];
@@ -43,7 +42,7 @@ function d3layer(layername, config){
 		  }
 		  return [point.x, point.y];
 		};
-		
+		tmp = g;
 		//Set the SVG to the correct dimensions
 		this.set_svg = function(){
 			var extent = _this.map.getExtent();
@@ -82,55 +81,7 @@ function d3layer(layername, config){
 			if (config.maptype == 'OpenLayers')
 				_this.set_svg();
 			
-			if (_this.labels){
-				// Append the place labels, setting their initial positions to
-				// the feature's centroid
-				var placeLabels = svg.selectAll('.place-label')
-					.data(collection.features, function(d){
-						return d.id;
-				});
-				
-					
-				var text = placeLabels.enter()
-					.append("svg:g")
-					.attr('class', 'place-label');
-					
-				//On new:	
-				text
-					.append('svg:text')
-					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0] ;})
-					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
-					.attr('text-anchor', 'middle')
-					.style('stroke','white')
-					.style('stroke-width','3px')
-					.style('stroke-opacity',.8)
-					.text(function(d) {
-							if (_this.labelconfig.field)
-								return d.properties[_this.labelconfig.field];
-							else
-								return d.id; 
-					});
-				text
-					.append('svg:text')
-					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0] ;})
-					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
-					.attr('text-anchor', 'middle')
-					.text(function(d) {
-							if (_this.labelconfig.field)
-								return d.properties[_this.labelconfig.field];
-							else
-								return d.id; 
-					})
-					
-					//TODO: how about styling the labels?
-				//On update:
-				placeLabels
-					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
-					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
-					
-				//On Exit:	
-				placeLabels.exit().remove();
-			}
+			
 			
 			if (_this.type == "path"){
 				loc = g.selectAll("path")
@@ -141,15 +92,6 @@ function d3layer(layername, config){
 					.attr("d", path)
 					.classed("zoomable",true)
 					.each(_this.styling)
-				
-				f.feature.append('foreignObject')
-				.attr("width", 480)
-				.attr("height", 500)
-					.append("xhtml:div")
-					.append('xhtml:p')
-					.style("font", "14px 'Helvetica Neue'")
-					.html('BPEPEPEPEPEPE!!!!');
-
 				
 				locUpdate = loc.transition().duration(500)
 					.attr("d",path);
@@ -203,20 +145,65 @@ function d3layer(layername, config){
 					;
 				loc.exit().remove();
 			}
+			
+			if (_this.labels){
+				// Append the place labels, setting their initial positions to
+				// the feature's centroid
+				var placeLabels = g.selectAll('.place-label')
+					.data(collection.features, function(d){
+						return d.id;
+				});
+				
+					
+				var label = placeLabels.enter()
+					.append("g")
+					.attr('class', 'place-label')
+					;
+					
+				//On new:	
+				label
+					.append('text')
+					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0] ;})
+					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
+					.attr('text-anchor', 'middle')
+					.classed('zoomable',true)
+					.style('stroke','white')
+					.style('stroke-width','3px')
+					.style('stroke-opacity',.8)
+					.text(function(d) {
+							if (_this.labelconfig.field)
+								return d.properties[_this.labelconfig.field];
+							else
+								return d.id; 
+					});
+				label
+					.append('text')
+					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0] ;})
+					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
+					.attr('text-anchor', 'middle')
+					.classed('zoomable',true)
+					.text(function(d) {
+							if (_this.labelconfig.field)
+								return d.properties[_this.labelconfig.field];
+							else
+								return d.id; 
+					})
+					
+					//TODO: how about styling the labels?
+				//On update:
+				placeLabels
+					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
+					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
+					
+				//On Exit:	
+				placeLabels.exit().remove();
+			}   
 			return f;
         }
 		var reset = function() {
 			if (config.maptype == 'OpenLayers')
 				_this.set_svg();
-		 
-		  	svg.selectAll(".place-label").selectAll("text")
-				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
-				.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
-
-			g.selectAll(".zoomable")
-				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
-				.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1];})
-				
+	
 			g.selectAll("image.zoomable")
 				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
 				.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1];})
@@ -225,11 +212,16 @@ function d3layer(layername, config){
 				.attr("cy",function(d) {return _this.project(d.geometry.coordinates)[1];})
 		  	//g.attr("transform", "translate(" + -bottomLeft[0] + "," + -topRight[1] + ")");
 			g.selectAll(".zoomable")
-				.attr("d", path)
+				.attr("d", path);
+			g.selectAll(".place-label")
+		  		.selectAll("text")
+				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
+				.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
 			  	
 		}
 		
-		core.bind("moveend", reset); 
+		core.bind("moveend", reset);
+		core.events.bind("locationChange", reset);
 		reset();
 		return f;
 	}
