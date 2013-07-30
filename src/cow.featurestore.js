@@ -111,14 +111,14 @@ When adding items, those are returned.
 			var item = {};
 			var d = new Date();
 			var timestamp = d.getTime();
-			feature.attributes.type = type;
-			//feature.attributes.icon = self.core.current_icon; //TODO TT: not nice
-			//feature.attributes.linecolor = self.core.current_linecolor;
-			//feature.attributes.fillcolor = self.core.current_fillcolor;
-			//feature.attributes.polycolor = self.core.current_polycolor;
+			feature.properties.type = type;
+			//feature.properties.icon = self.core.current_icon; //TODO TT: not nice
+			//feature.properties.linecolor = self.core.current_linecolor;
+			//feature.properties.fillcolor = self.core.current_fillcolor;
+			//feature.properties.polycolor = self.core.current_polycolor;
 			item.key = self.core.UID + "#" + timestamp;
-			feature.attributes.key = item.key;
-			feature.attributes.storename = self.name;
+			feature.properties.key = item.key;
+			feature.properties.storename = self.name;
 			item.uid = self.core.UID;
 			item.created = timestamp;
 			item.updated = timestamp;
@@ -139,18 +139,19 @@ When adding items, those are returned.
 		var item = {};
 		var d = new Date();
 		var timestamp = d.getTime();
-		feature.attributes.icon = self.core.current_icon; //TODO TT: not nice
-		feature.attributes.linecolor = self.core.current_linecolor;
-		feature.attributes.fillcolor = self.core.current_fillcolor;
-		feature.attributes.polycolor = self.core.current_polycolor;
+		feature.properties.icon = self.core.current_icon; //TODO TT: not nice
+		feature.properties.linecolor = self.core.current_linecolor;
+		feature.properties.fillcolor = self.core.current_fillcolor;
+		feature.properties.polycolor = self.core.current_polycolor;
 		item.key = self.core.UID + "#" + timestamp;
-		feature.attributes.key = item.key;
-		feature.attributes.store = self.name;
+		feature.properties.key = item.key;
+		feature.properties.store = self.name;
 		item.uid = self.core.UID;
 		item.created = timestamp;
 		item.updated = timestamp;
 		item.status = '';
-		item.feature = JSON.parse(geojson_format.write(feature));
+		//item.feature = JSON.parse(geojson_format.write(feature));
+		item.feature = feature;
 		//Add item to own stack
 		self.items(item);
 		core.trigger('storeChanged');
@@ -161,15 +162,16 @@ When adding items, those are returned.
 		//TODO TT: Open feature for editing
 		//controls.select.select(feature);
 	},
-	//feature attributes have been locally changed 
+	//feature properties have been locally changed 
 	updateLocalFeat: function(feature){
 		var self = this;
 		//var items = this.items();
 		var d = new Date();
 		var timestamp = d.getTime();
 		$.each(self.itemList, function(i, obj){
-				if (obj.options.key == feature.attributes.key){
-					obj.options.feature = JSON.parse(geojson_format.write(feature));
+				if (obj.options.key == feature.properties.key){
+					//obj.options.feature = JSON.parse(geojson_format.write(feature));
+					obj.options.feature = feature;
 					obj.options.updated = timestamp;
 					self.core.localdbase().update(obj.options);
 					var message = JSON.stringify(obj.options);
@@ -187,7 +189,7 @@ When adding items, those are returned.
 		var timestamp = d.getTime();
 		
 		$.each(self.itemList, function(i, obj){
-				if (obj.options.key == feature.attributes.key){
+				if (obj.options.key == feature.properties.key){
 					obj.options.feature = JSON.parse(geojson_format.write(feature));
 					obj.options.updated = timestamp;
 					self.core.localdbase().update(obj.options);

@@ -57,17 +57,29 @@ $.widget("cow.OlMapWidget", {
 		
 		//Creating the leaflet map
 		this.map = L.map('map',{ 
-			zoomControl:false,
-			drawControl: true
+			zoomControl:false
 		})
 		.setView([52.083726,5.111282], 9);//Utrecht
-
+		
 		// add an OpenStreetMap tile layer
 		var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 		}).addTo(this.map);
 		
 		var baseLayers = {"OSM": osmLayer};
+		
+		// Initialize the FeatureGroup to store editable layers
+		var drawnItems = new L.FeatureGroup();
+		this.map.addLayer(drawnItems);
+		// Initialize the draw control and pass it the FeatureGroup of editable layers
+		this.drawControl = new L.Control.Draw({
+			draw: false,
+			edit: {
+				featureGroup: drawnItems
+			}
+		});
+		
+		this.map.addControl(this.drawControl);
 		
 		L.control.layers(baseLayers).addTo(this.map);
 		
@@ -156,9 +168,22 @@ $.widget("cow.OlMapWidget", {
 		self.core.editLayer.clearLayers();
 		var items = self.core.getFeaturestoreByName('store1').getAllFeatures();
 		$.each(items, function(i, object){
+			var layerstyle  = function (feature) {
+				
+				var style = {
+					icon: L.icon({
+						iconUrl: feature.properties.icon,
+						iconSize: [40, 40]
+					}),
+					color: feature.properties.linecolor,
+					fillColor:  feature.properties.polycolor,
+				} 
+				return style;
+			};
+				
 			var feature = object.options.feature;
 			if (object.options.status != 'deleted')
-				self.core.editLayer.addData(feature);
+				self.core.editLayer.addData(feature).setStyle(layerstyle);
 		});
 	},
 	
@@ -197,39 +222,68 @@ $.widget("cow.OlMapWidget", {
 		var self = this;
 		
 	/** Here comes the big bad editlayer.. **/
-		var editlayer = L.geoJson().addTo(map);
-/*		
-		this.controls = {
-			modify: new OpenLayers.Control.ModifyFeature(editlayer),
-			//add: new OpenLayers.Control.EditingToolbar(editlayer),
-			select: new OpenLayers.Control.SelectFeature(editlayer),
-			pointcontrol: new OpenLayers.Control.DrawFeature(editlayer,OpenLayers.Handler.Point),
-			linecontrol:  new OpenLayers.Control.DrawFeature(editlayer, OpenLayers.Handler.Path),
-			polycontrol:  new OpenLayers.Control.DrawFeature(editlayer, OpenLayers.Handler.Polygon)
+		var layerstyle  = function (feature) {
+			var icon = L.icon({
+					iconUrl: feature.properties.icon,
+					iconSize: [40, 40]
+			});
+			var style = {
+				icon: icon,
+				//color: feature.properties.linecolor,
+				color: "red",
+				fillColor:  feature.properties.polycolor,
+			} 
+			return ;
+		};
+		var editlayer = L.geoJson(null,{
+				pointToLayer: function (feature, latlng) {
+					return L.marker(latlng, {
+							icon: L.icon({
+									iconUrl: feature.properties.icon,
+									iconSize: [40, 40]
+							})
+					});
+				}
 		}
+		).addTo(map);
 		
-		for(var key in this.controls) {
-                this.map.addControl(this.controls[key]);
-        }
-*/        
+		tmp=editlayer;
+		//See following URL for custom draw controls in leaflet
+		//http://stackoverflow.com/questions/15775103/leaflet-draw-mapping-how-to-initiate-the-draw-function-without-toolbar
+		
+		this.controls = {
+//			modify: new OpenLayers.Control.ModifyFeature(editlayer),
+			//add: new OpenLayers.Control.EditingToolbar(editlayer),
+//			select: new OpenLayers.Control.SelectFeature(editlayer),
+			pointcontrol: new L.Draw.Marker(this.map, this.drawControl.options.Marker),
+			linecontrol: new L.Draw.Polyline(this.map, this.drawControl.options.polyline),  
+			polycontrol:  new L.Draw.Polygon(this.map, this.drawControl.options.polygon)
+		}                 
+
+        
 		$('#newfeatpanel').bind("newpoint", function(evt, key){
-			self.controls.linecontrol.deactivate();
-			self.controls.polycontrol.deactivate();
-			self.controls.pointcontrol.activate();
+			self.controls.linecontrol.disable();
+			self.controls.polycontrol.disable();
+			self.controls.pointcontrol.enable();
+			var Licon = L.icon({
+					iconUrl: key,
+					iconSize: [40, 40]
+			});
+			self.controls.pointcontrol.setOptions({icon: Licon});
 			var layer = self.editLayer;
 			core.current_icon = key;
 		});
 		$('#newfeatpanel').bind("newline", function(evt, key){
-			self.controls.pointcontrol.deactivate();
-			self.controls.polycontrol.deactivate();
-			self.controls.linecontrol.activate();
+			self.controls.pointcontrol.disable();
+			self.controls.polycontrol.disable();
+			self.controls.linecontrol.enable();
 			var layer = self.editLayer;
 			core.current_linecolor = key;
 		});
 		$('#newfeatpanel').bind("newpoly", function(evt, key){
-			self.controls.linecontrol.deactivate();
-			self.controls.pointcontrol.deactivate();
-			self.controls.polycontrol.activate();
+			self.controls.linecontrol.disable();
+			self.controls.pointcontrol.disable();
+			self.controls.polycontrol.enable();
 			var layer = self.editLayer;
 			core.current_linecolor = key;
         	core.current_polycolor = key;
@@ -242,7 +296,13 @@ $.widget("cow.OlMapWidget", {
 			scope: this,
 			sketchcomplete: this.handlers.includeFeature//this.handlers.simple		
 		})*/;		
-//		this.editLayer.events.register('sketchcomplete',{'self':this,layer:editlayer},function(evt){core.trigger('sketchcomplete',evt.feature)});
+
+		this.map.on('draw:created', function (e) {
+			var type = e.layerType,
+				layer = e.layer;
+			self.core.trigger('sketchcomplete',layer.toGeoJSON());
+		});
+
 //		this.editLayer.events.register('afterfeaturemodified',{'self':this,layer:editlayer},function(evt){core.trigger('afterfeaturemodified',evt.feature)});
 		//this.editLayer.events.on({'featureselected': function(){
 		//		alert('Feat selected');

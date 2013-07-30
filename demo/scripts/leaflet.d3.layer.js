@@ -42,7 +42,7 @@ function d3layer(layername, config){
 		  }
 		  return [point.x, point.y];
 		};
-		tmp = g;
+		
 		//Set the SVG to the correct dimensions
 		this.set_svg = function(){
 			var extent = _this.map.getExtent();
