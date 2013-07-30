@@ -319,14 +319,9 @@ When adding items, those are returned.
 		});
 		return syncMessage;
 	},
-	//Simply repopulate the openlayers layer with items from the featurestore
+	//Simply repopulate the editlayer with items from the featurestore
 	reloadLayer: function(evt){
 		var self = evt.data.widget;
-		self.core.editLayer.removeAllFeatures();
-		$.each(self.itemList, function(i, object){
-			var feature = geojson_format.read(object.options.feature);
-			if (object.options.status != 'deleted')
-				self.core.editLayer.addFeatures(feature);
-		});
+		self.core.trigger('reloadFeatures');
 	}
 };

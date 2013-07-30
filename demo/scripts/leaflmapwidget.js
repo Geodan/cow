@@ -43,8 +43,9 @@ $.widget("cow.OlMapWidget", {
 		core.bind("drawExtent", {widget: self},self._drawExtent);
 		core.bind("drawPositions", {widget: self},self._drawPositions);
 		core.bind("updateSize", {widget: self},function(){
-			self.map.updateSize();
+//			self.map.updateSize();
 		});
+		core.bind("reloadFeatures",{widget: self},self._reloadLayer);
 		
 		
 		element.delegate('.owner','click', function(){
@@ -53,28 +54,37 @@ $.widget("cow.OlMapWidget", {
 			self.core.trigger('storeChanged');
 		});
 		
-		//openlayers stuff
-		this.map = new OpenLayers.Map("map");
-		var osmlayer = new OpenLayers.Layer.OSM("OpenStreetMap", null, {
-		   transitionEffect: 'resize'
-		});
 		
-		//this.map.addLayer(layer = new OpenLayers.Layer.Stamen("toner-lite", {opacity:0.5}));
-		this.map.addLayer(osmlayer);
-		//this.map.setCenter(new OpenLayers.LonLat(768708,6849389), 10);//Enschede
-		this.map.setCenter(new OpenLayers.LonLat(546467,6862526),10);//Amsterdam
-		this.map.addControl(new OpenLayers.Control.LayerSwitcher());
+		//Creating the leaflet map
+		this.map = L.map('map',{ zoomControl:false}).setView([52.083726,5.111282], 9);//Utrecht
+		//this.map = L.map('map',{
+		//	crs: L.CRS.EPSG900913
+		//});
+		tmp = this.map;
+		//this.map.setView([52.5, 5.5], 13);
+		// add an OpenStreetMap tile layer
+		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+		}).addTo(this.map);
+
+//		this.map.addControl(new OpenLayers.Control.LayerSwitcher());
 		
 		$('#peers').bind("zoomToPeersview", function(evt, bbox){
-				self.map.zoomToExtent([bbox.left,bbox.bottom,bbox.right,bbox.top]);
+			self.map.fitBounds([[bbox.bottom,bbox.left],[bbox.top,bbox.right]]);
 		});
 		
 		
 		this.handlers = {
-			// Triggers the jQuery events, after the OpenLayers events
+			// Triggers the jQuery events, after the map events
 			// happened without any further processing
 			simple: function(data) {
-				var extent = data.object.getExtent();
+				var bounds = data.target.getBounds();
+				var extent = {
+					left: bounds.getWest(),
+					bottom: bounds.getSouth(),
+					right: bounds.getEast(),
+					top: bounds.getNorth()
+				};
 				self.core.me() && self.core.me().extent(extent); //Set my own extent
 				core.trigger(data.type, extent);
 			}
@@ -82,11 +92,10 @@ $.widget("cow.OlMapWidget", {
 		this._createLayers(this.map);
 		
 				
-		this.map.events.on({
-			scope: this,
-			moveend: this.handlers.simple		
+		this.map.on('moveend',function(e){
+				self.handlers.simple(e);
 		});
-		this.controls.select.activate();
+//		this.controls.select.activate();
     },
     _destroy: function() {
         this.element.removeClass('ui-dialog ui-widget ui-widget-content ' +
@@ -109,7 +118,14 @@ $.widget("cow.OlMapWidget", {
         var element = self.element;
 	},
 	getExtent: function(){
-		return this.map.getExtent().toBBOX();
+		var bounds = this.map.getBounds();
+		var extent = {
+			left: bounds.getWest(),
+			bottom: bounds.getSouth(), 
+			right: bounds.getEast(),
+			top: bounds.getNorth()
+		}
+		return extent;
 	},
 	getControls: function(){
 		return this.controls;
@@ -134,208 +150,53 @@ $.widget("cow.OlMapWidget", {
 		if (self.locationlyr)
 			self.locationlyr.data(collection);
 	},
+	_reloadLayer: function(e){
+		self.core.editLayer.clearLayers();
+		var items = self.core.getFeaturestoreByName('store1').getAllFeatures();
+		$.each(items, function(i, object){
+			var feature = object.options.feature;
+			if (object.options.status != 'deleted')
+				self.core.editLayer.addData(feature);
+		});
+	},
+	
 	
 	_createLayers: function(map) {
 		var self = this;
-		var myd3layer = new OpenLayers.Layer.Vector('Extents layer');
-		// Add the container when the overlay is added to the map.
-		myd3layer.afterAdd = function () {
-			var divid = myd3layer.div.id;
-			self.viewlyr = new d3layer("viewlayer",{
-				divid:divid,
-				map: self.map,
-				type: "path",
-				labels: true,
-				labelconfig: {
-					field: "owner"
-				},
-				style: {
-					fill: "none",
-					stroke: "steelBlue",
-					'stroke-width': 2
-				}
-			});
-		};
-		map.addLayer(myd3layer);
-		self.core.viewlyr = self.viewlyr;//FOR DEBUG
-		
-		var myLocationLayer = new OpenLayers.Layer.Vector('d3layer');
-		myLocationLayer.afterAdd = function () {
-			var divid = myLocationLayer.div.id;
-			self.locationlyr = new d3layer("locationlayer",{
-				divid:divid,
-				map: self.map,
-				type: "circle",
-				labels: true,
-				labelconfig: {
-					field:"owner"
-				},
-				style: {
-					fill: "steelBlue"
-				}
-			});
-		};
-		map.addLayer(myLocationLayer);
-		
+/*
+		self.viewlyr = new d3layer("viewlayer",{
+			maptype: "Leaflet",
+			map: self,
+			type: "path",
+			labels: true,
+			labelconfig: {
+				field: "owner"
+			},
+			style: {
+				fill: "none",
+				stroke: "steelBlue",
+				'stroke-width': 2
+			}
+		});
+*/
+		self.locationlyr = new d3layer("locationlayer",{
+			maptype: "Leaflet",
+			map: self,
+			type: "circle",
+			labels: true,
+			labelconfig: {
+				field:"owner"
+			},
+			style: {
+				fill: "steelBlue"
+			}
+		});		
 
 		var self = this;
 		
 	/** Here comes the big bad editlayer.. **/
-		var context = {
-			getStrokeWidth: function(feature) {
-				if (feature.layer && feature.layer.map.getZoom() > 15)
-					return 3;
-				return 1;
-			},
-			getLabel: function(feature) {
-				if (feature.attributes.name && feature.layer.map.getZoom() > 13)
-                    return feature.attributes.name;
-                return "";
-			},
-            getIcon: function(feature) {
-            	if (feature.attributes.icon && feature.attributes.icon != null){
-            		//addition for larger scale icons IMOOV
-            		str = feature.attributes.icon;
-            		var patt=new RegExp("imoov");
-            		if (str && feature.layer && feature.layer.map.zoom < 15 && patt.test(str))
-            		{
-            			return str.replace(/-g.png/g,'k.png');
-            		}
-                    return feature.attributes.icon;
-                }
-                return "./mapicons/notvisited.png";
-            },
-            getLineColor: function(feature){
-            	if (feature.attributes.linecolor)
-            		return feature.attributes.linecolor;
-            	return "black";
-            },
-            getPolyColor: function(feature){
-            	if (feature.attributes.polycolor)
-            		return feature.attributes.polycolor;
-            	return null;
-            },
-            getFillOpacity: function(feature){
-            	if (feature.geometry && feature.geometry.CLASS_NAME == 'OpenLayers.Geometry.Polygon')
-            		return 0.5;
-            	return 1;
-            },
-            getZindex: function(feature){
-            	if (feature.geometry && feature.geometry.CLASS_NAME == 'OpenLayers.Geometry.Polygon')
-            		return 0;
-            	if (feature.geometry && feature.geometry.CLASS_NAME == 'OpenLayers.Geometry.LineString')
-            		return 10;
-            	return 20;
-            }
-        };
-        
-		var template = {
-		  pointRadius: 20,
-		  strokeWidth: "${getStrokeWidth}",
-		  label: "${getLabel}",
-		  title: "${getLabel}",
-		  labelAlign: "tl",
-		  labelXOffset: "15",
-          labelYOffset: "0",
-		  fontColor: '#00397C',
-		  fontSize: '12pt',
-		  labelOutlineColor: "white", 
-          labelOutlineWidth: 1,
-		  graphicZIndex: "${getZindex}",
-		  fillOpacity: "${getFillOpacity}",
-		  externalGraphic: "${getIcon}",
-		  fillColor: "${getPolyColor}",
-		  strokeColor: "${getLineColor}"
-        };
-        var selecttemplate = {
-          pointRadius: 40,
-		  strokeWidth:6,
-		  graphicZIndex: "${getZindex}",
-		  fillOpacity: "${getFillOpacity}",
-		  externalGraphic: "${getIcon}",
-		  fillColor: "${getPolyColor}",
-		  strokeColor: "${getLineColor}"
-        };
-		var style = new OpenLayers.Style(template,{
-        		context: context
-        });
-        var selectstyle = new OpenLayers.Style(selecttemplate,{
-        		context: context
-        }); 
-
-		
-		var editLayerStylemap = new OpenLayers.StyleMap({
-			default:style,
-			select: selectstyle 
-		});
-		var editlayer = new OpenLayers.Layer.Vector('Features layer',{
-			
-			styleMap:editLayerStylemap,
-			// add a special openlayers renderer extension that deals better with markers on touch devices
-			renderers: ["SVG"],
-			// enable the indexer by setting zIndexing to true
-			rendererOptions: {zIndexing: true},
-			eventListeners:{
-				featureselected:function(evt){
-					//TODO TT: This whole system of creating a popup is ugly!
-					//create something nicer...
-					var feature = evt.feature;
-					var name = feature.attributes.name || "";
-					var desc = feature.attributes.desc || "";
-					var innerHtml = ''
-						//+'<input onBlur="">Title<br>'
-						//+'<textarea></textarea><br>'
-						+ 'You can remove or change this feature using the buttons below<br/>'
-						+ 'Label: <input id="titlefld" name="name" value ="'+name+'""><br/>'
-						+ 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
-						+ '<button class="popupbutton" id="editButton">edit</button><br>'
-						+ '<button class="popupbutton" id="deleteButton"">delete</button>'
-						+ '<button class="popupbutton" id="closeButton"">Done</button>';
-					var anchor = {'size': new OpenLayers.Size(0,0), 'offset': new OpenLayers.Pixel(100, -100)};
-					var popup = new OpenLayers.Popup.Anchored("popup",
-						OpenLayers.LonLat.fromString(feature.geometry.getCentroid().toShortString()),
-						null,
-						innerHtml,
-						anchor,
-						true,
-						null
-					);
-					popup.autoSize = true;
-					popup.maxSize = new OpenLayers.Size(800,1000);
-					popup.relativePosition = "br";
-					popup.fixedRelativePosition = true;
-					feature.popup = popup;
-					map.addPopup(popup);
-					var titlefld = document.getElementById('titlefld');
-					titlefld.addEventListener("blur", self.changeFeature, false);
-					var descfld = document.getElementById('descfld');
-					descfld.addEventListener("blur", self.changeFeature, false);
-					var editbtn = document.getElementById('editButton');
-					editbtn.addEventListener("touchstart", self.editfeature, false);
-					editbtn.addEventListener("click", self.editfeature, false);
-					var deletebtn = document.getElementById('deleteButton');
-					deletebtn.addEventListener("touchstart", self.deletefeature, false);
-					deletebtn.addEventListener("click", self.deletefeature, false);
-					var closebtn = document.getElementById('closeButton');
-					closebtn.addEventListener("touchstart", self.closepopup, false);
-					closebtn.addEventListener("click", self.closepopup, false);
-				},
-				featureunselected:function(evt){
-					var feature = evt.feature;
-					//TODO TT: check first if feature attributes have been changed
-					var store = feature.attributes.store || "store1";
-					core.getFeaturestoreByName(store).updateLocalFeat(feature);
-					map.removePopup(feature.popup);
-					//TODO TT: this goes wrong first time... 
-					//Uncaught TypeError: Cannot call method 'destroy' of null 
-					feature.popup.destroy();
-					feature.popup = null;
-					self.controls.modify.deactivate();
-					self.controls.select.activate();
-				}
-		}});
-		
-		
+		var editlayer = L.geoJson().addTo(map);
+/*		
 		this.controls = {
 			modify: new OpenLayers.Control.ModifyFeature(editlayer),
 			//add: new OpenLayers.Control.EditingToolbar(editlayer),
@@ -348,7 +209,7 @@ $.widget("cow.OlMapWidget", {
 		for(var key in this.controls) {
                 this.map.addControl(this.controls[key]);
         }
-        
+*/        
 		$('#newfeatpanel').bind("newpoint", function(evt, key){
 			self.controls.linecontrol.deactivate();
 			self.controls.polycontrol.deactivate();
@@ -372,32 +233,32 @@ $.widget("cow.OlMapWidget", {
         	core.current_polycolor = key;
 		});
 		
-		this.map.addLayer(editlayer);
+		
 		this.editLayer = editlayer;
 		core.editLayer = editlayer;
 		/*this.editLayer.events.on({
 			scope: this,
 			sketchcomplete: this.handlers.includeFeature//this.handlers.simple		
 		})*/;		
-		this.editLayer.events.register('sketchcomplete',{'self':this,layer:editlayer},function(evt){core.trigger('sketchcomplete',evt.feature)});
-		this.editLayer.events.register('afterfeaturemodified',{'self':this,layer:editlayer},function(evt){core.trigger('afterfeaturemodified',evt.feature)});
+//		this.editLayer.events.register('sketchcomplete',{'self':this,layer:editlayer},function(evt){core.trigger('sketchcomplete',evt.feature)});
+//		this.editLayer.events.register('afterfeaturemodified',{'self':this,layer:editlayer},function(evt){core.trigger('afterfeaturemodified',evt.feature)});
 		//this.editLayer.events.on({'featureselected': function(){
 		//		alert('Feat selected');
 		//}});
-		this.controls.select.activate();
+//		this.controls.select.activate();
 		/** End of the big bad editlayer **/
 	},
 	_onSketchComplete: function(evt, feature){
 		var core = evt.data.widget.core;
 		//Disable the draw control(s) after drawing a feature
-		var controls = evt.data.widget.map.getControlsByClass('OpenLayers.Control.DrawFeature');
+/*		var controls = evt.data.widget.map.getControlsByClass('OpenLayers.Control.DrawFeature');
 		$.each(controls,function(id,control){
 				control.deactivate();
 		});
-	},
+*/	},
 	
 	editfeature: function(evt,x){
-		var feature = core.editLayer.selectedFeatures[0];
+/*		var feature = core.editLayer.selectedFeatures[0];
 		feature.popup.hide();
 		//TODO: WHY can't I reach the controls of my own class?!
 		var controls = $('#map').OlMapWidget('getControls')
@@ -405,18 +266,18 @@ $.widget("cow.OlMapWidget", {
 		controls.modify.standalone = true;
 		controls.modify.activate();
 		controls.modify.selectFeature(feature);
-	},
+*/	},
 	deletefeature: function(){
-		var feature = core.editLayer.selectedFeatures[0];
+/*		var feature = core.editLayer.selectedFeatures[0];
 		feature.popup.destroy();
 		var key = feature.attributes.key;
 		var store = feature.attributes.store || "store1";
 		core.getFeaturestoreByName(store).removeItem(key);
 		console.log('storeChanged');
 		core.trigger('storeChanged');
-	},
+*/	},
 	changeFeature: function(evt){
-		var key = evt.currentTarget.name;
+/*		var key = evt.currentTarget.name;
 		var value = evt.currentTarget.value;
 		var feature = core.editLayer.selectedFeatures[0];
 		if (feature){
@@ -429,12 +290,12 @@ $.widget("cow.OlMapWidget", {
 			feature.popup.destroy(); //we have to destroy since the next line triggers a reload of all features
 			core.getFeaturestoreByName(store).updateLocalFeat(feature);
 		}
-	},
+*/	},
 	closepopup: function(){
-		var feature = core.editLayer.selectedFeatures[0];
+/*		var feature = core.editLayer.selectedFeatures[0];
 		if (feature && feature.popup)
 			feature.popup.destroy();
-	}
+*/	}
 	
 	
 	});

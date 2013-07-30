@@ -17,16 +17,30 @@ function d3layer(layername, config){
 		this.pointradius = config.pointradius || 5;
 		this.bounds = [[0,0],[1,1]];
 		var width, height,bottomLeft,topRight;
-		//Getting the correct OpenLayers SVG. Probably not working with LeafLet this way.. 
-		var div = d3.selectAll("#" + config.divid);
-		div.selectAll("svg").remove();
-		var svg = div.append("svg");
+		
+		if (config.maptype == 'OpenLayers'){//Getting the correct OpenLayers SVG. 
+			var div = d3.selectAll("#" + config.divid);
+			div.selectAll("svg").remove();
+			var svg = div.append("svg");
+		}
+		else { //Leaflet does it easier
+			/* Initialize the SVG layer */
+			this.map.map._initPathRoot()    
+			var svg = d3.select("#map").select("svg");
+		}
+		
 		var g = svg.append("g");
 		
 		// Projecting latlon to screen coordinates
 		this.project = function(x) {
-		  //var point = this.map.latLngToLayerPoint(new L.LatLng(x[1], x[0])); //Leaflet version
-		  var point = _this.map.getViewPortPxFromLonLat(new OpenLayers.LonLat(x[0],x[1])); //OpenLayers version
+		  if (config.maptype == 'Leaflet')
+		  	  var point = _this.map.map.latLngToLayerPoint(new L.LatLng(x[1], x[0])); //Leaflet version
+		  else if (config.maptype == 'OpenLayers')
+		  	  var point = _this.map.getViewPortPxFromLonLat(new OpenLayers.LonLat(x[0],x[1])); //OpenLayers version
+		  else {
+		  	  console.warn("Error, no correct maptype specified for d3 layer " + layername);
+		  	  return;
+		  }
 		  return [point.x, point.y];
 		};
 		
@@ -42,8 +56,8 @@ function d3layer(layername, config){
 				.style("margin-left", bottomLeft[0] + "px")
 				.style("margin-top", topRight[1] + "px");
 		}
-		
-		this.set_svg();
+		if (config.maptype == 'OpenLayers')
+			this.set_svg();
 				
 		var path = d3.geo.path().projection(this.project);
 		
@@ -65,7 +79,8 @@ function d3layer(layername, config){
 		};
 		
 		f.data = function(collection){
-			_this.set_svg();
+			if (config.maptype == 'OpenLayers')
+				_this.set_svg();
 			
 			if (_this.labels){
 				// Append the place labels, setting their initial positions to
@@ -191,7 +206,8 @@ function d3layer(layername, config){
 			return f;
         }
 		var reset = function() {
-			_this.set_svg();
+			if (config.maptype == 'OpenLayers')
+				_this.set_svg();
 		 
 		  	svg.selectAll(".place-label").selectAll("text")
 				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})

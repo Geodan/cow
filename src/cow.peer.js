@@ -91,7 +91,7 @@ $.Cow.Peer.prototype = {
 	},
 	
 	_bbox2view: function(bbox) {
-		var b = [bbox.left,bbox.bottom,bbox.right,bbox.top];
+		var b = [bbox.bottom,bbox.left,bbox.top,bbox.right];
 		var feature = { "id": this.uid,
 						"type": "Feature",
 						"geometry": {
@@ -138,7 +138,7 @@ $.Cow.Peer.prototype = {
 		var point = new OpenLayers.Geometry.Point(position.coords.longitude,position.coords.latitude);
 		var attributes = {uid: uid, owner: name, time: position.timestamp, icon: icon};
 		//point.transform(proj, self.core.map.getProjectionObject()); //Getting rid of references to map
-		point.transform(proj, toproj);
+		//point.transform(proj, toproj); //TT: removed transformation for leaflet
 		/*Obs by d3 layer
 		var pointfeature = new OpenLayers.Feature.Vector(point, attributes);
 		this.core.mylocationLayer.addFeatures([pointfeature]);

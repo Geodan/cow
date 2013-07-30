@@ -142,6 +142,7 @@ $.widget("cow.OlMapWidget", {
 		myd3layer.afterAdd = function () {
 			var divid = myd3layer.div.id;
 			self.viewlyr = new d3layer("viewlayer",{
+				maptype: "OpenLayers",
 				divid:divid,
 				map: self.map,
 				type: "path",
@@ -163,6 +164,7 @@ $.widget("cow.OlMapWidget", {
 		myLocationLayer.afterAdd = function () {
 			var divid = myLocationLayer.div.id;
 			self.locationlyr = new d3layer("locationlayer",{
+				maptype: "OpenLayers",
 				divid:divid,
 				map: self.map,
 				type: "circle",
