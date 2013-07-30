@@ -56,14 +56,20 @@ $.widget("cow.OlMapWidget", {
 		
 		
 		//Creating the leaflet map
-		this.map = L.map('map',{ zoomControl:false}).setView([52.083726,5.111282], 9);//Utrecht
+		this.map = L.map('map',{ 
+			zoomControl:false,
+			drawControl: true
+		})
+		.setView([52.083726,5.111282], 9);//Utrecht
 
 		// add an OpenStreetMap tile layer
-		L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+		var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 		}).addTo(this.map);
-
-//		this.map.addControl(new OpenLayers.Control.LayerSwitcher());
+		
+		var baseLayers = {"OSM": osmLayer};
+		
+		L.control.layers(baseLayers).addTo(this.map);
 		
 		$('#peers').bind("zoomToPeersview", function(evt, bbox){
 			self.map.fitBounds([[bbox.bottom,bbox.left],[bbox.top,bbox.right]]);

@@ -191,9 +191,11 @@ function d3layer(layername, config){
 					
 					//TODO: how about styling the labels?
 				//On update:
-				placeLabels
+				//TODO: WHY THIS DOESN"T WORK!??!?
+				placeLabels.selectAll('text')
 					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
 					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
+					
 					
 				//On Exit:	
 				placeLabels.exit().remove();
@@ -213,8 +215,7 @@ function d3layer(layername, config){
 		  	//g.attr("transform", "translate(" + -bottomLeft[0] + "," + -topRight[1] + ")");
 			g.selectAll(".zoomable")
 				.attr("d", path);
-			g.selectAll(".place-label")
-		  		.selectAll("text")
+			g.selectAll("text.zoomable")
 				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
 				.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
 			  	
