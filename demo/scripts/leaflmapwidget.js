@@ -168,22 +168,11 @@ $.widget("cow.OlMapWidget", {
 		self.core.editLayer.clearLayers();
 		var items = self.core.getFeaturestoreByName('store1').getAllFeatures();
 		$.each(items, function(i, object){
-			var layerstyle  = function (feature) {
-				
-				var style = {
-					icon: L.icon({
-						iconUrl: feature.properties.icon,
-						iconSize: [40, 40]
-					}),
-					color: feature.properties.linecolor,
-					fillColor:  feature.properties.polycolor,
-				} 
-				return style;
-			};
-				
 			var feature = object.options.feature;
 			if (object.options.status != 'deleted')
-				self.core.editLayer.addData(feature).setStyle(layerstyle);
+				self.core.editLayer.addData(feature)
+					.bindLabel(feature.properties.name)
+					.setStyle(self.layerstyle);
 		});
 	},
 	
@@ -222,32 +211,97 @@ $.widget("cow.OlMapWidget", {
 		var self = this;
 		
 	/** Here comes the big bad editlayer.. **/
-		var layerstyle  = function (feature) {
+		this.layerstyle  = function (feature) {
 			var icon = L.icon({
 					iconUrl: feature.properties.icon,
 					iconSize: [40, 40]
 			});
 			var style = {
 				icon: icon,
-				//color: feature.properties.linecolor,
-				color: "red",
-				fillColor:  feature.properties.polycolor,
+				color: feature.properties.linecolor,
+				fillColor:  feature.properties.polycolor
 			} 
-			return ;
+			return style;
 		};
+		function highlightFeature(e) {
+			var layer = e.target;
+			
+			layer.setStyle({
+				weight: 5,
+				color: '#666',
+				dashArray: '',
+				fillOpacity: 0.7
+			});
+		
+			if (!L.Browser.ie && !L.Browser.opera) {
+				layer.bringToFront();
+			}
+		}
+		function resetHighlight(e) {
+			self.editLayer.resetStyle(e.target);
+		}
+		function zoomToFeature(e) {
+			self.map.fitBounds(e.target.getBounds());
+		}
+		function openPopup(e) {
+			var feature = e.target.feature;
+			var layer = e.layer;
+			var name = feature.properties.name || "";
+			var desc = feature.properties.desc || "";
+			var innerHtml = ''
+					+ 'Label: <input id="titlefld" name="name" value ="'+name+'""><br/>'
+					+ 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+					+ '<button class="popupbutton" id="editButton">edit</button><br />'
+					+ '<button class="popupbutton" id="deleteButton"">delete</button><br />'
+					+ '<button class="popupbutton" id="closeButton"">Done</button>';
+			var popup = L.popup()
+				.setLatLng(e.latlng)
+				.setContent(innerHtml)
+				.openOn(self.map);
+			tmp = e;
+			var titlefld = document.getElementById('titlefld');
+			titlefld.addEventListener("blur", self.changeFeature, false);
+			var descfld = document.getElementById('descfld');
+			descfld.addEventListener("blur", self.changeFeature, false);
+			var editbtn = document.getElementById('editButton');
+			editbtn.addEventListener("touchstart", self.editfeature, false);
+			editbtn.addEventListener("click", self.editfeature, false);
+			var deletebtn = document.getElementById('deleteButton');
+			deletebtn.addEventListener("touchstart", function() {
+				self.deletefeature(self,feature, layer);
+			}, false);
+			deletebtn.addEventListener("click", function() {
+				console.log(feature);
+				self.deletefeature(self,feature,layer);
+			}, false);
+			var closebtn = document.getElementById('closeButton');
+			closebtn.addEventListener("touchstart", function(){self.closepopup(self);}, false);
+			closebtn.addEventListener("click", function(){self.closepopup(self);}, false);
+		}
+		function onEachFeature(feature, layer) {
+			layer.on({
+				mouseover: highlightFeature,
+				mouseout: resetHighlight,
+				click: openPopup
+			});
+		}
+		
 		var editlayer = L.geoJson(null,{
+				style: this.layerstyle,
+				onEachFeature: onEachFeature,
 				pointToLayer: function (feature, latlng) {
 					return L.marker(latlng, {
 							icon: L.icon({
 									iconUrl: feature.properties.icon,
 									iconSize: [40, 40]
 							})
-					});
+					})
+					.bindLabel(feature.properties.name);
 				}
 		}
 		).addTo(map);
 		
-		tmp=editlayer;
+		
 		//See following URL for custom draw controls in leaflet
 		//http://stackoverflow.com/questions/15775103/leaflet-draw-mapping-how-to-initiate-the-draw-function-without-toolbar
 		
@@ -257,7 +311,10 @@ $.widget("cow.OlMapWidget", {
 //			select: new OpenLayers.Control.SelectFeature(editlayer),
 			pointcontrol: new L.Draw.Marker(this.map, this.drawControl.options.Marker),
 			linecontrol: new L.Draw.Polyline(this.map, this.drawControl.options.polyline),  
-			polycontrol:  new L.Draw.Polygon(this.map, this.drawControl.options.polygon)
+			polycontrol:  new L.Draw.Polygon(this.map, this.drawControl.options.polygon),
+			//deletecontrol: new L.EditToolbar.Delete(this.map, {
+            //    featureGroup: drawControl.options.featureGroup
+            //})
 		}                 
 
         
@@ -302,6 +359,8 @@ $.widget("cow.OlMapWidget", {
 				layer = e.layer;
 			self.core.trigger('sketchcomplete',layer.toGeoJSON());
 		});
+		
+		
 
 //		this.editLayer.events.register('afterfeaturemodified',{'self':this,layer:editlayer},function(evt){core.trigger('afterfeaturemodified',evt.feature)});
 		//this.editLayer.events.on({'featureselected': function(){
@@ -329,15 +388,15 @@ $.widget("cow.OlMapWidget", {
 		controls.modify.activate();
 		controls.modify.selectFeature(feature);
 */	},
-	deletefeature: function(){
-/*		var feature = core.editLayer.selectedFeatures[0];
-		feature.popup.destroy();
-		var key = feature.attributes.key;
-		var store = feature.attributes.store || "store1";
+	deletefeature: function(self,feature, layer){
+		//var feature = item.target.feature; 
+		var key = feature.properties.key;
+		var store = feature.properties.store || "store1";
 		core.getFeaturestoreByName(store).removeItem(key);
+		self.map.closePopup();
 		console.log('storeChanged');
 		core.trigger('storeChanged');
-*/	},
+	},
 	changeFeature: function(evt){
 /*		var key = evt.currentTarget.name;
 		var value = evt.currentTarget.value;
@@ -353,11 +412,9 @@ $.widget("cow.OlMapWidget", {
 			core.getFeaturestoreByName(store).updateLocalFeat(feature);
 		}
 */	},
-	closepopup: function(){
-/*		var feature = core.editLayer.selectedFeatures[0];
-		if (feature && feature.popup)
-			feature.popup.destroy();
-*/	}
+	closepopup: function(self){
+		self.map.closePopup();
+	}
 	
 	
 	});
