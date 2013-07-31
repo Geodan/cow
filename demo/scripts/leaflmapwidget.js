@@ -171,7 +171,6 @@ $.widget("cow.OlMapWidget", {
 			var feature = object.options.feature;
 			if (object.options.status != 'deleted')
 				self.core.editLayer.addData(feature)
-					.bindLabel(feature.properties.name)
 					.setStyle(self.layerstyle);
 		});
 	},
@@ -225,16 +224,17 @@ $.widget("cow.OlMapWidget", {
 		};
 		function highlightFeature(e) {
 			var layer = e.target;
+			if (layer.feature.geometry.type != "Point"){ //TODO: this is a workaround. In fact, we want to know whether it is a Marker layer or not 
+				layer.setStyle({
+					weight: 5,
+					color: '#666',
+					dashArray: '',
+					fillOpacity: 0.7
+				});
 			
-			layer.setStyle({
-				weight: 5,
-				color: '#666',
-				dashArray: '',
-				fillOpacity: 0.7
-			});
-		
-			if (!L.Browser.ie && !L.Browser.opera) {
-				layer.bringToFront();
+				if (!L.Browser.ie && !L.Browser.opera) {
+					layer.bringToFront();
+				}
 			}
 		}
 		function resetHighlight(e) {
@@ -260,7 +260,9 @@ $.widget("cow.OlMapWidget", {
 				.openOn(self.map);
 			tmp = e;
 			var titlefld = document.getElementById('titlefld');
-			titlefld.addEventListener("blur", self.changeFeature, false);
+			titlefld.addEventListener("blur", function(){
+					self.changeFeature(this, self, feature);
+			}, false);
 			var descfld = document.getElementById('descfld');
 			descfld.addEventListener("blur", self.changeFeature, false);
 			var editbtn = document.getElementById('editButton');
@@ -268,17 +270,17 @@ $.widget("cow.OlMapWidget", {
 			editbtn.addEventListener("click", self.editfeature, false);
 			var deletebtn = document.getElementById('deleteButton');
 			deletebtn.addEventListener("touchstart", function() {
-				self.deletefeature(self,feature, layer);
+				self.deletefeature(self,feature);
 			}, false);
 			deletebtn.addEventListener("click", function() {
-				console.log(feature);
-				self.deletefeature(self,feature,layer);
+				self.deletefeature(self,feature);
 			}, false);
 			var closebtn = document.getElementById('closeButton');
 			closebtn.addEventListener("touchstart", function(){self.closepopup(self);}, false);
 			closebtn.addEventListener("click", function(){self.closepopup(self);}, false);
 		}
 		function onEachFeature(feature, layer) {
+			layer.bindLabel(feature.properties.name);
 			layer.on({
 				mouseover: highlightFeature,
 				mouseout: resetHighlight,
@@ -296,7 +298,7 @@ $.widget("cow.OlMapWidget", {
 									iconSize: [40, 40]
 							})
 					})
-					.bindLabel(feature.properties.name);
+					;
 				}
 		}
 		).addTo(map);
@@ -397,21 +399,21 @@ $.widget("cow.OlMapWidget", {
 		console.log('storeChanged');
 		core.trigger('storeChanged');
 	},
-	changeFeature: function(evt){
-/*		var key = evt.currentTarget.name;
-		var value = evt.currentTarget.value;
-		var feature = core.editLayer.selectedFeatures[0];
+	changeFeature: function(evt,self, feature){
+		var key = evt.name;
+		var value = evt.value;
+		
 		if (feature){
-			var store = feature.attributes.store || "store1";
+			var store = feature.properties.store || "store1";
 			 
 			if (key == "name")
-				feature.attributes.name = value;
+				feature.properties.name = value;
 			if (key == "desc")
-				feature.attributes.desc = value;
-			feature.popup.destroy(); //we have to destroy since the next line triggers a reload of all features
+				feature.properties.desc = value;
+			self.map.closePopup(); //we have to destroy since the next line triggers a reload of all features
 			core.getFeaturestoreByName(store).updateLocalFeat(feature);
 		}
-*/	},
+	},
 	closepopup: function(self){
 		self.map.closePopup();
 	}
