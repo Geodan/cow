@@ -44,7 +44,7 @@ wsServer = new WebSocketServer({
 });
 
 var connections = [];
-
+var peers = [];
 function originIsAllowed(origin) {
   // put logic here to detect whether the specified origin is allowed.
   return true;
@@ -58,23 +58,62 @@ wsServer.on('request', function(request) {
     return;
   }
   
-  // This 
+  /*
+   Accepting a new connection and add the connection to the internal
+   stack of connections for future reference and tell the new
+   connection that it is connected and give its cash-ID (==ci)
+  */
   var connection = request.accept('connect', request.origin);
-
   connections.push(connection);
-  
   var ci = connections.indexOf(connection);
   connection.sendUTF('{"action":"connected","payload":{"cid":'+ci+'}}');
   
-  
+  /*
+   Once a connection is established messages can be recieved, these
+   need to be passed around to all other members.
+   A cow-client belongs to a herd, certain messages are only meant
+   for herd-members and cash should make sure that it knows which
+   cow is in which herd and pass the messages on to the correct members.
+  */
   connection.on('message', function(message) {
-
-
     if (message.type === 'utf8'&& message.utf8Data !==undefined) {
-      connections.forEach(function(destination) {
-        destination.sendUTF(message.utf8Data);
-
-      });
+      var data = JSON.parse(message.utf8Data);
+     
+      if(data.target) {
+        
+        console.log(data.target);
+        var index = peers.indexOf(data.target);
+        if (index !== -1) {
+            connections[index].sendUTF(message.utf8Data);
+            console.log('tarrget ' + data.target);
+        }
+    
+      }
+      else {
+        connections.forEach(function(destination) {
+          destination.sendUTF(message.utf8Data);
+        });
+        var action = data.action;
+        switch (action) {
+            /*These are the actions needed to make sure that the cid and uid are correct*/
+            //a peer is gone and everybody has a new connection-id, recieve a connectionID with UID
+            case 'updatePeers':
+                
+                var uid = data.payload.uid;
+                var cid = data.payload.connectionID;
+                peers[cid] = uid;
+                console.log('newpeers: ' + peers);
+            break;
+            //a new peer just joined, recieve its status: connection-id, uid, extent
+            // TODO: hoeft niet per se zo te zien, de cid/uid wordt ook al bijgehouden door de conenction.close
+            case 'newPeer':
+                var uid = data.payload.uid;
+                var cid = data.payload.cid;
+                peers[cid] = uid;
+                console.log(peers);
+            break;
+        }
+      }
     }
   });
 
@@ -83,6 +122,8 @@ wsServer.on('request', function(request) {
     if (index !== -1) {
       // remove the connection from the pool
       connections.splice(index, 1);
+      peers.splice(index, 1);
+      console.log('removed: '+peers);
       connections.forEach(function(destination) {
         //alert the other peers
         var ci = connections.indexOf(destination);
