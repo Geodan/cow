@@ -68,7 +68,14 @@ $.widget("cow.OlMapWidget", {
 		this.map.addControl(new OpenLayers.Control.LayerSwitcher());
 		
 		$('#peers').bind("zoomToPeersview", function(evt, bbox){
-				self.map.zoomToExtent([bbox.left,bbox.bottom,bbox.right,bbox.top]);
+				tmp = bbox;
+				var lb = new OpenLayers.LonLat(bbox.left,bbox.bottom);
+				var rt = new OpenLayers.LonLat(bbox.right,bbox.top);
+				var fromproj = new OpenLayers.Projection("EPSG:4326");
+				var toproj = new OpenLayers.Projection("EPSG:900913");
+				lb.transform(fromproj, toproj);
+				rt.transform(fromproj, toproj);
+				self.map.zoomToExtent([lb.lon,lb.lat,rt.lon,rt.lat]);
 		});
 		
 		
@@ -346,7 +353,6 @@ $.widget("cow.OlMapWidget", {
 					closebtn.addEventListener("click", self.closepopup, false);
 				},
 				featureunselected:function(evt){
-					tmp = evt.feature;
 					var feature = JSON.parse(geojson_format.write(evt.feature));
 					//TODO TT: check first if feature properties have been changed
 					var store = feature.properties.store || "store1";
