@@ -110,7 +110,7 @@ $.Cow.Websocket.prototype = {
 			}
 			core.ws.openws();
 		}
-		setTimeout(restart,10000);
+		//setTimeout(restart,10000);
 	},
 	_onError: function(event, error) {
 		alert(error);

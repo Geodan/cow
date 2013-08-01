@@ -133,10 +133,12 @@ $.Cow.Peer.prototype = {
 			name = this.options.owner;
 			icon = self.core.LOCATION_ICON;
 		}
-		var proj = new OpenLayers.Projection("EPSG:4326");
-		var toproj = new OpenLayers.Projection("EPSG:900913");
-		var point = new OpenLayers.Geometry.Point(position.coords.longitude,position.coords.latitude);
 		var attributes = {uid: uid, owner: name, time: position.timestamp, icon: icon};
+		//Obsolete
+		//var proj = new OpenLayers.Projection("EPSG:4326");
+		//var toproj = new OpenLayers.Projection("EPSG:900913");
+		//var point = new OpenLayers.Geometry.Point(position.coords.longitude,position.coords.latitude);
+		
 		//point.transform(proj, self.core.map.getProjectionObject()); //Getting rid of references to map
 		//point.transform(proj, toproj); //TT: removed transformation for leaflet
 		/*Obs by d3 layer
@@ -153,7 +155,7 @@ $.Cow.Peer.prototype = {
 			"geometry": {
 				"type": "Point",
 				"coordinates": [
-					point.x, point.y
+					position.coords.longitude, position.coords.latitude
 				]
 			},
 			"properties": attributes

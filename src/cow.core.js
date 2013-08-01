@@ -170,7 +170,6 @@ $.Cow.FeatureStore = function(core, options) {
 	};
 	this.core.bind('sketchcomplete', {widget: self}, self._onSketchComplete);
 	this.core.bind('afterfeaturemodified', {widget: self}, self._onFeatureModified);
-	this.core.bind('storeChanged', {widget: self}, self.reloadLayer);
 }
 
 /***

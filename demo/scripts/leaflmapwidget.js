@@ -42,10 +42,6 @@ $.widget("cow.LeaflMapWidget", {
 		
 		core.bind("drawExtent", {widget: self},self._drawExtent);
 		core.bind("drawPositions", {widget: self},self._drawPositions);
-		core.bind("updateSize", {widget: self},function(){
-//			self.map.updateSize();
-		});
-		core.bind("reloadFeatures",{widget: self},self._reloadLayer);
 		
 		
 		element.delegate('.owner','click', function(){

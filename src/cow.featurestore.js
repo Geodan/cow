@@ -67,6 +67,7 @@ When adding items, those are returned.
 			self._addItem(options);
 			core.localdbase().addFeat(options);
 		}
+		console.log('FS updateItem: storeChanged');
 		self.core.trigger('storeChanged');
 	},
 	getItemByIid: function(iid) {
@@ -102,6 +103,7 @@ When adding items, those are returned.
 				self.core.websocket().sendData(message, "updateFeature");
 			}
 		});
+		console.log("FS removeItem: storeChanged");
 		self.core.trigger('storeChanged');
 	},
 	//Inject features from other local source into featurestore
@@ -126,6 +128,7 @@ When adding items, those are returned.
 			item.feature = JSON.parse(geojson_format.write(feature));
 			//Add item to own stack
 			self.items(item);
+			console.log('FS injectFeatures: storeChanged');
 			core.trigger('storeChanged');
 			//Send item to world
 			var message = JSON.stringify(item);
@@ -154,13 +157,12 @@ When adding items, those are returned.
 		item.feature = feature;
 		//Add item to own stack
 		self.items(item);
-		core.trigger('storeChanged');
 		//Send item to world
 		var message = JSON.stringify(item);
 		core.websocket().sendData(message, "newFeature");
 		core.localdbase().addFeat(item);
-		//TODO TT: Open feature for editing
-		//controls.select.select(feature);
+		console.log("FS _onSketchComplete: storeChanged");
+		core.trigger('storeChanged');
 	},
 	//feature properties have been locally changed 
 	updateLocalFeat: function(feature){
@@ -178,7 +180,8 @@ When adding items, those are returned.
 					self.core.websocket().sendData(message, "updateFeature");
 				}
 		});
-		self.events.trigger('storeChanged');
+		console.log('FS updateLocalFeat: storeChanged');
+		self.core.trigger('storeChanged');
 	},
 	
 	//finished with modifying a features geometry
@@ -197,6 +200,7 @@ When adding items, those are returned.
 					self.core.websocket().sendData(message, "updateFeature");
 				}
 		});
+		console.log('FS _onFeatureModified: storeChanged');
 		self.core.trigger('storeChanged');
 	},
 	
@@ -213,6 +217,7 @@ When adding items, those are returned.
 				self._addItem(item);
 			core.localdbase().addFeat(item);
 		});
+		console.log('FS putFeatures: storeChanged');
 		core.trigger('storeChanged');
 	},
 	
@@ -222,6 +227,7 @@ When adding items, those are returned.
 		$.each(itemlist, function(i,item){
 			self._addItem(item);
 		});
+		console.log('FS fill: storeChanged');
 		self.core.trigger('storeChanged');
 		var fids = self.getIdList();
 		var message = fids;
@@ -259,7 +265,8 @@ When adding items, those are returned.
 		});
 		//TODO: need to notify other peers instantly about removal?
 		//Now it is delayed until next connection is made
-		self.events.trigger('storeChanged');
+		console.log('FS deleteAllFeatures: storeChanged');
+		self.core.trigger('storeChanged');
 
 	},
 	//return list with only keys and update time to inform other peers
@@ -320,10 +327,5 @@ When adding items, those are returned.
 			syncMessage.requestlist.push(val);	
 		});
 		return syncMessage;
-	},
-	//Simply repopulate the editlayer with items from the featurestore
-	reloadLayer: function(evt){
-		var self = evt.data.widget;
-		self.core.trigger('reloadFeatures');
 	}
 };
