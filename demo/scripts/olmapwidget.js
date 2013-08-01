@@ -46,6 +46,8 @@ $.widget("cow.OlMapWidget", {
 			self.map.updateSize();
 		});
 		
+		core.bind("reloadFeatures",{widget: self},self._reloadLayer);
+		
 		
 		element.delegate('.owner','click', function(){
 			var key = $(this).attr('owner');
@@ -74,9 +76,14 @@ $.widget("cow.OlMapWidget", {
 			// Triggers the jQuery events, after the OpenLayers events
 			// happened without any further processing
 			simple: function(data) {
-				var extent = data.object.getExtent();
-				self.core.me() && self.core.me().extent(extent); //Set my own extent
-				core.trigger(data.type, extent);
+				var extent = data.object.getExtent().toGeometry();
+				tmp = extent;
+				var toproj = new OpenLayers.Projection("EPSG:4326");
+				var fromproj = new OpenLayers.Projection("EPSG:900913");
+				extent.transform(fromproj, toproj);
+				extent.getBounds();
+				self.core.me() && self.core.me().extent(extent.bounds); //Set my own extent
+				core.trigger(data.type, extent.bounds);
 			}
         };
 		this._createLayers(this.map);
@@ -105,8 +112,8 @@ $.widget("cow.OlMapWidget", {
 	},
 	_updateMap: function(evt) {		
 		var self = evt.data.widget;
-		var features = core.featureStores[0].getAllFeatures();		//TT: we only use 1 store anyway... 
-        var element = self.element;
+		var features = core.getFeaturestoreByName('store1').getAllFeatures();		//TODO TT: WRONG, storename should be var 
+        
 	},
 	getExtent: function(){
 		return this.map.getExtent().toBBOX();
@@ -133,6 +140,22 @@ $.widget("cow.OlMapWidget", {
 			
 		if (self.locationlyr)
 			self.locationlyr.data(collection);
+	},
+	
+	
+	_reloadLayer: function(e){
+		self.core.editLayer.removeAllFeatures();
+		var items = self.core.getFeaturestoreByName('store1').getAllFeatures();
+		$.each(items, function(i, object){
+			var feature = geojson_format.read(object.options.feature,"Feature");
+			feature.properties = {};
+			$.each(feature.attributes, function(i,d){
+				feature.properties[i] = d;
+			})
+			
+			if (object.options.status != 'deleted')
+				self.core.editLayer.addFeatures(feature);
+		});
 	},
 	
 	_createLayers: function(map) {
@@ -190,31 +213,31 @@ $.widget("cow.OlMapWidget", {
 				return 1;
 			},
 			getLabel: function(feature) {
-				if (feature.attributes.name && feature.layer.map.getZoom() > 13)
-                    return feature.attributes.name;
+				if (feature.properties && feature.properties.name && feature.layer.map.getZoom() > 13)
+                    return feature.properties.name;
                 return "";
 			},
             getIcon: function(feature) {
-            	if (feature.attributes.icon && feature.attributes.icon != null){
+            	if (feature.properties && feature.properties.icon && feature.properties.icon != null){
             		//addition for larger scale icons IMOOV
-            		str = feature.attributes.icon;
+            		str = feature.properties.icon;
             		var patt=new RegExp("imoov");
             		if (str && feature.layer && feature.layer.map.zoom < 15 && patt.test(str))
             		{
             			return str.replace(/-g.png/g,'k.png');
             		}
-                    return feature.attributes.icon;
+                    return feature.properties.icon;
                 }
                 return "./mapicons/notvisited.png";
             },
             getLineColor: function(feature){
-            	if (feature.attributes.linecolor)
-            		return feature.attributes.linecolor;
+            	if (feature.properties && feature.properties.linecolor)
+            		return feature.properties.linecolor;
             	return "black";
             },
             getPolyColor: function(feature){
-            	if (feature.attributes.polycolor)
-            		return feature.attributes.polycolor;
+            	if (feature.properties && feature.properties.polycolor)
+            		return feature.properties.polycolor;
             	return null;
             },
             getFillOpacity: function(feature){
@@ -282,8 +305,8 @@ $.widget("cow.OlMapWidget", {
 					//TODO TT: This whole system of creating a popup is ugly!
 					//create something nicer...
 					var feature = evt.feature;
-					var name = feature.attributes.name || "";
-					var desc = feature.attributes.desc || "";
+					var name = feature.properties.name || "";
+					var desc = feature.properties.desc || "";
 					var innerHtml = ''
 						//+'<input onBlur="">Title<br>'
 						//+'<textarea></textarea><br>'
@@ -323,15 +346,16 @@ $.widget("cow.OlMapWidget", {
 					closebtn.addEventListener("click", self.closepopup, false);
 				},
 				featureunselected:function(evt){
-					var feature = evt.feature;
-					//TODO TT: check first if feature attributes have been changed
-					var store = feature.attributes.store || "store1";
+					tmp = evt.feature;
+					var feature = JSON.parse(geojson_format.write(evt.feature));
+					//TODO TT: check first if feature properties have been changed
+					var store = feature.properties.store || "store1";
 					core.getFeaturestoreByName(store).updateLocalFeat(feature);
-					map.removePopup(feature.popup);
+					map.removePopup(evt.feature.popup);
 					//TODO TT: this goes wrong first time... 
 					//Uncaught TypeError: Cannot call method 'destroy' of null 
-					feature.popup.destroy();
-					feature.popup = null;
+					evt.feature.popup.destroy();
+					evt.feature.popup = null;
 					self.controls.modify.deactivate();
 					self.controls.select.activate();
 				}
@@ -381,8 +405,20 @@ $.widget("cow.OlMapWidget", {
 			scope: this,
 			sketchcomplete: this.handlers.includeFeature//this.handlers.simple		
 		})*/;		
-		this.editLayer.events.register('sketchcomplete',{'self':this,layer:editlayer},function(evt){core.trigger('sketchcomplete',evt.feature)});
-		this.editLayer.events.register('afterfeaturemodified',{'self':this,layer:editlayer},function(evt){core.trigger('afterfeaturemodified',evt.feature)});
+		this.editLayer.events.register('sketchcomplete',
+			{'self':this,layer:editlayer},
+			function(evt){
+				var feature = JSON.parse(geojson_format.write(evt.feature));
+				core.trigger('sketchcomplete',feature);
+			}
+		);
+		this.editLayer.events.register('afterfeaturemodified',
+			{'self':this,layer:editlayer},
+			function(evt){
+				var feature = JSON.parse(geojson_format.write(evt.feature));
+				core.trigger('afterfeaturemodified',feature);
+			}
+		);
 		//this.editLayer.events.on({'featureselected': function(){
 		//		alert('Feat selected');
 		//}});
@@ -411,8 +447,8 @@ $.widget("cow.OlMapWidget", {
 	deletefeature: function(){
 		var feature = core.editLayer.selectedFeatures[0];
 		feature.popup.destroy();
-		var key = feature.attributes.key;
-		var store = feature.attributes.store || "store1";
+		var key = feature.properties.key;
+		var store = feature.properties.store || "store1";
 		core.getFeaturestoreByName(store).removeItem(key);
 		console.log('storeChanged');
 		core.trigger('storeChanged');
@@ -422,12 +458,12 @@ $.widget("cow.OlMapWidget", {
 		var value = evt.currentTarget.value;
 		var feature = core.editLayer.selectedFeatures[0];
 		if (feature){
-			var store = feature.attributes.store || "store1";
+			var store = feature.properties.store || "store1";
 			 
 			if (key == "name")
-				feature.attributes.name = value;
+				feature.properties.name = value;
 			if (key == "desc")
-				feature.attributes.desc = value;
+				feature.properties.desc = value;
 			feature.popup.destroy(); //we have to destroy since the next line triggers a reload of all features
 			core.getFeaturestoreByName(store).updateLocalFeat(feature);
 		}

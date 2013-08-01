@@ -26,7 +26,7 @@ var _defaultOptions = {
         core: undefined
 };
 
-$.widget("cow.OlMapWidget", {
+$.widget("cow.LeaflMapWidget", {
 	options: $.extend({}, _defaultOptions),
 	
  	_create: function() {
@@ -51,7 +51,7 @@ $.widget("cow.OlMapWidget", {
 		element.delegate('.owner','click', function(){
 			var key = $(this).attr('owner');
 			self.core.featureStores[0].removeItem(key);
-			self.core.trigger('storeChanged');
+			core.trigger('storeChanged');
 		});
 		
 		
@@ -68,20 +68,8 @@ $.widget("cow.OlMapWidget", {
 		
 		var baseLayers = {"OSM": osmLayer};
 		
-		// Initialize the FeatureGroup to store editable layers
-		var drawnItems = new L.FeatureGroup();
-		this.map.addLayer(drawnItems);
-		// Initialize the draw control and pass it the FeatureGroup of editable layers
-		this.drawControl = new L.Control.Draw({
-			draw: false,
-			edit: {
-				featureGroup: drawnItems
-			}
-		});
-		
-		this.map.addControl(this.drawControl);
-		
-		L.control.layers(baseLayers).addTo(this.map);
+		//Layer controls
+		//L.control.layers(baseLayers).addTo(this.map);
 		
 		$('#peers').bind("zoomToPeersview", function(evt, bbox){
 			self.map.fitBounds([[bbox.bottom,bbox.left],[bbox.top,bbox.right]]);
@@ -108,6 +96,10 @@ $.widget("cow.OlMapWidget", {
 				
 		this.map.on('moveend',function(e){
 				self.handlers.simple(e);
+		});
+		this.map.on('click',function(e){
+				self.controls.editcontrol.save();
+				self.controls.editcontrol.disable();
 		});
 //		this.controls.select.activate();
     },
@@ -258,29 +250,37 @@ $.widget("cow.OlMapWidget", {
 				.setLatLng(e.latlng)
 				.setContent(innerHtml)
 				.openOn(self.map);
-			tmp = e;
+			
+			
 			var titlefld = document.getElementById('titlefld');
 			titlefld.addEventListener("blur", function(){
 					self.changeFeature(this, self, feature);
 			}, false);
 			var descfld = document.getElementById('descfld');
 			descfld.addEventListener("blur", self.changeFeature, false);
+			
 			var editbtn = document.getElementById('editButton');
-			editbtn.addEventListener("touchstart", self.editfeature, false);
-			editbtn.addEventListener("click", self.editfeature, false);
-			var deletebtn = document.getElementById('deleteButton');
-			deletebtn.addEventListener("touchstart", function() {
-				self.deletefeature(self,feature);
+			//editbtn.addEventListener("touchstart", function(){
+			//		self.editfeature(self,feature);
+			//}, false);
+			editbtn.addEventListener("click", function(){
+					self.editfeature(self,feature);
 			}, false);
+			
+			var deletebtn = document.getElementById('deleteButton');
+			//deletebtn.addEventListener("touchstart", function() {
+			//	self.deletefeature(self,feature);
+			//}, false);
 			deletebtn.addEventListener("click", function() {
 				self.deletefeature(self,feature);
 			}, false);
+			
 			var closebtn = document.getElementById('closeButton');
-			closebtn.addEventListener("touchstart", function(){self.closepopup(self);}, false);
+			//closebtn.addEventListener("touchstart", function(){self.closepopup(self);}, false);
 			closebtn.addEventListener("click", function(){self.closepopup(self);}, false);
 		}
 		function onEachFeature(feature, layer) {
-			layer.bindLabel(feature.properties.name);
+			//layer.bindLabel(feature.properties.name);
 			layer.on({
 				mouseover: highlightFeature,
 				mouseout: resetHighlight,
@@ -303,7 +303,34 @@ $.widget("cow.OlMapWidget", {
 		}
 		).addTo(map);
 		
-		
+		// Initialize the draw control and pass it the FeatureGroup of editable layers
+		this.drawControl = new L.Control.Draw({
+			draw: false,
+			edit: {
+				featureGroup: editlayer,
+				edit: false,
+				remove: false
+				
+			}
+			
+		});
+		tmp = this.drawControl;
+		this.map.addControl(this.drawControl);
+		map.on('draw:created', function (e) {
+			var type = e.layerType,
+				layer = e.layer;
+
+			//TODO: sent feature
+
+			self.editLayer.addLayer(layer);
+		});
+		this.map.on("draw:edited", function(e,x){
+				var layers = e.layers;
+				
+				layers.eachLayer(function (layer) {
+					core.trigger('afterfeaturemodified',layer.toGeoJSON());
+				});
+		});
 		//See following URL for custom draw controls in leaflet
 		//http://stackoverflow.com/questions/15775103/leaflet-draw-mapping-how-to-initiate-the-draw-function-without-toolbar
 		
@@ -314,11 +341,12 @@ $.widget("cow.OlMapWidget", {
 			pointcontrol: new L.Draw.Marker(this.map, this.drawControl.options.Marker),
 			linecontrol: new L.Draw.Polyline(this.map, this.drawControl.options.polyline),  
 			polycontrol:  new L.Draw.Polygon(this.map, this.drawControl.options.polygon),
-			//deletecontrol: new L.EditToolbar.Delete(this.map, {
-            //    featureGroup: drawControl.options.featureGroup
-            //})
+			editcontrol: new L.EditToolbar.Edit(this.map, {
+                featureGroup: this.drawControl.options.edit.featureGroup,
+                selectedPathOptions: this.drawControl.options.edit.selectedPathOptions
+            })
 		}                 
-
+		
         
 		$('#newfeatpanel').bind("newpoint", function(evt, key){
 			self.controls.linecontrol.disable();
@@ -380,16 +408,10 @@ $.widget("cow.OlMapWidget", {
 		});
 */	},
 	
-	editfeature: function(evt,x){
-/*		var feature = core.editLayer.selectedFeatures[0];
-		feature.popup.hide();
-		//TODO: WHY can't I reach the controls of my own class?!
-		var controls = $('#map').OlMapWidget('getControls')
-		controls.modify.mode = OpenLayers.Control.ModifyFeature.RESHAPE;
-		controls.modify.standalone = true;
-		controls.modify.activate();
-		controls.modify.selectFeature(feature);
-*/	},
+	editfeature: function(self, feature){
+		self.map.closePopup();
+		self.controls.editcontrol.enable();
+	},
 	deletefeature: function(self,feature, layer){
 		//var feature = item.target.feature; 
 		var key = feature.properties.key;

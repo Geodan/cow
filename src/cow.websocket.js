@@ -282,7 +282,7 @@ $.Cow.Websocket.prototype = {
 		var peer = this.core.getPeerByUid(uid);
 		if(peer !== undefined) {
 			peer.events.trigger('peerMoved',payload);
-			console.log('peerMoved');
+			//console.log('peerMoved');
 		}
 		else console.warn('badpeer');
 	},

@@ -150,7 +150,7 @@ When adding items, those are returned.
 		item.created = timestamp;
 		item.updated = timestamp;
 		item.status = '';
-		//item.feature = JSON.parse(geojson_format.write(feature));
+		
 		item.feature = feature;
 		//Add item to own stack
 		self.items(item);
@@ -190,7 +190,7 @@ When adding items, those are returned.
 		
 		$.each(self.itemList, function(i, obj){
 				if (obj.options.key == feature.properties.key){
-					obj.options.feature = JSON.parse(geojson_format.write(feature));
+					obj.options.feature = feature;
 					obj.options.updated = timestamp;
 					self.core.localdbase().update(obj.options);
 					var message = JSON.stringify(obj.options);

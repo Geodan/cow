@@ -34,8 +34,13 @@ function d3layer(layername, config){
 		this.project = function(x) {
 		  if (config.maptype == 'Leaflet')
 		  	  var point = _this.map.map.latLngToLayerPoint(new L.LatLng(x[1], x[0])); //Leaflet version
-		  else if (config.maptype == 'OpenLayers')
-		  	  var point = _this.map.getViewPortPxFromLonLat(new OpenLayers.LonLat(x[0],x[1])); //OpenLayers version
+		  else if (config.maptype == 'OpenLayers'){
+		  	  var loc =  new OpenLayers.LonLat(x[0],x[1]);
+		  	  var fromproj = new OpenLayers.Projection("EPSG:4326");
+		  	  var toproj = new OpenLayers.Projection("EPSG:900913");
+		  	  loc.transform(fromproj, toproj);
+		  	  var point = _this.map.getViewPortPxFromLonLat(loc); //OpenLayers version
+		  }
 		  else {
 		  	  console.warn("Error, no correct maptype specified for d3 layer " + layername);
 		  	  return;
@@ -43,11 +48,16 @@ function d3layer(layername, config){
 		  return [point.x, point.y];
 		};
 		
+		
+		var olextentproject = function(x){
+			var point = _this.map.getViewPortPxFromLonLat(new OpenLayers.LonLat(x[0],x[1]));
+			return [point.x,point.y];
+		}
 		//Set the SVG to the correct dimensions
 		this.set_svg = function(){
 			var extent = _this.map.getExtent();
-			bottomLeft = _this.project([extent.left,extent.bottom]);
-			topRight = _this.project([extent.right,extent.top]);
+			bottomLeft = olextentproject([extent.left,extent.bottom]);
+			topRight = olextentproject([extent.right,extent.top]);
 			width = topRight[0] - bottomLeft[0];
 			height = bottomLeft[1] - topRight[1];
 			svg.attr("width", width)
