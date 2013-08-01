@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-//require.paths.unshift(__dirname); //make local paths accessible
+/* Copyright (c) 2011 by COW Contributors (see AUTHORS for
+ * full list of contributors). Published under the MIT license.
+ * See https://github.com/Geodan/cow/blob/master/LICENSE for the
+ * full text of the license. */
 var fs = require('fs');
 var WebSocketServer = require('websocket').server;
 var http = require('http');
@@ -54,14 +57,16 @@ wsServer.on('request', function(request) {
     console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
     return;
   }
-
+  
+  // This 
   var connection = request.accept('connect', request.origin);
 
   connections.push(connection);
   
   var ci = connections.indexOf(connection);
   connection.sendUTF('{"action":"connected","payload":{"cid":'+ci+'}}');
-
+  
+  
   connection.on('message', function(message) {
 
 
