@@ -81,7 +81,6 @@ wsServer.on('request', function(request) {
      
       if(data.target) {
         
-        console.log(data.target);
         var index = peers.indexOf(data.target);
         if (index !== -1) {
             connections[index].sendUTF(message.utf8Data);
@@ -97,13 +96,13 @@ wsServer.on('request', function(request) {
         switch (action) {
             /*These are the actions needed to make sure that the cid and uid are correct*/
             //a peer is gone and everybody has a new connection-id, recieve a connectionID with UID
-            case 'updatePeers':
+           /* case 'updatePeers':
                 
                 var uid = data.payload.uid;
                 var cid = data.payload.connectionID;
                 peers[cid] = uid;
                 console.log('newpeers: ' + peers);
-            break;
+            break;*/
             //a new peer just joined, recieve its status: connection-id, uid, extent
             // TODO: hoeft niet per se zo te zien, de cid/uid wordt ook al bijgehouden door de conenction.close
             case 'newPeer':
