@@ -137,21 +137,10 @@ $.Cow.LocalDbase = function(core, options) {
 	this.loaded = false;
 	this.core = core;
 	this.options = options;
-	var promise = this.init_db(this.options.dbname, this.options.tablename);
-	promise.done(function(){
-	  window.setTimeout(function(){
-		self.loaded = true;
-		console.log('dbinitialized');
-		core.trigger('dbinitialized');
-		var iteration = self.loadFromDB();
-		iteration.done(function(result, event){
-				//TODO TT: nu pas data syncen
-		});
-		iteration.fail(function(error){
-				alert('Fail to read from localdbase. ' + error.message);
-		});
-	  },200);
-	});
+	
+	var store = this.init_db("cow", "store1");//TODO
+	
+	var iteration = self.loadFromDB();
 	                     
 }
 /***
@@ -165,9 +154,8 @@ $.Cow.FeatureStore = function(core, options) {
 	this.events = $({});
 	this.uid = this.core.UID;
 	this.itemList = [];
-	if(this.options.name!==undefined) {
-		this.name = this.options.name;
-	};
+	this.name = this.options.name || "store1";
+	
 	this.core.bind('sketchcomplete', {widget: self}, self._onSketchComplete);
 	this.core.bind('afterfeaturemodified', {widget: self}, self._onFeatureModified);
 }
