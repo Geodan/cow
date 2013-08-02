@@ -87,7 +87,7 @@ $.Cow.Peer.prototype = {
 			}			
 		var point = geojson_format.read(p);
 		this.params.point = point;
-		self.core.trigger("drawExtent", core.getPeerCollection());
+		self.core.trigger("peerExtentChanged", core.getPeerCollection());
 	},
 	
 	_bbox2view: function(bbox) {
@@ -112,7 +112,7 @@ $.Cow.Peer.prototype = {
 	_onMoved: function(evt,payload) {
 		var self = evt.data.widget;
 		//console.log('peerupdated');
-		//self.core.trigger('peerupdated');
+		self.core.trigger('peerupdated');
 		//TODO: options worden niet automatisch bijgewerkt
 		self.options.owner = payload.owner;
 		self.extent(payload.extent);	
@@ -160,7 +160,7 @@ $.Cow.Peer.prototype = {
 			},
 			"properties": attributes
 		};
-		self.core.trigger("drawPositions", core.getPeerPositions());
+		self.core.trigger("peerPositionChanged", core.getPeerPositions());
 	},
 	_onLocationChanged: function(evt, payload){
 		//when I change my location, redraw my point

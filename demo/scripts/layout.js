@@ -71,7 +71,7 @@ $('.title').click(function(){
 		o3rd.after(big).after(o2nd).after(small);
 		}
 	}
-	core.trigger('updateSize');
+	core.trigger('layoutChanged');
 });
 });
 

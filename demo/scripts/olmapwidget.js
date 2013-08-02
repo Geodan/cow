@@ -11,7 +11,22 @@ _onConnect: function() {
 
 
 /**
-	TT: copied from featureswidget.js and adapted for map purpose
+#cow.OlMapWidget
+
+The OpenLayers Mapwidget provides an OpenLayers map including layers that interact
+with the features in COW.
+
+Listeners:
+core.storeChanged (something in the featurestore changed) -> redraw complete featurelayer
+core.peerExtentChanged (a peerExtent has changed) -> redraw peerExtent layer
+core.peerPositionChanged (a peers position has canged) -> redraw peer position
+core.layoutChanged (screenlayout changed) -> reset the map size (needed for extent calculations)
+core.zoomToPeersviewRequest (request for zooming to peerextent) -> zoom to extent of peer
+TODO: core.peerUpdated -> redraw peer information (labels, position, extent)
+
+Triggers:
+
+
 **/
 
 
@@ -36,21 +51,14 @@ $.widget("cow.OlMapWidget", {
         
         core = $(this.options.core).data('cow');
 		this.core=core;
-        core.bind("dbloaded", {widget: self}, self._onLoaded);
+        //Obs? core.bind("dbloaded", {widget: self}, self._onLoaded);
+
 		core.bind("storeChanged", {widget: self}, self._onLoaded);
+		core.bind("peerExtentChanged", {widget: self},self._drawExtent);
+		core.bind("peerPositionChanged", {widget: self},self._drawPositions);
+		core.bind("layoutChanged", {widget: self},self._updateSize);
+		core.bind("zoomToPeersviewRequest", {widget: self},self._zoomToPeersView);
 		
-		core.bind("drawExtent", {widget: self},self._drawExtent);
-		core.bind("drawPositions", {widget: self},self._drawPositions);
-		core.bind("updateSize", {widget: self},function(){
-			self.map.updateSize();
-		});
-		
-		
-		element.delegate('.owner','click', function(){
-			var key = $(this).attr('owner');
-			self.core.featureStores[0].removeItem(key);
-			self.core.trigger('storeChanged');
-		});
 		
 		//openlayers stuff
 		this.map = new OpenLayers.Map("map");
@@ -64,15 +72,7 @@ $.widget("cow.OlMapWidget", {
 		this.map.setCenter(new OpenLayers.LonLat(546467,6862526),10);//Amsterdam
 		this.map.addControl(new OpenLayers.Control.LayerSwitcher());
 		
-		$('#peers').bind("zoomToPeersview", function(evt, bbox){
-				var lb = new OpenLayers.LonLat(bbox.left,bbox.bottom);
-				var rt = new OpenLayers.LonLat(bbox.right,bbox.top);
-				var fromproj = new OpenLayers.Projection("EPSG:4326");
-				var toproj = new OpenLayers.Projection("EPSG:900913");
-				lb.transform(fromproj, toproj);
-				rt.transform(fromproj, toproj);
-				self.map.zoomToExtent([lb.lon,lb.lat,rt.lon,rt.lat]);
-		});
+		
 		
 		
 		this.handlers = {
@@ -129,6 +129,17 @@ $.widget("cow.OlMapWidget", {
 		if (self.viewlyr)
 			self.viewlyr.data(peerCollection);
 	},
+	_zoomToPeersView: function(evt, bbox){
+	    var self = evt.data.widget;
+        var lb = new OpenLayers.LonLat(bbox.left,bbox.bottom);
+        var rt = new OpenLayers.LonLat(bbox.right,bbox.top);
+        var fromproj = new OpenLayers.Projection("EPSG:4326");
+        var toproj = new OpenLayers.Projection("EPSG:900913");
+        lb.transform(fromproj, toproj);
+        rt.transform(fromproj, toproj);
+        self.map.zoomToExtent([lb.lon,lb.lat,rt.lon,rt.lat]);
+	},
+	
 	_drawPositions: function(evt, collection) {
 		var self = evt.data.widget;
 		//apply some styling to collection
@@ -143,7 +154,10 @@ $.widget("cow.OlMapWidget", {
 		if (self.locationlyr)
 			self.locationlyr.data(collection);
 	},
-	
+	_updateSize: function(evt){
+	    var map = evt.data.widget.map;
+	    map.updateSize(map);
+	},
 	
 	_reloadLayer: function(e){
 		console.log('MW _reloadLayer');
@@ -313,7 +327,7 @@ $.widget("cow.OlMapWidget", {
 					var innerHtml = ''
 						//+'<input onBlur="">Title<br>'
 						//+'<textarea></textarea><br>'
-						+ 'You can remove or change this feature using the buttons below<br/>'
+						//+ 'You can remove or change this feature using the buttons below<br/>'
 						+ 'Label: <input id="titlefld" name="name" value ="'+name+'""><br/>'
 						+ 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
 						+ '<button class="popupbutton" id="editButton">edit</button><br>'

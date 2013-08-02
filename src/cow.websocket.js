@@ -110,7 +110,7 @@ $.Cow.Websocket.prototype = {
 			}
 			core.ws.openws();
 		}
-		//setTimeout(restart,10000);
+		setTimeout(restart,5000);
 	},
 	_onError: function(event, error) {
 		alert(error);
@@ -140,6 +140,7 @@ $.Cow.Websocket.prototype = {
 		options.uid = this.core.UID;
 		options.cid = payload.cid;		
 		options.owner = name;
+		//options.herd = store.name;
 		options.family = 'alpha'; //used to check if client is able to act as alpha peer
 		var me = this.core.peers(options);
 		console.log('nr peers: '+this.core.peers().length);
@@ -262,7 +263,7 @@ $.Cow.Websocket.prototype = {
 		var newCid = payload.newCid;		
 		this.core.removePeer(peerGone);		
 		this.core.me().options.cid = newCid;
-		//this.core.trigger('peerGone',payload);	
+		//this.core.trigger('peerGinfromone',payload);	
 		var message = {};
 		message.uid = this.core.me().uid;
 		message.connectionID = this.core.me().options.cid;
@@ -292,7 +293,7 @@ $.Cow.Websocket.prototype = {
 		
 		if(peer !== undefined) {
 			peer.events.trigger('locationChange',payload);
-			console.log('locationChange');
+			//console.log('locationChange');
 		}
 		else console.warn('badpeer');
 	},

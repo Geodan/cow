@@ -28,12 +28,14 @@ $.widget("cow.PeersWidget", {
 		core.bind("peerGone", {widget: self}, self._onPeerGone);
 		core.bind("peerInfo", {widget: self}, self._onPeerInfo);
 		core.bind("newPeer", {widget: self}, self._onNewPeer);
-		core.bind("peerupdated", {widget: self}, self._onNewPeer);
+		core.bind("peerupdated", {widget: self}, self._onPeerUpdated);
+		
 		element.delegate('.owner','click', function(){
 			var owner = $(this).attr('owner');
 			var peer = core.getPeerByUid(owner);
 			var bbox = peer.extent();
-			self.element.trigger('zoomToPeersview', bbox);
+			//self.element.trigger('zoomToPeersview', bbox);
+			self.core.trigger('zoomToPeersviewRequest', bbox);
 			/* TT: Moved to olmapwidget (by trigger)
 			//self.core.map.zoomToExtent([bbox.left,bbox.bottom,bbox.right,bbox.top]);
 			*/
@@ -79,13 +81,17 @@ $.widget("cow.PeersWidget", {
 		var self = evt.data.widget;
 		self._updateList(evt);
 	},
+	_onPeerUpdated: function(evt) {
+	    var self = evt.data.widget;
+		self._updateList(evt);
+	},
 	_updateList: function(evt) {		
 		var self = evt.data.widget;
-		var peers = self.core.peers();
+		var xpeers = self.core.peers();
         var element = self.element;
 		var names = '';
 		
-		$.each(peers,function(){
+		$.each(xpeers,function(){
 			if(this.uid==self.core.UID) {
 			names = names+ '<span class="peerlist me" title="this is you!" owner="'+this.uid+'">'+this.options.owner+'</span></br>';
 			}
