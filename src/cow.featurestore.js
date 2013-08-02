@@ -120,7 +120,7 @@ When adding items, those are returned.
 			//feature.properties.polycolor = self.core.current_polycolor;
 			item.key = self.core.UID + "#" + timestamp;
 			feature.properties.key = item.key;
-			feature.properties.storename = self.name;
+			feature.properties.storename = self.core.options.activeHerd;
 			item.uid = self.core.UID;
 			item.created = timestamp;
 			item.updated = timestamp;
@@ -148,7 +148,7 @@ When adding items, those are returned.
 		feature.properties.polycolor = self.core.current_polycolor;
 		item.key = self.core.UID + "#" + timestamp;
 		feature.properties.key = item.key;
-		feature.properties.store = self.name;
+		feature.properties.store = self.core.options.activeHerd;
 		item.uid = self.core.UID;
 		item.created = timestamp;
 		item.updated = timestamp;
@@ -220,7 +220,9 @@ When adding items, those are returned.
 		console.log('FS putFeatures: storeChanged');
 		core.trigger('storeChanged');
 	},
-	
+	clear: function(){
+	    this.itemList = [];
+	},
 	//fill - items go from localdbase to featurestore
 	fill: function(itemlist){
 		var self = this;
@@ -228,10 +230,16 @@ When adding items, those are returned.
 			self._addItem(item);
 		});
 		console.log('FS fill: storeChanged');
-		self.core.trigger('storeChanged');
+		self.core.trigger('storeChanged'); //This will reload the map
+		
+		//Send our featurelist to the world for syncing
 		var fids = self.getIdList();
 		var message = fids;
 		self.loaded = true;
+		var message = {};
+        message.fids = fids;
+        message.storename = self.core.options.activeHerd;
+        self.core.websocket().sendData(message, "newPeerFidList");
 	},
 	
 	//request - incoming request from world

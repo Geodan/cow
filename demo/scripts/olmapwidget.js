@@ -162,7 +162,7 @@ $.widget("cow.OlMapWidget", {
 	_reloadLayer: function(e){
 		console.log('MW _reloadLayer');
 		self.core.editLayer.removeAllFeatures();
-		var items = self.core.getFeaturestoreByName('store1').getAllFeatures();
+		var items = self.core.featurestore().getAllFeatures();
 		$.each(items, function(i, object){
 			var feature = geojson_format.read(object.options.feature,"Feature");
 			feature.properties = {};
@@ -460,9 +460,10 @@ $.widget("cow.OlMapWidget", {
 		if (feature.popup)
 			feature.popup.destroy();
 		var key = feature.properties.key;
-		var store = feature.properties.store || "store1";
-		core.getFeaturestoreByName(store).removeItem(key);
-		core.trigger('storeChanged');
+		if (core.me().options.herd == feature.properties.store){
+		    core.featurestore().removeItem(key);
+		    core.trigger('storeChanged');
+		}
 	},
 	savefeature: function(evt){ //Just save the text...
 		var feature = core.editLayer.selectedFeatures[0];
@@ -474,17 +475,11 @@ $.widget("cow.OlMapWidget", {
 			feature.popup = null;
 		}
 		var jsonfeature = JSON.parse(geojson_format.write(feature));
-		var store = feature.properties.store || "store1";
-		core.getFeaturestoreByName(store).updateLocalFeat(jsonfeature);
-	},
-	
-	
-	
-		
-		
-	
-	
-	
+		if (core.me().options.herd == feature.properties.store){
+		    core.featurestore().updateLocalFeat(jsonfeature);
+		}
+	}
+
 	});
 })(jQuery);
 

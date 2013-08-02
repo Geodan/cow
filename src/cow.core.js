@@ -21,15 +21,17 @@ $.Cow.Core = function(element, options) {
 	this.map = window[this.options.map];
 	this.ws ={};
 	this.peerList = [];
+	this.herdList = [{id:0,name:"sketch"},{id:1,name:"test"}]; //Altijd initiele sketch herd aanwezig
+	this.options.activeHerd = this.herdList[0].id;
 	this.localDbase;
 	this.geoLocator;
-	this.featureStores = [];
+	this.featureStore;
 	this.events = $({});
 	if(this.options.websocket!==undefined) {
 		this.websocket(this.options.websocket);
 	}
 	if(this.options.featurestore!==undefined) {
-		this.featurestores(this.options.featurestore);
+		this.featurestore(this.options.featurestore);
 	}
 	if(this.options.localdbase!==undefined) {
 		this.localdbase(this.options.localdbase);
@@ -39,6 +41,19 @@ $.Cow.Core = function(element, options) {
 	}
 	element.data('cow', this);
 	self.bind("disconnected", {widget: self}, self.removeAllPeers);
+	
+	self.bind('changeHerdRequest', {widget:self}, function(e,id){
+	        self.featurestore().clear(); //Clear featurestore
+	        self.me().options.herd = id;
+	        self.options.activeHerd = id;
+	        self.options.storename = "store_"+id; //TODO: the link between activeHerd and storename can be better
+	        self.localdbase().loadFromDB();//Fill featurestore with what we have
+	        var options = {name: self.me().options.owner, herd: self.me().options.herd};
+	        self.trigger("paramsChange",options);
+	});
+	
+	
+	
 };
 /**
 #Cow.Websocket
@@ -64,6 +79,7 @@ $.Cow.Websocket = function(core, options) {
 	}
 	this.core.bind('moveend', {widget: self}, self._onMapMoved);
 	this.core.bind('locationChange', {widget:self}, self._onLocationChanged);
+	this.core.bind('paramChange', {widget:self}, self._onParamsChanged);
 	
 	//SMO: waarom?
 	//return this;
@@ -79,6 +95,20 @@ $.Cow.Websocket = function(core, options) {
 
 //TODO TT: Is this the best place to initialize an item? 
 $.Cow.Item = function(core, options){
+	var self = this;
+	this.core = core;
+	this.options = options;
+};
+
+/**
+#Cow.Herd
+
+The Cow.Herd object. It is constructed from within cow, it contains information
+on a available herd. The core.herdList contains 
+a list of Cow.Herd objects, including the special 'sketch' herd
+
+ */
+$.Cow.Peer = function(core, options) {
 	var self = this;
 	this.core = core;
 	this.options = options;
@@ -104,7 +134,7 @@ $.Cow.Peer = function(core, options) {
 	this.events.bind('peerMoved', {widget:self}, self._onMoved);
 	this.events.bind('updatePeer', {widget:self}, self._onMoved);
 	this.events.bind('locationChange', {widget:self}, self._onLocationChanged);
-
+	this.events.bind('paramChange', {widget:self}, self._onParamsChanged);
 	/*this.uid;
 	this.cid;
 	this.name;
@@ -137,11 +167,7 @@ $.Cow.LocalDbase = function(core, options) {
 	this.loaded = false;
 	this.core = core;
 	this.options = options;
-	
-	var store = this.init_db("cow", "store1");//TODO
-	
 	var iteration = self.loadFromDB();
-	                     
 }
 /***
 $.Cow.FeatureStore
@@ -154,7 +180,7 @@ $.Cow.FeatureStore = function(core, options) {
 	this.events = $({});
 	this.uid = this.core.UID;
 	this.itemList = [];
-	this.name = this.options.name || "store1";
+	//this.name = this.options.name || "store1";
 	
 	this.core.bind('sketchcomplete', {widget: self}, self._onSketchComplete);
 	this.core.bind('afterfeaturemodified', {widget: self}, self._onFeatureModified);
@@ -212,6 +238,87 @@ $.Cow.Core.prototype = {
 		var websocket = new $.Cow.Websocket(this, options);
 		this.ws=websocket;
 	},
+
+/**
+##cow.herds([options])
+###**Description**: get/set the herds of the cow
+
+**options** an object of key-value pairs with options to create one or
+more herds
+
+>Returns: [herd] (array of Cow.herd) _or_ false
+
+The `.herds()` method allows us to attach herds to a cow object. It takes
+an options object with herd options. To add multiple herds, create an array of
+herds options objects. If an options object is given, it will return the
+resulting herd(s). We can also use it to retrieve all herds currently attached
+to the cow.
+
+When adding herds, those are returned. 
+
+*/
+
+    herds: function(options) {
+		var self = this;
+		switch(arguments.length) {
+        case 0:
+            return this._getHerds();
+        case 1:
+            if (!$.isArray(options)) {
+                return this._addHerd(options);
+            }
+            else {
+				return $.core(options, function(peer) {
+                    return self._addHerd(herd);
+                })
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+	},
+	_getHerds: function() {
+        var herds = [];
+        $.each(this.herdList, function(id, herd) {
+            herds.push(herd);
+        });        
+        return herds;
+    },
+	_addHerd: function(options) {
+		var herd = new $.Cow.Herd(this, options);		
+		
+		if (options.uid != this.UID){
+			
+		}
+		this.herdList.push(herd);
+		//TODO: enable peer.trigger
+		//peer.trigger('addpeer');
+		return herd;
+	},
+	getHerdById: function(id) {
+		var herds = this.herds();
+		var herd;
+		$.each(herds, function(){
+			if(this.id == id) {			
+				herd = this;
+			}			
+		});
+		return herd;
+	},
+	removeHerd: function(id) {
+		var herds = this.herds();
+		var herdGone = id;
+		var delPeer;
+		$.each(herds, function(i){
+			if(this.id == peerGone) {			
+				delHerd = i;
+			}			
+		});
+		if(delHerd >= 0) herds.splice(delHerd,1);
+		this.herdList = herds;		
+	},
+
+
 /**
 ##cow.peers([options])
 ###**Description**: get/set the peers of the cow
@@ -417,11 +524,11 @@ When adding peers, those are returned.
 	/***
 	FEATURE STORES
 	***/
-	featurestores: function(options){
+	featurestore: function(options){
 		var self = this;
 		switch(arguments.length) {
         case 0:
-            return this._getFeaturestores();
+            return this._getFeaturestore();
         case 1:
             if (!$.isArray(options)) {
                 return this._addFeaturestore(options);
@@ -434,27 +541,16 @@ When adding peers, those are returned.
             throw('wrong argument number');
         }
 	},
-	_getFeaturestores: function(){
-		var stores = [];
-        $.each(this.featureStores, function(id, store) {
-            stores.push(store);
-        });        
-        return stores;
-	},
-	getFeaturestoreByName: function(name){
-		var stores = this._getFeaturestores();
-		var result = null;
-        $.each(stores, function(id, store) {
-            if (store.name == name)
-            	result = store;
-        });
-        return result;
+	_getFeaturestore: function(){
+        return this.featureStore;
 	},
 	_addFeaturestore: function(options){
 		var featureStore = new $.Cow.FeatureStore(this, options);		
-		this.featureStores.push(featureStore);
+		this.featureStore = featureStore;
 		return featureStore;
 	},
+	
+	
 	bind: function(types, data, fn) {
         var self = this;
 

@@ -20,7 +20,6 @@ $.widget("cow.PeersWidget", {
         var self = this;		
         var element = this.element;
 
-        //get the mapquery object
         core = $(this.options.core).data('cow');
 		this.core=core;
         core.bind("connected", {widget: self}, self._onConnect);
@@ -34,12 +33,14 @@ $.widget("cow.PeersWidget", {
 			var owner = $(this).attr('owner');
 			var peer = core.getPeerByUid(owner);
 			var bbox = peer.extent();
-			//self.element.trigger('zoomToPeersview', bbox);
 			self.core.trigger('zoomToPeersviewRequest', bbox);
-			/* TT: Moved to olmapwidget (by trigger)
-			//self.core.map.zoomToExtent([bbox.left,bbox.bottom,bbox.right,bbox.top]);
-			*/
 		});
+		
+		element.delegate('.herd','click', function(){
+			var herd = $(this).attr('herd');
+			self.core.trigger('changeHerdRequest', herd);
+		});
+		
 		$(this.options.name).change(function(){
 			self._updateName({data:{widget: self,name: $(this).val()}})
 		});
@@ -87,11 +88,13 @@ $.widget("cow.PeersWidget", {
 	},
 	_updateList: function(evt) {		
 		var self = evt.data.widget;
-		var xpeers = self.core.peers();
+		var peers = self.core.peers();
+		var herds = self.core.herds();
         var element = self.element;
-		var names = '';
+        
 		
-		$.each(xpeers,function(){
+        var names = '';
+		$.each(peers,function(){
 			if(this.uid==self.core.UID) {
 			names = names+ '<span class="peerlist me" title="this is you!" owner="'+this.uid+'">'+this.options.owner+'</span></br>';
 			}
@@ -99,9 +102,11 @@ $.widget("cow.PeersWidget", {
 			names = names+ '<span class="peerlist owner" title="click to see this peers view" owner="'+this.uid+'">'+this.options.owner+'</span></br>';
 			}
 		});
-		element.html(
-			names
-		);
+		names = names + "<h2>Herds</h2>";
+		$.each(herds,function(){
+		    names = names + '<span class="peerlist herd" title="click to activate this herd" herd="'+this.id+'">'+this.name+'</span></br>';
+		});
+		element.html(names);
 		
 	}
 	});

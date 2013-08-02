@@ -168,6 +168,15 @@ $.Cow.Peer.prototype = {
 		var self = evt.data.widget;
 		self.drawPosition(position);
 	},
+	_onParamsChanged: function(evt, payload){
+		//when I change my params, redraw my point and update lists
+		var herd = payload.herd;
+		var name = payload.name;
+		var self = evt.data.widget;
+		self.options.owner = name;
+		self.options.herd = herd;
+		//TODO redraw list and map
+	},
 	bind: function(types, data, fn) {
         var self = this;
 

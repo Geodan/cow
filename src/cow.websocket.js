@@ -6,7 +6,7 @@ $.Cow.Websocket.prototype = {
 	},
 	_onMessage: function(message) {
 		var core = this.obj.core;
-		//console.debug('message: '+message.data);
+		console.debug('message: '+message.data);
 		var data = JSON.parse(message.data);
 		var uid = data.uid;
 		var UID = core.UID; 
@@ -74,20 +74,26 @@ $.Cow.Websocket.prototype = {
 					this.obj._onPeerChangedLocation(payload,uid);
 				}
 			break;
+			//a peer has changed its params (name, herd)
+			case 'peerParamsChanged':
+				if(uid != UID) {
+					this.obj._onPeerChangedParams(payload,uid);
+				}
+			break;
 			
 			//a new object was drawn or updated by a peer
 			case 'newFeature':
 				if(uid != UID) {
 					var item = JSON.parse(payload);
-					var store = item.feature.properties.store || "store1";
-					core.getFeaturestoreByName(store).updateItem(item);
+					if (self.core.options.activeHerd == item.feature.properties.store)
+					    core.featurestore().updateItem(item);
 				}
 			break;
 			case 'updateFeature':
 				if(uid != UID) {
 					var item = JSON.parse(payload);
-					var store = item.feature.properties.store || "store1";
-					core.getFeaturestoreByName(store).updateItem(item);
+					if (self.core.options.activeHerd == item.feature.properties.store)
+					    core.featurestore().updateItem(item);
 				}
 			break;
 		}
@@ -140,7 +146,7 @@ $.Cow.Websocket.prototype = {
 		options.uid = this.core.UID;
 		options.cid = payload.cid;		
 		options.owner = name;
-		//options.herd = store.name;
+		options.herd = self.core.options.activeHerd;
 		options.family = 'alpha'; //used to check if client is able to act as alpha peer
 		var me = this.core.peers(options);
 		console.log('nr peers: '+this.core.peers().length);
@@ -148,21 +154,25 @@ $.Cow.Websocket.prototype = {
 		this.sendData(options,'newPeer');
 		
 		var sendFidList = function(){
-			$.each(core.featurestores(),function(i, store){
-				var fids = store.getIdList();
-				var message = {};
-				message.fids = fids;
-				message.storename = store.name;
-				self.core.websocket().sendData(message, "newPeerFidList");
-			});
+			var store = core.featurestore();
+            var fids = store.getIdList();
+            var message = {};
+            message.fids = fids;
+            message.storename = self.core.options.activeHerd;
+            self.core.websocket().sendData(message, "newPeerFidList");
+			
 		}
 		//TODO TT: at the moment we only check for 1 store to be loaded
-		if (this.core.featurestores()[0].loaded == true)
+		if (this.core.featurestore().loaded == true)
 			sendFidList();
 		else
 			setTimeout(sendFidList, 2000);
 			
 		
+	},
+	
+	_onDBLoaded: function(){
+	    
 	},
 	//You just joined and you get from each peer the relevant info
 	//Add it to your peerList
@@ -186,45 +196,47 @@ $.Cow.Websocket.prototype = {
 		}
 		else console.warn('badpeer');
 	},
-	_amIAlpha: function(id){ //find out wether I am alpha 
-		if (this.core.me().options.cid == id) //yes, I certainly am 
+	_amIAlpha: function(id,herd){ //find out wether I am alpha
+	    
+		if (this.core.me().options.cid == id && this.core.me().options.herd == herd) //yes, I certainly am (the oldest) and we're in the same herd 
 			return true;
-		else { //check again if lower peer turns out not to be from alpha family
-			id++;
+		else { //check again if younger peer turns out not to be from alpha family
+			id++; //or is not from my herd
 			var nextpeer = this.core.getPeerByCid(id);
-			if (nextpeer.options.family && nextpeer.options.family != 'alpha')
+			if ((nextpeer.options.family && nextpeer.options.family != 'alpha') ||
+			    (nextpeer.options.herd && nextpeer.options.herd != this.core.me().options.herd))
 				this._amIAlpha(id);	//I might still be alpha
 		}
 		return false;
 	},
 	_onNewPeerFidList: function(payload, uid) {
-		var self = this;
-		if (this._amIAlpha(0)){ //Check wether I'm alpha
+		var self = this; //TODO !! : alpha check must incorporate activeherd!!
+		if (this._amIAlpha(0, payload.storename)){ //Check wether I'm alpha 
 			console.log('I am alpha');
-			var storename = payload.storename || "store1";
-			var data = this.core.getFeaturestoreByName(storename).compareIdList(payload.fids);
-			var message = {};
-			//First the requestlist
-			message.requestlist = data.requestlist;
-			message.pushlist = []; //empty
-			message.storename = payload.storename;
-			this.sendData(message,'syncPeer',uid);
-			//Now the pushlist bit by bit
-			message.requestlist = []; //empty
-			var i = 0;
-			$.each(data.pushlist, function(id, item){
-					message.pushlist.push(item);
-					i++;
-					if (i >= 1) { //max 1 feat every time
-						i = 0;
-						self.sendData(message,'syncPeer',uid);
-						message.pushlist = []; //empty
-					}
-			});
-			//sent the remainder of the list
-			if (i > 0)
-				this.sendData(message,'syncPeer',uid);
-			
+			if (self.core.options.activeHerd == payload.storename){
+                var data = this.core.featurestore().compareIdList(payload.fids);
+                var message = {};
+                //First the requestlist
+                message.requestlist = data.requestlist;
+                message.pushlist = []; //empty
+                message.storename = payload.storename;
+                this.sendData(message,'syncPeer',uid);
+                //Now the pushlist bit by bit
+                message.requestlist = []; //empty
+                var i = 0;
+                $.each(data.pushlist, function(id, item){
+                        message.pushlist.push(item);
+                        i++;
+                        if (i >= 1) { //max 1 feat every time
+                            i = 0;
+                            self.sendData(message,'syncPeer',uid);
+                            message.pushlist = []; //empty
+                        }
+                });
+                //sent the remainder of the list
+                if (i > 0)
+                    this.sendData(message,'syncPeer',uid);
+			}
 		}
 	},
 	
@@ -233,28 +245,30 @@ $.Cow.Websocket.prototype = {
 	_onSyncPeer: function(payload,uid) {
 		var requested_fids = payload.requestlist;
 		var pushed_feats = payload.pushlist;
-		var storename = payload.storename || "store1";
-		var store = this.core.getFeaturestoreByName(storename);
-		//First sent the features that are asked for
-		if (requested_fids.length > 0){
-			var message = {};
-			message.features = store.requestFeatures(requested_fids);
-			message.storename = payload.storename;
-			this.sendData(message, 'requestedFeats');
-		}
-		//Now add the features that have been sent to the featurestore
-		if (pushed_feats.length > 0){
-			store.putFeatures(pushed_feats);
-		}
+		if (self.core.options.activeHerd == payload.storename){
+            var store = this.core.featurestore();
+            //First sent the features that are asked for
+            if (requested_fids.length > 0){
+                var message = {};
+                message.features = store.requestFeatures(requested_fids);
+                message.storename = payload.storename;
+                this.sendData(message, 'requestedFeats');
+            }
+            //Now add the features that have been sent to the featurestore
+            if (pushed_feats.length > 0){
+                store.putFeatures(pushed_feats);
+            }
+        }
 	},
 	//Peer sends back requested features, now store them
 	_onRequestedFeats: function(payload,uid) {
 		var requested_feats = payload;
-		var storename = payload.storename || "store1";
-		var store = this.core.getFeaturestoreByName(storename);
-		if (requested_feats.length > 0){
-			store.putFeatures(requested_feats);
-		}
+		if (self.core.mer().options.herd == payload.storename){
+            var store = this.core.featurestore();
+            if (requested_feats.length > 0){
+                store.putFeatures(requested_feats);
+            }
+        }
 	},
 	//A peer has disconnected, remove it from your peerList and
 	//send your new CID to the remaining peers
@@ -297,6 +311,16 @@ $.Cow.Websocket.prototype = {
 		}
 		else console.warn('badpeer');
 	},
+	//a peer has changed its parameters, reset its peer options
+	_onPeerChangedParams: function(payload, uid){
+		var peer = this.core.getPeerByUid(uid);
+		
+		if(peer !== undefined) {
+			peer.events.trigger('paramChange',payload);
+			//console.log('locationChange');
+		}
+		else console.warn('badpeer');
+	},
 	_onMapMoved: function(evt,extent) {
 		var self = evt.data.widget;
 		//if you initialise the map it gives a mapmove event, but core.me() is not yet finished
@@ -316,6 +340,17 @@ $.Cow.Websocket.prototype = {
 		message.position = position;
 		message.uid = self.core.UID;
 		self.sendData(message,'peerLocationChanged');
+	},
+	//my params changed, send update to world
+	_onParamsChanged: function(evt, payload) {
+		var self = evt.data.widget;
+		var name = payload.name;
+		var herd = payload.herd;
+		var message = {};
+		message.name = name;
+		message.herd = herd;
+		message.uid = self.core.UID;
+		self.sendData(message,'peerParamsChanged');
 	},
 	
 	bind: function(types, data, fn) {

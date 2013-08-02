@@ -7,31 +7,10 @@ https://github.com/axemclion/jquery-indexeddb/blob/gh-pages/docs/README.md
 
 //var localdbase = {
 $.Cow.LocalDbase.prototype = {
-    
-	init_db: function(dbname, tablename){
-	    this.options.tablename = tablename;
-        this.options.dbname = dbname;    
-	    var dbOpenPromise = $.indexedDB(dbname).objectStore(tablename, true);
-		// Simply open the database once so that it is created with the required tables
-		//var dbOpenPromise = $.indexedDB(dbname, {
-		//	"schema": {
-		//		"1": function(versionTransaction){
-		//			var catalog = versionTransaction.createObjectStore(tablename,{
-		//					"autoIncrement" : false,
-		//					"keyPath": "key"
-		//			});
-		//			versionTransaction.fail(function(err){console.log(err)});
-		//			tmp = versionTransaction;
-		//			catalog.createIndex("key");
-		//		}
-		//	}
-		//});
-		return dbOpenPromise;
-	},	
 	// Transfers features from database to arrays
 	loadFromDB: function(){
 		var core = this.core;
-		var tablename = this.options.tablename;
+		var tablename = core.options.activeHerd;
 		var dbname = this.options.dbname;
 		var store = $.indexedDB(dbname).objectStore(tablename,true); 
 		var myFeatureList = [];
@@ -50,7 +29,7 @@ $.Cow.LocalDbase.prototype = {
 		});    
 		iteration.done(function(){
 			//TODO TT: rewrite to trigger and remove storename
-			core.getFeaturestoreByName(tablename).fill(myFeatureList);
+			core.featurestore().fill(myFeatureList);
 		});
 		return iteration;
 	},
@@ -59,12 +38,13 @@ $.Cow.LocalDbase.prototype = {
 		$.indexedDB(this.options.dbname)
 		    .deleteDatabase();
 	},
-	emptyDB: function(table){
+	emptyDB: function(storename){
 		$.indexedDB(this.options.dbname)
-		    .objectStore(this.options.tablename)
+		    .objectStore(storename)
 		    .clear();
 	},
 	addFeat: function(evt){
+	    var core = this.core;
 		var newRecord = {};
 		newRecord.key = evt.key;
 		newRecord.uid = evt.uid;
@@ -73,7 +53,7 @@ $.Cow.LocalDbase.prototype = {
 		newRecord.status = evt.status;
 		newRecord.feature = evt.feature;
 		$.indexedDB(this.options.dbname)
-		    .objectStore(this.options.tablename,true)
+		    .objectStore(core.options.activeHerd,true)
 		    .put(newRecord)//Advantage of putting is that we overwrite old features with same key
 		    .fail(function(error){
 		            console.warn('Fail! ' + error);
@@ -83,15 +63,17 @@ $.Cow.LocalDbase.prototype = {
 	},
 	// Delete an item from featurestore
 	deleteFeat: function(itemId){
+	    var core = this.core;
 		$.indexedDB(this.options.dbname)
-		    .objectStore(this.options.tablename)["delete"](itemId)
+		    .objectStore(core.options.activeHerd)["delete"](itemId)
 		    .done(function(){
 				core.localdbase().loadFromDB();
 		});
 	},
 	update: function(item){
+	    var core = this.core;
 		$.indexedDB(this.options.dbname)
-		    .objectStore(this.options.tablename)
+		    .objectStore(core.options.storename)
 		    .each(function(elem) {
                 if (elem.key == item.key) {
                     elem.update(item);

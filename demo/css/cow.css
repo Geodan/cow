@@ -56,6 +56,11 @@ margin-top: 2px;
 .owner {
 	cursor: pointer;
 }
+
+.herd {
+	cursor: pointer;
+}
+
 .key {
 	cursor: pointer;
 }
