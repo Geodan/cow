@@ -167,6 +167,7 @@ $.Cow.LocalDbase = function(core, options) {
 	this.loaded = false;
 	this.core = core;
 	this.options = options;
+	this.options.dbname = "cow";
 	var iteration = self.loadFromDB();
 }
 /***

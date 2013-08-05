@@ -19,8 +19,6 @@ $.Cow.LocalDbase.prototype = {
 		var myFeatureList = [];
 		var iteration = $.indexedDB(dbname)
 		    .objectStore(tablename,this.storeOptions)
-		    .index("key")
-		    //.openCursor()
 		    .each(function(elem){
                     //array for use in map
                     var item = new Object();
@@ -37,6 +35,9 @@ $.Cow.LocalDbase.prototype = {
 		iteration.done(function(){
 			//TODO TT: rewrite to trigger and remove storename
 			core.featurestore().fill(myFeatureList);
+		});
+		iteration.fail(function(e){
+		    console.warn("Problem loading local indexeddb");        
 		});
 		return iteration;
 	},

@@ -197,22 +197,24 @@ $.Cow.Websocket.prototype = {
 		else console.warn('badpeer');
 	},
 	_amIAlpha: function(id,herd){ //find out wether I am alpha
-	    
-		if (this.core.me().options.cid == id && this.core.me().options.herd == herd) //yes, I certainly am (the oldest) and we're in the same herd 
-			return true;
-		else { //check again if younger peer turns out not to be from alpha family
-			id++; //or is not from my herd
-			var nextpeer = this.core.getPeerByCid(id);
-			if ((nextpeer.options.family && nextpeer.options.family != 'alpha') ||
-			    (nextpeer.options.herd && nextpeer.options.herd != this.core.me().options.herd))
-				this._amIAlpha(id);	//I might still be alpha
-		}
-		return false;
+	    if (this.core.me().options.herd == herd){ //I need to be part of the herd
+            if (this.core.me().options.cid == id) //yes, I certainly am (the oldest) 
+                return true;
+            else { //check again if younger peer turns out not to be from alpha family or not part of my herd
+                id++; 
+                var nextpeer = this.core.getPeerByCid(id);
+                if ((nextpeer.options.family && nextpeer.options.family != 'alpha') ||
+                    (nextpeer.options.herd && nextpeer.options.herd != this.core.me().options.herd))
+                    this._amIAlpha(id, herd);	//I might still be alpha
+            }
+            return false; //Not the oldest in the herd
+        }
+        else return false; //Not part of herd
 	},
 	_onNewPeerFidList: function(payload, uid) {
 		var self = this; //TODO !! : alpha check must incorporate activeherd!!
-		if (this._amIAlpha(0, payload.storename)){ //Check wether I'm alpha 
-			console.log('I am alpha');
+		//if (this._amIAlpha(0, payload.storename)){ //Check wether I'm alpha 
+			//console.log('I am alpha');
 			if (self.core.options.activeHerd == payload.storename){
                 var data = this.core.featurestore().compareIdList(payload.fids);
                 var message = {};
@@ -237,7 +239,7 @@ $.Cow.Websocket.prototype = {
                 if (i > 0)
                     this.sendData(message,'syncPeer',uid);
 			}
-		}
+		//}
 	},
 	
 	//The alpha peer sends a sync message including a list with new features and 
@@ -263,7 +265,7 @@ $.Cow.Websocket.prototype = {
 	//Peer sends back requested features, now store them
 	_onRequestedFeats: function(payload,uid) {
 		var requested_feats = payload;
-		if (self.core.mer().options.herd == payload.storename){
+		if (self.core.me().options.herd == payload.storename){
             var store = this.core.featurestore();
             if (requested_feats.length > 0){
                 store.putFeatures(requested_feats);
