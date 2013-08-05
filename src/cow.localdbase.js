@@ -10,23 +10,30 @@ $.Cow.LocalDbase.prototype = {
 	// Transfers features from database to arrays
 	loadFromDB: function(){
 		var core = this.core;
+		this.storeOptions = {
+            "autoIncrement" : false,
+            "keyPath": "key"
+		};
 		var tablename = core.options.activeHerd;
 		var dbname = this.options.dbname;
-		var store = $.indexedDB(dbname).objectStore(tablename,true); 
 		var myFeatureList = [];
-		var iteration = store.each(function(elem){
-			//array for use in map
-			var item = new Object();
-			item.key 	= elem.value.key 	
-			item.uid 	= elem.value.uid 	
-			item.created = elem.value.created 
-			item.updated = elem.value.updated
-			item.status = elem.value.status 
-			item.feature	= elem.value.feature
-			
-			if (item.feature.properties && item.feature.properties.key)
-				myFeatureList.push(item);
-		});    
+		var iteration = $.indexedDB(dbname)
+		    .objectStore(tablename,this.storeOptions)
+		    .index("key")
+		    //.openCursor()
+		    .each(function(elem){
+                    //array for use in map
+                    var item = new Object();
+                    item.key 	= elem.value.key 	
+                    item.uid 	= elem.value.uid 	
+                    item.created = elem.value.created 
+                    item.updated = elem.value.updated
+                    item.status = elem.value.status 
+                    item.feature	= elem.value.feature
+                    
+                    if (item.feature.properties && item.feature.properties.key)
+                        myFeatureList.push(item);
+                });    
 		iteration.done(function(){
 			//TODO TT: rewrite to trigger and remove storename
 			core.featurestore().fill(myFeatureList);
@@ -40,7 +47,7 @@ $.Cow.LocalDbase.prototype = {
 	},
 	emptyDB: function(storename){
 		$.indexedDB(this.options.dbname)
-		    .objectStore(storename)
+		    .objectStore(storename,this.storeOptions)
 		    .clear();
 	},
 	addFeat: function(evt){
@@ -53,7 +60,7 @@ $.Cow.LocalDbase.prototype = {
 		newRecord.status = evt.status;
 		newRecord.feature = evt.feature;
 		$.indexedDB(this.options.dbname)
-		    .objectStore(core.options.activeHerd,true)
+		    .objectStore(core.options.activeHerd,false)
 		    .put(newRecord)//Advantage of putting is that we overwrite old features with same key
 		    .fail(function(error){
 		            console.warn('Fail! ' + error);
@@ -73,7 +80,7 @@ $.Cow.LocalDbase.prototype = {
 	update: function(item){
 	    var core = this.core;
 		$.indexedDB(this.options.dbname)
-		    .objectStore(core.options.storename)
+		    .objectStore(core.options.storename,false)
 		    .each(function(elem) {
                 if (elem.key == item.key) {
                     elem.update(item);
