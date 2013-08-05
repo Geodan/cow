@@ -188,12 +188,16 @@ $.widget("cow.OlMapWidget", {
 				type: "path",
 				labels: true,
 				labelconfig: {
-					field: "owner"
+					field: "owner",
+					style: {
+					    color: "steelBlue"
+					}
 				},
 				style: {
 					fill: "none",
 					stroke: "steelBlue",
-					'stroke-width': 2
+					'stroke-width': 2,
+					textlocation: "ul"
 				}
 			});
 		};

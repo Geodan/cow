@@ -28,6 +28,7 @@ $.widget("cow.PeersWidget", {
 		core.bind("peerInfo", {widget: self}, self._onPeerInfo);
 		core.bind("newPeer", {widget: self}, self._onNewPeer);
 		core.bind("peerupdated", {widget: self}, self._onPeerUpdated);
+		core.bind("changeHerdRequest", {widget: self}, self._updateList);
 		
 		element.delegate('.owner','click', function(){
 			var owner = $(this).attr('owner');
@@ -39,6 +40,7 @@ $.widget("cow.PeersWidget", {
 		element.delegate('.herd','click', function(){
 			var herd = $(this).attr('herd');
 			self.core.trigger('changeHerdRequest', herd);
+			
 		});
 		
 		$(this.options.name).change(function(){
@@ -104,7 +106,12 @@ $.widget("cow.PeersWidget", {
 		});
 		names = names + "<h2>Herds</h2>";
 		$.each(herds,function(){
-		    names = names + '<span class="peerlist herd" title="click to activate this herd" herd="'+this.id+'">'+this.name+'</span></br>';
+		    if(this.id==self.core.options.activeHerd) {
+		        names = names + '<span class="peerlist me" title="this is your herd" herd="'+this.id+'">'+this.name+'</span></br>';
+		    }
+		    else {
+		        names = names + '<span class="peerlist herd" title="click to activate this herd" herd="'+this.id+'">'+this.name+'</span></br>';
+		    }
 		});
 		element.html(names);
 		

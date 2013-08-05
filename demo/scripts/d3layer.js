@@ -68,7 +68,8 @@ function d3layer(layername, config){
 		if (config.maptype == 'OpenLayers')
 			this.set_svg();
 				
-		var path = d3.geo.path().projection(this.project);
+		var geoPath = d3.geo.path().projection(this.project);
+		
 		
 		this.styling = function(d){ //A per feature styling method
 			for (var key in _this.style) { //First check for generic layer style
@@ -87,28 +88,70 @@ function d3layer(layername, config){
 			}
 		};
 		
+		this.textstyling = function(d){ //A per feature styling method
+			for (var key in _this.labelconfig.style) { //First check for generic layer style
+				d3.select(this).style(key,function(d){
+					if (d.labelconfig && d.labelconfig.style && d.labelconfig.style[key])
+						return d.labelconfig.style[key]; //Override with features style if present
+ 					else	
+						return _this.labelconfig.style[key]; //Apply generic style
+				});
+			};
+			//Now apply remaining styles of feature (possible doing a bit double work from previous loop)
+			if (d.labelconfig && d.labelconfig.style) { //If feature has style information
+				for (var key in d.labelconfig.style){ //run through the styles
+					d3.select(this).style(key,d.labelconfig.style[key]); //and apply them
+				}
+			}
+		};
+		
+		this.pathStyler = function(d){ //Some path specific styles (point radius, label placement eg.)
+		    if (d.style && d.style.radius)
+		        geoPath.pointRadius(d.style.radius);
+		    else if (_this.style && _this.style.radius)
+		        geoPath.pointRadius(_this.style.radius);
+		    
+		    d.textLocation = geoPath.centroid(d);
+		    var bounds = geoPath.bounds(d);
+		    if (_this.style && _this.style.textlocation){
+		        switch(_this.style.textlocation){
+		          case 'ul':
+		            d.textLocation[0] = bounds[0][0];
+		            d.textLocation[1] = bounds[0][1];
+		            break;
+		          case 'ur':
+		            d.textLocation[0] = bounds[1][0];
+		            d.textLocation[1] = bounds[1][1];
+		            break;
+		        }
+		    }
+		    else
+		        d.textLocation[1] = d.textLocation[1] + 20; //bit down..   
+
+		    return geoPath(d);
+		};
+		
 		f.data = function(collection){
 			if (config.maptype == 'OpenLayers')
 				_this.set_svg();
-			
-			
-			
-			if (_this.type == "path"){
+
+			if (_this.type == "path" || _this.type == "circle"){
 				loc = g.selectAll("path")
 					.data(collection.features, function(d){
 						return d.id;
 					});
 				f.feature = loc.enter().append("path")
-					.attr("d", path)
+					.attr("d", _this.pathStyler)
 					.classed("zoomable",true)
 					.each(_this.styling)
 				
 				locUpdate = loc.transition().duration(500)
-					.attr("d",path);
+					.attr("d",_this.pathStyler);
 				
 				loc.exit().remove();
 			}
-			else if (_this.type == "circle"){
+			/* Obs? we're now drawing points as circles via the path
+			else if (_this.type == "circlex"){
 				loc = g.selectAll("circle")
 				  .data(collection.features, function(d){return d.id;});
 				f.feature = loc.enter().append("circle")
@@ -131,6 +174,7 @@ function d3layer(layername, config){
 					;
 				loc.exit().remove();
 			}
+			*/
 			else if (_this.type == "marker"){
 				//Obs? f.collection = this.collection;
 				loc = g.selectAll("image")
@@ -145,8 +189,6 @@ function d3layer(layername, config){
 					//.attr("class",layername)
 					.classed("zoomable",true)
 					.each(_this.styling)
-				
-				
 					
 				locUpdate = loc
 					.transition().duration(100).ease("linear")			
@@ -166,16 +208,18 @@ function d3layer(layername, config){
 				
 					
 				var label = placeLabels.enter()
-					.append("g")
+					.append('g')
 					.attr('class', 'place-label')
 					;
 					
 				//On new:	
 				label
 					.append('text')
-					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0] ;})
-					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
-					.attr('text-anchor', 'middle')
+					//.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0] ;})
+					//.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
+					.attr("x",function(d) {return d.textLocation[0] ;})
+					.attr("y",function(d) {return d.textLocation[1] ;})
+					.attr('text-anchor', 'left')
 					.classed('zoomable',true)
 					.style('stroke','white')
 					.style('stroke-width','3px')
@@ -188,9 +232,11 @@ function d3layer(layername, config){
 					});
 				label
 					.append('text')
-					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0] ;})
-					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
-					.attr('text-anchor', 'middle')
+					.attr("x",function(d) {return d.textLocation[0] ;})
+					.attr("y",function(d) {return d.textLocation[1] ;})
+					.attr('text-anchor', 'left')
+					.each(_this.textstyling)
+					.classed('maintext',true)
 					.classed('zoomable',true)
 					.text(function(d) {
 							if (_this.labelconfig.field)
@@ -201,13 +247,16 @@ function d3layer(layername, config){
 					
 					//TODO: how about styling the labels?
 				//On update:
-				//TODO: WHY THIS DOESN"T WORK!??!?
-				placeLabels.selectAll('text')
-					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
-					.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
+				placeLabels
+				    .each(function(d,i){ //Need to make slightly difficult loop to get to text in <g> element
+				          d3.select(this).selectAll('text')
+				            .transition().duration(500)
+				            .attr("x",function(x) {return d.textLocation[0] ;})
+                            .attr("y",function(x) {return d.textLocation[1] ;})
+				    });
 					
-					
-				//On Exit:	
+				//On Exit:
+				
 				placeLabels.exit().remove();
 			}   
 			return f;
@@ -224,10 +273,10 @@ function d3layer(layername, config){
 				.attr("cy",function(d) {return _this.project(d.geometry.coordinates)[1];})
 		  	//g.attr("transform", "translate(" + -bottomLeft[0] + "," + -topRight[1] + ")");
 			g.selectAll(".zoomable")
-				.attr("d", path);
+				.attr("d", _this.pathStyler);
 			g.selectAll("text.zoomable")
-				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
-				.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
+				.attr("x",function(d) {return d.textLocation[0] ;})
+				.attr("y",function(d) {return d.textLocation[1] ;})
 			  	
 		}
 		
