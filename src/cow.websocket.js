@@ -119,8 +119,8 @@ $.Cow.Websocket.prototype = {
 		setTimeout(restart,5000);
 	},
 	_onError: function(event, error) {
-		alert(error);
-		console.log('error');
+		//alert(error);
+		console.warn('error: ' + event);
 	},
 	sendData: function(data, action, target){
 		//TODO: check if data is an object
