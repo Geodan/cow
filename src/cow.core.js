@@ -99,14 +99,6 @@ $.Cow.Websocket = function(core, options) {
     
 };
 
-    /* SMO: obsolete 7/8/2013
-    */
-//TODO TT: Is this the best place to initialize an item? 
-$.Cow.Item = function(core, options){
-    var self = this;
-    this.core = core;
-    this.options = options;
-};
 
 
 /**

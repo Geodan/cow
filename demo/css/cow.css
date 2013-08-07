@@ -196,3 +196,13 @@ border: solid 1px #2e3436 !important;
 .deleted {
 	text-decoration: line-through;
 }
+
+#videopanel {
+    position: absolute;
+    display: none;
+    left: 200px;
+    top: 200px;
+    height: 600px;
+    width: 600px;
+    padding: 10px;
+}

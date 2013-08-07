@@ -46,7 +46,7 @@ When adding items, those are returned.
     },
 	_addItem: function(options) {
 		var items = this.items();
-		var newitem = new $.Cow.Item(this, options);
+		var newitem = {"options": options};
 		this.itemList.push(newitem);
 		return newitem;
 	},

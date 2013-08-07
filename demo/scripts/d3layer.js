@@ -146,12 +146,15 @@ function d3layer(layername, config){
 			//On enter
 			var newentity = entities.enter()
 			    .append('g')
-			    .classed('entity',true);
+			    .classed('entity',true)			    
+			    
+			    ;
 			
 			if (_this.type == "path" || _this.type == "circle"){
 			    newentity.append("path")
 			        .classed("zoomable",true)
-			        .each(_this.styling);
+			        .each(_this.styling)
+			        ;
 			}
 			if (_this.labels){
 			    var label = newentity.append('g')
@@ -193,7 +196,9 @@ function d3layer(layername, config){
 			    if (_this.type == "path" || _this.type == "circle"){
 			        entity.select('path') //Only 1 path per entity
 			            .transition().duration(500)
-			            .attr("d",_this.pathStyler(d));
+			            .attr("d",_this.pathStyler(d))
+			            ;
+
 			    }
 			    if (_this.labels){
 			        entity.select('.place-label')
@@ -210,34 +215,9 @@ function d3layer(layername, config){
 			    }
 			});
 			//On exit	
-			entities.exit().remove();
+			entities.exit().remove().transition().duration(500);
 			
-			
-			/* Obs? we're now drawing points as circles via the path
-			else if (_this.type == "circlex"){
-				loc = g.selectAll("circle")
-				  .data(collection.features, function(d){return d.id;});
-				f.feature = loc.enter().append("circle")
-					.attr("cx",function(d) {return _this.project(d.geometry.coordinates)[0]})
-					.attr("cy",function(d) { return _this.project(d.geometry.coordinates)[1]})
-					.attr("r",10)
-					//.attr("class",layername)
-					.classed("zoomable",true)
-					.each(_this.styling)
-				
-				//Apply styles
-				//for (var key in _this.style) {
-				//		f.feature.style(key,_this.style[key]);
-				//};
-				
-				locUpdate = loc
-					.transition().duration(100).ease("linear")			
-					.attr("cx",function(d) {return _this.project(d.geometry.coordinates)[0]})
-					.attr("cy",function(d) { return _this.project(d.geometry.coordinates)[1]})
-					;
-				loc.exit().remove();
-			}
-			
+			/* Markers disabled, need to incorporate in path
 			else if (_this.type == "marker"){
 				//Obs? f.collection = this.collection;
 				loc = g.selectAll("image")
@@ -266,15 +246,7 @@ function d3layer(layername, config){
 		var reset = function() {
 			if (config.maptype == 'OpenLayers')
 				_this.set_svg();
-			console.log('reset');
-			//g.selectAll("image.zoomable")
-			//	.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
-			//	.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1];})
-			//g.selectAll("circle.zoomable")
-			//	.attr("cx",function(d) {return _this.project(d.geometry.coordinates)[0];})
-			//	.attr("cy",function(d) {return _this.project(d.geometry.coordinates)[1];})
-		  	//g.attr("transform", "translate(" + -bottomLeft[0] + "," + -topRight[1] + ")");
-		  	
+
 			g.selectAll(".entity")
 			    .each(function(d,i){
 			        var entity = d3.select(this);
@@ -295,7 +267,6 @@ function d3layer(layername, config){
                             })
                     }
 			    });
-			
 		}
 		
 		core.bind("moveend", reset); //Redraw after mapmoved

@@ -198,7 +198,7 @@ $.widget("cow.OlMapWidget", {
 				labelconfig: {
 					field: "owner",
 					style: {
-					    color: "steelBlue"
+					    stroke: "steelBlue"
 					}
 				},
 				style: {
@@ -212,24 +212,24 @@ $.widget("cow.OlMapWidget", {
 		map.addLayer(myd3layer);
 		self.core.viewlyr = self.viewlyr;//FOR DEBUG
 		
-		//var myLocationLayer = new OpenLayers.Layer.Vector('d3layer');
-		//myLocationLayer.afterAdd = function () {
-		//	var divid = myLocationLayer.div.id;
-		//	self.locationlyr = new d3layer("locationlayer",{
-		//		maptype: "OpenLayers",
-		//		divid:divid,
-		//		map: self.map,
-		//		type: "circle",
-		//		labels: true,
-		//		labelconfig: {
-		//			field:"owner"
-		//		},
-		//		style: {
-		//			fill: "steelBlue"
-		//		}
-		//	});
-		//};
-		//map.addLayer(myLocationLayer);
+		var myLocationLayer = new OpenLayers.Layer.Vector('d3layer');
+		myLocationLayer.afterAdd = function () {
+			var divid = myLocationLayer.div.id;
+			self.locationlyr = new d3layer("locationlayer",{
+				maptype: "OpenLayers",
+				divid:divid,
+				map: self.map,
+				type: "circle",
+				labels: true,
+				labelconfig: {
+					field:"owner"
+				},
+				style: {
+					fill: "steelBlue"
+				}
+			});
+		};
+		map.addLayer(myLocationLayer);
 		
 
 		var self = this;
