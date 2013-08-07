@@ -50,6 +50,7 @@ $.widget("cow.PeersWidget", {
             $('#videopanel').show();
             
             mc = self.peer1.call(owner, ls);
+            tmp = mc;
             mc.on('stream', function(s){
                 window.remote = s;
                   z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('#videoplace');
@@ -91,6 +92,7 @@ $.widget("cow.PeersWidget", {
       self.peer1 = new Peer(self.core.UID, { key: 'lwjd5qra8257b9', debug: true });
       
       self.peer1.on('call', function(c){
+        
         c.answer(s);
         c.on('stream', function(s){
           $('#videopanel').show();
@@ -106,6 +108,8 @@ $.widget("cow.PeersWidget", {
 	console.log('_onDisconnect');
 		var self = evt.data.widget;
 		self._updateList(evt);
+		//Peerjs stuff
+		self.peer1.destroy();
 	},
 	_onPeerGone: function(evt) {
 	console.log('_onPeerGone');
