@@ -12,16 +12,21 @@ $.Cow.Core = function(element, options) {
 	var self = this;
 	var time = new Date();
 	this.UID = time.getTime(); 
-	this.MYLOCATION = "My location";
+	/* SMO: obsolete 7/8/2013
+    this.MYLOCATION = "My location";
 	this.LOCATION_ICON = './mapicons/male.png';
 	this.MYLOCATION_ICON = './mapicons/you-are-here-2.png';
 	this.current_icon;
+    */
 	this.options = $.extend({}, new $.fn.cow.defaults.core(), options);
 	this.element = element;
 	this.map = window[this.options.map];
 	this.ws ={};
 	this.peerList = [];
+    /* SMO: obsolete 7/8/2013
 	this.herdList = [{id:0,name:"sketch"},{id:1,name:"test"}]; //Altijd initiele sketch herd aanwezig
+    */
+    this.herdList = [{id:0,name:"sketch"}];
 	this.options.activeHerd = this.herdList[0].id;
 	this.localDbase;
 	this.geoLocator;
@@ -42,6 +47,7 @@ $.Cow.Core = function(element, options) {
 	element.data('cow', this);
 	self.bind("disconnected", {widget: self}, self.removeAllPeers);
 	
+    //TODO: put this in a proper function
 	self.bind('changeHerdRequest', {widget:self}, function(e,id){
 	        self.featurestore().clear(); //Clear featurestore
 	        self.me().options.herd = id;
@@ -93,12 +99,15 @@ $.Cow.Websocket = function(core, options) {
 	
 };
 
+    /* SMO: obsolete 7/8/2013
+    
 //TODO TT: Is this the best place to initialize an item? 
 $.Cow.Item = function(core, options){
 	var self = this;
 	this.core = core;
 	this.options = options;
 };
+*/
 
 /**
 #Cow.Herd
