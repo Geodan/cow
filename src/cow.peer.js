@@ -87,7 +87,7 @@ $.Cow.Peer.prototype = {
             }            
         var point = geojson_format.read(p);
         this.params.point = point;
-        self.core.trigger("peerExtentChanged", core.getPeerCollection());
+        self.core.trigger("peerExtentChanged", core.getPeerExtents());
     },
     
     _bbox2view: function(bbox) {
@@ -109,14 +109,7 @@ $.Cow.Peer.prototype = {
                 }
         return feature;
     },
-    _onMoved: function(evt,payload) {
-        var self = evt.data.widget;
-        //console.log('peerupdated');
-        self.core.trigger('peerupdated');
-        //TODO: options worden niet automatisch bijgewerkt
-        self.options.owner = payload.owner;
-        self.extent(payload.extent);    
-    },
+    
     drawPosition: function(position){
         
         var uid = this.uid;
@@ -161,6 +154,17 @@ $.Cow.Peer.prototype = {
             "properties": attributes
         };
         self.core.trigger("peerPositionChanged", core.getPeerPositions());
+    },
+    
+    _onUpdatePeer: function(evt, payload) {
+    },
+    _onMoved: function(evt,payload) {
+        var self = evt.data.widget;
+        //console.log('peerupdated');
+        self.core.trigger('peerupdated');
+        //TODO: options worden niet automatisch bijgewerkt
+        self.options.owner = payload.owner;
+        self.extent(payload.extent);    
     },
     _onLocationChanged: function(evt, payload){
         //when I change my location, redraw my point

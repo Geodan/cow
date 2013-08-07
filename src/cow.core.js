@@ -100,14 +100,14 @@ $.Cow.Websocket = function(core, options) {
 };
 
     /* SMO: obsolete 7/8/2013
-    
+    */
 //TODO TT: Is this the best place to initialize an item? 
 $.Cow.Item = function(core, options){
     var self = this;
     this.core = core;
     this.options = options;
 };
-*/
+
 
 /**
 #Cow.Herd
@@ -140,12 +140,22 @@ $.Cow.Peer = function(core, options) {
     this.params = {};
     this.viewfeature;
     this.events = $({});
+    
+    this.events.bind('updatePeer', {widget: self}, self._onUpdatePeer);
+    /* SMO: obsolete 7/8/2013
+    //Someone moved
     this.events.bind('peerMoved', {widget:self}, self._onMoved);
+    
     this.events.bind('updatePeer', {widget:self}, self._onMoved);
+    
+    //my physical position changed
     this.events.bind('mylocationChange', {widget:self}, self._onLocationChanged);
+    //someone's physical position changed
     this.events.bind('locationChange', {widget:self}, self._onLocationChanged);
+    //someone changed other metadata
     this.events.bind('paramChange', {widget:self}, self._onParamsChanged);
-    /*this.uid;
+    
+    this.uid;
     this.cid;
     this.name;
     this.extent;*/
@@ -394,9 +404,9 @@ When adding peers, those are returned.
         return peer;
     },
     //Return feature collection of peer view extents
-    getPeerCollection: function() {
+    getPeerExtents: function() {
         var collection = {"type":"FeatureCollection","features":[]};
-        $.each(core.peerList, function(){
+        $.each(core.peers(), function(){
             if (this.params.viewfeature.id != self.core.me().uid)
             collection.features.push(this.params.viewfeature);
         });
@@ -405,7 +415,7 @@ When adding peers, those are returned.
     //Return feature collection of peer positions
     getPeerPositions: function(){
         var collection = {"type":"FeatureCollection","features":[]};
-        $.each(core.peerList, function(){
+        $.each(core.peers(), function(){
             if (this.params.pointfeature)
                 collection.features.push(this.params.pointfeature);
         });
