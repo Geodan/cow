@@ -78,7 +78,7 @@ $.Cow.Websocket = function(core, options) {
 		}
 	}
 	this.core.bind('moveend', {widget: self}, self._onMapMoved);
-	this.core.bind('locationChange', {widget:self}, self._onLocationChanged);
+	this.core.bind('mylocationChange', {widget:self}, self._onLocationChanged);
 	this.core.bind('paramChange', {widget:self}, self._onParamsChanged);
 	
 	//SMO: waarom?
@@ -133,6 +133,7 @@ $.Cow.Peer = function(core, options) {
 	this.events = $({});
 	this.events.bind('peerMoved', {widget:self}, self._onMoved);
 	this.events.bind('updatePeer', {widget:self}, self._onMoved);
+	this.events.bind('mylocationChange', {widget:self}, self._onLocationChanged);
 	this.events.bind('locationChange', {widget:self}, self._onLocationChanged);
 	this.events.bind('paramChange', {widget:self}, self._onParamsChanged);
 	/*this.uid;

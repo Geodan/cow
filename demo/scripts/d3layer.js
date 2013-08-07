@@ -110,46 +110,109 @@ function d3layer(layername, config){
 		        geoPath.pointRadius(d.style.radius);
 		    else if (_this.style && _this.style.radius)
 		        geoPath.pointRadius(_this.style.radius);
-		    
-		    d.textLocation = geoPath.centroid(d);
+
+		    return geoPath(d);
+		};
+		
+		this.textLocation = function(d){
+		    var textLocation = geoPath.centroid(d);
 		    var bounds = geoPath.bounds(d);
 		    if (_this.style && _this.style.textlocation){
 		        switch(_this.style.textlocation){
 		          case 'ul':
-		            d.textLocation[0] = bounds[0][0];
-		            d.textLocation[1] = bounds[0][1];
+		            textLocation[0] = bounds[0][0];
+		            textLocation[1] = bounds[0][1];
+		            console.log("Styler: " + textLocation);
 		            break;
 		          case 'ur':
-		            d.textLocation[0] = bounds[1][0];
-		            d.textLocation[1] = bounds[1][1];
+		            textLocation[0] = bounds[1][0];
+		            textLocation[1] = bounds[1][1];
 		            break;
 		        }
 		    }
 		    else
-		        d.textLocation[1] = d.textLocation[1] + 20; //bit down..   
-
-		    return geoPath(d);
-		};
+		        textLocation[1] = textLocation[1] + 20; //a bit down..
+		    return textLocation;
+		}
 		
 		f.data = function(collection){
 			if (config.maptype == 'OpenLayers')
 				_this.set_svg();
 
+			//Create a 'g' element first, in case we need to bind more then 1 elements to a data entry
+			var entities = g.selectAll(".entity")
+			    .data(collection.features, function(d){return d.id;});
+			
+			//On enter
+			var newentity = entities.enter()
+			    .append('g')
+			    .classed('entity',true);
+			
 			if (_this.type == "path" || _this.type == "circle"){
-				loc = g.selectAll("path")
-					.data(collection.features, function(d){
-						return d.id;
-					});
-				f.feature = loc.enter().append("path")
-					.attr("d", _this.pathStyler)
-					.classed("zoomable",true)
-					.each(_this.styling)
-				
-				locUpdate = loc.transition().duration(500)
-					.attr("d",_this.pathStyler);
-				
-				loc.exit().remove();
+			    newentity.append("path")
+			        .classed("zoomable",true)
+			        .each(_this.styling);
 			}
+			if (_this.labels){
+			    var label = newentity.append('g')
+			        .classed('place-label',true);
+			    //On new:	
+				label
+					.append('text')
+					.attr("x",function(d) {return _this.textLocation(d)[0] ;})
+					.attr("y",function(d) {return _this.textLocation(d)[1] ;})
+					.classed("zoomable",true)
+					.attr('text-anchor', 'left')
+					.style('stroke','white')
+					.style('stroke-width','3px')
+					.style('stroke-opacity',.8)
+					.text(function(d) {
+							if (_this.labelconfig.field)
+								return d.properties[_this.labelconfig.field];
+							else
+								return d.id; 
+					});
+				label
+					.append('text')
+					.attr("x",function(d) {return _this.textLocation(d)[0] ;})
+					.attr("y",function(d) {return _this.textLocation(d)[1] ;})
+					.classed("zoomable",true)
+					.attr('text-anchor', 'left')
+					.each(_this.textstyling)
+					.text(function(d) {
+							if (_this.labelconfig.field)
+								return d.properties[_this.labelconfig.field];
+							else
+								return d.id; 
+					})
+			} //End of new label
+
+			//On update
+			entities.each(function(d,i){
+			    var entity = d3.select(this);
+			    if (_this.type == "path" || _this.type == "circle"){
+			        entity.select('path') //Only 1 path per entity
+			            .transition().duration(500)
+			            .attr("d",_this.pathStyler(d));
+			    }
+			    if (_this.labels){
+			        entity.select('.place-label')
+                        .selectAll('text')
+                        .transition().duration(500)
+                        .attr("x", _this.textLocation(d)[0] )
+                        .attr("y", _this.textLocation(d)[1] )
+                        .text(function(foo) {
+                            if (_this.labelconfig.field)
+                                return d.properties[_this.labelconfig.field];
+                            else
+                                return d.id; 
+                        })
+			    }
+			});
+			//On exit	
+			entities.exit().remove();
+			
+			
 			/* Obs? we're now drawing points as circles via the path
 			else if (_this.type == "circlex"){
 				loc = g.selectAll("circle")
@@ -174,7 +237,7 @@ function d3layer(layername, config){
 					;
 				loc.exit().remove();
 			}
-			*/
+			
 			else if (_this.type == "marker"){
 				//Obs? f.collection = this.collection;
 				loc = g.selectAll("image")
@@ -197,91 +260,45 @@ function d3layer(layername, config){
 					;
 				loc.exit().remove();
 			}
-			
-			if (_this.labels){
-				// Append the place labels, setting their initial positions to
-				// the feature's centroid
-				var placeLabels = g.selectAll('.place-label')
-					.data(collection.features, function(d){
-						return d.id;
-				});
-				
-					
-				var label = placeLabels.enter()
-					.append('g')
-					.attr('class', 'place-label')
-					;
-					
-				//On new:	
-				label
-					.append('text')
-					//.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0] ;})
-					//.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1] +20;})
-					.attr("x",function(d) {return d.textLocation[0] ;})
-					.attr("y",function(d) {return d.textLocation[1] ;})
-					.attr('text-anchor', 'left')
-					.classed('zoomable',true)
-					.style('stroke','white')
-					.style('stroke-width','3px')
-					.style('stroke-opacity',.8)
-					.text(function(d) {
-							if (_this.labelconfig.field)
-								return d.properties[_this.labelconfig.field];
-							else
-								return d.id; 
-					});
-				label
-					.append('text')
-					.attr("x",function(d) {return d.textLocation[0] ;})
-					.attr("y",function(d) {return d.textLocation[1] ;})
-					.attr('text-anchor', 'left')
-					.each(_this.textstyling)
-					.classed('maintext',true)
-					.classed('zoomable',true)
-					.text(function(d) {
-							if (_this.labelconfig.field)
-								return d.properties[_this.labelconfig.field];
-							else
-								return d.id; 
-					})
-					
-					//TODO: how about styling the labels?
-				//On update:
-				placeLabels
-				    .each(function(d,i){ //Need to make slightly difficult loop to get to text in <g> element
-				          d3.select(this).selectAll('text')
-				            .transition().duration(500)
-				            .attr("x",function(x) {return d.textLocation[0] ;})
-                            .attr("y",function(x) {return d.textLocation[1] ;})
-				    });
-					
-				//On Exit:
-				
-				placeLabels.exit().remove();
-			}   
+			*/
 			return f;
         }
 		var reset = function() {
 			if (config.maptype == 'OpenLayers')
 				_this.set_svg();
-	
-			g.selectAll("image.zoomable")
-				.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
-				.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1];})
-			g.selectAll("circle.zoomable")
-				.attr("cx",function(d) {return _this.project(d.geometry.coordinates)[0];})
-				.attr("cy",function(d) {return _this.project(d.geometry.coordinates)[1];})
+			console.log('reset');
+			//g.selectAll("image.zoomable")
+			//	.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0];})
+			//	.attr("y",function(d) {return _this.project(d.geometry.coordinates)[1];})
+			//g.selectAll("circle.zoomable")
+			//	.attr("cx",function(d) {return _this.project(d.geometry.coordinates)[0];})
+			//	.attr("cy",function(d) {return _this.project(d.geometry.coordinates)[1];})
 		  	//g.attr("transform", "translate(" + -bottomLeft[0] + "," + -topRight[1] + ")");
-			g.selectAll(".zoomable")
-				.attr("d", _this.pathStyler);
-			g.selectAll("text.zoomable")
-				.attr("x",function(d) {return d.textLocation[0] ;})
-				.attr("y",function(d) {return d.textLocation[1] ;})
-			  	
+		  	
+			g.selectAll(".entity")
+			    .each(function(d,i){
+			        var entity = d3.select(this);
+			        if (_this.type == "path" || _this.type == "circle"){
+                        entity.select('path') //Only 1 path per entity
+                            .attr("d",_this.pathStyler(d));
+                    }
+                     if (_this.labels){
+                        entity.select('.place-label')
+                            .selectAll('text')
+                            .attr("x", _this.textLocation(d)[0] )
+                            .attr("y", _this.textLocation(d)[1] )
+                            .text(function(foo) {
+                                if (_this.labelconfig.field)
+                                    return d.properties[_this.labelconfig.field];
+                                else
+                                    return d.id; 
+                            })
+                    }
+			    });
+			
 		}
 		
-		core.bind("moveend", reset);
-		core.events.bind("locationChange", reset);
+		core.bind("moveend", reset); //Redraw after mapmoved
 		reset();
 		return f;
 	}

@@ -21,8 +21,8 @@ $.Cow.GeoLocator.prototype = {
 				var payload = {};
 				payload.uid = self.core.UID;
 				payload.position = position;
-				peer.events.trigger('locationChange', [payload]);
-				self.core.trigger('locationChange', [payload]);
+				peer.events.trigger('mylocationChange', [payload]);
+				self.core.trigger('mylocationChange', [payload]);
 			}
 	},
 	_showError: function(error){
@@ -54,12 +54,12 @@ $.Cow.GeoLocator.prototype = {
   				maximumAge: 5000
 			} 
 		);
-		//window.setTimeout( function () {
-		//		console.log('Stop polling geolocation');
-		//		window.navigator.geolocation.clearWatch( geolocationid ) 
-		//	}, 
-		//	5000 //stop checking after 10 seconds
-		//);
+		window.setTimeout( function () {
+				console.log('Stop polling geolocation');
+				window.navigator.geolocation.clearWatch( geolocationid ) 
+			}, 
+			5000 //stop checking after 5 seconds
+		);
 	},
 	getLocation: function(){
 		self = this;
@@ -67,11 +67,11 @@ $.Cow.GeoLocator.prototype = {
 		if (navigator.geolocation)
 		{
 			this._setGeoLocation();//first one
-			//window.setTimeout( function () {
-			//	self._setGeoLocation();
-			//	}, 
-			//	10000 //check every 10 seconds
-			//);
+			window.setInterval( function () {
+				self._setGeoLocation();
+				}, 
+				10000 //check every 10 seconds
+			);
 		}
 	  else{alert("Geolocation is not supported by this browser.")}
 	}

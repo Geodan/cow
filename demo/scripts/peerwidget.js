@@ -30,7 +30,14 @@ $.widget("cow.PeersWidget", {
 		core.bind("peerupdated", {widget: self}, self._onPeerUpdated);
 		core.bind("changeHerdRequest", {widget: self}, self._updateList);
 		
-		element.delegate('.owner','click', function(){
+		element.delegate('.location','click', function(){
+			var owner = $(this).attr('owner');
+			var peer = core.getPeerByUid(owner);
+			var location = peer.options.position;
+			self.core.trigger('zoomToPeerslocationRequest', location);
+		});
+		
+		element.delegate('.extent','click', function(){
 			var owner = $(this).attr('owner');
 			var peer = core.getPeerByUid(owner);
 			var bbox = peer.extent();
@@ -98,10 +105,10 @@ $.widget("cow.PeersWidget", {
         var names = '';
 		$.each(peers,function(){
 			if(this.uid==self.core.UID) {
-			names = names+ '<span class="peerlist me" title="this is you!" owner="'+this.uid+'">'+this.options.owner+'</span></br>';
+			names = names+ '<span class="peerlist me" title="this is you!" owner="'+this.uid+'">'+this.options.owner+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png"></span></br>';
 			}
 			else {
-			names = names+ '<span class="peerlist owner" title="click to see this peers view" owner="'+this.uid+'">'+this.options.owner+'</span></br>';
+			names = names+ '<span class="peerlist owner" title="click to see this peers view" owner="'+this.uid+'">'+this.options.owner+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png"></span></br>';
 			}
 		});
 		names = names + "<h2>Herds</h2>";

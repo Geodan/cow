@@ -53,8 +53,13 @@ margin-top: 2px;
 	font-weight: 500;
 	color: #f57900;
 }
-.owner {
-	cursor: pointer;
+
+.location {
+    cursor: pointer;
+}
+
+.extent {
+    cursor: pointer;
 }
 
 .herd {

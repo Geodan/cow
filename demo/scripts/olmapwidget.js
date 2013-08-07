@@ -58,7 +58,7 @@ $.widget("cow.OlMapWidget", {
 		core.bind("peerPositionChanged", {widget: self},self._drawPositions);
 		core.bind("layoutChanged", {widget: self},self._updateSize);
 		core.bind("zoomToPeersviewRequest", {widget: self},self._zoomToPeersView);
-		
+		core.bind("zoomToPeerslocationRequest", {widget: self},self._zoomToPeersLocation);
 		
 		//openlayers stuff
 		this.map = new OpenLayers.Map("map");
@@ -139,7 +139,15 @@ $.widget("cow.OlMapWidget", {
         rt.transform(fromproj, toproj);
         self.map.zoomToExtent([lb.lon,lb.lat,rt.lon,rt.lat]);
 	},
-	
+	_zoomToPeersLocation: function(evt, location){
+	    var self = evt.data.widget;
+	    var loc = new OpenLayers.LonLat(location.coords.longitude,location.coords.latitude);
+	    var fromproj = new OpenLayers.Projection("EPSG:4326");
+        var toproj = new OpenLayers.Projection("EPSG:900913");
+        loc.transform(fromproj, toproj);
+	    self.map.setCenter(loc,14,true,true);
+	    //TODO: trigger an update for d3 layers
+	},
 	_drawPositions: function(evt, collection) {
 		var self = evt.data.widget;
 		//apply some styling to collection
@@ -204,24 +212,24 @@ $.widget("cow.OlMapWidget", {
 		map.addLayer(myd3layer);
 		self.core.viewlyr = self.viewlyr;//FOR DEBUG
 		
-		var myLocationLayer = new OpenLayers.Layer.Vector('d3layer');
-		myLocationLayer.afterAdd = function () {
-			var divid = myLocationLayer.div.id;
-			self.locationlyr = new d3layer("locationlayer",{
-				maptype: "OpenLayers",
-				divid:divid,
-				map: self.map,
-				type: "circle",
-				labels: true,
-				labelconfig: {
-					field:"owner"
-				},
-				style: {
-					fill: "steelBlue"
-				}
-			});
-		};
-		map.addLayer(myLocationLayer);
+		//var myLocationLayer = new OpenLayers.Layer.Vector('d3layer');
+		//myLocationLayer.afterAdd = function () {
+		//	var divid = myLocationLayer.div.id;
+		//	self.locationlyr = new d3layer("locationlayer",{
+		//		maptype: "OpenLayers",
+		//		divid:divid,
+		//		map: self.map,
+		//		type: "circle",
+		//		labels: true,
+		//		labelconfig: {
+		//			field:"owner"
+		//		},
+		//		style: {
+		//			fill: "steelBlue"
+		//		}
+		//	});
+		//};
+		//map.addLayer(myLocationLayer);
 		
 
 		var self = this;
