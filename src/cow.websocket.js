@@ -298,7 +298,9 @@ $.Cow.Websocket.prototype = {
     _onPeerMoved: function(payload,uid) {
         var peer = this.core.getPeerByUid(uid);
         if(peer !== undefined) {
-            peer.events.trigger('peerMoved',payload);
+            //SMO event refab
+            //peer.events.trigger('peerMoved',payload);
+            peer.events.trigger('updatePeer',payload);
             //console.log('peerMoved');
         }
         else console.warn('badpeer');
@@ -308,7 +310,9 @@ $.Cow.Websocket.prototype = {
         var peer = this.core.getPeerByUid(uid);
         
         if(peer !== undefined) {
-            peer.events.trigger('locationChange',payload);
+            //SMO event refab
+            //peer.events.trigger('locationChange',payload);
+            peer.events.trigger('updatePeer',payload);
             //console.log('locationChange');
         }
         else console.warn('badpeer');
@@ -318,7 +322,9 @@ $.Cow.Websocket.prototype = {
         var peer = this.core.getPeerByUid(uid);
         
         if(peer !== undefined) {
-            peer.events.trigger('paramChange',payload);
+            //SMO event refab
+            //peer.events.trigger('paramChange',payload);
+            peer.events.trigger('updatePeer',payload);
             //console.log('locationChange');
         }
         else console.warn('badpeer');
