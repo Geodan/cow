@@ -36,7 +36,10 @@
   <script src="scripts/d3layer.js" type="text/javascript"></script>
   
   <!-- Peerjs -->
+  <!--
   <script src="http://cdn.peerjs.com/0/peer.min.js"></script>
+  -->
+  <script type="text/javascript" src="/main/peerjs/peerjs/dist/peer.js"></script>
   
   <link rel="stylesheet" type="text/css" href="css/cow.css" />	
   <link rel="stylesheet" type="text/css" media="screen" href="css/screen.css" />
@@ -86,7 +89,7 @@ var geojson_format = new OpenLayers.Format.GeoJSON();
 var core;
   
 $(document).ready(function(){
-    $('#cow').cow({
+  $('#cow').cow({
     activeHerd: 0,
     websocket: {url: 'wss://websocket.geodan.nl:443/'},
     featurestore: {},
@@ -101,6 +104,7 @@ $(document).ready(function(){
   $('#peers').PeersWidget({core: '#cow',name:'#myname'});
   $('#features').FeaturesWidget({core: '#cow'});
   $('#newfeatpanel').NewFeatureWidget({core: '#cow'});
+
      
 });
  
@@ -147,7 +151,11 @@ $(document).ready(function(){
 
   </div>
   <div id="cow"></div>	
-  <div id="help" ></div>	
+  <div id="help" ></div>
+  <div id="videopanel">
+    <h2>Video:</h2>
+    <div id="videoplace"></div>
+   </div>
   </body>
 </html>
 

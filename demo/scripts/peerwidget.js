@@ -44,6 +44,18 @@ $.widget("cow.PeersWidget", {
 			self.core.trigger('zoomToPeersviewRequest', bbox);
 		});
 		
+		//Preliminary peerjs video connection
+		element.delegate('.videoconnection','click', function(){
+            var owner = $(this).attr('owner');
+            $('#videopanel').show();
+            
+            mc = self.peer1.call(owner, ls);
+            mc.on('stream', function(s){
+                window.remote = s;
+                  z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('#videoplace');
+              });
+         });
+		
 		element.delegate('.herd','click', function(){
 			var herd = $(this).attr('herd');
 			self.core.trigger('changeHerdRequest', herd);
@@ -70,6 +82,25 @@ $.widget("cow.PeersWidget", {
 	console.log('_onConnect');
 		var self = evt.data.widget;
 		self._updateList(evt);
+		
+	//Doing some preliminary peerjs stuff..
+	navigator.webkitGetUserMedia({audio: true, video: true}, function(s){
+      window.ls = s;
+      // Create a new Peer with our demo API key, with debug set to true so we can
+      // see what's going on.
+      self.peer1 = new Peer(self.core.UID, { key: 'lwjd5qra8257b9', debug: true });
+      
+      self.peer1.on('call', function(c){
+        c.answer(s);
+        c.on('stream', function(s){
+          $('#videopanel').show();
+          window.s = s;
+          z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('#videoplace');
+        });
+      });
+    }, function(){});
+		
+		
 	},
 	_onDisconnect: function(evt) {
 	console.log('_onDisconnect');
@@ -108,7 +139,7 @@ $.widget("cow.PeersWidget", {
 			names = names+ '<span class="peerlist me" title="this is you!" owner="'+this.uid+'">'+this.options.owner+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png"></span></br>';
 			}
 			else {
-			names = names+ '<span class="peerlist owner" title="click to see this peers view" owner="'+this.uid+'">'+this.options.owner+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png"></span></br>';
+			names = names+ '<span class="peerlist owner" title="click to see this peers view" owner="'+this.uid+'">'+this.options.owner+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png"><span class="videoconnection" owner="'+this.uid+'">Video</span></span></br>';
 			}
 		});
 		names = names + "<h2>Herds</h2>";
