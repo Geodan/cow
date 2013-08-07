@@ -9,51 +9,57 @@ The Cow.Core object. It is automatically constructed from the options
 given in the `cow([options])` constructor. 
  */
 $.Cow.Core = function(element, options) {
-	var self = this;
-	var time = new Date();
-	this.UID = time.getTime(); 
-	this.MYLOCATION = "My location";
-	this.LOCATION_ICON = './mapicons/male.png';
-	this.MYLOCATION_ICON = './mapicons/you-are-here-2.png';
-	this.current_icon;
-	this.options = $.extend({}, new $.fn.cow.defaults.core(), options);
-	this.element = element;
-	this.map = window[this.options.map];
-	this.ws ={};
-	this.peerList = [];
-	this.herdList = [{id:0,name:"sketch"},{id:1,name:"test"}]; //Altijd initiele sketch herd aanwezig
-	this.options.activeHerd = this.herdList[0].id;
-	this.localDbase;
-	this.geoLocator;
-	this.featureStore;
-	this.events = $({});
-	if(this.options.websocket!==undefined) {
-		this.websocket(this.options.websocket);
-	}
-	if(this.options.featurestore!==undefined) {
-		this.featurestore(this.options.featurestore);
-	}
-	if(this.options.localdbase!==undefined) {
-		this.localdbase(this.options.localdbase);
-	}
-	if(this.options.geolocator!==undefined) {
-		this.geolocator(this.options.geolocator);
-	}
-	element.data('cow', this);
-	self.bind("disconnected", {widget: self}, self.removeAllPeers);
-	
-	self.bind('changeHerdRequest', {widget:self}, function(e,id){
-	        self.featurestore().clear(); //Clear featurestore
-	        self.me().options.herd = id;
-	        self.options.activeHerd = id;
-	        self.options.storename = "store_"+id; //TODO: the link between activeHerd and storename can be better
-	        self.localdbase().loadFromDB();//Fill featurestore with what we have
-	        var options = {name: self.me().options.owner, herd: self.me().options.herd};
-	        self.trigger("paramsChange",options);
-	});
-	
-	
-	
+    var self = this;
+    var time = new Date();
+    this.UID = time.getTime(); 
+    /* SMO: obsolete 7/8/2013
+    this.MYLOCATION = "My location";
+    this.LOCATION_ICON = './mapicons/male.png';
+    this.MYLOCATION_ICON = './mapicons/you-are-here-2.png';
+    this.current_icon;
+    */
+    this.options = $.extend({}, new $.fn.cow.defaults.core(), options);
+    this.element = element;
+    this.map = window[this.options.map];
+    this.ws ={};
+    this.peerList = [];
+    /* SMO: obsolete 7/8/2013
+    this.herdList = [{id:0,name:"sketch"},{id:1,name:"test"}]; //Altijd initiele sketch herd aanwezig
+    */
+    this.herdList = [{id:0,name:"sketch"}];
+    this.options.activeHerd = this.herdList[0].id;
+    this.localDbase;
+    this.geoLocator;
+    this.featureStore;
+    this.events = $({});
+    if(this.options.websocket!==undefined) {
+        this.websocket(this.options.websocket);
+    }
+    if(this.options.featurestore!==undefined) {
+        this.featurestore(this.options.featurestore);
+    }
+    if(this.options.localdbase!==undefined) {
+        this.localdbase(this.options.localdbase);
+    }
+    if(this.options.geolocator!==undefined) {
+        this.geolocator(this.options.geolocator);
+    }
+    element.data('cow', this);
+    self.bind("disconnected", {widget: self}, self.removeAllPeers);
+    
+    //TODO: put this in a proper function
+    self.bind('changeHerdRequest', {widget:self}, function(e,id){
+            self.featurestore().clear(); //Clear featurestore
+            self.me().options.herd = id;
+            self.options.activeHerd = id;
+            self.options.storename = "store_"+id; //TODO: the link between activeHerd and storename can be better
+            self.localdbase().loadFromDB();//Fill featurestore with what we have
+            var options = {name: self.me().options.owner, herd: self.me().options.herd};
+            self.trigger("paramsChange",options);
+    });
+    
+    
+    
 };
 /**
 #Cow.Websocket
@@ -65,34 +71,46 @@ the `cow()` constructor.
 example: websocket: {url: 'wss://80.113.1.130:443/'}
  */
 $.Cow.Websocket = function(core, options) {
-	var self = this;
-	this.core = core;
-	this.options = options;
-	this.events = $({});
-	//TODO: if connection cannot be established inform the user
-	if (!this.ws || this.ws.readyState != 1) //if no connection
-	{
-		if(this.options.url && this.options.url.indexOf('ws') ==0) {
-			this.url = this.options.url;
-			this.openws(this.url)
-		}
-	}
-	this.core.bind('moveend', {widget: self}, self._onMapMoved);
-	this.core.bind('mylocationChange', {widget:self}, self._onLocationChanged);
-	this.core.bind('paramChange', {widget:self}, self._onParamsChanged);
-	
-	//SMO: waarom?
-	//return this;
-	this.handlers = {
+    var self = this;
+    this.core = core;
+    this.options = options;
+    this.events = $({});
+    //TODO: if connection cannot be established inform the user
+    if (!this.ws || this.ws.readyState != 1) //if no connection
+    {
+        if(this.options.url && this.options.url.indexOf('ws') ==0) {
+            this.url = this.options.url;
+            this.openws(this.url)
+        }
+    }
+    this.core.bind('moveend', {widget: self}, self._onMapMoved);
+    this.core.bind('mylocationChange', {widget:self}, self._onLocationChanged);
+    this.core.bind('paramChange', {widget:self}, self._onParamsChanged);
+    
+    //SMO: waarom?
+    //return this;
+    this.handlers = {
         // Triggers the jQuery events, after the OpenLayers events
         // happened without any further processing
         simple: function(data) {
             this.trigger(data.type);
         }
     };
-	
+    
 };
 
+<<<<<<< HEAD
+=======
+    /* SMO: obsolete 7/8/2013
+    
+//TODO TT: Is this the best place to initialize an item? 
+$.Cow.Item = function(core, options){
+    var self = this;
+    this.core = core;
+    this.options = options;
+};
+*/
+>>>>>>> ea9dbb0d3f4af726d19187c0aba389feb7bd7112
 
 /**
 #Cow.Herd
@@ -103,9 +121,9 @@ a list of Cow.Herd objects, including the special 'sketch' herd
 
  */
 $.Cow.Peer = function(core, options) {
-	var self = this;
-	this.core = core;
-	this.options = options;
+    var self = this;
+    this.core = core;
+    this.options = options;
 };
 
 /**
@@ -117,36 +135,36 @@ a list of Cow.Peer objects, including the special 'me' peer
 
  */
 $.Cow.Peer = function(core, options) {
-	var self = this;
-	this.core = core;
-	this.options = options;
-	this.uid = options.uid;
-	this.bbox;
-	this.params = {};
-	this.viewfeature;
-	this.events = $({});
-	this.events.bind('peerMoved', {widget:self}, self._onMoved);
-	this.events.bind('updatePeer', {widget:self}, self._onMoved);
-	this.events.bind('mylocationChange', {widget:self}, self._onLocationChanged);
-	this.events.bind('locationChange', {widget:self}, self._onLocationChanged);
-	this.events.bind('paramChange', {widget:self}, self._onParamsChanged);
-	/*this.uid;
-	this.cid;
-	this.name;
-	this.extent;*/
-	
-	if(this.options.extent!==undefined) {
-		this.extent(this.options.extent);
-	};
-	
-	
+    var self = this;
+    this.core = core;
+    this.options = options;
+    this.uid = options.uid;
+    this.bbox;
+    this.params = {};
+    this.viewfeature;
+    this.events = $({});
+    this.events.bind('peerMoved', {widget:self}, self._onMoved);
+    this.events.bind('updatePeer', {widget:self}, self._onMoved);
+    this.events.bind('mylocationChange', {widget:self}, self._onLocationChanged);
+    this.events.bind('locationChange', {widget:self}, self._onLocationChanged);
+    this.events.bind('paramChange', {widget:self}, self._onParamsChanged);
+    /*this.uid;
+    this.cid;
+    this.name;
+    this.extent;*/
+    
+    if(this.options.extent!==undefined) {
+        this.extent(this.options.extent);
+    };
+    
+    
     this.handlers = {
         // Triggers the jQuery events, after the OpenLayers events
         // happened without any further processing
         simple: function(data) {
             this.trigger(data.type);
         },
-		includeFeature: function(data) {
+        includeFeature: function(data) {
             var feature = data.feature;
             this.trigger(data.type, [feature]);
         }
@@ -158,60 +176,60 @@ Accessed from the core the localbase.
 On creation it also populates the featurestore.
 ***/
 $.Cow.LocalDbase = function(core, options) {
-	var self = this;
-	this.loaded = false;
-	this.core = core;
-	this.options = options;
-	this.options.dbname = "cow";
-	var iteration = self.loadFromDB();
+    var self = this;
+    this.loaded = false;
+    this.core = core;
+    this.options = options;
+    this.options.dbname = "cow";
+    var iteration = self.loadFromDB();
 }
 /***
 $.Cow.FeatureStore
 ***/
 $.Cow.FeatureStore = function(core, options) {
-	var self = this;
-	this.loaded = false;
-	this.core = core;
-	this.options = options;
-	this.events = $({});
-	this.uid = this.core.UID;
-	this.itemList = [];
-	//this.name = this.options.name || "store1";
-	
-	this.core.bind('sketchcomplete', {widget: self}, self._onSketchComplete);
-	this.core.bind('afterfeaturemodified', {widget: self}, self._onFeatureModified);
+    var self = this;
+    this.loaded = false;
+    this.core = core;
+    this.options = options;
+    this.events = $({});
+    this.uid = this.core.UID;
+    this.itemList = [];
+    //this.name = this.options.name || "store1";
+    
+    this.core.bind('sketchcomplete', {widget: self}, self._onSketchComplete);
+    this.core.bind('afterfeaturemodified', {widget: self}, self._onFeatureModified);
 }
 
 /***
 $.Cow.GeoLocator
 ***/
 $.Cow.GeoLocator = function(core, options){
-	var self = this;
-	this.core = core;
-	this.options = options;
-	this.events = $({});
-	this.uid = this.core.UID;
-	//We need a timeout to settle the core
-	setTimeout(function(){self.getLocation()},2000);
+    var self = this;
+    this.core = core;
+    this.options = options;
+    this.events = $({});
+    this.uid = this.core.UID;
+    //We need a timeout to settle the core
+    setTimeout(function(){self.getLocation()},2000);
 }
 
 $.Cow.Core.prototype = {
-	/**
-	##cow.me()
-	###**Description**: returns the peer object representing the client it self
-	*/	
-	me: function(){
-		var peer = this.getPeerByUid(this.UID);	
-		return peer;
-	},
-	
+    /**
+    ##cow.me()
+    ###**Description**: returns the peer object representing the client it self
+    */    
+    me: function(){
+        var peer = this.getPeerByUid(this.UID);    
+        return peer;
+    },
+    
 /**
 ##cow.websocket([options])
 ###**Description**: get/set the websocket of the cow
 */
-	websocket: function(options) {
-		var self = this;
-		switch(arguments.length) {
+    websocket: function(options) {
+        var self = this;
+        switch(arguments.length) {
         case 0:
             return this._getWebsocket();
         case 1:
@@ -219,21 +237,21 @@ $.Cow.Core.prototype = {
                 return this._setWebsocket(options);
             }
             else {
-				throw('wrong argument number, only one websocket allowed');
+                throw('wrong argument number, only one websocket allowed');
             }
             break;
         default:
             throw('wrong argument number');
         }
-	},
-	
-	_getWebsocket: function() {
-		return this.ws;
-	},
-	_setWebsocket: function(options) {
-		var websocket = new $.Cow.Websocket(this, options);
-		this.ws=websocket;
-	},
+    },
+    
+    _getWebsocket: function() {
+        return this.ws;
+    },
+    _setWebsocket: function(options) {
+        var websocket = new $.Cow.Websocket(this, options);
+        this.ws=websocket;
+    },
 
 /**
 ##cow.herds([options])
@@ -255,8 +273,8 @@ When adding herds, those are returned.
 */
 
     herds: function(options) {
-		var self = this;
-		switch(arguments.length) {
+        var self = this;
+        switch(arguments.length) {
         case 0:
             return this._getHerds();
         case 1:
@@ -264,7 +282,7 @@ When adding herds, those are returned.
                 return this._addHerd(options);
             }
             else {
-				return $.core(options, function(peer) {
+                return $.core(options, function(peer) {
                     return self._addHerd(herd);
                 })
             }
@@ -272,47 +290,47 @@ When adding herds, those are returned.
         default:
             throw('wrong argument number');
         }
-	},
-	_getHerds: function() {
+    },
+    _getHerds: function() {
         var herds = [];
         $.each(this.herdList, function(id, herd) {
             herds.push(herd);
         });        
         return herds;
     },
-	_addHerd: function(options) {
-		var herd = new $.Cow.Herd(this, options);		
-		
-		if (options.uid != this.UID){
-			
-		}
-		this.herdList.push(herd);
-		//TODO: enable peer.trigger
-		//peer.trigger('addpeer');
-		return herd;
-	},
-	getHerdById: function(id) {
-		var herds = this.herds();
-		var herd;
-		$.each(herds, function(){
-			if(this.id == id) {			
-				herd = this;
-			}			
-		});
-		return herd;
-	},
-	removeHerd: function(id) {
-		var herds = this.herds();
-		var herdGone = id;
-		var delPeer;
-		$.each(herds, function(i){
-			if(this.id == peerGone) {			
-				delHerd = i;
-			}			
-		});
-		if(delHerd >= 0) herds.splice(delHerd,1);
-		this.herdList = herds;		
-	},
+    _addHerd: function(options) {
+        var herd = new $.Cow.Herd(this, options);        
+        
+        if (options.uid != this.UID){
+            
+        }
+        this.herdList.push(herd);
+        //TODO: enable peer.trigger
+        //peer.trigger('addpeer');
+        return herd;
+    },
+    getHerdById: function(id) {
+        var herds = this.herds();
+        var herd;
+        $.each(herds, function(){
+            if(this.id == id) {            
+                herd = this;
+            }            
+        });
+        return herd;
+    },
+    removeHerd: function(id) {
+        var herds = this.herds();
+        var herdGone = id;
+        var delPeer;
+        $.each(herds, function(i){
+            if(this.id == peerGone) {            
+                delHerd = i;
+            }            
+        });
+        if(delHerd >= 0) herds.splice(delHerd,1);
+        this.herdList = herds;        
+    },
 
 
 /**
@@ -333,9 +351,9 @@ to the cow.
 When adding peers, those are returned. 
 
 */
-	peers: function(options) {
-		var self = this;
-		switch(arguments.length) {
+    peers: function(options) {
+        var self = this;
+        switch(arguments.length) {
         case 0:
             return this._getPeers();
         case 1:
@@ -343,7 +361,7 @@ When adding peers, those are returned.
                 return this._addPeer(options);
             }
             else {
-				return $.core(options, function(peer) {
+                return $.core(options, function(peer) {
                     return self._addPeer(peer);
                 })
             }
@@ -351,124 +369,124 @@ When adding peers, those are returned.
         default:
             throw('wrong argument number');
         }
-	},
-	_getPeers: function() {
+    },
+    _getPeers: function() {
         var peers = [];
         $.each(this.peerList, function(id, peer) {
-			//SMO: mogelijk nog iets leuks meet peer volgorde ofzo
+            //SMO: mogelijk nog iets leuks meet peer volgorde ofzo
             peers.push(peer);
         });        
         return peers;
     },
-	_addPeer: function(options) {
-		var peer = new $.Cow.Peer(this, options);		
-		
-		if (options.uid != this.UID){
-			
-			var geojson_format = new OpenLayers.Format.GeoJSON();
-			var feature = geojson_format.read(peer.view());
-			peer.params.feature = feature;
-			peer.extent(options.extent);
-			if (options.position){
-				peer.drawPosition(options.position);
-			}
-		}
-		this.peerList.push(peer);
-		//TODO: enable peer.trigger
-		//peer.trigger('addpeer');
-		return peer;
-	},
-	//Return feature collection of peer view extents
-	getPeerCollection: function() {
-		var collection = {"type":"FeatureCollection","features":[]};
-		$.each(core.peerList, function(){
-			if (this.params.viewfeature.id != self.core.me().uid)
-			collection.features.push(this.params.viewfeature);
-		});
-		return collection;
-	},
-	//Return feature collection of peer positions
-	getPeerPositions: function(){
-		var collection = {"type":"FeatureCollection","features":[]};
-		$.each(core.peerList, function(){
-			if (this.params.pointfeature)
-				collection.features.push(this.params.pointfeature);
-		});
-		return collection;
-	},
-	getPeerByUid: function(uid) {
-	
-		var meuid = uid;
-		var peers = this.peers();
-		var peer;
-		$.each(peers, function(){
-			if(this.uid == meuid) {			
-				peer = this;
-			}			
-		});
-		
-		return peer;
-	},
-	getPeerByCid: function(cid) {
-	
-		var mecid = cid;
-		var peers = this.peers();
-		var peer;
-		$.each(peers, function(){
-			if(this.options.cid == mecid) {			
-				peer = this;
-			}			
-		});
-		
-		return peer;
-	},
+    _addPeer: function(options) {
+        var peer = new $.Cow.Peer(this, options);        
+        
+        if (options.uid != this.UID){
+            
+            var geojson_format = new OpenLayers.Format.GeoJSON();
+            var feature = geojson_format.read(peer.view());
+            peer.params.feature = feature;
+            peer.extent(options.extent);
+            if (options.position){
+                peer.drawPosition(options.position);
+            }
+        }
+        this.peerList.push(peer);
+        //TODO: enable peer.trigger
+        //peer.trigger('addpeer');
+        return peer;
+    },
+    //Return feature collection of peer view extents
+    getPeerCollection: function() {
+        var collection = {"type":"FeatureCollection","features":[]};
+        $.each(core.peerList, function(){
+            if (this.params.viewfeature.id != self.core.me().uid)
+            collection.features.push(this.params.viewfeature);
+        });
+        return collection;
+    },
+    //Return feature collection of peer positions
+    getPeerPositions: function(){
+        var collection = {"type":"FeatureCollection","features":[]};
+        $.each(core.peerList, function(){
+            if (this.params.pointfeature)
+                collection.features.push(this.params.pointfeature);
+        });
+        return collection;
+    },
+    getPeerByUid: function(uid) {
+    
+        var meuid = uid;
+        var peers = this.peers();
+        var peer;
+        $.each(peers, function(){
+            if(this.uid == meuid) {            
+                peer = this;
+            }            
+        });
+        
+        return peer;
+    },
+    getPeerByCid: function(cid) {
+    
+        var mecid = cid;
+        var peers = this.peers();
+        var peer;
+        $.each(peers, function(){
+            if(this.options.cid == mecid) {            
+                peer = this;
+            }            
+        });
+        
+        return peer;
+    },
 /**
 ##cow.removePeer(cid)
 ###**Description**: removes the specific peer from the list of peers
 */
-	removePeer: function(cid) {
-		//TODO: dit werkt niet, toch doro de hele cid lijst lopen
-		var peers = this.peers();
-		var peerGone = cid;
-		var delPeer;
-		var feature;
-		var point;
-		var geolocation;
-		var uid;
-		$.each(peers, function(i){
-			if(this.options.cid == peerGone) {			
-				delPeer = i;
-				uid = this.uid;
-				if(this.params !== undefined) {
-					feature = this.params.feature[0];
-					point = this.params.point[0];
-				}
-			}			
-		});
-		/* Obs by d3 layer
-		geolocation = self.core.mylocationLayer.getFeaturesByAttribute('uid', uid);		
-		this.mylocationLayer.removeFeatures(geolocation);
-		*/
-		if(delPeer >= 0) peers.splice(delPeer,1);
-		this.peerList = peers;		
-		//TODO: remove peer from d3 layers
-		
-	},
-	removeAllPeers: function() {
-		var peers = this.peers();
-		$.each(peers, function(i,peer){
-			peer = {};
-		});
-		this.peerList = [];
-		//TODO: remove peer from d3 layers
-	},
-		
-	/***
-	LOCAL DATABASE
-	***/
-	localdbase: function(options){
-		var self = this;
-		switch(arguments.length) {
+    removePeer: function(cid) {
+        //TODO: dit werkt niet, toch doro de hele cid lijst lopen
+        var peers = this.peers();
+        var peerGone = cid;
+        var delPeer;
+        var feature;
+        var point;
+        var geolocation;
+        var uid;
+        $.each(peers, function(i){
+            if(this.options.cid == peerGone) {            
+                delPeer = i;
+                uid = this.uid;
+                if(this.params !== undefined) {
+                    feature = this.params.feature[0];
+                    point = this.params.point[0];
+                }
+            }            
+        });
+        /* Obs by d3 layer
+        geolocation = self.core.mylocationLayer.getFeaturesByAttribute('uid', uid);        
+        this.mylocationLayer.removeFeatures(geolocation);
+        */
+        if(delPeer >= 0) peers.splice(delPeer,1);
+        this.peerList = peers;        
+        //TODO: remove peer from d3 layers
+        
+    },
+    removeAllPeers: function() {
+        var peers = this.peers();
+        $.each(peers, function(i,peer){
+            peer = {};
+        });
+        this.peerList = [];
+        //TODO: remove peer from d3 layers
+    },
+        
+    /***
+    LOCAL DATABASE
+    ***/
+    localdbase: function(options){
+        var self = this;
+        switch(arguments.length) {
         case 0:
             return this._getLocalDbase();
         case 1:
@@ -476,26 +494,26 @@ When adding peers, those are returned.
                 return this._setLocalDbase(options);
             }
             else {
-				throw('only one dbase allowed');
+                throw('only one dbase allowed');
             }
             break;
         default:
             throw('wrong argument number');
         }
-	},
-	_getLocalDbase: function(){
-		return this.localDbase;
-	},
-	_setLocalDbase: function(options){
-		var dbase = new $.Cow.LocalDbase(this, options);
-		this.localDbase = dbase;
-	},
-	 /***
-	GEO LOCATOR
-	***/
-	geolocator: function(options){
-		var self = this;
-		switch(arguments.length) {
+    },
+    _getLocalDbase: function(){
+        return this.localDbase;
+    },
+    _setLocalDbase: function(options){
+        var dbase = new $.Cow.LocalDbase(this, options);
+        this.localDbase = dbase;
+    },
+     /***
+    GEO LOCATOR
+    ***/
+    geolocator: function(options){
+        var self = this;
+        switch(arguments.length) {
         case 0:
             return this._getGeoLocator();
         case 1:
@@ -503,26 +521,26 @@ When adding peers, those are returned.
                 return this._setGeoLocator(options);
             }
             else {
-				throw('only one geolocator allowed');
+                throw('only one geolocator allowed');
             }
             break;
         default:
             throw('wrong argument number');
         }
-	},
-	_getGeoLocator: function(){
-		return this.geoLocator;
-	},
-	_setGeoLocator: function(options){
-		var locator = new $.Cow.GeoLocator(this, options);
-		this.geoLocator = locator;
-	},
-	/***
-	FEATURE STORES
-	***/
-	featurestore: function(options){
-		var self = this;
-		switch(arguments.length) {
+    },
+    _getGeoLocator: function(){
+        return this.geoLocator;
+    },
+    _setGeoLocator: function(options){
+        var locator = new $.Cow.GeoLocator(this, options);
+        this.geoLocator = locator;
+    },
+    /***
+    FEATURE STORES
+    ***/
+    featurestore: function(options){
+        var self = this;
+        switch(arguments.length) {
         case 0:
             return this._getFeaturestore();
         case 1:
@@ -530,24 +548,24 @@ When adding peers, those are returned.
                 return this._addFeaturestore(options);
             }
             else {
-				throw('only one featstore allowed');
+                throw('only one featstore allowed');
             }
             break;
         default:
             throw('wrong argument number');
         }
-	},
-	_getFeaturestore: function(){
+    },
+    _getFeaturestore: function(){
         return this.featureStore;
-	},
-	_addFeaturestore: function(options){
-		var featureStore = new $.Cow.FeatureStore(this, options);		
-		this.featureStore = featureStore;
-		return featureStore;
-	},
-	
-	
-	bind: function(types, data, fn) {
+    },
+    _addFeaturestore: function(options){
+        var featureStore = new $.Cow.FeatureStore(this, options);        
+        this.featureStore = featureStore;
+        return featureStore;
+    },
+    
+    
+    bind: function(types, data, fn) {
         var self = this;
 
         // A map of event/handle pairs, wrap each of them
@@ -586,7 +604,7 @@ When adding peers, those are returned.
        
         return this;
     },
-	trigger: function() {
+    trigger: function() {
         // There is no point in using trigger() insted of triggerHandler(), as
         // we don't fire native events
         this.events.triggerHandler.apply(this.events, arguments);
@@ -614,13 +632,13 @@ $.fn.cow = function(options) {
 };
 
 $.fn.cow.defaults = {
-	core: function() {
+    core: function() {
         return {
-			map: 'map',
-			editlayer: 'editlayer',
-			namefield: 'myname'
-		};
-	}
+            map: 'map',
+            editlayer: 'editlayer',
+            namefield: 'myname'
+        };
+    }
 };
 
 $.Cow.util = {};
