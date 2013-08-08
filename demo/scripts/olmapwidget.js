@@ -169,8 +169,9 @@ $.widget("cow.OlMapWidget", {
 				feature.properties[i] = d;
 			})
 			
-			if (object.options.status != 'deleted')
+			if (object.options.status != 'deleted'){
 				self.core.editLayer.addFeatures(feature);
+			}
 		});
 	},
 	

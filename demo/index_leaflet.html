@@ -81,7 +81,10 @@ var myproject = "demo";
 /*Obs?
 var map, layer, vLayer, drawControls, editlayer, extent;
 */
-var geojson_format = new OpenLayers.Format.GeoJSON();
+var geojson_format = new OpenLayers.Format.GeoJSON({
+    'internalProjection': new OpenLayers.Projection("EPSG:900913"),
+    'externalProjection': new OpenLayers.Projection("EPSG:4326")
+   });
 var core;
   
 $(document).ready(function(){

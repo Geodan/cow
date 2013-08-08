@@ -85,7 +85,10 @@ var myproject = "demo";
 var extents = { "type": "FeatureCollection","features": []};
 var labelpoints = { "type": "FeatureCollection","features": []};
 */
-var geojson_format = new OpenLayers.Format.GeoJSON();
+var geojson_format = new OpenLayers.Format.GeoJSON({
+    'internalProjection': new OpenLayers.Projection("EPSG:900913"),
+    'externalProjection': new OpenLayers.Projection("EPSG:4326")
+   });
 var core;
   
 $(document).ready(function(){

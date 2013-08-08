@@ -71,7 +71,7 @@ $.widget("cow.LeaflMapWidget", {
 					right: bounds.getEast(),
 					top: bounds.getNorth()
 				};
-				self.core.me() && self.core.me().view({extent:extent.bounds}); //Set my own extent
+				self.core.me() && self.core.me().view({"extent":extent}); //Set my own extent
 				self.viewlyr.reset();
 				self.locationlyr.reset();
 		};

@@ -367,10 +367,10 @@ A Peer is on object containing:
         var peer = new $.Cow.Peer(this, options);        
         
         if (options.uid != this.UID){
-            
-            var geojson_format = new OpenLayers.Format.GeoJSON();
-            var feature = geojson_format.read(peer.view());
-            peer.params.feature = feature;
+            //TT: Obsolete?
+            //var geojson_format = new OpenLayers.Format.GeoJSON();
+            //var feature = geojson_format.read(peer.view());
+            //peer.params.feature = feature;
             peer.view({"extent":options.extent});
             if (options.position){
                 peer.position({"point":options.position});
