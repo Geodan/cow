@@ -64,7 +64,14 @@ $.widget("cow.PeersWidget", {
         
         element.delegate('.herd','click', function(){
             var herd = $(this).attr('herd');
-            self.core.me().herd({uid: herd});
+            self.core.activeHerd = herd;
+            if (self.core.me())
+                self.core.me().herd({uid: herd});
+            
+            self.core.featurestore().clear(); //Clear featurestore
+            //self.core.options.storename = "store_"+herd; //TODO: the link between activeHerd and storename can be better
+            self.core.localdbase().loadFromDB();//Fill featurestore with what we have
+            
             
         });
         
