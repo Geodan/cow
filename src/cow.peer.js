@@ -38,12 +38,13 @@ $.Cow.Peer.prototype = {
             this.params.viewExtent = this._view2bbox(options.feature);
         }
         else if(options.extent !== undefined) {
+        console.log('extent');
             this.params.viewExtent = options.extent
             this.params.viewFeature = this._bbox2view(options.extent);
         }
         if(this.uid == this.core.UID) {
             this.core.trigger("peerStoreChanged", this.uid);
-            this.core.trigger("meChanged", {"extent":this.params.viewExtent});
+            this.core.trigger("meChanged", {"extent":this.view().extent});
         }
     },
     //helper function to turn a view feature to an extent object

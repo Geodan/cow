@@ -141,7 +141,7 @@ $.Cow.Websocket.prototype = {
         var herd = core.getHerdById(self.core.options.activeHerd);
         me.owner({"name":name});
         me.herd(herd);
-        
+        me.view({"extent":{"bottom":0,"left":0,"top":1,"right":1}});
         var sendFidList = function(){
             var store = core.featurestore();
             var fids = store.getIdList();
@@ -166,9 +166,9 @@ $.Cow.Websocket.prototype = {
         console.log('Got peerinfo from: '+uid);        
         if(payload.options.uid !== undefined && payload.options.cid !== undefined) {
             var me = this.core.peers(payload.options);
-            me.view({"extent":payload.extent});
+            me.view({"extent":payload.view});
             me.position({"point":payload.position});
-            me.owner({"name":payload.extent});
+            me.owner({"name":payload.owner});
             me.herd(payload.herd);
             this.core.trigger('ws-peerInfo');    
         }
