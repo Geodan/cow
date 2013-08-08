@@ -1,95 +1,59 @@
 $.Cow.Peer.prototype = {
     
-    /*    var self = this;
-    this.core = core;
-    this.options = options;
-    this.uid = options.uid;
-    */
-    //SMO: moet er wel een extent() functie zijn?
-    extent: function(bbox) {
-        var self = this;
-        switch(arguments.length) {
-        case 0:
-            return this._getExtent();
-        case 1:
-            if (!$.isArray(bbox)) {
-                return this._setExtent(bbox);
-            }
-            else {
-                throw('wrong argument number, only one extent allowed');
-            }
-            break;
-        default:
-            throw('wrong argument number');
-        }
-    },
-    _getExtent: function() {
-        return this.bbox;
-    },
-    _setExtent: function(bbox) {
-        this.options.extent = bbox;
-        this.bbox = bbox;
-        this.view(bbox);
-        
-    },
+    /*
+    view is an object containing:
+    -feature: a full GeoJSON feature representing the view-extent
+    -extent: an object {left, bottom, right, top} meant for syncing
     
-    view: function(bbox) {
+    view() takes an options object {feature:<GeoJSON feature>,extent: {bottom:#,left:#,top:#,right:#}}
+    */    
+    view: function(options) {
         var self = this;
         switch(arguments.length) {
         case 0:
             return this._getView();
         case 1:
-            if (!$.isArray(bbox)) {
-                return this._setView(bbox);
+            if (!$.isArray(options)) {                
+                return this._setView(options);
             }
             else {
-                throw('wrong argument number, only one extent allowed');
+                throw('wrong argument number, only one view-extent allowed');
             }
             break;
         default:
             throw('wrong argument number');
         }
     },
+    //internal, use .view()
     _getView: function() {
-        return this.params.viewfeature;
+        var _view = {};
+        _view.feature = this.params.viewFeature;
+        _view.extent = this.params.viewExtent;
+        return _view;
     },
-    _setView: function(bbox) {    
-        
-        
-        
-        if(bbox.type !==undefined){
-             this.params.viewfeature = bbox;
+    //internal, use .view(options)
+    _setView: function(options) {    
+        if(options.feature !== undefined) {
+            this.params.viewFeature = options.feature
+            this.params.viewExtent = this._view2bbox(options.feature);
         }
-        else this.params.viewfeature = this._bbox2view(bbox);    
-        if(this.params.feature !== undefined) {
-            this._drawExtent()
+        else if(options.extent !== undefined) {
+            this.params.viewExtent = options.extent
+            this.params.viewFeature = this._bbox2view(options.extent);
         }
-        
-        //TODO: trigger een redraw van de polygon?
-        //console.log('view: '+JSON.stringify(this.viewfeature));
-    },
-    _drawExtent: function() {
-        this.params.oldfeature = feature;
-        var geojson_format = new OpenLayers.Format.GeoJSON();
-        var feature = geojson_format.read(this.params.viewfeature);
-        
-        this.params.feature = feature;        
-        var p = {  "id": this.uid,
-                   "type": "Feature",
-                   "geometry": {
-                        "type": "Point",
-                        "coordinates": this.view().geometry.coordinates[0][1]
-                    },
-                    "properties": {
-                        "uid": this.uid,
-                        "label": this.options.owner
-                    }
-            }            
-        var point = geojson_format.read(p);
-        this.params.point = point;
         self.core.trigger("peerExtentChanged", core.getPeerExtents());
     },
-    
+    //helper function to turn a view feature to an extent object
+    _view2bbox: function(view) {
+        var coords = view.geometry.coordinates;
+        var bounds = {};
+        bounds.bottom = coords[0][1];
+        bounds.left = coords[0][0];
+        bounds.top = coords[2][1];
+        bounds.right = coords[2][0];
+        return bounds;
+    },
+    //helper function to turn an extent object to a view feature 
     _bbox2view: function(bbox) {
         var b = [bbox.left,bbox.bottom,bbox.right,bbox.top];
         var feature = { "id": this.uid,
@@ -110,6 +74,70 @@ $.Cow.Peer.prototype = {
         return feature;
     },
     
+    /*
+    position is an object containing:
+    -coords: 
+    -owner
+    -timestamp
+    -uid
+    
+    position() takes an options object: {coords:{longitude:#,latitude:#},time:timestamp}
+    */
+    position: function(options) {
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this._getPosition();
+        case 1:
+            if (!$.isArray(options)) {                
+                return this._setPosition(options);
+            }
+            else {
+                throw('wrong argument number, only one position allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+    },
+    _getPosition: function() {
+        var _position = {};
+        _position.feature = this.params.locationFeature;
+        _position.point = this.params.locationPoint;
+        return _position;
+    },
+    _setPosition: function(options){
+        var attributes = { uid: this.uid, owner: this.options.owner};
+        if(options.time) {
+            attributes.time = options.time;
+        }
+        else {
+            
+        }
+        var _point = { 
+            "id": this.uid,
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                ]
+            },
+            "properties": attributes
+        };
+        if(options.coords){
+            if(!this.params.locationFeature) {
+                _point.coordinates[0] = options.coords.longitude;
+                _point.coordinates[1] = options.coords.latitude;
+                _point.properties = attributes;
+                this.params.locationFeature = _point;
+            }
+            else {
+                this.params.locationFeature.geometry.coordinates[0] = options.coords.longitude;
+                this.params.locationFeature.geometry.coordinates[1] = options.coords.latitude;
+            }
+        }
+
+    },
     drawPosition: function(position){
         
         var uid = this.uid;
@@ -127,17 +155,7 @@ $.Cow.Peer.prototype = {
             icon = self.core.LOCATION_ICON;
         }
         var attributes = {uid: uid, owner: name, time: position.timestamp, icon: icon};
-        //Obsolete
-        //var proj = new OpenLayers.Projection("EPSG:4326");
-        //var toproj = new OpenLayers.Projection("EPSG:900913");
-        //var point = new OpenLayers.Geometry.Point(position.coords.longitude,position.coords.latitude);
-        
-        //point.transform(proj, self.core.map.getProjectionObject()); //Getting rid of references to map
-        //point.transform(proj, toproj); //TT: removed transformation for leaflet
-        /*Obs by d3 layer
-        var pointfeature = new OpenLayers.Feature.Vector(point, attributes);
-        this.core.mylocationLayer.addFeatures([pointfeature]);
-        */
+       
         this.options.position = position;
         
         
@@ -157,30 +175,23 @@ $.Cow.Peer.prototype = {
     },
     
     _onUpdatePeer: function(evt, payload) {
-    },
-    _onMoved: function(evt,payload) {
         var self = evt.data.widget;
-        //console.log('peerupdated');
+        if(payload.owner) {
+            self.options.owner = payload.owner;
+        }
+        if(payload.herd) {
+            self.options.herd = payload.herd;
+        }
+        if (payload.extent) {
+            self.view({extent: payload.extent});
+        }
+        if(payload.position) {
+            self.position(payload.position);
+        }
+        
         self.core.trigger('peerupdated');
-        //TODO: options worden niet automatisch bijgewerkt
-        self.options.owner = payload.owner;
-        self.extent(payload.extent);    
     },
-    _onLocationChanged: function(evt, payload){
-        //when I change my location, redraw my point
-        var position = payload.position;
-        var self = evt.data.widget;
-        self.drawPosition(position);
-    },
-    _onParamsChanged: function(evt, payload){
-        //when I change my params, redraw my point and update lists
-        var herd = payload.herd;
-        var name = payload.name;
-        var self = evt.data.widget;
-        self.options.owner = name;
-        self.options.herd = herd;
-        //TODO redraw list and map
-    },
+
     bind: function(types, data, fn) {
         var self = this;
 
