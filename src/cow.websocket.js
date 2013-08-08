@@ -168,7 +168,7 @@ $.Cow.Websocket.prototype = {
             this.core.peers(payload);
             this.core.trigger('ws-peerInfo');    
         }
-        else console.log('badpeer');
+        else console.log('badpeer '+uid);
     },
     //A new peer has joined, send it your info, compare its features and add it to your
     //peerList
@@ -180,7 +180,7 @@ $.Cow.Websocket.prototype = {
             this.sendData(message,'informPeer',uid);
             this.core.trigger('ws-newPeer');
         }
-        else console.warn('badpeer');
+        else console.warn('badpeer '+uid);
     },
     _amIAlpha: function(id,herd){ //find out wether I am alpha
         if (this.core.me().options.herd == herd){ //I need to be part of the herd
@@ -279,7 +279,7 @@ $.Cow.Websocket.prototype = {
             var peerCid = payload.connectionID;
             peer.options.cid = peerCid
         }
-        else console.warn('badpeer');
+        else console.warn('badpeer '+uid);
     },
     //A peer has updated, tell the peer object to change
     _onPeerUpdated: function(payload,uid) {
@@ -287,7 +287,7 @@ $.Cow.Websocket.prototype = {
         if(peer !== undefined) {
             peer.events.trigger('ws-updatePeer',payload);
         }
-        else console.warn('badpeer');
+        else console.warn('badpeer '+uid);
     },
     //My stuff has changed, send over the changed data to the other peers
     _onMeChanged: function(evt, payload) {
@@ -348,7 +348,7 @@ $.Cow.Websocket.prototype = {
         return this.events.triggerHandler.apply(this.events, arguments);
     },
     
-    //TODO: waarom zijn deze twee er?
+    
     closews: function() {
         if (this.ws){
             this.ws.close();    
