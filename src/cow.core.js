@@ -83,10 +83,11 @@ $.Cow.Websocket = function(core, options) {
             this.openws(this.url)
         }
     }
-    this.core.bind('moveend', {widget: self}, self._onMapMoved);
+    this.core.bind('meChanged', {widget: self}, self._onMeChanged);
+/*    this.core.bind('moveend', {widget: self}, self._onMapMoved);
     this.core.bind('mylocationChange', {widget:self}, self._onLocationChanged);
     this.core.bind('paramChange', {widget:self}, self._onParamsChanged);
-    
+  */  
     //SMO: waarom?
     //return this;
     this.handlers = {
@@ -99,21 +100,6 @@ $.Cow.Websocket = function(core, options) {
     
 };
 
-
-
-/**
-#Cow.Herd
-
-The Cow.Herd object. It is constructed from within cow, it contains information
-on a available herd. The core.herdList contains 
-a list of Cow.Herd objects, including the special 'sketch' herd
-
- */
-$.Cow.Peer = function(core, options) {
-    var self = this;
-    this.core = core;
-    this.options = options;
-};
 
 /**
 #Cow.Peer
@@ -133,7 +119,7 @@ $.Cow.Peer = function(core, options) {
     this.viewfeature;
     this.events = $({});
     
-    this.events.bind('updatePeer', {widget: self}, self._onUpdatePeer);
+    this.events.bind('ws-updatePeer', {widget: self}, self._onUpdatePeer);
     /* SMO: obsolete 7/8/2013
     //Someone moved
     this.events.bind('peerMoved', {widget:self}, self._onMoved);

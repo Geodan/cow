@@ -41,7 +41,7 @@ $.Cow.Peer.prototype = {
             this.params.viewExtent = options.extent
             this.params.viewFeature = this._bbox2view(options.extent);
         }
-        self.core.trigger("peerExtentChanged", core.getPeerExtents());
+        self.core.trigger("peerStoreChanged", this.uid);
     },
     //helper function to turn a view feature to an extent object
     _view2bbox: function(view) {
@@ -138,44 +138,10 @@ $.Cow.Peer.prototype = {
                 this.params.locationFeature.geometry.coordinates[1] = options.coords.latitude;
             }
         }
-        //TODO: draw shit
+        self.core.trigger("peerStoreChanged", this.uid);
 
     },
-    drawPosition: function(position){
-        
-        var uid = this.uid;
-        /* Obs by d3layer        
-        var f =    self.core.mylocationLayer.getFeaturesByAttribute('uid', uid);
-        this.core.mylocationLayer.removeFeatures(f);
-        */
-        if (uid == self.core.UID){
-            name = self.core.MYLOCATION;
-            icon = self.core.MYLOCATION_ICON;
-        }
-        else
-        {
-            name = this.options.owner;
-            icon = self.core.LOCATION_ICON;
-        }
-        var attributes = {uid: uid, owner: name, time: position.timestamp, icon: icon};
-       
-        this.options.position = position;
-        
-        
-        //For d3 layer: create generic geojson point
-        this.params.pointfeature = { 
-            "id": this.uid,
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    position.coords.longitude, position.coords.latitude
-                ]
-            },
-            "properties": attributes
-        };
-        self.core.trigger("peerPositionChanged", core.getPeerPositions());
-    },
+
     
     _onUpdatePeer: function(evt, payload) {
         var self = evt.data.widget;
@@ -192,7 +158,7 @@ $.Cow.Peer.prototype = {
             self.position(payload.position);
         }
         
-        self.core.trigger('peerupdated');
+        self.core.trigger("peerStoreChanged", this.uid);
     },
 
     bind: function(types, data, fn) {
