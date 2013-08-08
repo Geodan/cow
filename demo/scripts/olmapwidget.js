@@ -51,11 +51,8 @@ $.widget("cow.OlMapWidget", {
         
         core = $(this.options.core).data('cow');
 		this.core=core;
-        //Obs? core.bind("dbloaded", {widget: self}, self._onLoaded);
 
-		core.bind("storeChanged", {widget: self}, self._onLoaded);
-		//Obs core.bind("peerExtentChanged", {widget: self},self._drawExtent);
-		//Obs core.bind("peerPositionChanged", {widget: self},self._drawPositions);
+		core.bind("storeChanged", {widget: self}, self._onFeatureStoreChanged);
 		core.bind("peerStoreChanged", {widget: self}, self._onPeerStoreChanged);
 		core.bind("layoutChanged", {widget: self},self._updateSize);
 		core.bind("zoomToPeersviewRequest", {widget: self},self._zoomToPeersView);
@@ -76,25 +73,20 @@ $.widget("cow.OlMapWidget", {
 		
 		
 		
-		this.handlers = {
-			// Triggers the jQuery events, after the OpenLayers events
-			// happened without any further processing
-			simple: function(data) {
-				var extent = data.object.getExtent().toGeometry();
-				var toproj = new OpenLayers.Projection("EPSG:4326");
-				var fromproj = new OpenLayers.Projection("EPSG:900913");
-				extent.transform(fromproj, toproj);
-				extent.getBounds();
-				self.core.me() && self.core.me().view({extent:extent.bounds}); //Set my own extent
-				//Obs? core.trigger(data.type, extent.bounds);
-			}
+		var handleNewExtent = function(data){
+            var extent = data.object.getExtent().toGeometry();
+            var toproj = new OpenLayers.Projection("EPSG:4326");
+            var fromproj = new OpenLayers.Projection("EPSG:900913");
+            extent.transform(fromproj, toproj);
+            extent.getBounds();
+            self.core.me() && self.core.me().view({extent:extent.bounds}); //Set my own extent
         };
 		this._createLayers(this.map);
 		
 				
 		this.map.events.on({
 			scope: this,
-			moveend: this.handlers.simple		
+			moveend: handleNewExtent		
 		});
 		this.controls.select.activate();
     },
@@ -103,8 +95,8 @@ $.widget("cow.OlMapWidget", {
                                  'ui-corner-all')
             .empty();
     },
-	_onLoaded: function(evt) {
-		//console.log('_onLoaded');
+	_onFeatureStoreChanged: function(evt) {
+		//console.log('_onFeatureStoreChanged');
 		var self = evt.data.widget;
 		self._updateMap(evt);
 	},
@@ -116,7 +108,6 @@ $.widget("cow.OlMapWidget", {
 	_updateMap: function(evt) {		
 		var self = evt.data.widget;
 		self._reloadLayer(); 
-        
 	},
 	getExtent: function(){
 		return this.map.getExtent().toBBOX();
@@ -124,7 +115,7 @@ $.widget("cow.OlMapWidget", {
 	getControls: function(){
 		return this.controls;
 	},
-	
+	//Anything changed in the peers store results in redraw of peer features (extents & points)
 	_onPeerStoreChanged: function(evt) {
 	    var self = evt.data.widget;
 	    var extentCollection = self.core.getPeerExtents();
@@ -144,16 +135,8 @@ $.widget("cow.OlMapWidget", {
             });
 			self.locationlyr.data(locationCollection);
 		}
-		
-		
 	},
-	/* Obs
-	_drawExtent: function(evt, peerCollection) {
-		var self = evt.data.widget;
-		if (self.viewlyr)
-			self.viewlyr.data(peerCollection);
-	},
-	*/
+	
 	_zoomToPeersView: function(evt, bbox){
 	    var self = evt.data.widget;
         var lb = new OpenLayers.LonLat(bbox.left,bbox.bottom);
@@ -173,22 +156,6 @@ $.widget("cow.OlMapWidget", {
 	    self.map.setCenter(loc,14,true,true);
 	    //TODO: trigger an update for d3 layers
 	},
-	/* Obs
-	_drawPositions: function(evt, collection) {
-		var self = evt.data.widget;
-		//apply some styling to collection
-		$.each(collection.features, function(i,d){
-			var style = {}; //TODO: this goes right on Chrome desktop but wrong on chrome Beta mobile?!
-			if (d.id == self.core.me().uid)
-				style.fill = "red";
-			else style.fill = "steelBlue";
-			d.style = style;
-		});
-			
-		if (self.locationlyr)
-			self.locationlyr.data(collection);
-	},
-	*/
 	_updateSize: function(evt){
 	    var map = evt.data.widget.map;
 	    map.updateSize(map);
@@ -464,7 +431,6 @@ $.widget("cow.OlMapWidget", {
 				self.controls.select.activate();
 				
 				var feature = JSON.parse(geojson_format.write(evt.feature));
-				//Obs: core.trigger('sketchcomplete',feature);
 				core.featurestore().saveLocalFeat(feature);
 				evt.feature.destroy(); //Ridiculous.... without this the 'edited' feature stays on the map
 			}
@@ -473,8 +439,6 @@ $.widget("cow.OlMapWidget", {
 			{'self':this,layer:editlayer},
 			function(evt){
 				var feature = JSON.parse(geojson_format.write(evt.feature));
-				
-				//Obs: core.trigger('afterfeaturemodified',feature);
 				core.featurestore().updateLocalFeat(feature);
 			}
 		);

@@ -11,13 +11,17 @@ Dependencies Core
 =================
 
 ### jQuery ###
-jQuery version 1.9.1
+jQuery version 1.10.2
 
 ### OpenLayers ###
 OpenLayers version 2.12
 
 ### jquery.indexeddb.js ###
 https://github.com/axemclion/jquery-indexeddb
+
+### D3js ###
+D3js version 3
+
 
 Dependencies Client
 ===================
