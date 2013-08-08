@@ -182,7 +182,7 @@ $.Cow.Peer.prototype = {
         return this.params.herd;
     },
     _setHerd: function(options){
-        if(!options.uid) {
+        if(options.uid === undefined) {
             throw "Herd without ID!";
         }
         if(!options.name) {
@@ -219,13 +219,14 @@ $.Cow.Peer.prototype = {
         }
     },
     _getOwner: function() {
-        return this.options.owner;
+        return this.params.owner;
     },
     _setOwner: function(options){
-        this.options.owner = options.owner;
+        this.params.owner = options.owner;
+        if(this.params.owner === undefined) this.params.owner = 'anonymous';
         if(this.uid == this.core.UID) {
             this.core.trigger("peerStoreChanged", this.uid);
-            this.core.trigger("meChanged", {"owner":this.options.owner});
+            this.core.trigger("meChanged", {"owner":this.params.owner});
         }
     },
     
