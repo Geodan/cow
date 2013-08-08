@@ -106,10 +106,10 @@ $.widget("cow.PeersWidget", {
         var names = '';
         $.each(herds,function() {
             if(this.uid==self.core.activeHerd) {
-                names = names + '<span class="peerlist herd me" title="this is your herd" herd="'+this.id+'">'+this.name+'</span></br>';
+                names = names + '<span class="peerlist herd me" title="this is your herd" herd="'+this.uid+'">'+this.name+'</span></br>';
             }
             else {
-                names = names + '<span class="peerlist herd" title="click to activate this herd" herd="'+this.id+'">'+this.name+'</span></br>';
+                names = names + '<span class="peerlist herd" title="click to activate this herd" herd="'+this.uid+'">'+this.name+'</span></br>';
             }
             $.each(this.peers, function(){
                 if(this.uid==self.core.UID) {
