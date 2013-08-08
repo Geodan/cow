@@ -26,8 +26,8 @@ $.Cow.Core = function(element, options) {
     /* SMO: obsolete 7/8/2013
     this.herdList = [{id:0,name:"sketch"},{id:1,name:"test"}]; //Altijd initiele sketch herd aanwezig
     */
-    this.herdList = [{uid:0,name:"sketch"}];
-    this.options.activeHerd = this.herdList[0].uid;
+    this.herdList = [{uid:0,name:"sketch"},{uid:1,name:"temp"}];
+    this.activeHerd = this.herdList[0].uid;
     this.localDbase;
     this.geoLocator;
     this.featureStore;
@@ -48,14 +48,14 @@ $.Cow.Core = function(element, options) {
     self.bind("disconnected", {widget: self}, self.removeAllPeers);
     
     //TODO: put this in a proper function
-    self.bind('changeHerdRequest', {widget:self}, function(e,id){
-            self.featurestore().clear(); //Clear featurestore
-            self.me().options.herd = id;
-            self.options.activeHerd = id;
-            self.options.storename = "store_"+id; //TODO: the link between activeHerd and storename can be better
-            self.localdbase().loadFromDB();//Fill featurestore with what we have
-            var options = {name: self.me().options.owner, herd: self.me().options.herd};
-            self.trigger("paramsChange",options);
+    self.bind('changeHerdRequest', {widget:self}, function(e,uid){
+        self.featurestore().clear(); //Clear featurestore
+        self.me().herd(core.getHerdById(uid));
+        self.activeHerd = uid;
+        self.options.storename = "store_"+uid; //TODO: the link between activeHerd and storename can be better
+        self.localdbase().loadFromDB();//Fill featurestore with what we have
+        var options = {name: self.me().options.owner, herd: uid};
+        self.trigger("paramsChange",options); //TODO: is this still a valid trigger?
     });
     
     
@@ -387,8 +387,10 @@ A Peer is on object containing:
     getPeerExtents: function() {
         var collection = {"type":"FeatureCollection","features":[]};
         $.each(core.peers(), function(){
-            if (this.uid != self.core.me().uid && this.view().feature)
-            collection.features.push(this.view().feature);
+            if (this.uid != self.core.me().uid
+                    && this.herd().uid == self.core.me().herd().uid
+                    && this.view().feature)
+                collection.features.push(this.view().feature);
         });
         return collection;
     },

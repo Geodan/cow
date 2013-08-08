@@ -63,7 +63,7 @@ $.widget("cow.OlMapWidget", {
 		this.map.addLayer(osmlayer);
 		//this.map.setCenter(new OpenLayers.LonLat(768708,6849389), 10);//Enschede
 		this.map.setCenter(new OpenLayers.LonLat(546467,6862526),10);//Amsterdam
-		this.map.addControl(new OpenLayers.Control.LayerSwitcher());
+		//this.map.addControl(new OpenLayers.Control.LayerSwitcher());
 		
 		
 		var handleOnLoad = function(){
@@ -83,7 +83,6 @@ $.widget("cow.OlMapWidget", {
             self.locationlyr.reset();
 		};
 		
-		tmp = this.map;
 		var handleNewExtent = function(data){
             var extent = data.object.getExtent().toGeometry();
             var toproj = new OpenLayers.Projection("EPSG:4326");
@@ -486,7 +485,7 @@ $.widget("cow.OlMapWidget", {
 		if (feature.popup)
 			feature.popup.destroy();
 		var key = feature.properties.key;
-		if (core.me().options.herd == feature.properties.store){
+		if (core.me().herd().uid == feature.properties.store){
 		    core.featurestore().removeItem(key);
 		    core.trigger('storeChanged');
 		}
@@ -501,7 +500,7 @@ $.widget("cow.OlMapWidget", {
 			feature.popup = null;
 		}
 		var jsonfeature = JSON.parse(geojson_format.write(feature));
-		if (core.me().options.herd == feature.properties.store){
+		if (core.me().herd().uid == feature.properties.store){
 		    core.featurestore().updateLocalFeat(jsonfeature);
 		}
 	}

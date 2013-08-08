@@ -120,7 +120,7 @@ When adding items, those are returned.
 			//feature.properties.polycolor = self.core.current_polycolor;
 			item.key = self.core.UID + "#" + timestamp;
 			feature.properties.key = item.key;
-			feature.properties.storename = self.core.options.activeHerd;
+			feature.properties.storename = self.core.activeHerd;
 			item.uid = self.core.UID;
 			item.created = timestamp;
 			item.updated = timestamp;
@@ -148,7 +148,7 @@ When adding items, those are returned.
 		feature.properties.polycolor = self.core.current_polycolor;
 		item.key = self.core.UID + "#" + timestamp;
 		feature.properties.key = item.key;
-		feature.properties.store = self.core.options.activeHerd;
+		feature.properties.store = self.core.activeHerd;
 		item.uid = self.core.UID;
 		item.created = timestamp;
 		item.updated = timestamp;
@@ -238,7 +238,7 @@ When adding items, those are returned.
 		self.loaded = true;
 		var message = {};
         message.fids = fids;
-        message.storename = self.core.options.activeHerd;
+        message.storename = self.core.activeHerd;
         self.core.websocket().sendData(message, "newPeerFidList");
 	},
 	

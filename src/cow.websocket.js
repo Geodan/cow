@@ -74,14 +74,14 @@ $.Cow.Websocket.prototype = {
             case 'newFeature':
                 if(uid != UID) {
                     var item = JSON.parse(payload);
-                    if (self.core.options.activeHerd == item.feature.properties.store)
+                    if (self.core.activeHerd == item.feature.properties.store)
                         core.featurestore().updateItem(item);
                 }
             break;
             case 'updateFeature':
                 if(uid != UID) {
                     var item = JSON.parse(payload);
-                    if (self.core.options.activeHerd == item.feature.properties.store)
+                    if (self.core.activeHerd == item.feature.properties.store)
                         core.featurestore().updateItem(item);
                 }
             break;
@@ -139,7 +139,7 @@ $.Cow.Websocket.prototype = {
         this.core.trigger('ws-connected');        
         this.sendData(options,'newPeer');
         //triggers _onNewPeer()
-        var herd = core.getHerdById(self.core.options.activeHerd);
+        var herd = core.getHerdById(self.core.activeHerd);
         me.owner({"name":name});
         me.herd(herd);
         
@@ -148,7 +148,7 @@ $.Cow.Websocket.prototype = {
             var fids = store.getIdList();
             var message = {};
             message.fids = fids;
-            message.storename = self.core.options.activeHerd;
+            message.storename = self.core.activeHerd;
             self.core.websocket().sendData(message, "newPeerFidList");
             
         }
@@ -196,14 +196,14 @@ $.Cow.Websocket.prototype = {
         else console.warn('badpeer '+uid);
     },
     _amIAlpha: function(id,herd){ //find out wether I am alpha
-        if (this.core.me().options.herd == herd){ //I need to be part of the herd
+        if (this.core.me().herd().uid == herd){ //I need to be part of the herd
             if (this.core.me().options.cid == id) //yes, I certainly am (the oldest) 
                 return true;
             else { //check again if younger peer turns out not to be from alpha family or not part of my herd
                 id++; 
                 var nextpeer = this.core.getPeerByCid(id);
                 if ((nextpeer.options.family && nextpeer.options.family != 'alpha') ||
-                    (nextpeer.options.herd && nextpeer.options.herd != this.core.me().options.herd))
+                    (nextpeer.herd().uid && nextpeer.herd().uid != this.core.me().herd().uid))
                     this._amIAlpha(id, herd);    //I might still be alpha
             }
             return false; //Not the oldest in the herd
@@ -214,7 +214,7 @@ $.Cow.Websocket.prototype = {
         var self = this; //TODO !! : alpha check must incorporate activeherd!!
         //if (this._amIAlpha(0, payload.storename)){ //Check wether I'm alpha 
             //console.log('I am alpha');
-            if (self.core.options.activeHerd == payload.storename){
+            if (self.core.activeHerd == payload.storename){
                 var data = this.core.featurestore().compareIdList(payload.fids);
                 var message = {};
                 //First the requestlist
@@ -246,7 +246,7 @@ $.Cow.Websocket.prototype = {
     _onSyncPeer: function(payload,uid) {
         var requested_fids = payload.requestlist;
         var pushed_feats = payload.pushlist;
-        if (self.core.options.activeHerd == payload.storename){
+        if (self.core.activeHerd == payload.storename){
             var store = this.core.featurestore();
             //First sent the features that are asked for
             if (requested_fids.length > 0){
@@ -264,7 +264,7 @@ $.Cow.Websocket.prototype = {
     //Peer sends back requested features, now store them
     _onRequestedFeats: function(payload,uid) {
         var requested_feats = payload;
-        if (self.core.me().options.herd == payload.storename){
+        if (self.core.me().herd().uid == payload.storename){
             var store = this.core.featurestore();
             if (requested_feats.length > 0){
                 store.putFeatures(requested_feats);

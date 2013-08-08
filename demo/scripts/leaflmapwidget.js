@@ -53,10 +53,9 @@ $.widget("cow.LeaflMapWidget", {
 			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 		}).addTo(this.map);
 		
-		var baseLayers = {"OSM": osmLayer};
-		
 		//Layer controls
-		L.control.layers(baseLayers).addTo(this.map);
+		//var baseLayers = {"OSM": osmLayer};
+		//L.control.layers(baseLayers).addTo(this.map);
 		
 		$('#peers').bind("zoomToPeersview", function(evt, bbox){
 			self.map.fitBounds([[bbox.bottom,bbox.left],[bbox.top,bbox.right]]);

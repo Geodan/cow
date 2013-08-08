@@ -120,7 +120,8 @@ $.widget("cow.PeersWidget", {
 		var self = evt.data.widget;
 		self._updateList(evt);
 		//Peerjs stuff
-		self.peer1.destroy();
+		if (self.peer1)
+		    self.peer1.destroy();
 	},
 	_onPeerGone: function(evt) {
 	console.log('_onPeerGone');
@@ -156,11 +157,12 @@ $.widget("cow.PeersWidget", {
 		});
 		names = names + "<h2>Herds</h2>";
 		$.each(herds,function(){
-		    if(this.id==self.core.options.activeHerd) {
-		        names = names + '<span class="peerlist me" title="this is your herd" herd="'+this.id+'">'+this.name+'</span></br>';
+		    //TODO: make sure this works when we have no me() peer
+		    if(self.core.me().herd() && this.uid==self.core.me().herd().uid) {
+		        names = names + '<span class="peerlist me" title="this is your herd" herd="'+this.uid+'">'+this.name+'</span></br>';
 		    }
 		    else {
-		        names = names + '<span class="peerlist herd" title="click to activate this herd" herd="'+this.id+'">'+this.name+'</span></br>';
+		        names = names + '<span class="peerlist herd" title="click to activate this herd" herd="'+this.uid+'">'+this.name+'</span></br>';
 		    }
 		});
 		element.html(names);
