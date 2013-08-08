@@ -24,8 +24,8 @@ $.widget("cow.ConnectWidget", {
 
      
 
-        core.bind("connected", {widget: self}, self._onConnect);
-        core.bind("disconnected", {widget: self}, self._onDisConnect);
+        core.bind("ws-connected", {widget: self}, self._onConnect);
+        core.bind("ws-disconnected", {widget: self}, self._onDisConnect);
 		
 		element.delegate('.disconnect','click', function(){
 			try {//TODO: This should be a trigger instead of directly calling the websocket
