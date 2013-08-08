@@ -71,7 +71,7 @@ $.Cow.Peer.prototype = {
                         },
                      "properties": {
                         "uid":this.uid,
-                        "owner": this.options.owner,
+                        "owner": this.owner().name,
                         "label":""
                     }
                 }
@@ -220,11 +220,12 @@ $.Cow.Peer.prototype = {
         }
     },
     _getOwner: function() {
+        if(this.params.owner === undefined) this.params.owner = {"name":"anonymous"};
         return this.params.owner;
     },
     _setOwner: function(options){
         this.params.owner = options.owner;
-        if(this.params.owner === undefined) this.params.owner = 'anonymous';
+        if(this.params.owner === undefined) this.params.owner = {"name":"anonymous"};
         if(this.uid == this.core.UID) {
             this.core.trigger("peerStoreChanged", this.uid);
             this.core.trigger("meChanged", {"owner":this.params.owner});
