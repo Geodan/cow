@@ -43,7 +43,7 @@ $.Cow.Peer.prototype = {
         }
         if(this.uid == this.core.UID) {
             this.core.trigger("peerStoreChanged", this.uid);
-            this.core.trigger("meChanged", {"view":this.params.viewExtent});
+            this.core.trigger("meChanged", {"extent":this.params.viewExtent});
         }
     },
     //helper function to turn a view feature to an extent object
@@ -119,7 +119,7 @@ $.Cow.Peer.prototype = {
         
         if(this.uid == this.core.UID) {
             this.core.trigger("peerStoreChanged", this.uid);
-            this.core.trigger("meChanged", {"position":this.params.locationPoint});
+            this.core.trigger("meChanged", {"point":this.params.locationPoint});
         }
     },
     _position2point: function(pos) {

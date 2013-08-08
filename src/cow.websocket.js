@@ -47,7 +47,7 @@ $.Cow.Websocket.prototype = {
             //a peer is gone and everybody has a new connection-id, recieve a connectionID with UID
             case 'updatePeers':
                 if(uid != UID) {            
-                    this.obj.__onUpdatePeer(payload,uid);
+                    this.obj._onUpdatePeers(payload,uid);
                 }
             break;
             //a new peer just joined, recieve its status: connection-id, uid, extent
@@ -62,24 +62,13 @@ $.Cow.Websocket.prototype = {
                     this.obj._onNewPeerFidList(payload,uid);
                 }
             break;
-            //a peer has moved its map, recieve a new extent
-            case 'peerMoved':
+            //a peer has changed, update the peer
+            case 'peerUpdated':
                 if(uid != UID) {
-                    this.obj._onPeerMoved(payload,uid);
+                    this.obj._onPeerUpdated(payload,uid);
                 }
             break;
-            //a peer has changed its location
-            case 'peerLocationChanged':
-                if(uid != UID) {
-                    this.obj._onPeerChangedLocation(payload,uid);
-                }
-            break;
-            //a peer has changed its params (name, herd)
-            case 'peerParamsChanged':
-                if(uid != UID) {
-                    this.obj._onPeerChangedParams(payload,uid);
-                }
-            break;
+            
             
             //a new object was drawn or updated by a peer
             case 'newFeature':
@@ -286,7 +275,7 @@ $.Cow.Websocket.prototype = {
         this.sendData(message,'updatePeers');
     },
     //Pure websocket function, only needed to keep the connection-ids in sync with the uids
-    __onUpdatePeer: function(payload,uid) {
+    _onUpdatePeers: function(payload,uid) {
         var peer = this.core.getPeerByUid(uid);
         console.log('updatePeer');
         if(peer !== undefined) {
@@ -295,76 +284,18 @@ $.Cow.Websocket.prototype = {
         }
         else console.warn('badpeer');
     },
-    _onPeerMoved: function(payload,uid) {
+    _onPeerUpdated: function(payload,uid) {
         var peer = this.core.getPeerByUid(uid);
         if(peer !== undefined) {
-            //SMO event refab
-            //peer.events.trigger('peerMoved',payload);
             peer.events.trigger('ws-updatePeer',payload);
-            //console.log('peerMoved');
         }
         else console.warn('badpeer');
     },
-    //a peer has changed location, redraw its position on the map
-    _onPeerChangedLocation: function(payload, uid){
-        var peer = this.core.getPeerByUid(uid);
-        
-        if(peer !== undefined) {
-            //SMO event refab
-            //peer.events.trigger('locationChange',payload);
-            peer.events.trigger('ws-updatePeer',payload);
-            //console.log('locationChange');
-        }
-        else console.warn('badpeer');
-    },
-    //a peer has changed its parameters, reset its peer options
-    _onPeerChangedParams: function(payload, uid){
-        var peer = this.core.getPeerByUid(uid);
-        
-        if(peer !== undefined) {
-            //SMO event refab
-            //peer.events.trigger('paramChange',payload);
-            peer.events.trigger('ws-updatePeer',payload);
-            //console.log('locationChange');
-        }
-        else console.warn('badpeer');
-    },
-    
-    
-    //SMO: my stuff has changed
+    //SMO: my stuff has changed, send over the changed data
     _onMeChanged: function(evt, payload) {
-    },
-    
-    _onMapMoved: function(evt,extent) {
         var self = evt.data.widget;
-        //if you initialise the map it gives a mapmove event, but core.me() is not yet finished
-        if(self.core.me() !== undefined) {        
-            self.core.me().extent(extent);
-            var message = {};
-            message.extent = self.core.me().extent();
-            message.owner = self.core.me().options.owner;
-            self.sendData(message,'peerMoved');
-        }
-    },
-    //my location has changed, send update to world
-    _onLocationChanged: function(evt, payload) {
-        var self = evt.data.widget;
-        var position = payload.position;
-        var message = {};
-        message.position = position;
-        message.uid = self.core.UID;
-        self.sendData(message,'peerLocationChanged');
-    },
-    //my params changed, send update to world
-    _onParamsChanged: function(evt, payload) {
-        var self = evt.data.widget;
-        var name = payload.name;
-        var herd = payload.herd;
-        var message = {};
-        message.name = name;
-        message.herd = herd;
-        message.uid = self.core.UID;
-        self.sendData(message,'peerParamsChanged');
+        console.log('mechanged '+ JSON.stringify(payload));
+        self.sendData(payload,"peerUpdated");
     },
     
     
