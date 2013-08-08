@@ -44,7 +44,7 @@ $.Cow.GeoLocator.prototype = {
 		console.warn(innerHTML);
 	},
 	_setGeoLocation: function(){
-		console.log('Start polling geolocation');
+		//console.log('Start polling geolocation');
 		var geolocationid = window.navigator.geolocation.watchPosition( 
 			this._showPosition, 
 			this._showError, 
@@ -55,7 +55,7 @@ $.Cow.GeoLocator.prototype = {
 			} 
 		);
 		window.setTimeout( function () {
-				console.log('Stop polling geolocation');
+				//console.log('Stop polling geolocation');
 				window.navigator.geolocation.clearWatch( geolocationid ) 
 			}, 
 			5000 //stop checking after 5 seconds

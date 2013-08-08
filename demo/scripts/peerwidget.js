@@ -47,13 +47,21 @@ $.widget("cow.PeersWidget", {
 		//Preliminary peerjs video connection
 		element.delegate('.videoconnection','click', function(){
             var owner = $(this).attr('owner');
+            $('#videopanel').add("button").on("click",function(e){
+                console.log("Closing "  + owner);
+                self.peer1.managers[owner].close();
+                $('#videopanel').hide();
+            });
+            
             $('#videopanel').show();
             
             mc = self.peer1.call(owner, ls);
+            tmp = self.peer1;
             mc.on('stream', function(s){
                 window.remote = s;
                   z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('#videoplace');
               });
+            
          });
 		
 		element.delegate('.herd','click', function(){
@@ -91,11 +99,17 @@ $.widget("cow.PeersWidget", {
       self.peer1 = new Peer(self.core.UID, { key: 'lwjd5qra8257b9', debug: true });
       
       self.peer1.on('call', function(c){
+        
         c.answer(s);
         c.on('stream', function(s){
           $('#videopanel').show();
           window.s = s;
           z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('#videoplace');
+          
+        });
+        c.on('close', function(x){
+             console.log('Video connection closed');
+             $('#videopanel').hide();
         });
       });
     }, function(){});
@@ -106,6 +120,8 @@ $.widget("cow.PeersWidget", {
 	console.log('_onDisconnect');
 		var self = evt.data.widget;
 		self._updateList(evt);
+		//Peerjs stuff
+		self.peer1.destroy();
 	},
 	_onPeerGone: function(evt) {
 	console.log('_onPeerGone');

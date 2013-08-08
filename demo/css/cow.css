@@ -200,9 +200,9 @@ border: solid 1px #2e3436 !important;
 #videopanel {
     position: absolute;
     display: none;
-    left: 200px;
-    top: 200px;
-    height: 600px;
-    width: 600px;
+    left: 50px;
+    top: 50px;
+    height: 200px;
+    width: 200px;
     padding: 10px;
 }

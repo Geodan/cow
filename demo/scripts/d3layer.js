@@ -122,7 +122,6 @@ function d3layer(layername, config){
 		          case 'ul':
 		            textLocation[0] = bounds[0][0];
 		            textLocation[1] = bounds[0][1];
-		            console.log("Styler: " + textLocation);
 		            break;
 		          case 'ur':
 		            textLocation[0] = bounds[1][0];
