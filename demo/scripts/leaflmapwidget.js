@@ -36,20 +36,11 @@ $.widget("cow.LeaflMapWidget", {
         
         core = $(this.options.core).data('cow');
 		this.core=core;
-        core.bind("dbloaded", {widget: self}, self._onLoaded);
-		core.bind("storeChanged", {widget: self}, self._onLoaded);
-		core.bind("sketchcomplete", {widget: self}, self._onSketchComplete);
-		
-		core.bind("drawExtent", {widget: self},self._drawExtent);
-		core.bind("drawPositions", {widget: self},self._drawPositions);
-		
-		
-		element.delegate('.owner','click', function(){
-			var key = $(this).attr('owner');
-			self.core.featureStores[0].removeItem(key);
-			core.trigger('storeChanged');
-		});
-		
+        core.bind("storeChanged", {widget: self}, self._onFeatureStoreChanged);
+		core.bind("peerStoreChanged", {widget: self}, self._onPeerStoreChanged);
+		//core.bind("layoutChanged", {widget: self},self._updateSize);
+		core.bind("zoomToPeersviewRequest", {widget: self},self._zoomToPeersView);
+		core.bind("zoomToPeerslocationRequest", {widget: self},self._zoomToPeersLocation);
 		
 		//Creating the leaflet map
 		this.map = L.map('map',{ 
@@ -65,17 +56,14 @@ $.widget("cow.LeaflMapWidget", {
 		var baseLayers = {"OSM": osmLayer};
 		
 		//Layer controls
-		//L.control.layers(baseLayers).addTo(this.map);
+		L.control.layers(baseLayers).addTo(this.map);
 		
 		$('#peers').bind("zoomToPeersview", function(evt, bbox){
 			self.map.fitBounds([[bbox.bottom,bbox.left],[bbox.top,bbox.right]]);
 		});
 		
 		
-		this.handlers = {
-			// Triggers the jQuery events, after the map events
-			// happened without any further processing
-			simple: function(data) {
+		var handleNewExtent = function(data){
 				var bounds = data.target.getBounds();
 				var extent = {
 					left: bounds.getWest(),
@@ -83,15 +71,15 @@ $.widget("cow.LeaflMapWidget", {
 					right: bounds.getEast(),
 					top: bounds.getNorth()
 				};
-				self.core.me() && self.core.me().extent(extent); //Set my own extent
-				core.trigger(data.type, extent);
-			}
-        };
+				self.core.me() && self.core.me().view({extent:extent.bounds}); //Set my own extent
+				self.viewlyr.reset();
+				self.locationlyr.reset();
+		};
 		this._createLayers(this.map);
 		
 				
 		this.map.on('moveend',function(e){
-				self.handlers.simple(e);
+				handleNewExtent(e);
 		});
 		this.map.on('click',function(e){
 				self.controls.editcontrol.save();
@@ -104,7 +92,7 @@ $.widget("cow.LeaflMapWidget", {
                                  'ui-corner-all')
             .empty();
     },
-	_onLoaded: function(evt) {
+	_onFeatureStoreChanged: function(evt) {
 		//console.log('_onLoaded');
 		var self = evt.data.widget;
 		self._updateMap(evt);
@@ -116,8 +104,7 @@ $.widget("cow.LeaflMapWidget", {
 	},
 	_updateMap: function(evt) {		
 		var self = evt.data.widget;
-		var features = core.featureStores[0].getAllFeatures();		//TT: we only use 1 store anyway... 
-        var element = self.element;
+		self._reloadLayer(); 
 	},
 	getExtent: function(){
 		var bounds = this.map.getBounds();
@@ -132,29 +119,40 @@ $.widget("cow.LeaflMapWidget", {
 	getControls: function(){
 		return this.controls;
 	},
+	//Anything changed in the peers store results in redraw of peer features (extents & points)
+	_onPeerStoreChanged: function(evt) {
+	    var self = evt.data.widget;
+	    var extentCollection = self.core.getPeerExtents();
+	    var locationCollection = self.core.getPeerPositions();
+	    //Update layer with extents
+	    if (self.viewlyr){
+			self.viewlyr.data(extentCollection);
+		}
+		//Update layer with locations
+		if (self.locationlyr){
+		    $.each(locationCollection.features, function(i,d){
+                var style = {}; 
+                if (d.id == self.core.me().uid)
+                    style.fill = "red";
+                else style.fill = "steelBlue";
+                d.style = style;
+            });
+			self.locationlyr.data(locationCollection);
+		}
+	},
+	_zoomToPeersView: function(evt, bbox){
+	    var self = evt.data.widget;
+        //TODO
+	},
+	_zoomToPeersLocation: function(evt, location){
+	    var self = evt.data.widget;
+	    //TODO
+	},
 	
-	_drawExtent: function(evt, peerCollection) {
-		var self = evt.data.widget;
-		if (self.viewlyr)
-			self.viewlyr.data(peerCollection);
-	},
-	_drawPositions: function(evt, collection) {
-		var self = evt.data.widget;
-		//apply some styling to collection
-		$.each(collection.features, function(i,d){
-			var style = {}; //TODO: this goes right on Chrome desktop but wrong on chrome Beta mobile?!
-			if (d.id == self.core.me().uid)
-				style.fill = "red";
-			else style.fill = "steelBlue";
-			d.style = style;
-		});
-			
-		if (self.locationlyr)
-			self.locationlyr.data(collection);
-	},
+
 	_reloadLayer: function(e){
 		self.core.editLayer.clearLayers();
-		var items = self.core.getFeaturestoreByName('store1').getAllFeatures();
+		var items = self.core.featurestore().getAllFeatures();
 		$.each(items, function(i, object){
 			var feature = object.options.feature;
 			if (object.options.status != 'deleted')
@@ -171,17 +169,21 @@ $.widget("cow.LeaflMapWidget", {
 			maptype: "Leaflet",
 			map: self,
 			type: "path",
-			labels: false,
+			labels: true,
 			labelconfig: {
-				field: "owner"
-			},
+                field: "owner",
+                style: {
+                    stroke: "steelBlue"
+                }
+            },
 			style: {
-				fill: "none",
-				stroke: "steelBlue",
-				'stroke-width': 2
-			}
+					fill: "none",
+					stroke: "steelBlue",
+					'stroke-width': 2,
+					textlocation: "ul"
+				}
 		});
-
+        
 		self.locationlyr = new d3layer("locationlayer",{
 			maptype: "Leaflet",
 			map: self,
@@ -324,7 +326,9 @@ $.widget("cow.LeaflMapWidget", {
 				var layers = e.layers;
 				
 				layers.eachLayer(function (layer) {
-					core.trigger('afterfeaturemodified',layer.toGeoJSON());
+				    var feature = layer.toGeoJSON()
+				    core.featurestore().updateLocalFeat(feature);
+					//core.trigger('afterfeaturemodified',layer.toGeoJSON());
 				});
 		});
 		//See following URL for custom draw controls in leaflet
@@ -383,7 +387,9 @@ $.widget("cow.LeaflMapWidget", {
 		this.map.on('draw:created', function (e) {
 			var type = e.layerType,
 				layer = e.layer;
-			self.core.trigger('sketchcomplete',layer.toGeoJSON());
+			var feature = layer.toGeoJSON()
+			core.featurestore().saveLocalFeat(feature);
+			//self.core.trigger('sketchcomplete',layer.toGeoJSON());
 		});
 		
 		
@@ -412,7 +418,7 @@ $.widget("cow.LeaflMapWidget", {
 		//var feature = item.target.feature; 
 		var key = feature.properties.key;
 		var store = feature.properties.store || "store1";
-		core.getFeaturestoreByName(store).removeItem(key);
+		core.featurestore().removeItem(key);
 		self.map.closePopup();
 		console.log('storeChanged');
 		core.trigger('storeChanged');
@@ -429,7 +435,7 @@ $.widget("cow.LeaflMapWidget", {
 			if (key == "desc")
 				feature.properties.desc = value;
 			self.map.closePopup(); //we have to destroy since the next line triggers a reload of all features
-			core.getFeaturestoreByName(store).updateLocalFeat(feature);
+			core.featurestore().updateLocalFeat(feature);
 		}
 	},
 	closepopup: function(self){

@@ -17,15 +17,10 @@ The OpenLayers Mapwidget provides an OpenLayers map including layers that intera
 with the features in COW.
 
 Listeners:
+core.peerStoreChanged -> redraw peer information (labels, position, extent)
 core.storeChanged (something in the featurestore changed) -> redraw complete featurelayer
-core.peerExtentChanged (a peerExtent has changed) -> redraw peerExtent layer
-core.peerPositionChanged (a peers position has canged) -> redraw peer position
 core.layoutChanged (screenlayout changed) -> reset the map size (needed for extent calculations)
 core.zoomToPeersviewRequest (request for zooming to peerextent) -> zoom to extent of peer
-TODO: core.peerUpdated -> redraw peer information (labels, position, extent)
-
-Triggers:
-
 
 **/
 
