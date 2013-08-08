@@ -80,6 +80,8 @@ $.widget("cow.OlMapWidget", {
             extent.transform(fromproj, toproj);
             extent.getBounds();
             self.core.me() && self.core.me().view({extent:extent.bounds}); //Set my own extent
+            self.viewlyr.reset();
+            self.locationlyr.reset();
         };
 		this._createLayers(this.map);
 		

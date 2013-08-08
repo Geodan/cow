@@ -242,7 +242,7 @@ function d3layer(layername, config){
 			*/
 			return f;
         }
-		var reset = function() {
+		f.reset = function() {
 			if (config.maptype == 'OpenLayers')
 				_this.set_svg();
 
@@ -267,8 +267,6 @@ function d3layer(layername, config){
                     }
 			    });
 		}
-		
-		core.bind("moveend", reset); //Redraw after mapmoved
-		reset();
+		f.reset();
 		return f;
 	}
