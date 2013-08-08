@@ -10,47 +10,40 @@ _onConnect: function() {
 */
 (function($) {
 $.widget("cow.PeersWidget", {
-	options: {
+    options: {
         // The cow.core instance
         core: undefined,
-		name: '#myname'
+        name: '#myname'
     },
  _create: function() {
         var core;
-        var self = this;		
+        var self = this;        
         var element = this.element;
 
         core = $(this.options.core).data('cow');
-		this.core=core;
+        this.core=core;
         core.bind("ws-connected", {widget: self}, self._onPeerStoreChanged);
-		core.bind("ws-disconnected", {widget: self}, self._onPeerStoreChanged);
-		core.bind("ws-peerGone", {widget: self}, self._onPeerStoreChanged);
+        core.bind("ws-disconnected", {widget: self}, self._onPeerStoreChanged);
+        core.bind("ws-peerGone", {widget: self}, self._onPeerStoreChanged);
         core.bind("peerStoreChanged" ,{widget: self}, self._onPeerStoreChanged);
-        /* SMO: obs? 8/8/13
-		core.bind("peerInfo", {widget: self}, self._onPeerInfo);
-		core.bind("newPeer", {widget: self}, self._onNewPeer);
-		core.bind("peerupdated", {widget: self}, self._onPeerUpdated);
-		core.bind("changeHerdRequest", {widget: self}, self._updateList);
-        */
-		
-		element.delegate('.location','click', function(){
-			var owner = $(this).attr('owner');
-			var peer = core.getPeerByUid(owner);
-			var location = peer.position().point;
+       
+        
+        element.delegate('.location','click', function(){
+            var owner = $(this).attr('owner');
+            var peer = core.getPeerByUid(owner);
+            var location = peer.position().point;
             self.core.center({position:location});
-			//TODO: extend the Peer object with peer.center()
-            //self.core.trigger('zoomToPeerslocationRequest', location);
-		});
-		
-		element.delegate('.extent','click', function(){
-			var owner = $(this).attr('owner');
-			var peer = core.getPeerByUid(owner);
-			var bbox = peer.view().extent;
-			self.core.center({view:bbox});
-		});
-		
-		//Preliminary peerjs video connection
-		element.delegate('.videoconnection','click', function(){
+        });
+        
+        element.delegate('.extent','click', function(){
+            var owner = $(this).attr('owner');
+            var peer = core.getPeerByUid(owner);
+            var bbox = peer.view().extent;
+            self.core.center({view:bbox});
+        });
+        
+        //Preliminary peerjs video connection
+        element.delegate('.videoconnection','click', function(){
             var owner = $(this).attr('owner');
             $('#videopanel').add("button").on("click",function(e){
                 console.log("Closing "  + owner);
@@ -68,17 +61,17 @@ $.widget("cow.PeersWidget", {
               });
             
          });
-		
-		element.delegate('.herd','click', function(){
-			var herd = $(this).attr('herd');
-			self.core.trigger('changeHerdRequest', herd);
-			
-		});
-		
-		$(this.options.name).change(function(){
+        
+        element.delegate('.herd','click', function(){
+            var herd = $(this).attr('herd');
+            self.core.trigger('changeHerdRequest', herd);
+            
+        });
+        
+        $(this.options.name).change(function(){
             self.core.me().owner({"name":$(this).val()});
-			
-		});
+            
+        });
 
     },
     _destroy: function() {
@@ -86,43 +79,43 @@ $.widget("cow.PeersWidget", {
                                  'ui-corner-all')
             .empty();
     },
-	
-	
-	_onPeerStoreChanged: function(evt) {
-	console.log('_onNewPeer');
-		var self = evt.data.widget;
-		self._updateList(evt);
-	},
-	
-	_updateList: function(evt) {		
-		var self = evt.data.widget;
-		var peers = self.core.peers();
-		var herds = self.core.herds();
+    
+    
+    _onPeerStoreChanged: function(evt) {
+    console.log('_onNewPeer');
+        var self = evt.data.widget;
+        self._updateList(evt);
+    },
+    
+    _updateList: function(evt) {        
+        var self = evt.data.widget;
+        var peers = self.core.peers();
+        var herds = self.core.herds();
         var element = self.element;
         
-		
+        
         var names = '';
-		$.each(peers,function(){
-			if(this.uid==self.core.UID) {
-			names = names+ '<span class="peerlist me" title="this is you!" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png"></span></br>';
-			}
-			else {
-			names = names+ '<span class="peerlist owner" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png">&nbsp;<img class="videoconnection" owner="'+this.uid+'" src="./css/img/camera.png"></span></br>';
-			}
-		});
-		names = names + "<h2>Herds</h2>";
-		$.each(herds,function(){
-		    if(this.id==self.core.options.activeHerd) {
-		        names = names + '<span class="peerlist me" title="this is your herd" herd="'+this.id+'">'+this.name+'</span></br>';
-		    }
-		    else {
-		        names = names + '<span class="peerlist herd" title="click to activate this herd" herd="'+this.id+'">'+this.name+'</span></br>';
-		    }
-		});
-		element.html(names);
-		
-	}
-	});
+        $.each(peers,function(){
+            if(this.uid==self.core.UID) {
+            names = names+ '<span class="peerlist me" title="this is you!" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png"></span></br>';
+            }
+            else {
+            names = names+ '<span class="peerlist owner" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png">&nbsp;<img class="videoconnection" owner="'+this.uid+'" src="./css/img/camera.png"></span></br>';
+            }
+        });
+        names = names + "<h2>Herds</h2>";
+        $.each(herds,function(){
+            if(this.id==self.core.options.activeHerd) {
+                names = names + '<span class="peerlist me" title="this is your herd" herd="'+this.id+'">'+this.name+'</span></br>';
+            }
+            else {
+                names = names + '<span class="peerlist herd" title="click to activate this herd" herd="'+this.id+'">'+this.name+'</span></br>';
+            }
+        });
+        element.html(names);
+        
+    }
+    });
 })(jQuery);
 
 
