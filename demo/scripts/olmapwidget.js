@@ -84,7 +84,7 @@ $.widget("cow.OlMapWidget", {
 				var fromproj = new OpenLayers.Projection("EPSG:900913");
 				extent.transform(fromproj, toproj);
 				extent.getBounds();
-				self.core.me() && self.core.me().extent(extent.bounds); //Set my own extent
+				self.core.me() && self.core.me().view({extent:extent.bounds}); //Set my own extent
 				core.trigger(data.type, extent.bounds);
 			}
         };

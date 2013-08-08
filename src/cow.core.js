@@ -22,7 +22,7 @@ $.Cow.Core = function(element, options) {
     this.element = element;
     this.map = window[this.options.map];
     this.ws ={};
-    this.peerList = [];
+    this._peerList = [];
     /* SMO: obsolete 7/8/2013
     this.herdList = [{id:0,name:"sketch"},{id:1,name:"test"}]; //Altijd initiele sketch herd aanwezig
     */
@@ -45,7 +45,7 @@ $.Cow.Core = function(element, options) {
         this.geolocator(this.options.geolocator);
     }
     element.data('cow', this);
-    self.bind("disconnected", {widget: self}, self.removeAllPeers);
+    self.bind("ws-disconnected", {widget: self}, self.removeAllPeers);
     
     //TODO: put this in a proper function
     self.bind('changeHerdRequest', {widget:self}, function(e,id){
@@ -83,6 +83,7 @@ $.Cow.Websocket = function(core, options) {
             this.openws(this.url)
         }
     }
+    //SMO: TODO: kloppen deze events?    
     this.core.bind('moveend', {widget: self}, self._onMapMoved);
     this.core.bind('mylocationChange', {widget:self}, self._onLocationChanged);
     this.core.bind('paramChange', {widget:self}, self._onParamsChanged);
@@ -101,25 +102,13 @@ $.Cow.Websocket = function(core, options) {
 
 
 
-/**
-#Cow.Herd
 
-The Cow.Herd object. It is constructed from within cow, it contains information
-on a available herd. The core.herdList contains 
-a list of Cow.Herd objects, including the special 'sketch' herd
-
- */
-$.Cow.Peer = function(core, options) {
-    var self = this;
-    this.core = core;
-    this.options = options;
-};
 
 /**
 #Cow.Peer
 
 The Cow.Peer object. It is constructed from within cow, it contains information
-on a connected peer. The core.peerList contains 
+on a connected peer. The core._peerList contains 
 a list of Cow.Peer objects, including the special 'me' peer
 
  */
@@ -133,7 +122,7 @@ $.Cow.Peer = function(core, options) {
     this.viewfeature;
     this.events = $({});
     
-    this.events.bind('updatePeer', {widget: self}, self._onUpdatePeer);
+    this.events.bind('ws-updatePeer', {widget: self}, self._onUpdatePeer);
     /* SMO: obsolete 7/8/2013
     //Someone moved
     this.events.bind('peerMoved', {widget:self}, self._onMoved);
@@ -153,7 +142,7 @@ $.Cow.Peer = function(core, options) {
     this.extent;*/
     
     if(this.options.extent!==undefined) {
-        this.extent(this.options.extent);
+        this.view({extent:this.options.extent});
     };
     
     
@@ -349,6 +338,21 @@ to the cow.
 
 When adding peers, those are returned. 
 
+A Peer is on abject containing:
+-view()
+-position()
+-uid
+-options:
+ =cid
+ =uid
+ =herd
+ =owner
+ =family
+-params
+ =viewExtent
+ =viewFeature
+ =locationPoint
+ =locationFeature
 */
     peers: function(options) {
         var self = this;
@@ -371,7 +375,7 @@ When adding peers, those are returned.
     },
     _getPeers: function() {
         var peers = [];
-        $.each(this.peerList, function(id, peer) {
+        $.each(this._peerList, function(id, peer) {
             //SMO: mogelijk nog iets leuks meet peer volgorde ofzo
             peers.push(peer);
         });        
@@ -383,14 +387,12 @@ When adding peers, those are returned.
         if (options.uid != this.UID){
             
             var geojson_format = new OpenLayers.Format.GeoJSON();
-            var feature = geojson_format.read(peer.view());
-            peer.params.feature = feature;
-            peer.extent(options.extent);
+            //a position is known, show that as well
             if (options.position){
-                peer.drawPosition(options.position);
+                peer.position(options.position);
             }
         }
-        this.peerList.push(peer);
+        this._peerList.push(peer);
         //TODO: enable peer.trigger
         //peer.trigger('addpeer');
         return peer;
@@ -399,8 +401,8 @@ When adding peers, those are returned.
     getPeerExtents: function() {
         var collection = {"type":"FeatureCollection","features":[]};
         $.each(core.peers(), function(){
-            if (this.params.viewfeature.id != self.core.me().uid)
-            collection.features.push(this.params.viewfeature);
+            if (this.uid != self.core.me().uid)
+            collection.features.push(this.view().feature);
         });
         return collection;
     },
@@ -467,7 +469,7 @@ When adding peers, those are returned.
         this.mylocationLayer.removeFeatures(geolocation);
         */
         if(delPeer >= 0) peers.splice(delPeer,1);
-        this.peerList = peers;        
+        this._peerList = peers;        
         //TODO: remove peer from d3 layers
         
     },
@@ -476,7 +478,7 @@ When adding peers, those are returned.
         $.each(peers, function(i,peer){
             peer = {};
         });
-        this.peerList = [];
+        this._peerList = [];
         //TODO: remove peer from d3 layers
     },
         

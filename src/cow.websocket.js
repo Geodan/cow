@@ -105,7 +105,7 @@ $.Cow.Websocket.prototype = {
         var wasClean = event.wasClean;
         console.log('disconnected');
         this.close();
-        this.obj.core.trigger('disconnected');    
+        this.obj.core.trigger('ws-disconnected');    
         //TODO: doe iets slimmers, hij hangt nu af van de global variable 'core'....
         var restart = function(){
             try{
@@ -150,7 +150,7 @@ $.Cow.Websocket.prototype = {
         options.family = 'alpha'; //used to check if client is able to act as alpha peer
         var me = this.core.peers(options);
         console.log('nr peers: '+this.core.peers().length);
-        this.core.trigger('connected');        
+        this.core.trigger('ws-connected');        
         this.sendData(options,'newPeer');
         
         var sendFidList = function(){
@@ -180,7 +180,7 @@ $.Cow.Websocket.prototype = {
         console.log('Got peerinfo from: '+uid);        
         if(payload.uid !== undefined && payload.extent !== undefined && payload.cid !== undefined) {
             this.core.peers(payload);
-            this.core.trigger('peerInfo');    
+            this.core.trigger('ws-peerInfo');    
         }
         else console.log('badpeer');
     },
@@ -192,7 +192,7 @@ $.Cow.Websocket.prototype = {
             this.core.peers(payload);
             var message = this.core.me().options;
             this.sendData(message,'informPeer',uid);
-            this.core.trigger('newPeer');
+            this.core.trigger('ws-newPeer');
         }
         else console.warn('badpeer');
     },
@@ -300,7 +300,7 @@ $.Cow.Websocket.prototype = {
         if(peer !== undefined) {
             //SMO event refab
             //peer.events.trigger('peerMoved',payload);
-            peer.events.trigger('updatePeer',payload);
+            peer.events.trigger('ws-updatePeer',payload);
             //console.log('peerMoved');
         }
         else console.warn('badpeer');
@@ -312,7 +312,7 @@ $.Cow.Websocket.prototype = {
         if(peer !== undefined) {
             //SMO event refab
             //peer.events.trigger('locationChange',payload);
-            peer.events.trigger('updatePeer',payload);
+            peer.events.trigger('ws-updatePeer',payload);
             //console.log('locationChange');
         }
         else console.warn('badpeer');
@@ -324,7 +324,7 @@ $.Cow.Websocket.prototype = {
         if(peer !== undefined) {
             //SMO event refab
             //peer.events.trigger('paramChange',payload);
-            peer.events.trigger('updatePeer',payload);
+            peer.events.trigger('ws-updatePeer',payload);
             //console.log('locationChange');
         }
         else console.warn('badpeer');
