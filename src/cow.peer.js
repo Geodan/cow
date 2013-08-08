@@ -76,10 +76,8 @@ $.Cow.Peer.prototype = {
     
     /*
     position is an object containing:
-    -coords: 
-    -owner
-    -timestamp
-    -uid
+    -feature: a full GeoJSON point feature
+    -point: an object containing latitude and longitude
     
     position() takes an options object: {coords:{longitude:#,latitude:#},time:timestamp}
     */
