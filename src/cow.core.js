@@ -26,8 +26,8 @@ $.Cow.Core = function(element, options) {
     /* SMO: obsolete 7/8/2013
     this.herdList = [{id:0,name:"sketch"},{id:1,name:"test"}]; //Altijd initiele sketch herd aanwezig
     */
-    this.herdList = [{id:0,name:"sketch"}];
-    this.options.activeHerd = this.herdList[0].id;
+    this.herdList = [{uid:0,name:"sketch"}];
+    this.options.activeHerd = this.herdList[0].uid;
     this.localDbase;
     this.geoLocator;
     this.featureStore;
@@ -282,7 +282,7 @@ When adding herds, those are returned.
         var herds = this.herds();
         var herd;
         $.each(herds, function(){
-            if(this.id == id) {            
+            if(this.uid == id) {            
                 herd = this;
             }            
         });
@@ -323,11 +323,12 @@ When adding peers, those are returned.
 A Peer is on object containing:
 -view()
 -position()
+-owner()
+-herd()
 -uid
 -options:
  =cid
  =uid 
- =owner
  =family
 -params
  =viewExtent
@@ -335,6 +336,7 @@ A Peer is on object containing:
  =locationPoint
  =locationFeature
  =herd
+ =owner
 */
     peers: function(options) {
         var self = this;

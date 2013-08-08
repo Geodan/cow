@@ -125,22 +125,22 @@ $.Cow.Websocket.prototype = {
     _onConnect: function(payload) {
         var self = this;
         console.log('onConnect');
-        //TODO TT: Extent should not be taken from map object directly but from mapwidget
-        //var extent = this.core.map.getExtent();
-        var extent = {left: 0, bottom: 0, top: 1, right: 1};
+       
         var name = $('#'+this.core.options.namefield).val();
-        
+       
         var options = {};
-        options.extent = JSON.parse(JSON.stringify(extent));
+       
         options.uid = this.core.UID;
         options.cid = payload.cid;        
-        options.owner = name;
-        options.herd = self.core.options.activeHerd;
-        options.family = 'alpha'; //used to check if client is able to act as alpha peer
+       options.family = 'alpha'; //used to check if client is able to act as alpha peer
         var me = this.core.peers(options);
         console.log('nr peers: '+this.core.peers().length);
         this.core.trigger('ws-connected');        
         this.sendData(options,'newPeer');
+        //triggers _onNewPeer()
+        var herd = core.getHerdById(self.core.options.activeHerd);
+        me.owner({"name":name});
+        me.herd(herd);
         
         var sendFidList = function(){
             var store = core.featurestore();
@@ -174,9 +174,15 @@ $.Cow.Websocket.prototype = {
     //peerList
     _onNewPeer: function(payload,uid) {
         console.log('This peer just connected: '+uid);
-        if(payload.uid !== undefined && payload.extent !== undefined && payload.cid !== undefined) {
+        if(payload.uid !== undefined && payload.cid !== undefined) {
+            console.log('adding peer');
             this.core.peers(payload);
-            var message = this.core.me().options;
+            var message = {};
+            message.options = this.core.me().options;
+            message.view = this.core.me().view().extent;
+            message.owner = this.core.me().owner();
+            message.position = this.core.me().position().point;
+            message.herd = this.core.me().herd();
             this.sendData(message,'informPeer',uid);
             this.core.trigger('ws-newPeer');
         }
