@@ -154,14 +154,90 @@ $.Cow.Peer.prototype = {
         return _position;
     },
     
+    /*
+    herd is an object containing:
+    -name: the name of the herd
+    -uid: unique ID of the herd, must be unique for ever
+    
+    herd() takes an options object: {name:"herd name",uid:#}
+    */
+    herd: function(options) {
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this._getHerd();
+        case 1:
+            if (!$.isArray(options)) {                
+                return this._setHerd(options);
+            }
+            else {
+                throw('wrong argument number, only one herd per peer allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+    },
+    _getHerd: function() {
+        return this.params.herd;
+    },
+    _setHerd: function(options){
+        if(!options.uid) {
+            throw "Herd without ID!";
+        }
+        if(!options.name) {
+                options.name = "herd-"+options.uid;
+        }
+        this.params.herd = options;
+        if(this.uid == this.core.UID) {
+            this.core.trigger("peerStoreChanged", this.uid);
+            this.core.trigger("meChanged", {"herd":this.params.herd});
+        }
+    },
+    
+    /*
+    owner is an object containing:
+    -name: the name of the owner
+    
+    owner() takes an options object: {name:"owner name"}
+    */
+    owner: function(options) {
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this._getOwner();
+        case 1:
+            if (!$.isArray(options)) {                
+                return this._setOwner(options);
+            }
+            else {
+                throw('wrong argument number, only one owner per peer allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+    },
+    _getOwner: function() {
+        return this.options.owner;
+    },
+    _setOwner: function(options){
+        this.options.owner = options.owner;
+        if(this.uid == this.core.UID) {
+            this.core.trigger("peerStoreChanged", this.uid);
+            this.core.trigger("meChanged", {"owner":this.options.owner});
+        }
+    },
+    
+    
     //this one gets triggered by the websocket
     _onUpdatePeer: function(evt, payload) {
         var self = evt.data.widget;
         if(payload.owner) {
-            self.options.owner = payload.owner;
+            self.owner(payload.owner);
         }
         if(payload.herd) {
-            self.options.herd = payload.herd;
+            self.herd(payload.herd);
         }
         if (payload.extent) {
             self.view({extent: payload.extent});

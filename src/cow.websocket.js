@@ -160,9 +160,6 @@ $.Cow.Websocket.prototype = {
         
     },
     
-    _onDBLoaded: function(){
-        
-    },
     //You just joined and you get from each peer the relevant info
     //Add it to your peerList
     _onInformPeer: function(payload,uid) {        
@@ -284,6 +281,7 @@ $.Cow.Websocket.prototype = {
         }
         else console.warn('badpeer');
     },
+    //A peer has updated, tell the peer object to change
     _onPeerUpdated: function(payload,uid) {
         var peer = this.core.getPeerByUid(uid);
         if(peer !== undefined) {
@@ -291,10 +289,11 @@ $.Cow.Websocket.prototype = {
         }
         else console.warn('badpeer');
     },
-    //SMO: my stuff has changed, send over the changed data
+    //My stuff has changed, send over the changed data to the other peers
     _onMeChanged: function(evt, payload) {
         var self = evt.data.widget;
         console.log('mechanged '+ JSON.stringify(payload));
+        //TODO: check if the payload is good?
         self.sendData(payload,"peerUpdated");
     },
     
@@ -348,6 +347,8 @@ $.Cow.Websocket.prototype = {
     _triggerReturn: function() {
         return this.events.triggerHandler.apply(this.events, arguments);
     },
+    
+    //TODO: waarom zijn deze twee er?
     closews: function() {
         if (this.ws){
             this.ws.close();    

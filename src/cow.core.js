@@ -120,23 +120,7 @@ $.Cow.Peer = function(core, options) {
     this.events = $({});
     
     this.events.bind('ws-updatePeer', {widget: self}, self._onUpdatePeer);
-    /* SMO: obsolete 7/8/2013
-    //Someone moved
-    this.events.bind('peerMoved', {widget:self}, self._onMoved);
-    
-    this.events.bind('updatePeer', {widget:self}, self._onMoved);
-    
-    //my physical position changed
-    this.events.bind('mylocationChange', {widget:self}, self._onLocationChanged);
-    //someone's physical position changed
-    this.events.bind('locationChange', {widget:self}, self._onLocationChanged);
-    //someone changed other metadata
-    this.events.bind('paramChange', {widget:self}, self._onParamsChanged);
-    
-    this.uid;
-    this.cid;
-    this.name;
-    this.extent;*/
+
     
     if(this.options.extent!==undefined) {
         this.view({"extent": this.options.extent});
@@ -342,8 +326,7 @@ A Peer is on object containing:
 -uid
 -options:
  =cid
- =uid
- =herd
+ =uid 
  =owner
  =family
 -params
@@ -351,6 +334,7 @@ A Peer is on object containing:
  =viewFeature
  =locationPoint
  =locationFeature
+ =herd
 */
     peers: function(options) {
         var self = this;
