@@ -94,6 +94,7 @@ $.Cow.Websocket.prototype = {
         var wasClean = event.wasClean;
         console.log('disconnected');
         this.close();
+        this.obj.core.removeAllPeers();
         this.obj.core.trigger('ws-disconnected');    
         //TODO: doe iets slimmers, hij hangt nu af van de global variable 'core'....
         var restart = function(){
