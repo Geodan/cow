@@ -154,6 +154,7 @@ $.Cow.Peer.prototype = {
         return _position;
     },
     
+    //this one gets triggered by the websocket
     _onUpdatePeer: function(evt, payload) {
         var self = evt.data.widget;
         if(payload.owner) {
