@@ -41,7 +41,10 @@ $.Cow.Peer.prototype = {
             this.params.viewExtent = options.extent
             this.params.viewFeature = this._bbox2view(options.extent);
         }
-        self.core.trigger("peerStoreChanged", this.uid);
+        if(this.uid == this.core.UID) {
+            self.core.trigger("peerStoreChanged", this.uid);
+            self.core.trigger("meChanged", {"view":this.params.viewExtent});
+        }
     },
     //helper function to turn a view feature to an extent object
     _view2bbox: function(view) {
@@ -77,9 +80,9 @@ $.Cow.Peer.prototype = {
     /*
     position is an object containing:
     -feature: a full GeoJSON point feature
-    -point: an object containing latitude and longitude
+    -point: an object containing latitude, longitude and time
     
-    position() takes an options object: {coords:{longitude:#,latitude:#},time:timestamp}
+    position() takes an options object: {feature:<GeoJSON feature>,point: {longitude:#,latitude:#,time:timestamp}}
     */
     position: function(options) {
         var self = this;
@@ -105,9 +108,31 @@ $.Cow.Peer.prototype = {
         return _position;
     },
     _setPosition: function(options){
+        if(options.feature !== undefined) {
+            this.params.locationFeature = options.feature
+            this.params.locationPoint = this._position2point(options.feature);
+        }
+        else if(options.point !== undefined) {
+            this.params.locationPoint = options.point;
+            this.params.locationFeature = this._point2position(options.point);
+        }
+        
+        if(this.uid == this.core.UID) {
+            self.core.trigger("peerStoreChanged", this.uid);
+            self.core.trigger("meChanged", {"position":this.params.locationPoint});
+        }
+    },
+    _position2point: function(pos) {
+        var _point = {};
+        _point.longitude = pos.geometry.coordinates[0];
+        _point.latitude =  pos.geometry.coordinates[1];
+        _point.time = pos.properties.time;
+        return _point;
+    },
+    _point2position: function(point) {
         var attributes = { uid: this.uid, owner: this.options.owner};
-        if(options.time) {
-            attributes.time = options.time;
+        if(point.time) {
+            attributes.time = point.time;
         }
         else {
             if(!this.params.locationFeature) {
@@ -116,32 +141,18 @@ $.Cow.Peer.prototype = {
                 attributes.time = time.getTime();
             }
         }
-        var _point = { 
+        var _position = { 
             "id": this.uid,
             "type": "Feature",
             "geometry": {
                 "type": "Point",
-                "coordinates": [
+                "coordinates": [ point.longitude,point.latitude
                 ]
             },
             "properties": attributes
         };
-        if(options.coords){
-            if(!this.params.locationFeature) {
-                _point.geometry.coordinates[0] = options.coords.longitude;
-                _point.geometry.coordinates[1] = options.coords.latitude;
-                _point.properties = attributes;
-                this.params.locationFeature = _point;
-            }
-            else {
-                this.params.locationFeature.geometry.coordinates[0] = options.coords.longitude;
-                this.params.locationFeature.geometry.coordinates[1] = options.coords.latitude;
-            }
-        }
-        self.core.trigger("peerStoreChanged", this.uid);
-
+        return _position;
     },
-
     
     _onUpdatePeer: function(evt, payload) {
         var self = evt.data.widget;
