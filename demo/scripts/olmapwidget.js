@@ -54,8 +54,9 @@ $.widget("cow.OlMapWidget", {
         //Obs? core.bind("dbloaded", {widget: self}, self._onLoaded);
 
 		core.bind("storeChanged", {widget: self}, self._onLoaded);
-		core.bind("peerExtentChanged", {widget: self},self._drawExtent);
-		core.bind("peerPositionChanged", {widget: self},self._drawPositions);
+		//Obs core.bind("peerExtentChanged", {widget: self},self._drawExtent);
+		//Obs core.bind("peerPositionChanged", {widget: self},self._drawPositions);
+		core.bind("peerStoreChanged", {widget: self}, self._onPeerStoreChanged);
 		core.bind("layoutChanged", {widget: self},self._updateSize);
 		core.bind("zoomToPeersviewRequest", {widget: self},self._zoomToPeersView);
 		core.bind("zoomToPeerslocationRequest", {widget: self},self._zoomToPeersLocation);
@@ -85,7 +86,7 @@ $.widget("cow.OlMapWidget", {
 				extent.transform(fromproj, toproj);
 				extent.getBounds();
 				self.core.me() && self.core.me().view({extent:extent.bounds}); //Set my own extent
-				core.trigger(data.type, extent.bounds);
+				//Obs? core.trigger(data.type, extent.bounds);
 			}
         };
 		this._createLayers(this.map);
@@ -124,11 +125,35 @@ $.widget("cow.OlMapWidget", {
 		return this.controls;
 	},
 	
+	_onPeerStoreChanged: function(evt) {
+	    var self = evt.data.widget;
+	    var extentCollection = self.core.getPeerExtents();
+	    var locationCollection = self.core.getPeerPositions();
+	    //Update layer with extents
+	    if (self.viewlyr){
+			self.viewlyr.data(extentCollection);
+		}
+		//Update layer with locations
+		if (self.locationlyr){
+		    $.each(locationCollection.features, function(i,d){
+                var style = {}; 
+                if (d.id == self.core.me().uid)
+                    style.fill = "red";
+                else style.fill = "steelBlue";
+                d.style = style;
+            });
+			self.locationlyr.data(locationCollection);
+		}
+		
+		
+	},
+	/* Obs
 	_drawExtent: function(evt, peerCollection) {
 		var self = evt.data.widget;
 		if (self.viewlyr)
 			self.viewlyr.data(peerCollection);
 	},
+	*/
 	_zoomToPeersView: function(evt, bbox){
 	    var self = evt.data.widget;
         var lb = new OpenLayers.LonLat(bbox.left,bbox.bottom);
@@ -148,6 +173,7 @@ $.widget("cow.OlMapWidget", {
 	    self.map.setCenter(loc,14,true,true);
 	    //TODO: trigger an update for d3 layers
 	},
+	/* Obs
 	_drawPositions: function(evt, collection) {
 		var self = evt.data.widget;
 		//apply some styling to collection
@@ -162,6 +188,7 @@ $.widget("cow.OlMapWidget", {
 		if (self.locationlyr)
 			self.locationlyr.data(collection);
 	},
+	*/
 	_updateSize: function(evt){
 	    var map = evt.data.widget.map;
 	    map.updateSize(map);
@@ -437,7 +464,8 @@ $.widget("cow.OlMapWidget", {
 				self.controls.select.activate();
 				
 				var feature = JSON.parse(geojson_format.write(evt.feature));
-				core.trigger('sketchcomplete',feature);
+				//Obs: core.trigger('sketchcomplete',feature);
+				core.featurestore().saveLocalFeat(feature);
 				evt.feature.destroy(); //Ridiculous.... without this the 'edited' feature stays on the map
 			}
 		);
@@ -445,7 +473,9 @@ $.widget("cow.OlMapWidget", {
 			{'self':this,layer:editlayer},
 			function(evt){
 				var feature = JSON.parse(geojson_format.write(evt.feature));
-				core.trigger('afterfeaturemodified',feature);
+				
+				//Obs: core.trigger('afterfeaturemodified',feature);
+				core.featurestore().updateLocalFeat(feature);
 			}
 		);
 		this.controls.select.activate();
