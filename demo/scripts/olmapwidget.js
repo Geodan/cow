@@ -66,20 +66,42 @@ $.widget("cow.OlMapWidget", {
 		this.map.addControl(new OpenLayers.Control.LayerSwitcher());
 		
 		
+		var handleOnLoad = function(){
+		    var extent = self.map.getExtent().toGeometry();
+            var toproj = new OpenLayers.Projection("EPSG:4326");
+            var fromproj = new OpenLayers.Projection("EPSG:900913");
+            extent.transform(fromproj, toproj);
+            var bounds = extent.getBounds();
+            var extent = { //Changing openlayers extent into json feat
+					left: bounds.left,
+					bottom: bounds.bottom,
+					right: bounds.right,
+					top: bounds.top
+			};
+            self.core.me() && self.core.me().view({extent:extent}); //Set my own extent
+            self.viewlyr.reset();
+            self.locationlyr.reset();
+		};
 		
-		
+		tmp = this.map;
 		var handleNewExtent = function(data){
             var extent = data.object.getExtent().toGeometry();
             var toproj = new OpenLayers.Projection("EPSG:4326");
             var fromproj = new OpenLayers.Projection("EPSG:900913");
             extent.transform(fromproj, toproj);
-            extent.getBounds();
-            self.core.me() && self.core.me().view({extent:extent.bounds}); //Set my own extent
+            var bounds = extent.getBounds();
+            var extent = { //Changing openlayers extent into json feat
+					left: bounds.left,
+					bottom: bounds.bottom,
+					right: bounds.right,
+					top: bounds.top
+			};
+            self.core.me() && self.core.me().view({"extent":extent}); //Set my own extent
             self.viewlyr.reset();
             self.locationlyr.reset();
         };
 		this._createLayers(this.map);
-		
+		handleOnLoad();
 				
 		this.map.events.on({
 			scope: this,
