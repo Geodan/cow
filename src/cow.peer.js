@@ -124,8 +124,8 @@ $.Cow.Peer.prototype = {
         };
         if(options.coords){
             if(!this.params.locationFeature) {
-                _point.coordinates[0] = options.coords.longitude;
-                _point.coordinates[1] = options.coords.latitude;
+                _point.geometry.coordinates[0] = options.coords.longitude;
+                _point.geometry.coordinates[1] = options.coords.latitude;
                 _point.properties = attributes;
                 this.params.locationFeature = _point;
             }
