@@ -349,6 +349,24 @@ to the cow.
 
 When adding peers, those are returned. 
 
+<<<<<<< HEAD
+=======
+A Peer is on object containing:
+-view()
+-position()
+-uid
+-options:
+ =cid
+ =uid
+ =herd
+ =owner
+ =family
+-params
+ =viewExtent
+ =viewFeature
+ =locationPoint
+ =locationFeature
+>>>>>>> 737fbb80595848c906b929ad691c6d76f82d21b7
 */
     peers: function(options) {
         var self = this;
