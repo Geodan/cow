@@ -6,7 +6,7 @@ $.Cow.Websocket.prototype = {
     },
     _onMessage: function(message) {
         var core = this.obj.core;
-        //console.debug('message: '+message.data);
+        console.debug('message: '+message.data);
         var data = JSON.parse(message.data);
         var uid = data.uid;
         var UID = core.UID; 

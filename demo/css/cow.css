@@ -62,6 +62,10 @@ margin-top: 2px;
     cursor: pointer;
 }
 
+.videoconnection {
+    cursor: pointer;
+}
+
 .herd {
 	cursor: pointer;
 }

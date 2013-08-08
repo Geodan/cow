@@ -90,7 +90,7 @@ $.widget("cow.PeersWidget", {
 	console.log('_onConnect');
 		var self = evt.data.widget;
 		self._updateList(evt);
-		
+	/*	
 	//Doing some preliminary peerjs stuff..
 	navigator.webkitGetUserMedia({audio: true, video: true}, function(s){
       window.ls = s;
@@ -113,7 +113,7 @@ $.widget("cow.PeersWidget", {
         });
       });
     }, function(){});
-		
+	*/	
 		
 	},
 	_onDisconnect: function(evt) {
@@ -155,7 +155,7 @@ $.widget("cow.PeersWidget", {
 			names = names+ '<span class="peerlist me" title="this is you!" owner="'+this.uid+'">'+this.options.owner+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png"></span></br>';
 			}
 			else {
-			names = names+ '<span class="peerlist owner" title="click to see this peers view" owner="'+this.uid+'">'+this.options.owner+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png"><span class="videoconnection" owner="'+this.uid+'">Video</span></span></br>';
+			names = names+ '<span class="peerlist owner" owner="'+this.uid+'">'+this.options.owner+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png">&nbsp;<img class="videoconnection" owner="'+this.uid+'" src="./css/img/camera.png"></span></br>';
 			}
 		});
 		names = names + "<h2>Herds</h2>";
