@@ -68,6 +68,10 @@ margin-top: 2px;
 
 .herd {
 	cursor: pointer;
+    font-size: 120%;
+}
+.peer {
+    padding-left: 1em;
 }
 
 .key {

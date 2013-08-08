@@ -135,13 +135,13 @@ $.Cow.Websocket.prototype = {
        options.family = 'alpha'; //used to check if client is able to act as alpha peer
         var me = this.core.peers(options);
         me.view({"extent":{"bottom":0,"left":0,"top":1,"right":1}});
+        var herd = this.core.getHerdById(this.core.activeHerd);
+        me.herd(herd);
+        me.owner({"name":name});
         console.log('nr peers: '+this.core.peers().length);
         this.core.trigger('ws-connected');        
         this.sendData(options,'newPeer');
         //triggers _onNewPeer()
-        var herd = core.getHerdById(self.core.activeHerd);
-        me.owner({"name":name});
-        me.herd(herd);
         
         var sendFidList = function(){
             var store = core.featurestore();
