@@ -194,6 +194,7 @@ $.Cow.Peer.prototype = {
         if(this.uid == this.core.UID) {
             this.core.trigger("peerStoreChanged", this.uid);
             this.core.trigger("meChanged", {"herd":this.params.herd});
+            
         }
     },
     

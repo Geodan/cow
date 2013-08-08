@@ -22,7 +22,7 @@ $.widget("cow.PeersWidget", {
 
         core = $(this.options.core).data('cow');
         this.core=core;
-      
+        core.bind("ws-disconnected", {widget: self}, self._onPeerStoreChanged);
         core.bind("ws-peerInfo", {widget: self}, self._onPeerStoreChanged);
         core.bind("ws-peerGone", {widget: self}, self._onPeerStoreChanged);
         core.bind("peerStoreChanged" ,{widget: self}, self._onPeerStoreChanged);
