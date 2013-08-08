@@ -172,8 +172,7 @@ $.Cow.Websocket.prototype = {
             me.position({"point":payload.position});
             me.owner(payload.owner);
             me.herd(payload.herd);
-            //SMO obsolete? 8/8/13
-            //this.core.trigger('ws-peerInfo');    
+            this.core.trigger('ws-peerInfo');    
         }
         else console.log('badpeer '+uid);
     },
@@ -191,8 +190,7 @@ $.Cow.Websocket.prototype = {
             message.position = this.core.me().position().point;
             message.herd = this.core.me().herd();
             this.sendData(message,'informPeer',uid);
-            //SMO obsolete? 8/8/13
-            //this.core.trigger('ws-newPeer');
+            this.core.trigger('ws-newPeer');
         }
         else console.warn('badpeer '+uid);
     },
