@@ -164,7 +164,7 @@ $.Cow.Websocket.prototype = {
     //Add it to your peerList
     _onInformPeer: function(payload,uid) {        
         console.log('Got peerinfo from: '+uid);        
-        if(payload.uid !== undefined && payload.extent !== undefined && payload.cid !== undefined) {
+        if(payload.uid !== undefined && payload.cid !== undefined) {
             this.core.peers(payload);
             this.core.trigger('ws-peerInfo');    
         }
