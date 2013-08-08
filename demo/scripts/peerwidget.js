@@ -105,7 +105,7 @@ $.widget("cow.PeersWidget", {
         });
         var names = '';
         $.each(herds,function() {
-            if(this.uid==self.core.options.activeHerd) {
+            if(this.uid==self.core.activeHerd) {
                 names = names + '<span class="peerlist herd me" title="this is your herd" herd="'+this.id+'">'+this.name+'</span></br>';
             }
             else {

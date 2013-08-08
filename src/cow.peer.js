@@ -182,7 +182,7 @@ $.Cow.Peer.prototype = {
     },
     _getHerd: function() {
         if(this.params.herd === undefined){
-            this.params.herd = this.core.getHerdById(this.core.options.activeHerd);
+            this.params.herd = this.core.getHerdById(this.core.activeHerd);
         }
         return this.params.herd;
     },
