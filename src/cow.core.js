@@ -191,7 +191,35 @@ $.Cow.Core.prototype = {
         var peer = this.getPeerByUid(this.UID);    
         return peer;
     },
-    
+     /*
+        center is an object containing:
+        -position: a position().point
+        -view: a view().extent
+     */
+     center: function (options) {
+        var position;
+        var view;
+        // Get the current position
+        if (arguments.length===0) {
+            position = this.me().position().point;
+            view = this.me().view().extent;
+            return {
+                position: [position.longitude, position.latitude],
+                view: view
+            };
+        }
+
+        // Zoom to the extent of the box
+        if (options.view!==undefined) {
+            this.trigger('zoomToExtent',options.view);
+
+        }
+        
+        // Position is given
+        else {
+            this.trigger('zoomToPoint',options.position)
+        }
+    },
 /**
 ##cow.websocket([options])
 ###**Description**: get/set the websocket of the cow
