@@ -329,6 +329,8 @@ $.Cow.Websocket.prototype = {
         }
         else console.warn('badpeer');
     },
+    
+    //SMO: my stuff has changed
     _onMapMoved: function(evt,extent) {
         var self = evt.data.widget;
         //if you initialise the map it gives a mapmove event, but core.me() is not yet finished
@@ -360,6 +362,7 @@ $.Cow.Websocket.prototype = {
         message.uid = self.core.UID;
         self.sendData(message,'peerParamsChanged');
     },
+    
     
     bind: function(types, data, fn) {
         var self = this;
