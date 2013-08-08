@@ -22,13 +22,16 @@ $.widget("cow.PeersWidget", {
 
         core = $(this.options.core).data('cow');
 		this.core=core;
-        core.bind("connected", {widget: self}, self._onConnect);
-		core.bind("disconnected", {widget: self}, self._onDisconnect);
-		core.bind("peerGone", {widget: self}, self._onPeerGone);
+        core.bind("ws-connected", {widget: self}, self._onConnect);
+		core.bind("ws-disconnected", {widget: self}, self._onDisconnect);
+		core.bind("ws-peerGone", {widget: self}, self._onPeerGone);
+        core.bind("peerStoreChanged" ,{widget: self}, self._onPeerStoreChanged);
+        /* SMO: obs? 8/8/13
 		core.bind("peerInfo", {widget: self}, self._onPeerInfo);
 		core.bind("newPeer", {widget: self}, self._onNewPeer);
 		core.bind("peerupdated", {widget: self}, self._onPeerUpdated);
 		core.bind("changeHerdRequest", {widget: self}, self._updateList);
+        */
 		
 		element.delegate('.location','click', function(){
 			var owner = $(this).attr('owner');
@@ -71,7 +74,8 @@ $.widget("cow.PeersWidget", {
 		});
 		
 		$(this.options.name).change(function(){
-			self._updateName({data:{widget: self,name: $(this).val()}})
+            self.core.me().owner({"name":$(this).val()});
+			
 		});
 
     },
@@ -80,12 +84,7 @@ $.widget("cow.PeersWidget", {
                                  'ui-corner-all')
             .empty();
     },
-	_updateName:function(evt){
-		var self = evt.data.widget;
-		var name = evt.data.name;
-		self.core.me().options.owner =name;
-		self._updateList(evt);
-	},
+	
 	_onConnect: function(evt) {
 	console.log('_onConnect');
 		var self = evt.data.widget;
@@ -117,7 +116,7 @@ $.widget("cow.PeersWidget", {
 		
 	},
 	_onDisconnect: function(evt) {
-	console.log('_onDisconnect');
+        console.log('_onDisconnect');
 		var self = evt.data.widget;
 		self._updateList(evt);
 		//Peerjs stuff
@@ -133,15 +132,12 @@ $.widget("cow.PeersWidget", {
 		var self = evt.data.widget;
 		self._updateList(evt);
 	},
-	_onNewPeer: function(evt) {
+	_onPeerStoreChanged: function(evt) {
 	console.log('_onNewPeer');
 		var self = evt.data.widget;
 		self._updateList(evt);
 	},
-	_onPeerUpdated: function(evt) {
-	    var self = evt.data.widget;
-		self._updateList(evt);
-	},
+	
 	_updateList: function(evt) {		
 		var self = evt.data.widget;
 		var peers = self.core.peers();
@@ -152,10 +148,10 @@ $.widget("cow.PeersWidget", {
         var names = '';
 		$.each(peers,function(){
 			if(this.uid==self.core.UID) {
-			names = names+ '<span class="peerlist me" title="this is you!" owner="'+this.uid+'">'+this.options.owner+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png"></span></br>';
+			names = names+ '<span class="peerlist me" title="this is you!" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png"></span></br>';
 			}
 			else {
-			names = names+ '<span class="peerlist owner" owner="'+this.uid+'">'+this.options.owner+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png">&nbsp;<img class="videoconnection" owner="'+this.uid+'" src="./css/img/camera.png"></span></br>';
+			names = names+ '<span class="peerlist owner" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png">&nbsp;<img class="videoconnection" owner="'+this.uid+'" src="./css/img/camera.png"></span></br>';
 			}
 		});
 		names = names + "<h2>Herds</h2>";

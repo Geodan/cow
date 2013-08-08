@@ -134,6 +134,7 @@ $.Cow.Websocket.prototype = {
         options.cid = payload.cid;        
        options.family = 'alpha'; //used to check if client is able to act as alpha peer
         var me = this.core.peers(options);
+        me.view({"extent":{"bottom":0,"left":0,"top":1,"right":1}});
         console.log('nr peers: '+this.core.peers().length);
         this.core.trigger('ws-connected');        
         this.sendData(options,'newPeer');
@@ -141,7 +142,7 @@ $.Cow.Websocket.prototype = {
         var herd = core.getHerdById(self.core.options.activeHerd);
         me.owner({"name":name});
         me.herd(herd);
-        me.view({"extent":{"bottom":0,"left":0,"top":1,"right":1}});
+        
         var sendFidList = function(){
             var store = core.featurestore();
             var fids = store.getIdList();
@@ -168,9 +169,10 @@ $.Cow.Websocket.prototype = {
             var me = this.core.peers(payload.options);
             me.view({"extent":payload.view});
             me.position({"point":payload.position});
-            me.owner({"name":payload.owner});
+            me.owner(payload.owner);
             me.herd(payload.herd);
-            this.core.trigger('ws-peerInfo');    
+            //SMO obsolete? 8/8/13
+            //this.core.trigger('ws-peerInfo');    
         }
         else console.log('badpeer '+uid);
     },
@@ -188,7 +190,8 @@ $.Cow.Websocket.prototype = {
             message.position = this.core.me().position().point;
             message.herd = this.core.me().herd();
             this.sendData(message,'informPeer',uid);
-            this.core.trigger('ws-newPeer');
+            //SMO obsolete? 8/8/13
+            //this.core.trigger('ws-newPeer');
         }
         else console.warn('badpeer '+uid);
     },
@@ -275,7 +278,7 @@ $.Cow.Websocket.prototype = {
         var newCid = payload.newCid;        
         this.core.removePeer(peerGone);        
         this.core.me().options.cid = newCid;
-        //this.core.trigger('peerGinfromone',payload);    
+        this.core.trigger('ws-peerGone'); //this.core.trigger('peerGinfromone',payload);    
         var message = {};
         message.uid = this.core.me().uid;
         message.connectionID = this.core.me().options.cid;
