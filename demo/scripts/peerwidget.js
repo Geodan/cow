@@ -22,7 +22,7 @@ $.widget("cow.PeersWidget", {
 
         core = $(this.options.core).data('cow');
         this.core=core;
-      
+        core.bind("ws-disconnected", {widget: self}, self._onPeerStoreChanged);
         core.bind("ws-peerInfo", {widget: self}, self._onPeerStoreChanged);
         core.bind("ws-peerGone", {widget: self}, self._onPeerStoreChanged);
         core.bind("peerStoreChanged" ,{widget: self}, self._onPeerStoreChanged);
@@ -67,7 +67,7 @@ $.widget("cow.PeersWidget", {
             self.core.activeHerd = herd;
             if (self.core.me())
                 self.core.me().herd({uid: herd});
-            
+            self._updateList(self);
             self.core.featurestore().clear(); //Clear featurestore
             //self.core.options.storename = "store_"+herd; //TODO: the link between activeHerd and storename can be better
             self.core.localdbase().loadFromDB();//Fill featurestore with what we have
@@ -91,11 +91,10 @@ $.widget("cow.PeersWidget", {
     _onPeerStoreChanged: function(evt) {
     console.log('_onNewPeer');
         var self = evt.data.widget;
-        self._updateList(evt);
+        self._updateList(self);
     },
     
-    _updateList: function(evt) {        
-        var self = evt.data.widget;
+    _updateList: function(self) {        
         var peers = self.core.peers();
         var herds = [];
         var element = self.element;
