@@ -169,7 +169,7 @@ $.Cow.Websocket.prototype = {
             me.view({"extent":payload.extent});
             me.position({"point":payload.position});
             me.owner({"name":payload.extent});
-            me.herd({"herd":payload.herd});
+            me.herd(payload.herd);
             this.core.trigger('ws-peerInfo');    
         }
         else console.log('badpeer '+uid);
