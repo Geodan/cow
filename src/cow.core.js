@@ -338,7 +338,7 @@ to the cow.
 
 When adding peers, those are returned. 
 
-A Peer is on abject containing:
+A Peer is on object containing:
 -view()
 -position()
 -uid

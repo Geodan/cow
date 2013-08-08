@@ -110,7 +110,11 @@ $.Cow.Peer.prototype = {
             attributes.time = options.time;
         }
         else {
-            
+            if(!this.params.locationFeature) {
+                console.warn('Recieved a position without time, defaulting to current time');
+                var time = new Date();
+                attributes.time = time.getTime();
+            }
         }
         var _point = { 
             "id": this.uid,
@@ -134,6 +138,7 @@ $.Cow.Peer.prototype = {
                 this.params.locationFeature.geometry.coordinates[1] = options.coords.latitude;
             }
         }
+        //TODO: draw shit
 
     },
     drawPosition: function(position){
