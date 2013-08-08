@@ -21,8 +21,13 @@ $.Cow.GeoLocator.prototype = {
 				var payload = {};
 				payload.uid = self.core.UID;
 				payload.position = position;
-				peer.events.trigger('mylocationChange', [payload]);
-				self.core.trigger('mylocationChange', [payload]);
+				position.coords.time = new Date().getTime();
+				
+				var point = {point: position.coords};
+				
+				self.core.me().position(point);
+				//peer.events.trigger('mylocationChange', [payload]);
+				//self.core.trigger('mylocationChange', [payload]);
 			}
 	},
 	_showError: function(error){
