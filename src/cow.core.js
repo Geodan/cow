@@ -387,9 +387,9 @@ A Peer is on object containing:
             var geojson_format = new OpenLayers.Format.GeoJSON();
             var feature = geojson_format.read(peer.view());
             peer.params.feature = feature;
-            peer.extent(options.extent);
+            peer.view({"extent":options.extent});
             if (options.position){
-                peer.drawPosition(options.position);
+                peer.position({"point":options.position});
             }
         }
         this.peerList.push(peer);
@@ -401,8 +401,8 @@ A Peer is on object containing:
     getPeerExtents: function() {
         var collection = {"type":"FeatureCollection","features":[]};
         $.each(core.peers(), function(){
-            if (this.params.viewfeature.id != self.core.me().uid)
-            collection.features.push(this.params.viewfeature);
+            if (this.uid != self.core.me().uid)
+            collection.features.push(this.params.viewFeature);
         });
         return collection;
     },
@@ -410,8 +410,8 @@ A Peer is on object containing:
     getPeerPositions: function(){
         var collection = {"type":"FeatureCollection","features":[]};
         $.each(core.peers(), function(){
-            if (this.params.pointfeature)
-                collection.features.push(this.params.pointfeature);
+            if (this.params.pointFeature)
+                collection.features.push(this.params.pointFeature);
         });
         return collection;
     },
