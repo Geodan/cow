@@ -387,8 +387,8 @@ A Peer is on object containing:
     getPeerExtents: function() {
         var collection = {"type":"FeatureCollection","features":[]};
         $.each(core.peers(), function(){
-            if (this.uid != self.core.me().uid)
-            collection.features.push(this.params.viewFeature);
+            if (this.uid != self.core.me().uid && this.view().feature)
+            collection.features.push(this.view().feature);
         });
         return collection;
     },
@@ -396,8 +396,8 @@ A Peer is on object containing:
     getPeerPositions: function(){
         var collection = {"type":"FeatureCollection","features":[]};
         $.each(core.peers(), function(){
-            if (this.params.pointFeature)
-                collection.features.push(this.params.pointFeature);
+            if (this.position().feature)
+                collection.features.push(this.position().feature);
         });
         return collection;
     },
