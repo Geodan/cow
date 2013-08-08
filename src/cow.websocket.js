@@ -94,6 +94,7 @@ $.Cow.Websocket.prototype = {
         var wasClean = event.wasClean;
         console.log('disconnected');
         this.close();
+        this.obj.core.removeAllPeers();
         this.obj.core.trigger('ws-disconnected');    
         //TODO: doe iets slimmers, hij hangt nu af van de global variable 'core'....
         var restart = function(){
@@ -171,8 +172,7 @@ $.Cow.Websocket.prototype = {
             me.position({"point":payload.position});
             me.owner(payload.owner);
             me.herd(payload.herd);
-            //SMO obsolete? 8/8/13
-            //this.core.trigger('ws-peerInfo');    
+            this.core.trigger('ws-peerInfo');    
         }
         else console.log('badpeer '+uid);
     },
@@ -190,8 +190,7 @@ $.Cow.Websocket.prototype = {
             message.position = this.core.me().position().point;
             message.herd = this.core.me().herd();
             this.sendData(message,'informPeer',uid);
-            //SMO obsolete? 8/8/13
-            //this.core.trigger('ws-newPeer');
+            this.core.trigger('ws-newPeer');
         }
         else console.warn('badpeer '+uid);
     },
