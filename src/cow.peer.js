@@ -161,7 +161,7 @@ $.Cow.Peer.prototype = {
     -name: the name of the herd
     -uid: unique ID of the herd, must be unique for ever
     
-    herd() takes an options object: {name:"herd name",uid:#}
+    herd() takes an options object: {uid:#}
     */
     herd: function(options) {
         var self = this;
@@ -181,16 +181,16 @@ $.Cow.Peer.prototype = {
         }
     },
     _getHerd: function() {
+        if(this.params.herd === undefined){
+            this.params.herd = this.core.getHerdById(this.core.options.activeHerd);
+        }
         return this.params.herd;
     },
     _setHerd: function(options){
         if(options.uid === undefined) {
             throw "Herd without ID!";
         }
-        if(!options.name) {
-                options.name = "herd-"+options.uid;
-        }
-        this.params.herd = options;
+        this.params.herd = self.core.getHerdById(options.uid);
         if(this.uid == this.core.UID) {
             this.core.trigger("peerStoreChanged", this.uid);
             this.core.trigger("meChanged", {"herd":this.params.herd});
