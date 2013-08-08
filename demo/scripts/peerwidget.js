@@ -22,9 +22,9 @@ $.widget("cow.PeersWidget", {
 
         core = $(this.options.core).data('cow');
 		this.core=core;
-        core.bind("ws-connected", {widget: self}, self._onConnect);
-		core.bind("ws-disconnected", {widget: self}, self._onDisconnect);
-		core.bind("ws-peerGone", {widget: self}, self._onPeerGone);
+        core.bind("ws-connected", {widget: self}, self._onPeerStoreChanged);
+		core.bind("ws-disconnected", {widget: self}, self._onPeerStoreChanged);
+		core.bind("ws-peerGone", {widget: self}, self._onPeerStoreChanged);
         core.bind("peerStoreChanged" ,{widget: self}, self._onPeerStoreChanged);
         /* SMO: obs? 8/8/13
 		core.bind("peerInfo", {widget: self}, self._onPeerInfo);
@@ -36,15 +36,17 @@ $.widget("cow.PeersWidget", {
 		element.delegate('.location','click', function(){
 			var owner = $(this).attr('owner');
 			var peer = core.getPeerByUid(owner);
-			var location = peer.options.position;
-			self.core.trigger('zoomToPeerslocationRequest', location);
+			var location = peer.position().point;
+            self.core.center({position:location});
+			//TODO: extend the Peer object with peer.center()
+            //self.core.trigger('zoomToPeerslocationRequest', location);
 		});
 		
 		element.delegate('.extent','click', function(){
 			var owner = $(this).attr('owner');
 			var peer = core.getPeerByUid(owner);
-			var bbox = peer.extent();
-			self.core.trigger('zoomToPeersviewRequest', bbox);
+			var bbox = peer.view().extent;
+			self.core.center({view:bbox});
 		});
 		
 		//Preliminary peerjs video connection
@@ -85,53 +87,7 @@ $.widget("cow.PeersWidget", {
             .empty();
     },
 	
-	_onConnect: function(evt) {
-	console.log('_onConnect');
-		var self = evt.data.widget;
-		self._updateList(evt);
-	/*	
-	//Doing some preliminary peerjs stuff..
-	navigator.webkitGetUserMedia({audio: true, video: true}, function(s){
-      window.ls = s;
-      // Create a new Peer with our demo API key, with debug set to true so we can
-      // see what's going on.
-      self.peer1 = new Peer(self.core.UID, { key: 'lwjd5qra8257b9', debug: true });
-      
-      self.peer1.on('call', function(c){
-        
-        c.answer(s);
-        c.on('stream', function(s){
-          $('#videopanel').show();
-          window.s = s;
-          z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('#videoplace');
-          
-        });
-        c.on('close', function(x){
-             console.log('Video connection closed');
-             $('#videopanel').hide();
-        });
-      });
-    }, function(){});
-	*/	
-		
-	},
-	_onDisconnect: function(evt) {
-        console.log('_onDisconnect');
-		var self = evt.data.widget;
-		self._updateList(evt);
-		//Peerjs stuff
-		self.peer1.destroy();
-	},
-	_onPeerGone: function(evt) {
-	console.log('_onPeerGone');
-		var self = evt.data.widget;
-		self._updateList(evt);
-	},
-	_onPeerInfo: function(evt) {
-		console.log('_onPeerInfo');
-		var self = evt.data.widget;
-		self._updateList(evt);
-	},
+	
 	_onPeerStoreChanged: function(evt) {
 	console.log('_onNewPeer');
 		var self = evt.data.widget;

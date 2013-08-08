@@ -1,4 +1,5 @@
 $.Cow.Peer.prototype = {
+
     
     /*
     view is an object containing:
