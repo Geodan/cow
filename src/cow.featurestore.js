@@ -137,8 +137,8 @@ When adding items, those are returned.
 		});
 	},
 	//feature has been drawm, add it to featurestore including some extra data
-	_onSketchComplete: function(evt, feature){
-		var self = evt.data.widget;
+	saveLocalFeat: function(feature){
+		var self = this;
 		var item = {};
 		var d = new Date();
 		var timestamp = d.getTime();
@@ -164,10 +164,10 @@ When adding items, those are returned.
 		console.log("FS _onSketchComplete: storeChanged");
 		core.trigger('storeChanged');
 	},
+
 	//feature properties have been locally changed 
 	updateLocalFeat: function(feature){
 		var self = this;
-		//var items = this.items();
 		var d = new Date();
 		var timestamp = d.getTime();
 		$.each(self.itemList, function(i, obj){
@@ -183,7 +183,7 @@ When adding items, those are returned.
 		console.log('FS updateLocalFeat: storeChanged');
 		self.core.trigger('storeChanged');
 	},
-	
+	/*Obs
 	//finished with modifying a features geometry
 	_onFeatureModified: function(evt, feature){
 		var self = evt.data.widget;
@@ -203,7 +203,7 @@ When adding items, those are returned.
 		console.log('FS _onFeatureModified: storeChanged');
 		self.core.trigger('storeChanged');
 	},
-	
+	*/
 	//putFeatures - feature(s) incoming from world 
 	putFeatures: function(itemlist){
 		var self = this;

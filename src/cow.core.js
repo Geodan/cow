@@ -181,8 +181,8 @@ $.Cow.FeatureStore = function(core, options) {
     this.itemList = [];
     //this.name = this.options.name || "store1";
     
-    this.core.bind('sketchcomplete', {widget: self}, self._onSketchComplete);
-    this.core.bind('afterfeaturemodified', {widget: self}, self._onFeatureModified);
+    //Obs: this.core.bind('sketchcomplete', {widget: self}, self._onSketchComplete);
+    //Obs: this.core.bind('afterfeaturemodified', {widget: self}, self._onFeatureModified);
 }
 
 /***
