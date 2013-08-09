@@ -70,7 +70,20 @@ margin-top: 2px;
 	cursor: pointer;
     font-size: 120%;
 }
+.removeherd {
+    color: red;
+    font-size: 70%;
+    float: right;
+    cursor: pointer;
+}
+.removeherdconfirm {
+    
+}
+.verborgen {
+    display:none;
+}
 .peer {
+
     padding-left: 1em;
 }
 

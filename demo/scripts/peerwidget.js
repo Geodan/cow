@@ -19,7 +19,7 @@ $.widget("cow.PeersWidget", {
         var core;
         var self = this;        
         var element = this.element;
-        
+       
         this.peer1;
         this.ls;
         
@@ -31,6 +31,8 @@ $.widget("cow.PeersWidget", {
         
         core = $(this.options.core).data('cow');
         this.core=core;
+        this.oldherds = [];
+        
         core.bind("ws-disconnected", {widget: self}, self._onPeerStoreChanged);
         core.bind("ws-peerInfo", {widget: self}, self._onPeerStoreChanged);
         core.bind("ws-peerGone", {widget: self}, self._onPeerStoreChanged);
@@ -49,6 +51,9 @@ $.widget("cow.PeersWidget", {
             var peer = core.getPeerByUid(owner);
             var bbox = peer.view().extent;
             self.core.center({view:bbox});
+        });
+        element.delegate('.remove','click', function(){
+            $(this).siblings('.removeherdconfirm').removeClass('verborgen');
         });
         
         //Preliminary peerjs video connection
@@ -127,7 +132,7 @@ $.widget("cow.PeersWidget", {
     
     
     _onPeerStoreChanged: function(evt) {
-    console.log('_onNewPeer');
+        
         var self = evt.data.widget;
         self._updateList(self);
     },
@@ -135,8 +140,6 @@ $.widget("cow.PeersWidget", {
     _updateList: function(self) {        
         var peers = self.core.peers();
         var herds = [];
-        var element = self.element;
-        
         $.each(self.core.herds(),function(i) {
             herds[i] = {};
             herds[i].uid = this.uid;
@@ -144,16 +147,46 @@ $.widget("cow.PeersWidget", {
             herds[i].peers = [];
         });
         $.each(peers,function() {
-            var id = this.herd().uid;
+            var uid = this.herd().uid;
+            var id = 0;
+            $.each(herds,function(i) {
+                if(this.uid == uid) {
+                    id = i;
+                }
+            });
+            
             herds[id].peers.push(this);
         });
+        var element = self.element;
+        var change = false;
+        if( herds.length == self.oldherds.length) {
+            //at least the same number of herds is there, up to the next check
+            
+            $.each(herds,function(i){
+                if ($(this.peers).not(self.oldherds[i].peers).length == 0 && $(self.oldherds[i].peers).not(this.peers).length == 0 ) {
+                
+                }
+                else change = true;
+            });
+        }
+        else {
+            change = true
+           
+                    
+        }
+        self.oldherds = herds;
+        if (change) {
         var names = '';
         $.each(herds,function() {
+            var remove = '';
+            if(this.uid != 0) {
+                remove = ' <span class="removeherd" title="remove this herd and delete all features">remove</span><div class="removeherdconfirm verborgen">are you sure? <span class="yesremove">yes</span><span class="notremove">no</span>';
+            }
             if(this.uid==self.core.activeHerd) {
-                names = names + '<span class="peerlist herd me" title="this is your herd" herd="'+this.uid+'">'+this.name+'</span></br>';
+                names = names + '<div><span class="peerlist herd me" title="this is your herd" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
             }
             else {
-                names = names + '<span class="peerlist herd" title="click to activate this herd" herd="'+this.uid+'">'+this.name+'</span></br>';
+                names = names + '<div><span class="peerlist herd" title="click to activate this herd" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
             }
             $.each(this.peers, function(){
                 if (this.video().state === "on")
@@ -173,7 +206,7 @@ $.widget("cow.PeersWidget", {
         
         
         self.listdiv.html(names);
-        
+        }
     }
     });
 
