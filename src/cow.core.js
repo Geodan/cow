@@ -335,7 +335,7 @@ When adding herds, those are returned.
         if(herd===undefined) {
             herd = this.herds({uid:id});
             var message = {};
-            message.herdID = id;
+            message.herdId = id;
             this.websocket().sendData(message,'getHerdInfo');
         }
         
