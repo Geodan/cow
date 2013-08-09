@@ -304,12 +304,14 @@ When adding herds, those are returned.
             throw('Wrong herd parameters, you need an UID');
         }
 
+
         else if (!options.name) {
             options.name = 'new herd';
         }
 
 
         options.active = true; //Adding always makes an active herd
+
 
         //check of the 'new herd'niet al bestaat
         $.each(this.herdList, function(id, herd) {
