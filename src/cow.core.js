@@ -280,14 +280,14 @@ When adding herds, those are returned.
                 return this._addHerd(options);
             }
             else {
-                return $.core(options, function(peer) {
+                return $.core(options, function(herd) {
                     return self._addHerd(herd);
                 })
             }
             break;
         default:
             throw('wrong argument number');
-        }
+        }      
     },
     _getHerds: function() {
         //haal alleen de herds op uit de lijst waar de status != deleted
@@ -298,16 +298,26 @@ When adding herds, those are returned.
         return herds;
     },
     _addHerd: function(options) {
-        var herd = new $.Cow.Herd(this, options);        
+        console.log('Adding herd ' + options);
+        if (!options.uid || !options.name){
+            throw('Wrong herd parameters');
+        }
+        //var herd = options;        
         
         if (options.uid != this.UID){
-            
+           
         }
-        //check of the 'new herd'niet al bestaat met status deleted
-        this.herdList.push(herd);
+        //check of the 'new herd'niet al bestaat
+        $.each(this.herdList, function(id, herd) {
+                if (options.uid == herd.uid)
+                    throw("Herd already in list");
+        });
+        
+        
+        this.herdList.push(options);
         //check voor database flag en in db proppen
-
-        return herd;
+        this.localdbase().putHerd(options);
+        return options;
     },
     getHerdById: function(id) {
         var herds = this.herds();

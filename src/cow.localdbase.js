@@ -8,6 +8,7 @@ https://github.com/axemclion/jquery-indexeddb/blob/gh-pages/docs/README.md
 //var localdbase = {
 $.Cow.LocalDbase.prototype = {
     initHerds: function(){
+        var self = this;
         var storeOptions = {
             "autoIncrement" : false,
             "keyPath": "uid"
@@ -16,8 +17,10 @@ $.Cow.LocalDbase.prototype = {
         $.indexedDB(this.options.dbname)
 		    .objectStore("herds",storeOptions)
 		    .each(function(elem){
-		        if (elem.active) this.core.herds(elem);
+		        if (elem.value.active) 
+		            self.core.herds(elem.value);
 		    });
+		
     },
     putHerd: function(record){
         $.indexedDB(this.options.dbname)
