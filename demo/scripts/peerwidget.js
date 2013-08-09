@@ -54,16 +54,16 @@ $.widget("cow.PeersWidget", {
         //Preliminary peerjs video connection
         element.delegate('.videoconnection','click', function(){
             var owner = $(this).attr('owner');
-            $('#videopanel').add("button").on("click",function(e){
+            $('#videoclosebtn').click( function(e){
                 console.log("Closing "  + owner);
+                tmp = self.peer1;
                 self.peer1.managers[owner].close();
                 $('#videopanel').hide();
             });
             
             $('#videopanel').show();
             
-            mc = self.peer1.call(owner, ls);
-            tmp = self.peer1;
+            mc = self.peer1.call(owner, self.localstream);
             mc.on('stream', function(s){
                 window.remote = s;
                   z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('#videoplace');
@@ -87,12 +87,12 @@ $.widget("cow.PeersWidget", {
         this.peerjsdiv.delegate("#cameraOnOff",'click',function(){
                 if (this.checked){
                     //Turn on camera stream
-                    navigator.getMedia = ( navigator.getUserMedia ||
-                           navigator.webkitGetUserMedia ||
+                    navigator.getMedia = ( navigator.webkitGetUserMedia ||
+                            navigator.getUserMedia ||
                            navigator.mozGetUserMedia ||
                            navigator.msGetUserMedia);
-                    navigator.getMedia({audio: true, video: true}, function(s){
-                      this.localstream = s;
+                    navigator.webkitGetUserMedia({audio: true, video: true}, function(s){
+                      self.localstream = s;
                       // Create a new Peer with our demo API key, with debug set to true so we can
                       // see what's going on.
                       self.peer1 = new Peer(self.core.UID, { key: 'lwjd5qra8257b9', debug: true });
