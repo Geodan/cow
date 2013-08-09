@@ -91,8 +91,6 @@ $.Cow.LocalDbase.prototype = {
 		    .fail(function(error){
 		            console.warn('Fail! ' + error);
 		    });
-		
-		
 	},
 	// Delete an item from featurestore
 	deleteFeat: function(itemId){
@@ -114,7 +112,4 @@ $.Cow.LocalDbase.prototype = {
             });
 	}
 }
-
-
-
 

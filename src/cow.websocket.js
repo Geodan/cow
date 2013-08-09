@@ -328,7 +328,7 @@ $.Cow.Websocket.prototype = {
         $.each(myherds, function(i, herd){
              if (herd.uid == herdId){
                  message = herd;
-                 this.sendData(message,'herdUpdate');
+                 self.sendData(message,'herdUpdate');
              }
         })
     },
