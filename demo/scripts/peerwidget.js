@@ -81,6 +81,7 @@ $.widget("cow.PeersWidget", {
             var time = new Date().getTime();
             var name = $('#newHerd').val();
             self.core.herds({uid: time,name:name});
+            $('#newHerd').val('Add a new herd');
             //$(this).parent().addClass('verborgen');
             
         });
