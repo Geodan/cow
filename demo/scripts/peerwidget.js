@@ -189,14 +189,13 @@ $.widget("cow.PeersWidget", {
         });
         $.each(peers,function() {
             var uid = this.herd().uid;
-            var id = 0;
+            var id;
             $.each(herds,function(i) {
                 if(this.uid == uid) {
                     id = i;
                 }
             });
-            
-            herds[id].peers.push(this);
+            if(id !== undefined) herds[id].peers.push(this);
         });
         var element = self.element;
         var change = false;

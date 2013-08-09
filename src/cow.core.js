@@ -300,10 +300,19 @@ When adding herds, those are returned.
     },
     _addHerd: function(options) {
         console.log('Adding herd ' + options);
-        if (!options.uid || !options.name){
-            throw('Wrong herd parameters');
+        if (!options.uid ) {
+            throw('Wrong herd parameters, you need an UID');
         }
+
+
+        else if (!options.name) {
+            options.name = 'new herd';
+        }
+
+
         options.active = true; //Adding always makes an active herd
+
+
         //check of the 'new herd'niet al bestaat
         $.each(this.herdList, function(id, herd) {
                 if (options.uid == herd.uid)
@@ -323,6 +332,13 @@ When adding herds, those are returned.
                 herd = this;
             }            
         });
+        if(herd===undefined) {
+            herd = this.herds({uid:id});
+            var message = {};
+            message.herdId = id;
+            this.websocket().sendData(message,'getHerdInfo');
+        }
+        
         return herd;
     },
     removeHerd: function(id) {
