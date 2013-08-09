@@ -333,7 +333,7 @@ $.Cow.Websocket.prototype = {
         })
     },
     _onHerdUpdate: function(payload){
-        this.core.herd(payload);
+        this.core.herds(payload);
     },
     //My stuff has changed, send over the changed data to the other peers
     _onMeChanged: function(evt, payload) {
