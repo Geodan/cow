@@ -19,7 +19,16 @@ $.widget("cow.PeersWidget", {
         var core;
         var self = this;        
         var element = this.element;
-
+        
+        this.peer1;
+        this.ls;
+        
+        element.append('<div id="list"></div>');
+        element.append('<div id="peerjs"></div>');
+        this.listdiv = element.find('#list');
+        this.peerjsdiv = element.find('#peerjs');
+        this.peerjsdiv.html('<br>Camera: <input type="checkBox" id="cameraOnOff">');
+        
         core = $(this.options.core).data('cow');
         this.core=core;
         core.bind("ws-disconnected", {widget: self}, self._onPeerStoreChanged);
@@ -75,6 +84,35 @@ $.widget("cow.PeersWidget", {
             
         });
         
+        this.peerjsdiv.delegate("#cameraOnOff",'click',function(){
+                if (this.checked){
+                    //Turn on camera stream
+                    navigator.getMedia = ( navigator.getUserMedia ||
+                           navigator.webkitGetUserMedia ||
+                           navigator.mozGetUserMedia ||
+                           navigator.msGetUserMedia);
+                    navigator.getMedia({audio: true, video: true}, function(s){
+                      this.localstream = s;
+                      // Create a new Peer with our demo API key, with debug set to true so we can
+                      // see what's going on.
+                      self.peer1 = new Peer(self.core.UID, { key: 'lwjd5qra8257b9', debug: true });
+                      self.core.me().video({state:"on"});
+                      self.peer1.on('call', function(c){
+                        c.answer(s);
+                      //  c.on('stream', function(s){
+                      //    window.s = s;
+                      //    z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('body');
+                      //  });
+                      });
+                    }, function(){});
+                }
+                else if (!this.checked){
+                    //Turn off camers stream
+                    self.core.me().video({state:"off"});
+                }
+
+        })
+        
         $(this.options.name).change(function(){
             self.core.me().owner({"name":$(this).val()});
             
@@ -118,18 +156,23 @@ $.widget("cow.PeersWidget", {
                 names = names + '<span class="peerlist herd" title="click to activate this herd" herd="'+this.uid+'">'+this.name+'</span></br>';
             }
             $.each(this.peers, function(){
+                if (this.video().state === "on")
+                    var videostring = '<img class="videoconnection" owner="'+this.uid+'" src="./css/img/camera.png">';
+                else videostring = '';
                 if(this.uid==self.core.UID) {
                     names = names+ '<span class="peerlist peer me" title="this is you!" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png"></span></br>';
                     }
                     else {
-                    names = names+ '<span class="peerlist peer owner" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png">&nbsp;<img class="videoconnection" owner="'+this.uid+'" src="./css/img/camera.png"></span></br>';
+                    names = names+ '<span class="peerlist peer owner" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png">&nbsp;'+videostring+'</span></br>';
                     }
             });
         });
 
         names = names + '<input type="text" id="newHerd">';
         
-        element.html(names);
+        
+        
+        self.listdiv.html(names);
         
     }
     });

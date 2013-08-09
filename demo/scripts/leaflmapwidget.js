@@ -39,8 +39,8 @@ $.widget("cow.LeaflMapWidget", {
         core.bind("storeChanged", {widget: self}, self._onFeatureStoreChanged);
 		core.bind("peerStoreChanged", {widget: self}, self._onPeerStoreChanged);
 		//core.bind("layoutChanged", {widget: self},self._updateSize);
-		core.bind("zoomToPeersviewRequest", {widget: self},self._zoomToPeersView);
-		core.bind("zoomToPeerslocationRequest", {widget: self},self._zoomToPeersLocation);
+		core.bind("zoomToExtent", {widget: self},self._zoomToPeersView);
+		core.bind("zoomToPoint", {widget: self},self._zoomToPeersLocation);
 		
 		//Creating the leaflet map
 		this.map = L.map('map',{ 
@@ -141,11 +141,14 @@ $.widget("cow.LeaflMapWidget", {
 	},
 	_zoomToPeersView: function(evt, bbox){
 	    var self = evt.data.widget;
-        //TODO
+	    var bt = new L.LatLng(bbox.bottom, bbox.left),
+	        ur = new L.LatLng(bbox.top, bbox.right),
+	        bounds = new L.LatLngBounds(bt, ur);
+	    self.map.fitBounds(bounds);
 	},
 	_zoomToPeersLocation: function(evt, location){
 	    var self = evt.data.widget;
-	    //TODO
+	    self.map.setView([location.latitude,location.longitude],9);
 	},
 	
 

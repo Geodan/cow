@@ -235,13 +235,51 @@ $.Cow.Peer.prototype = {
             this.core.trigger("meChanged", {"owner":this.params.owner});
         }
     },
+    /*
+    video is an object containing:
+    -state: on of off
     
+    video() takes an options object: {state:"<on> or <off>"}
+    */
+    video: function(options) {
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this._getVideo();
+        case 1:
+            if (!$.isArray(options)) {                
+                return this._setVideo(options);
+            }
+            else {
+                throw('wrong argument number, only one owner per peer allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+    },
+    _getVideo: function() {
+        if(this.params.video === undefined) this.params.video = {"state":"off"};
+        return this.params.video;
+    },
+    _setVideo: function(options){
+        if(!options.state) {
+            options.state = "off";
+        }
+        this.params.video = options;
+        if(this.uid == this.core.UID) {
+            this.core.trigger("meChanged", {"video":this.params.video});
+        }
+    },
     
     //this one gets triggered by the websocket
     _onUpdatePeer: function(evt, payload) {
         var self = evt.data.widget;
         if(payload.owner) {
             self.owner(payload.owner);
+        }
+        if(payload.video) {
+            self.video(payload.video);
         }
         if(payload.herd) {
             self.herd(payload.herd);

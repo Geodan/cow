@@ -217,7 +217,7 @@ $.Cow.Core.prototype = {
         
         // Position is given
         else {
-            this.trigger('zoomToPoint',options.position)
+            this.trigger('zoomToPoint',options.position);
         }
     },
 /**
