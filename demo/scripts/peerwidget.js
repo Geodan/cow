@@ -24,6 +24,7 @@ $.widget("cow.PeersWidget", {
         this.ls;
         
         element.append('<div id="list"></div>');
+        element.append('<span><input type="text" id="newHerd" value="Add a new herd" size="15"><span class="addHerd licht">Add</span></span>');
         element.append('<div id="peerjs"></div>');
         this.listdiv = element.find('#list');
         this.peerjsdiv = element.find('#peerjs');
@@ -58,11 +59,29 @@ $.widget("cow.PeersWidget", {
         element.delegate('.notremove','click', function(){
             $(this).parent().addClass('verborgen');
         });
-        
+        element.delegate('#newHerd','click', function(){
+            $(this).addClass('newHerdActive');
+            var value = $(this).val();
+            if(value == "Add a new herd") $(this).val('');
+            $(this).siblings('.addHerd').removeClass('licht');
+        });
+        element.delegate('#newHerd','blur', function(){
+            $(this).removeClass('newHerdActive');
+            var value = $(this).val();
+            if(value == "") $(this).val('Add a new herd');
+            $(this).siblings('.addHerd').addClass('licht');
+        });
         element.delegate('.yesremove','click', function(){
             var herdID= $(this).parent().siblings('.herd').attr('herd');
             self.core.removeHerd(herdID);
-            $(this).parent().addClass('verborgen');
+            //$(this).parent().addClass('verborgen');
+            
+        });
+         element.delegate('.addHerd','click', function(){
+            var time = new Date().getTime();
+            var name = $('#newHerd').val();
+            self.core.herds({uid: time,name:name});
+            //$(this).parent().addClass('verborgen');
             
         });
         //Preliminary peerjs video connection
@@ -201,7 +220,7 @@ $.widget("cow.PeersWidget", {
         $.each(herds,function() {
             var remove = '';
             if(this.uid != 0) {
-                remove = ' <span class="removeherd" title="remove this herd and delete all features">remove</span><div class="removeherdconfirm verborgen">are you sure? <span class="yesremove" title"this will remove the herd and all its features, not easily undone">yes</span><span class="notremove" title="alrighty">no</span>';
+                remove = ' <span class="removeherd" title="remove this herd and delete all features">remove</span><div class="removeherdconfirm verborgen">are you sure? <span class="yesremove" title"this will remove the herd and all its features, not easily undone">yes</span><span class="notremove" title="alrighty">no</span></div>';
             }
             if(this.uid==self.core.activeHerd) {
                 names = names + '<div><span class="peerlist herd me" title="this is your herd" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
@@ -214,15 +233,15 @@ $.widget("cow.PeersWidget", {
                     var videostring = '<img class="videoconnection" owner="'+this.uid+'" src="./css/img/camera.png">';
                 else videostring = '';
                 if(this.uid==self.core.UID) {
-                    names = names+ '<span class="peerlist peer me" title="this is you!" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png"></span></br>';
+                    names = names+ '<div class="peerlist peer me" title="this is you!" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png"></div>';
                     }
                     else {
-                    names = names+ '<span class="peerlist peer owner" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png">&nbsp;'+videostring+'</span></br>';
+                    names = names+ '<div class="peerlist peer owner" owner="'+this.uid+'">'+this.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png">&nbsp;'+videostring+'</div>';
                     }
             });
         });
 
-        names = names + '<input type="text" id="newHerd">';
+        
         
         
         

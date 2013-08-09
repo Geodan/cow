@@ -76,7 +76,7 @@ margin-top: 2px;
     float: right;
     cursor: pointer;
 }
-.yesremove {
+.yesremove, .addHerd {
 padding-left: 0.4em;
 padding-right: 0.4em;
 cursor: pointer;
@@ -97,11 +97,24 @@ background: #eeeeec;
 .verborgen {
     display:none;
 }
+.licht {
+    opacity: 0.1;
+}
 .peer {
 
     padding-left: 1em;
 }
-
+#newHerd {
+    border: solid 1px #eeeeec;
+    color: #eeeeec;
+}
+#newHerd:hover {
+    border: solid 1px #999;
+    color: #999;
+}
+#newHerd.newHerdActive {
+    color: #555753;
+}
 .key {
 	cursor: pointer;
 }
