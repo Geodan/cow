@@ -139,6 +139,7 @@ $.Cow.Websocket.prototype = {
         var herd = this.core.getHerdById(this.core.activeHerd);
         me.herd(herd);
         me.owner({"name":name});
+        me.video({"state":"off"});
         console.log('nr peers: '+this.core.peers().length);
         this.core.trigger('ws-connected');        
         this.sendData(options,'newPeer');
@@ -172,6 +173,8 @@ $.Cow.Websocket.prototype = {
             me.position({"point":payload.position});
             me.owner(payload.owner);
             me.herd(payload.herd);
+            if (payload.video)
+                me.video(payload.video);
             this.core.trigger('ws-peerInfo');    
         }
         else console.log('badpeer '+uid);
@@ -189,6 +192,7 @@ $.Cow.Websocket.prototype = {
             message.owner = this.core.me().owner();
             message.position = this.core.me().position().point;
             message.herd = this.core.me().herd();
+            message.video = this.core.me().video();
             this.sendData(message,'informPeer',uid);
             this.core.trigger('ws-newPeer');
         }
