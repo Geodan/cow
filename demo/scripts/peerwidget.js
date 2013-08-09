@@ -52,10 +52,12 @@ $.widget("cow.PeersWidget", {
             var bbox = peer.view().extent;
             self.core.center({view:bbox});
         });
-        element.delegate('.remove','click', function(){
+        element.delegate('.removeherd','click', function(){
             $(this).siblings('.removeherdconfirm').removeClass('verborgen');
         });
-        
+        element.delegate('.notremove','click', function(){
+            $(this).parent().addClass('verborgen');
+        });
         //Preliminary peerjs video connection
         element.delegate('.videoconnection','click', function(){
             var owner = $(this).attr('owner');
@@ -192,7 +194,7 @@ $.widget("cow.PeersWidget", {
         $.each(herds,function() {
             var remove = '';
             if(this.uid != 0) {
-                remove = ' <span class="removeherd" title="remove this herd and delete all features">remove</span><div class="removeherdconfirm verborgen">are you sure? <span class="yesremove">yes</span><span class="notremove">no</span>';
+                remove = ' <span class="removeherd" title="remove this herd and delete all features">remove</span><div class="removeherdconfirm verborgen">are you sure? <span class="yesremove" title"this will remove the herd and all its features, not easily undone">yes</span><span class="notremove" title="alrighty">no</span>';
             }
             if(this.uid==self.core.activeHerd) {
                 names = names + '<div><span class="peerlist herd me" title="this is your herd" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';

@@ -76,8 +76,23 @@ margin-top: 2px;
     float: right;
     cursor: pointer;
 }
+.yesremove {
+padding-left: 0.4em;
+padding-right: 0.4em;
+cursor: pointer;
+border: solid 1px #f57900;
+background: #eeeeec;
+}
+.notremove {
+padding-left: 0.4em;
+padding-right: 0.4em;
+cursor: pointer;
+border: solid 1px #333;
+margin-left: 0.4em;
+background: #eeeeec;
+}
 .removeherdconfirm {
-    
+    text-align: right;
 }
 .verborgen {
     display:none;
