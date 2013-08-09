@@ -56,13 +56,15 @@ $.widget("cow.PeersWidget", {
             var owner = $(this).attr('owner');
             $('#videoclosebtn').click( function(e){
                 console.log("Closing "  + owner);
-                tmp = self.peer1;
-                self.peer1.managers[owner].close();
+                if (self.peer1.managers[owner])
+                    self.peer1.managers[owner].close();
                 $('#videopanel').hide();
             });
-            
+            if (!self.peer1){
+                alert('Enable your own camera befor connecting');
+                return;
+            }
             $('#videopanel').show();
-            
             mc = self.peer1.call(owner, self.localstream);
             mc.on('stream', function(s){
                 window.remote = s;
@@ -109,6 +111,16 @@ $.widget("cow.PeersWidget", {
                 else if (!this.checked){
                     //Turn off camers stream
                     self.core.me().video({state:"off"});
+                    $('#videopanel').hide();
+                    if (self.peer1){
+                        $.each(self.peer1.managers, function(c){
+                            self.peer1.managers[c].close()
+                        });
+                            
+                        
+                        self.peer1.destroy();
+                        self.peer1 = null;
+                    }
                 }
 
         })
