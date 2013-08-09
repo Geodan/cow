@@ -150,7 +150,8 @@ $.Cow.LocalDbase = function(core, options) {
     this.core = core;
     this.options = options;
     this.options.dbname = "cow";
-    var iteration = self.loadFromDB();
+    var iteration = self.loadFromDB(); //features are initialized from localdb
+    self.initHerds(); //Herds are initialized from localdb
 }
 /***
 $.Cow.FeatureStore
@@ -279,16 +280,17 @@ When adding herds, those are returned.
                 return this._addHerd(options);
             }
             else {
-                return $.core(options, function(peer) {
+                return $.core(options, function(herd) {
                     return self._addHerd(herd);
                 })
             }
             break;
         default:
             throw('wrong argument number');
-        }
+        }      
     },
     _getHerds: function() {
+        //haal alleen de herds op uit de lijst waar de status != deleted
         var herds = [];
         $.each(this.herdList, function(id, herd) {
             herds.push(herd);
@@ -296,15 +298,26 @@ When adding herds, those are returned.
         return herds;
     },
     _addHerd: function(options) {
-        var herd = new $.Cow.Herd(this, options);        
+        console.log('Adding herd ' + options);
+        if (!options.uid || !options.name){
+            throw('Wrong herd parameters');
+        }
+        //var herd = options;        
         
         if (options.uid != this.UID){
-            
+           
         }
-        this.herdList.push(herd);
-        //TODO: enable peer.trigger
-        //peer.trigger('addpeer');
-        return herd;
+        //check of the 'new herd'niet al bestaat
+        $.each(this.herdList, function(id, herd) {
+                if (options.uid == herd.uid)
+                    throw("Herd already in list");
+        });
+        
+        
+        this.herdList.push(options);
+        //check voor database flag en in db proppen
+        this.localdbase().putHerd(options);
+        return options;
     },
     getHerdById: function(id) {
         var herds = this.herds();
@@ -319,14 +332,16 @@ When adding herds, those are returned.
     removeHerd: function(id) {
         var herds = this.herds();
         var herdGone = id;
-        var delPeer;
+        var delHerd;
         $.each(herds, function(i){
-            if(this.id == peerGone) {            
+            if(this.id == herdGone) {            
                 delHerd = i;
+                this.active = false;
+                //Overwrite herd in dbase with new status
+                self.core.localdb().putHerd(this);
             }            
         });
-        if(delHerd >= 0) herds.splice(delHerd,1);
-        this.herdList = herds;        
+        this.herdList = herds;  
     },
 
 

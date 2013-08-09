@@ -7,6 +7,31 @@ https://github.com/axemclion/jquery-indexeddb/blob/gh-pages/docs/README.md
 
 //var localdbase = {
 $.Cow.LocalDbase.prototype = {
+    initHerds: function(){
+        var self = this;
+        var storeOptions = {
+            "autoIncrement" : false,
+            "keyPath": "uid"
+		};
+        
+        $.indexedDB(this.options.dbname)
+		    .objectStore("herds",storeOptions)
+		    .each(function(elem){
+		        if (elem.value.active) 
+		            self.core.herds(elem.value);
+		    });
+		
+    },
+    putHerd: function(record){
+        $.indexedDB(this.options.dbname)
+		    .objectStore("herds",false)
+		    .put(record);
+    },
+    deleteHerd: function(uid){
+        $.indexedDB(this.options.dbname)
+		    .objectStore("herds",false)["delete"](uid);
+    },
+    
 	// Transfers features from database to arrays
 	loadFromDB: function(){
 		var core = this.core;
@@ -33,7 +58,7 @@ $.Cow.LocalDbase.prototype = {
                         myFeatureList.push(item);
                 });    
 		iteration.done(function(){
-			//TODO TT: rewrite to trigger and remove storename
+			//TODO TT: rewrite to trigger
 			core.featurestore().fill(myFeatureList);
 		});
 		iteration.fail(function(e){
