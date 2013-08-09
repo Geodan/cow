@@ -150,7 +150,8 @@ $.Cow.LocalDbase = function(core, options) {
     this.core = core;
     this.options = options;
     this.options.dbname = "cow";
-    var iteration = self.loadFromDB();
+    var iteration = self.loadFromDB(); //features are initialized from localdb
+    self.initHerds(); //Herds are initialized from localdb
 }
 /***
 $.Cow.FeatureStore
@@ -289,6 +290,7 @@ When adding herds, those are returned.
         }
     },
     _getHerds: function() {
+        //haal alleen de herds op uit de lijst waar de status != deleted
         var herds = [];
         $.each(this.herdList, function(id, herd) {
             herds.push(herd);
@@ -301,9 +303,10 @@ When adding herds, those are returned.
         if (options.uid != this.UID){
             
         }
+        //check of the 'new herd'niet al bestaat met status deleted
         this.herdList.push(herd);
-        //TODO: enable peer.trigger
-        //peer.trigger('addpeer');
+        //check voor database flag en in db proppen
+
         return herd;
     },
     getHerdById: function(id) {
@@ -319,14 +322,16 @@ When adding herds, those are returned.
     removeHerd: function(id) {
         var herds = this.herds();
         var herdGone = id;
-        var delPeer;
+        var delHerd;
         $.each(herds, function(i){
-            if(this.id == peerGone) {            
+            if(this.id == herdGone) {            
                 delHerd = i;
+                this.active = false;
+                //Overwrite herd in dbase with new status
+                self.core.localdb().putHerd(this);
             }            
         });
-        if(delHerd >= 0) herds.splice(delHerd,1);
-        this.herdList = herds;        
+        this.herdList = herds;  
     },
 
 
