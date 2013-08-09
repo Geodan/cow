@@ -50,8 +50,8 @@ $.widget("cow.OlMapWidget", {
 		core.bind("storeChanged", {widget: self}, self._onFeatureStoreChanged);
 		core.bind("peerStoreChanged", {widget: self}, self._onPeerStoreChanged);
 		core.bind("layoutChanged", {widget: self},self._updateSize);
-		core.bind("zoomToPeersviewRequest", {widget: self},self._zoomToPeersView);
-		core.bind("zoomToPeerslocationRequest", {widget: self},self._zoomToPeersLocation);
+		core.bind("zoomToExtent", {widget: self},self._zoomToPeersView);
+		core.bind("zoomToPoint", {widget: self},self._zoomToPeersLocation);
 		
 		//openlayers stuff
 		this.map = new OpenLayers.Map("map");
@@ -167,7 +167,7 @@ $.widget("cow.OlMapWidget", {
 	},
 	_zoomToPeersLocation: function(evt, location){
 	    var self = evt.data.widget;
-	    var loc = new OpenLayers.LonLat(location.coords.longitude,location.coords.latitude);
+	    var loc = new OpenLayers.LonLat(location.longitude,location.latitude);
 	    var fromproj = new OpenLayers.Projection("EPSG:4326");
         var toproj = new OpenLayers.Projection("EPSG:900913");
         loc.transform(fromproj, toproj);
