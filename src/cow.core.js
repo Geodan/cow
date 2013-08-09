@@ -26,7 +26,7 @@ $.Cow.Core = function(element, options) {
     /* SMO: obsolete 7/8/2013
     this.herdList = [{id:0,name:"sketch"},{id:1,name:"test"}]; //Altijd initiele sketch herd aanwezig
     */
-    this.herdList = [{uid:0,name:"sketch"},{uid:1,name:"temp"}];
+    this.herdList = [{uid:0,name:"sketch", active: true}];
     this.activeHerd = this.herdList[0].uid;
     this.localDbase;
     this.geoLocator;
@@ -293,7 +293,8 @@ When adding herds, those are returned.
         //haal alleen de herds op uit de lijst waar de status != deleted
         var herds = [];
         $.each(this.herdList, function(id, herd) {
-            herds.push(herd);
+            if (herd.active)
+                herds.push(herd);
         });        
         return herds;
     },
@@ -302,16 +303,19 @@ When adding herds, those are returned.
         if (!options.uid ) {
             throw('Wrong herd parameters, you need an UID');
         }
+
         else if (!options.name) {
             options.name = 'new herd';
         }
 
+
+        options.active = true; //Adding always makes an active herd
+
         //check of the 'new herd'niet al bestaat
         $.each(this.herdList, function(id, herd) {
                 if (options.uid == herd.uid)
-                    throw("Herd already in list");
+                    return; //("Herd already in list");
         });
-        
         
         this.herdList.push(options);
         //check voor database flag en in db proppen
@@ -340,11 +344,12 @@ When adding herds, those are returned.
         var herdGone = id;
         var delHerd;
         $.each(herds, function(i){
-            if(this.id == herdGone) {            
-                delHerd = i;
+            if(this.uid == herdGone) {            
                 this.active = false;
                 //Overwrite herd in dbase with new status
-                self.core.localdb().putHerd(this);
+                self.core.localdbase().putHerd(this);
+                
+                self.core.trigger("peerStoreChanged", self.core.UID);
             }            
         });
         this.herdList = herds;  
