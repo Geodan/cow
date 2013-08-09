@@ -58,6 +58,13 @@ $.widget("cow.PeersWidget", {
         element.delegate('.notremove','click', function(){
             $(this).parent().addClass('verborgen');
         });
+        
+        element.delegate('.yesremove','click', function(){
+            var herdID= $(this).parent().siblings('.herd').attr('herd');
+            self.core.removeHerd(herdID);
+            $(this).parent().addClass('verborgen');
+            
+        });
         //Preliminary peerjs video connection
         element.delegate('.videoconnection','click', function(){
             var owner = $(this).attr('owner');
