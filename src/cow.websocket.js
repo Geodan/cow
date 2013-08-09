@@ -43,6 +43,7 @@ $.Cow.Websocket.prototype = {
                 }
             break;
             
+                
         //Messages from Peers: broadcasted messages
             //a peer is gone and everybody has a new connection-id, recieve a connectionID with UID
             case 'updatePeers':
@@ -85,6 +86,19 @@ $.Cow.Websocket.prototype = {
                         core.featurestore().updateItem(item);
                 }
             break;
+            //A peer request information about a herd
+            case 'getHerdInfo':
+                if(uid != UID) {
+                    this.obj._onGetHerdInfo(payload);
+                }
+            break;
+            //Info about a herd comes in...
+            case 'herdUpdate':
+                if(uid != UID) {
+                    this.obj._onHerdUpdate(payload);
+                }
+            break;
+            
         }
     },
     _onClose: function(event) {
@@ -304,6 +318,22 @@ $.Cow.Websocket.prototype = {
             peer.events.trigger('ws-updatePeer',payload);
         }
         else console.warn('badpeer '+uid);
+    },
+    //A peer wants to have more info about a herd. send it
+    _onGetHerdInfo: function(payload){
+        //Everybody sends data back, if available
+        var herdId = payload.herdId;
+        var myherds = this.core.herds();
+        var self = this;
+        $.each(myherds, function(i, herd){
+             if (herd.uid == herdId){
+                 message = herd;
+                 this.sendData(message,'herdUpdate');
+             }
+        })
+    },
+    _onHerdUpdate: function(payload){
+        this.core.herd(payload);
     },
     //My stuff has changed, send over the changed data to the other peers
     _onMeChanged: function(evt, payload) {
