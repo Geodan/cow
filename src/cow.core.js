@@ -301,7 +301,7 @@ When adding herds, those are returned.
     },
     _addHerd: function(options) {
         console.log('Adding herd ' + JSON.stringify(options));
-        if (options.uid){
+        if (!options.uid){
             throw('Wrong herd parameters');
         }
         else if (!options.name) {
@@ -345,6 +345,7 @@ When adding herds, those are returned.
             this.herds({uid:id});
             var message = {};
             message.herdId = id;
+            console.warn('no herd, getinfo');
             this.websocket().sendData(message,'getHerdInfo');
         }
         return herd;
