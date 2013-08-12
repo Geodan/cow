@@ -1,7 +1,7 @@
 function d3layer(layername, config){
 		var f = {}, bounds, feature, collection;
 		this.f = f;
-		var _this = this;
+		var _this = this;        
 		var layername = layername;
 		this.type = config.type || "path";
 		this.freq = 100;
