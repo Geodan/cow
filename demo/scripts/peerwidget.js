@@ -198,7 +198,7 @@ $.widget("cow.PeersWidget", {
             if(id !== undefined) herds[id].peers.push(this);
         });
         var element = self.element;
-        var change = false;
+       /* var change = false;
         if( herds.length == self.oldherds.length) {
             //at least the same number of herds is there, up to the next check
             
@@ -216,8 +216,8 @@ $.widget("cow.PeersWidget", {
            
                     
         }
-        self.oldherds = herds;
-        if (change) {
+        self.oldherds = herds;*/
+        if (true) {
         var names = '';
         $.each(herds,function() {
             var remove = '';

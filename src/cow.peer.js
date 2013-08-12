@@ -43,8 +43,9 @@ $.Cow.Peer.prototype = {
             this.params.viewExtent = options.extent
             this.params.viewFeature = this._bbox2view(options.extent);
         }
+        this.core.trigger("peerStoreChanged", this.uid);
         if(this.uid == this.core.UID) {
-            this.core.trigger("peerStoreChanged", this.uid);
+            
             this.core.trigger("meChanged", {"extent":this.view().extent});
         }
     },
@@ -118,9 +119,9 @@ $.Cow.Peer.prototype = {
             this.params.locationPoint = options.point;
             this.params.locationFeature = this._point2position(options.point);
         }
-        
+        this.core.trigger("peerStoreChanged", this.uid);
         if(this.uid == this.core.UID) {
-            this.core.trigger("peerStoreChanged", this.uid);
+            
             this.core.trigger("meChanged", {"point":this.params.locationPoint});
         }
     },
@@ -157,13 +158,13 @@ $.Cow.Peer.prototype = {
     },
     
     /*
-    herd is an object containing:
-    -name: the name of the herd
+    herd is an object containing:    
     -uid: unique ID of the herd, must be unique for ever
     
     herd() takes an options object: {uid:#}
     */
     herd: function(options) {
+        //console.log('herd()');
         var self = this;
         switch(arguments.length) {
         case 0:
@@ -182,17 +183,17 @@ $.Cow.Peer.prototype = {
     },
     _getHerd: function() {
         if(this.params.herd === undefined){
-            this.params.herd = this.core.getHerdById(this.core.activeHerd);
+            this.params.herd = {uid:this.core.activeHerd}
         }
-        return this.params.herd;
+        return this.core.getHerdById(this.params.herd.uid);
     },
     _setHerd: function(options){
         if(options.uid === undefined) {
             throw "Herd without ID!";
         }
-        this.params.herd = self.core.getHerdById(options.uid);
+        this.params.herd = {uid:options.uid};
+        this.core.trigger("peerStoreChanged", this.uid);
         if(this.uid == this.core.UID) {
-            this.core.trigger("peerStoreChanged", this.uid);
             this.core.trigger("meChanged", {"herd":this.params.herd});
             
         }
@@ -230,8 +231,9 @@ $.Cow.Peer.prototype = {
             options.name = "anonymous";
         }
         this.params.owner = options;
+        this.core.trigger("peerStoreChanged", this.uid);
         if(this.uid == this.core.UID) {
-            this.core.trigger("peerStoreChanged", this.uid);
+           
             this.core.trigger("meChanged", {"owner":this.params.owner});
         }
     },
@@ -267,6 +269,7 @@ $.Cow.Peer.prototype = {
             options.state = "off";
         }
         this.params.video = options;
+        this.core.trigger("peerStoreChanged", this.uid);
         if(this.uid == this.core.UID) {
             this.core.trigger("meChanged", {"video":this.params.video});
         }

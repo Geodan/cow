@@ -147,13 +147,16 @@ $.Cow.Websocket.prototype = {
        
         options.uid = this.core.UID;
         options.cid = payload.cid;        
-       options.family = 'alpha'; //used to check if client is able to act as alpha peer
-       //let everybody know you exist, before sending peerupdates
-       this.sendData(options,'newPeer');
+        options.family = 'alpha'; //used to check if client is able to act as alpha peer
         var me = this.core.peers(options);
+        
+        //let everybody know you exist, before sending peerupdates
+        this.sendData(options,'newPeer');// we don't want to trigger anything with this herd
+        me.herd({uid:this.core.activeHerd});
+       
+        
         me.view({"extent":{"bottom":0,"left":0,"top":1,"right":1}});
-        var herd = this.core.getHerdById(this.core.activeHerd);
-        me.herd(herd);
+
         me.owner({"name":name});
         me.video({"state":"off"});
         console.log('nr peers: '+this.core.peers().length);
@@ -184,13 +187,14 @@ $.Cow.Websocket.prototype = {
     _onInformPeer: function(payload,uid) {        
         console.log('Got peerinfo from: '+uid);        
         if(payload.options.uid !== undefined && payload.options.cid !== undefined) {
-            var me = this.core.peers(payload.options);
-            me.view({"extent":payload.view});
-            me.position({"point":payload.position});
-            me.owner(payload.owner);
-            me.herd(payload.herd);
+            var it = this.core.peers(payload.options);
+            this.core.herds(payload.herd);
+            it.view({"extent":payload.view});
+            it.position({"point":payload.position});
+            it.owner(payload.owner);
+            it.herd(payload.herd);
             if (payload.video)
-                me.video(payload.video);
+                it.video(payload.video);
             this.core.trigger('ws-peerInfo');    
         }
         else console.log('badpeer '+uid);
