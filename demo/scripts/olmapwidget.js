@@ -235,10 +235,14 @@ $.widget("cow.OlMapWidget", {
 				type: "circle",
 				labels: true,
 				labelconfig: {
-					field:"owner"
+					field:"owner",
+					style: {
+					    stroke: "steelBlue"
+					}
 				},
 				style: {
-					fill: "steelBlue"
+					fill: "steelBlue",
+					textLocation: "ul"
 				}
 			});
 		};
