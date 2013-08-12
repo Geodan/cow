@@ -307,7 +307,7 @@ When adding herds, those are returned.
         else if (!options.name) {
             options.name = 'new herd';
         }
-        options.active = true; //Adding always makes an active herd
+        
         var existing;
         var i;
         //check of the 'new herd'niet al bestaat
@@ -325,6 +325,7 @@ When adding herds, those are returned.
              return options;
         }
         else {
+            options.active = true; //Adding always makes an active herd
             this.herdList.push(options);
             //check voor database flag en in db proppen
             this.localdbase().putHerd(options);
