@@ -246,12 +246,21 @@ border: solid 1px #2e3436 !important;
 	text-decoration: line-through;
 }
 
-#videopanel {
+
+.videobig {
     position: absolute;
-    display: none;
     left: 50px;
     top: 50px;
     height: 200px;
     width: 200px;
+    padding: 10px;
+}
+#videopanel {
+    position: relative;
+    display: none;
+    /*left: 50px;
+    top: 50px;
+    height: 200px;
+    width: 200px;*/
     padding: 10px;
 }
