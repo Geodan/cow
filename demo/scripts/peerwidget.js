@@ -204,7 +204,9 @@ $.widget("cow.PeersWidget", {
             
             $.each(herds,function(i){
                 if ($(this.peers).not(self.oldherds[i].peers).length == 0 && $(self.oldherds[i].peers).not(this.peers).length == 0 ) {
-                
+                    if(this.name != self.oldherds[i].name) {
+                        change = true;
+                    }
                 }
                 else change = true;
             });

@@ -148,6 +148,8 @@ $.Cow.Websocket.prototype = {
         options.uid = this.core.UID;
         options.cid = payload.cid;        
        options.family = 'alpha'; //used to check if client is able to act as alpha peer
+       //let everybody know you exist, before sending peerupdates
+       this.sendData(options,'newPeer');
         var me = this.core.peers(options);
         me.view({"extent":{"bottom":0,"left":0,"top":1,"right":1}});
         var herd = this.core.getHerdById(this.core.activeHerd);
@@ -156,7 +158,7 @@ $.Cow.Websocket.prototype = {
         me.video({"state":"off"});
         console.log('nr peers: '+this.core.peers().length);
         this.core.trigger('ws-connected');        
-        this.sendData(options,'newPeer');
+        
         //triggers _onNewPeer()
         
         var sendFidList = function(){
@@ -322,6 +324,7 @@ $.Cow.Websocket.prototype = {
     //A peer wants to have more info about a herd. send it
     _onGetHerdInfo: function(payload){
         //Everybody sends data back, if available
+        // make sure you're actually aware of the herd, not 'new herd'
         var herdId = payload.herdId;
         var myherds = this.core.herds();
         var self = this;

@@ -300,24 +300,36 @@ When adding herds, those are returned.
     },
     _addHerd: function(options) {
         console.log('Adding herd ' + options);
-        if (!options.uid || !options.name){
+        if (!options.uid ){
             throw('Wrong herd parameters');
         }
+        else if (!options.name) {
+            options.name = 'new herd';
+        }
+        //TODO: what does active mean??
         options.active = true; //Adding always makes an active herd
         var existing;
+        var i;
         //check of the 'new herd'niet al bestaat
         $.each(this.herdList, function(id, herd) {
-                if (options.uid == herd.uid)
+                if (options.uid == herd.uid) {
+                    i = id;
                     existing = true;
-                    return; //("Herd already in list");
+                     //("Herd already in list");
+                    }
         });
         if (existing){
-            return;
+             this.herdList[i] = options;
+             //TODO: update the database as well
+             return options;
         }
-        this.herdList.push(options);
-        //check voor database flag en in db proppen
-        this.localdbase().putHerd(options);
-        return options;
+        else {
+            this.herdList.push(options);
+            //check voor database flag en in db proppen
+            this.localdbase().putHerd(options);
+            return options;
+        }
+        this.trigger("peerStoreChanged", self.UID);
     },
     getHerdById: function(id) {
         var herds = this.herds();
@@ -327,6 +339,13 @@ When adding herds, those are returned.
                 herd = this;
             }            
         });
+        if(herd ===undefined) {
+            //create the new herd
+            this.herds({uid:id});
+            var message = {};
+            message.herdId = id;
+            this.websocket().sendData(message,'getHerdInfo');
+        }
         return herd;
     },
     removeHerd: function(id) {
@@ -339,7 +358,7 @@ When adding herds, those are returned.
                 //Overwrite herd in dbase with new status
                 self.core.localdbase().putHerd(this);
                 
-                self.core.trigger("peerStoreChanged", self.core.UID);
+                self.core.trigger("peerStoreChanged", self.UID);
             }            
         });
         this.herdList = herds;  
