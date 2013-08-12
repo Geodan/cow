@@ -26,7 +26,7 @@ $.Cow.Core = function(element, options) {
     /* SMO: obsolete 7/8/2013
     this.herdList = [{id:0,name:"sketch"},{id:1,name:"test"}]; //Altijd initiele sketch herd aanwezig
     */
-    this.herdList = [{uid:0,name:"sketch", active: true}];
+    this.herdList = [{uid:666,name:"sketch", active: true}];
     this.activeHerd = this.herdList[0].uid;
     this.localDbase;
     this.geoLocator;

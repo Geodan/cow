@@ -17,7 +17,7 @@ $.Cow.LocalDbase.prototype = {
         $.indexedDB(this.options.dbname)
 		    .objectStore("herds",storeOptions)
 		    .each(function(elem){
-		        if (elem.value.active) 
+		        //if (elem.value.active) Disabled check, we want to know their status for administration
 		            self.core.herds(elem.value);
 		    });
 		
