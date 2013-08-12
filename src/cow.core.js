@@ -290,7 +290,7 @@ When adding herds, those are returned.
         }      
     },
     _getHerds: function() {
-        //haal alleen de herds op uit de lijst waar de status != deleted
+        //haal alleen de herds op uit de lijst waar active == true
         var herds = [];
         $.each(this.herdList, function(id, herd) {
             if (herd.active)
@@ -319,14 +319,12 @@ When adding herds, those are returned.
                     }
         });
         if (existing){
-             this.herdList[i] = options;
-             //TODO: update the database as well
+             this.herdList[i] = options; //Change in herdlist
              this.localdbase().putHerd(options);
              return options;
         }
         else {
-            this.herdList.push(options);
-            //check voor database flag en in db proppen
+            this.herdList.push(options); //Add to herdlist
             this.localdbase().putHerd(options);
             return options;
         }
