@@ -72,11 +72,11 @@ $.Cow.GeoLocator.prototype = {
 		if (navigator.geolocation)
 		{
 			this._setGeoLocation();//first one
-			window.setInterval( function () {
+			/*window.setInterval( function () {
 				self._setGeoLocation();
 				}, 
 				10000 //check every 10 seconds
-			);
+			);*/
 		}
 	  else{alert("Geolocation is not supported by this browser.")}
 	}

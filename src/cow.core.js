@@ -271,6 +271,7 @@ When adding herds, those are returned.
 */
 
     herds: function(options) {
+    // console.log('herds()');
         var self = this;
         switch(arguments.length) {
         case 0:
@@ -299,14 +300,13 @@ When adding herds, those are returned.
         return herds;
     },
     _addHerd: function(options) {
-        console.log('Adding herd ' + options);
+        console.log('Adding herd ' + JSON.stringify(options));
         if (!options.uid ){
             throw('Wrong herd parameters');
         }
         else if (!options.name) {
             options.name = 'new herd';
         }
-        //TODO: what does active mean??
         options.active = true; //Adding always makes an active herd
         var existing;
         var i;
@@ -328,7 +328,7 @@ When adding herds, those are returned.
             this.localdbase().putHerd(options);
             return options;
         }
-        this.trigger("peerStoreChanged", self.UID);
+        this.trigger("herdListChanged", self.UID);
     },
     getHerdById: function(id) {
         var herds = this.herds();
@@ -401,6 +401,7 @@ A Peer is on object containing:
  =owner
 */
     peers: function(options) {
+      //  console.log('peers()');
         var self = this;
         switch(arguments.length) {
         case 0:
@@ -449,7 +450,7 @@ A Peer is on object containing:
     getPeerExtents: function() {
         var collection = {"type":"FeatureCollection","features":[]};
         $.each(core.peers(), function(){
-            if (this.uid != self.core.me().uid
+            if (this.uid != self.core.me().uid && this.herd()
                     && this.herd().uid == self.core.me().herd().uid
                     && this.view().feature)
                 collection.features.push(this.view().feature);
