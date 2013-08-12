@@ -38,7 +38,7 @@ $.widget("cow.PeersWidget", {
         core.bind("ws-peerInfo", {widget: self}, self._onPeerStoreChanged);
         core.bind("ws-peerGone", {widget: self}, self._onPeerStoreChanged);
         core.bind("peerStoreChanged" ,{widget: self}, self._onPeerStoreChanged);
-       
+       core.bind("herdListChanged" ,{widget: self}, self._onPeerStoreChanged);
         
         element.delegate('.location','click', function(){
             var owner = $(this).attr('owner');
