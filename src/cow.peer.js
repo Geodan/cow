@@ -185,7 +185,7 @@ $.Cow.Peer.prototype = {
         if(this.params.herd === undefined){
             this.params.herd = {uid:this.core.activeHerd}
         }
-        return this.core.getHerdById(this.params.herd.uid);
+        return this.params.herd.uid;
     },
     _setHerd: function(options){
         if(options.uid === undefined) {

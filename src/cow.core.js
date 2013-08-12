@@ -301,13 +301,13 @@ When adding herds, those are returned.
     },
     _addHerd: function(options) {
         console.log('Adding herd ' + JSON.stringify(options));
-        if (!options.uid ){
+        if (!options.uid){
             throw('Wrong herd parameters');
         }
         else if (!options.name) {
             options.name = 'new herd';
         }
-        options.active = true; //Adding always makes an active herd
+        
         var existing;
         var i;
         //check of the 'new herd'niet al bestaat
@@ -324,7 +324,8 @@ When adding herds, those are returned.
              return options;
         }
         else {
-            this.herdList.push(options); //Add to herdlist
+            options.active = true; //Adding always makes an active herd
+            this.herdList.push(options);
             this.localdbase().putHerd(options);
             return options;
         }
@@ -343,6 +344,7 @@ When adding herds, those are returned.
             this.herds({uid:id});
             var message = {};
             message.herdId = id;
+            console.warn('no herd, getinfo');
             this.websocket().sendData(message,'getHerdInfo');
         }
         return herd;

@@ -212,7 +212,8 @@ $.Cow.Websocket.prototype = {
             message.owner = this.core.me().owner();
             message.position = this.core.me().position().point;
             message.herd = this.core.me().herd();
-            delete message.herd[active]; //This information is private
+            delete message.herd.active;
+            console.log(JSON.stringify(message));
             message.video = this.core.me().video();
             this.sendData(message,'informPeer',uid);
             this.core.trigger('ws-newPeer');
@@ -336,6 +337,8 @@ $.Cow.Websocket.prototype = {
         $.each(myherds, function(i, herd){
              if (herd.uid == herdId){
                  message = herd;
+                 delete message.active;
+                 console.log(JSON.stringify(message));
                  self.sendData(message,'herdUpdate');
              }
         })
