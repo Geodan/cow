@@ -321,6 +321,7 @@ When adding herds, those are returned.
         if (existing){
              this.herdList[i] = options;
              //TODO: update the database as well
+             this.localdbase().putHerd(options);
              return options;
         }
         else {
