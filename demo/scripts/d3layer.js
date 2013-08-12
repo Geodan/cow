@@ -152,6 +152,7 @@ function d3layer(layername, config){
 			if (_this.type == "path" || _this.type == "circle"){
 			    newentity.append("path")
 			        .classed("zoomable",true)
+			        .classed(function(d){return d.id;}),true)
 			        .each(_this.styling)
 			        ;
 			}

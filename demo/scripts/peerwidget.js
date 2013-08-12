@@ -28,7 +28,12 @@ $.widget("cow.PeersWidget", {
         element.append('<div id="peerjs"></div>');
         this.listdiv = element.find('#list');
         this.peerjsdiv = element.find('#peerjs');
-        this.peerjsdiv.html('<br>Camera: <input type="checkBox" id="cameraOnOff">');
+        this.peerjsdiv.html('<br>Camera:' 
+                + '<input type="checkBox" id="cameraOnOff">'
+                + '<div id="videopanel">'
+                + '<h2>Video:</h2><button id="videoclosebtn">Close</button>'
+                + '<div id="videoplace"></div>'
+                + '</div>');
         
         core = $(this.options.core).data('cow');
         this.core=core;
@@ -92,6 +97,7 @@ $.widget("cow.PeersWidget", {
                 console.log("Closing "  + owner);
                 if (self.peer1.managers[owner])
                     self.peer1.managers[owner].close();
+                
                 $('#videopanel').hide();
             });
             if (!self.peer1){
@@ -101,8 +107,15 @@ $.widget("cow.PeersWidget", {
             $('#videopanel').show();
             mc = self.peer1.call(owner, self.localstream);
             mc.on('stream', function(s){
+                $('video').remove(); //Remove existing videos
                 window.remote = s;
                   z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('#videoplace');
+                  z.width(150);
+                  z.click(function(evt){
+                      console.log(evt);
+                      tmp = this;
+                      $('video').addClass('videobig');
+                  });
               });
             
          });
@@ -127,7 +140,7 @@ $.widget("cow.PeersWidget", {
                             navigator.getUserMedia ||
                            navigator.mozGetUserMedia ||
                            navigator.msGetUserMedia);
-                    navigator.webkitGetUserMedia({audio: true, video: true}, function(s){
+                    navigator.getMedia({audio: false, video: true}, function(s){
                       self.localstream = s;
                       // Create a new Peer with our demo API key, with debug set to true so we can
                       // see what's going on.
