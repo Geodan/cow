@@ -50,7 +50,7 @@ $.Cow.Core = function(element, options) {
     //TODO: put this in a proper function
     self.bind('changeHerdRequest', {widget:self}, function(e,uid){
         self.featurestore().clear(); //Clear featurestore
-        self.me().herd(core.getHerdById(uid));
+        self.me().herd({uid:uid});
         self.activeHerd = uid;
         self.options.storename = "store_"+uid; //TODO: the link between activeHerd and storename can be better
         self.localdbase().loadFromDB();//Fill featurestore with what we have
@@ -292,17 +292,18 @@ When adding herds, those are returned.
     },
     _getHerds: function() {
         //haal alleen de herds op uit de lijst waar de status != deleted
+        /* SMO obs: 12/8/13
         var herds = [];
         $.each(this.herdList, function(id, herd) {
             if (herd.active)
                 herds.push(herd);
-        });        
-        return herds;
+        });        */
+        return this.herdList;
     },
     _addHerd: function(options) {
         console.log('Adding herd ' + JSON.stringify(options));
         if (!options.uid){
-            throw('Wrong herd parameters');
+            throw('Wrong herd parameters'+JSON.stringify(options));
         }
         else if (!options.name) {
             options.name = 'new herd';

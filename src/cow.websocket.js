@@ -188,6 +188,10 @@ $.Cow.Websocket.prototype = {
         console.log('Got peerinfo from: '+uid);        
         if(payload.options.uid !== undefined && payload.options.cid !== undefined) {
             var it = this.core.peers(payload.options);
+            if(payload.herd.active) {
+                console.warn('delete active');
+                delete payload.herd.active;
+            }
             this.core.herds(payload.herd);
             it.view({"extent":payload.view});
             it.position({"point":payload.position});
@@ -211,8 +215,7 @@ $.Cow.Websocket.prototype = {
             message.view = this.core.me().view().extent;
             message.owner = this.core.me().owner();
             message.position = this.core.me().position().point;
-            message.herd = this.core.me().herd();
-            delete message.herd.active;
+            message.herd = this.core.getHerdById(this.core.me().herd().uid);
             console.log(JSON.stringify(message));
             message.video = this.core.me().video();
             this.sendData(message,'informPeer',uid);
