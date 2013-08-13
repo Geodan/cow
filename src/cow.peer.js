@@ -163,6 +163,7 @@ $.Cow.Peer.prototype = {
     
     herd() takes an options object: {uid:#}
     */
+    /* Obs
     herd: function(options) {
         //console.log('herd()');
         var self = this;
@@ -199,7 +200,7 @@ $.Cow.Peer.prototype = {
             
         }
     },
-    
+    */
     /*
     owner is an object containing:
     -name: the name of the owner
@@ -284,11 +285,6 @@ $.Cow.Peer.prototype = {
         }
         if(payload.video) {
             self.video(payload.video);
-        }
-        if(payload.herd) {
-            //make sure that the herd exists in the core
-            self.core.getHerdById(payload.herd);
-            self.herd(payload.herd);
         }
         if (payload.extent) {
             self.view({extent: payload.extent});

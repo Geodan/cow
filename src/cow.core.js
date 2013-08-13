@@ -23,11 +23,11 @@ $.Cow.Core = function(element, options) {
     this.map = window[this.options.map];
     this.ws ={};
     this.peerList = [];
+    this.herdList = [];
     /* SMO: obsolete 7/8/2013
     this.herdList = [{id:0,name:"sketch"},{id:1,name:"test"}]; //Altijd initiele sketch herd aanwezig
     */
-    this.herdList = [{uid:666,name:"sketch", active: true}];
-    this.activeHerd = this.herdList[0].uid;
+    
     this.localDbase;
     this.geoLocator;
     this.featureStore;
@@ -45,17 +45,18 @@ $.Cow.Core = function(element, options) {
         this.geolocator(this.options.geolocator);
     }
     element.data('cow', this);
+    //Standard herd, always available
+    this.herds({uid:666,name:"sketch", peeruid: this.UID});
+    this.activeHerd = 666;
+    
     self.bind("disconnected", {widget: self}, self.removeAllPeers);
     
     //TODO: put this in a proper function
     self.bind('changeHerdRequest', {widget:self}, function(e,uid){
         self.featurestore().clear(); //Clear featurestore
-        self.me().herd({uid:uid});
         self.activeHerd = uid;
         self.options.storename = "store_"+uid; //TODO: the link between activeHerd and storename can be better
         self.localdbase().loadFromDB();//Fill featurestore with what we have
-        var options = {name: self.me().options.owner, herd: uid};
-        self.trigger("paramsChange",options); //TODO: is this still a valid trigger?
     });
     
     
@@ -139,6 +140,15 @@ $.Cow.Peer = function(core, options) {
         }
     };
 };
+
+$.Cow.Herd = function(core, options) {
+    var self = this;
+    this.core = core;
+    this.options = options;
+    this.uid = options.uid;
+    this.memberList = [];
+}
+
 /***
 $.Cow.LocalDbase object
 Accessed from the core the localbase.
@@ -301,39 +311,43 @@ When adding herds, those are returned.
         return this.herdList;
     },
     _addHerd: function(options) {
-        console.log('Adding herd ' + JSON.stringify(options));
-        if (!options.uid){
-            throw('Wrong herd parameters'+JSON.stringify(options));
+        if (!options.uid || !options.name){
+            throw('Missing herd parameters '+JSON.stringify(options));
         }
-        else if (!options.name) {
-            options.name = 'new herd';
-        }
-        
+        var herd;        
         var existing;
         var i;
-        //check of the 'new herd'niet al bestaat
+        //Remove peer from previous herd
+        if (this.getHerdByPeerUid(options.peeruid))
+            this.getHerdByPeerUid(options.peeruid).removeMember(options.peeruid);
+        
+        //check if herd exists
         $.each(this.herdList, function(id, herd) {
                 if (options.uid == herd.uid) {
                     i = id;
                     existing = true;
-                     //("Herd already in list");
-                    }
+                }
         });
         if (existing){
-             this.herdList[i] = options;
-             //TODO: update the database as well
-             this.localdbase().putHerd(options);
-             return options;
+            if (options.peeruid){
+             this.herdList[i].members(options.peeruid); //Update membership of herd
+            }
+            this.localdbase().putHerd(this.herdList[i]); //Write to db
+            herd =this.herdList[i]; 
         }
-        else {
-            options.active = true; //Adding always makes an active herd
-            this.herdList.push(options);
-            //check voor database flag en in db proppen
-            this.localdbase().putHerd(options);
-            return options;
+        else { //Herd is new
+            if (!options.active) //could be inactive from localdb
+                options.active = true;
+            herd = new $.Cow.Herd(this, options);
+            if (options.peeruid)
+                herd.members(options.peeruid);
+            this.herdList.push(herd); //Add herd to list
+            this.localdbase().putHerd(herd); //Write to db
         }
         this.trigger("herdListChanged", self.UID);
+        return herd;
     },
+    
     getHerdById: function(id) {
         var herds = this.herds();
         var herd;
@@ -342,16 +356,24 @@ When adding herds, those are returned.
                 herd = this;
             }            
         });
-        if(herd ===undefined) {
-            //create the new herd
-            this.herds({uid:id});
-            var message = {};
-            message.herdId = id;
-            console.warn('no herd, getinfo');
-            this.websocket().sendData(message,'getHerdInfo');
-        }
         return herd;
     },
+    getHerdByPeerUid: function(peeruid){
+        var herds = this.herds();
+        //TODO: mag dit zo?
+        var result;
+        $.each(herds, function(id, herd){
+            memberList = herd.members();
+            for (var i=0;i<memberList.length;i++){
+                if (memberList[i] == peeruid) {
+                    result = herd;
+                }
+            }
+        });
+        return result;
+    },
+    
+    
     removeHerd: function(id) {
         var herds = this.herds();
         var herdGone = id;
@@ -455,9 +477,7 @@ A Peer is on object containing:
     getPeerExtents: function() {
         var collection = {"type":"FeatureCollection","features":[]};
         $.each(core.peers(), function(){
-            if (this.uid != self.core.me().uid && this.herd()
-                    && this.herd().uid == self.core.me().herd().uid
-                    && this.view().feature)
+            if (this.uid != self.core.me().uid && this.view().feature) //TODO, check for same herd
                 collection.features.push(this.view().feature);
         });
         return collection;

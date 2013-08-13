@@ -69,8 +69,6 @@ $.Cow.Websocket.prototype = {
                     this.obj._onPeerUpdated(payload,uid);
                 }
             break;
-            
-            
             //a new object was drawn or updated by a peer
             case 'newFeature':
                 if(uid != UID) {
@@ -93,9 +91,9 @@ $.Cow.Websocket.prototype = {
                 }
             break;
             //Info about a herd comes in...
-            case 'herdUpdate':
+            case 'herdInfo':
                 if(uid != UID) {
-                    this.obj._onHerdUpdate(payload);
+                    this.obj._onHerdInfo(payload,uid);
                 }
             break;
             
@@ -148,12 +146,15 @@ $.Cow.Websocket.prototype = {
         options.uid = this.core.UID;
         options.cid = payload.cid;        
         options.family = 'alpha'; //used to check if client is able to act as alpha peer
+        
         var me = this.core.peers(options);
         
         //let everybody know you exist, before sending peerupdates
         this.sendData(options,'newPeer');// we don't want to trigger anything with this herd
-        me.herd({uid:this.core.activeHerd});
-       
+      
+        //Immediately give a herdInfo
+        var herd = this.core.getHerdByPeerUid(this.core.UID);
+        this.sendData(herd.options,'herdInfo');
         
         me.view({"extent":{"bottom":0,"left":0,"top":1,"right":1}});
 
@@ -188,15 +189,9 @@ $.Cow.Websocket.prototype = {
         console.log('Got peerinfo from: '+uid);        
         if(payload.options.uid !== undefined && payload.options.cid !== undefined) {
             var it = this.core.peers(payload.options);
-            if(payload.herd.active) {
-                console.warn('delete active');
-                delete payload.herd.active;
-            }
-            this.core.herds(payload.herd);
             it.view({"extent":payload.view});
             it.position({"point":payload.position});
             it.owner(payload.owner);
-            it.herd(payload.herd);
             if (payload.video)
                 it.video(payload.video);
             this.core.trigger('ws-peerInfo');    
@@ -209,17 +204,21 @@ $.Cow.Websocket.prototype = {
         console.log('This peer just connected: '+uid);
         if(payload.uid !== undefined && payload.cid !== undefined) {
             console.log('adding peer');
+            var peeroption = 
             this.core.peers(payload);
             var message = {};
             message.options = this.core.me().options;
             message.view = this.core.me().view().extent;
             message.owner = this.core.me().owner();
             message.position = this.core.me().position().point;
-            message.herd = this.core.getHerdById(this.core.me().herd().uid);
             console.log(JSON.stringify(message));
             message.video = this.core.me().video();
             this.sendData(message,'informPeer',uid);
             this.core.trigger('ws-newPeer');
+            
+            var herd = this.core.getHerdByPeerUid(this.core.me().uid);
+            this.sendData(herd.options,'herdInfo');
+            
         }
         else console.warn('badpeer '+uid);
     },
@@ -338,7 +337,7 @@ $.Cow.Websocket.prototype = {
         var myherds = this.core.herds();
         var self = this;
         $.each(myherds, function(i, herd){
-             if (herd.uid == herdId){
+             if (herd.uid == herdId.uid){
                  message = herd;
                  delete message.active;
                  console.log(JSON.stringify(message));
@@ -346,8 +345,12 @@ $.Cow.Websocket.prototype = {
              }
         })
     },
-    _onHerdUpdate: function(payload){
-        this.core.herds(payload);
+    _onHerdInfo: function(payload,uid){
+        var options = {};
+        options.uid = payload.uid;
+        options.name = payload.name;
+        options.peeruid = uid;
+        this.core.herds(options);
     },
     //My stuff has changed, send over the changed data to the other peers
     _onMeChanged: function(evt, payload) {

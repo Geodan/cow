@@ -17,15 +17,25 @@ $.Cow.LocalDbase.prototype = {
         $.indexedDB(this.options.dbname)
 		    .objectStore("herds",storeOptions)
 		    .each(function(elem){
-		        //if (elem.value.active) Disabled check, we want to know their status for administration
-		            self.core.herds(elem.value);
-		    });
-		
+		        var options = {};
+		        options.uid = elem.value.uid;
+		        options.name = elem.value.name;
+		        options.active = elem.value.active;
+	            self.core.herds(options);
+	        });
     },
-    putHerd: function(record){
-        $.indexedDB(this.options.dbname)
+    putHerd: function(herd){
+        var record = {};
+        record.uid = herd.options.uid;
+        record.name = herd.options.name;
+        record.active = herd.options.active;
+        var request = $.indexedDB(this.options.dbname)
 		    .objectStore("herds",false)
 		    .put(record);
+		 request.onerror = function(e){
+            console.warn('Error adding: '+e);
+         };
+         
     },
     deleteHerd: function(uid){
         $.indexedDB(this.options.dbname)
