@@ -17,7 +17,6 @@ Cow is a plugin for jQuery to use websockets to work together with geographical 
 **description** initialise Cow and associate it with the matched element. The Cow object is refered to as *cow* in the documentation
 
 *options*: an object of key-value pairs with options for cow.
-possible pairs are:
  * websocket (object with url to the websocket server ) - default: wss://localhost:443 
  
 #### me()
@@ -25,10 +24,28 @@ possible pairs are:
 
 **description** shorthand to get the Peer object representing the local peer; the one controlled by the local user
 
+**returns:** me (Cow.Peer)
+
+#### activeherd()
+>cow.activeherd([options])
+
+**description** gets or sets the 'Active Herd' of the client, this is the herd the user is currently working in.
+
+*options*: an object of key-value pairs with options for activeHerd
+ * activeHerdId (int with the UID of the active herd)
+ 
+**returns:** id (int)
+ 
 #### center()
 >cow.center([options])
 
-**description** 
+**description** gets the postion of the user and the viewextent of the map or set zooms the map to the given viewextent or position
+
+*options*: an object of key-value pairs with options for center
+ * position (an object containing latitude and longitude floats)
+ * view (an object containing left, bottom, right and top floats)
+ 
+**returns:** {position: [longitude, latitude], view: {left:float, bottom: float, right: float, top: float }}
 
 #### herds()
 #### peers()
