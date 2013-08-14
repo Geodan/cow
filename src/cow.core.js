@@ -161,7 +161,7 @@ $.Cow.LocalDbase = function(core, options) {
     this.options = options;
     this.options.dbname = "cow";
     var iteration = self.loadFromDB(); //features are initialized from localdb
-    self.initHerds(); //Herds are initialized from localdb
+    var herds = self.herdsdb();//Herds are initialized from localdb
 }
 /***
 $.Cow.FeatureStore
@@ -360,7 +360,7 @@ When adding herds, those are returned.
             if (options.peeruid){
              this.herdList[i].members(options.peeruid); //Update membership of herd
             }
-            this.localdbase().putHerd(this.herdList[i]); //Write to db
+            this.localdbase().herdsdb(this.herdList[i]); //Write to db
             herd =this.herdList[i]; 
         }
         else { //Herd is new
@@ -370,7 +370,7 @@ When adding herds, those are returned.
             if (options.peeruid)
                 herd.members(options.peeruid);
             this.herdList.push(herd); //Add herd to list
-            this.localdbase().putHerd(herd); //Write to db
+            this.localdbase().herdsdb(herd); //Write to db
         }
         this.trigger("herdListChanged", self.UID);
         return herd;
@@ -410,7 +410,7 @@ When adding herds, those are returned.
                 this.active = false;
                 this.options.active = false; //needed for dbase
                 //Overwrite herd in dbase with new status
-                self.core.localdbase().putHerd(this);
+                self.core.localdbase().herdsdb(this);
                 
                 self.core.trigger("peerStoreChanged", self.UID);
             }            

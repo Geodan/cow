@@ -20,6 +20,7 @@ $.Cow.LocalDbase.prototype = {
             if (!$.isArray(options)) {
                 return this._addHerd(options);
             }
+        }
     },
     _addHerd: function(herd){
         var record = {};
@@ -32,7 +33,7 @@ $.Cow.LocalDbase.prototype = {
 		 request.onerror = function(e){
             console.warn('Error adding: '+e);
          };
-         return herd();
+         return herd;
     },
     _getHerds: function() {
         var storeOptions = {
@@ -52,52 +53,28 @@ $.Cow.LocalDbase.prototype = {
 	        });
 	    return herdList;
     },
+    removeherd: function(uid){
+        $.indexedDB(this.options.dbname)
+		    .objectStore("herds",false)["delete"](uid);
+    },
     
     featuresdb: function(options) {
+        var self = this;
+		switch(arguments.length) {
+        case 0:
+            return this._getFeatures();
+        case 1:
+            if (!$.isArray(options)) {
+                return this._addFeature(options);
+            }
+        }
     },
-    removeherd: function(herdId) {
-    },
+    
     removefeature: function(fid) {
     },
     /**
         Deprecated functions
     */
-
-    initHerds: function(){
-        var self = this;
-        var storeOptions = {
-            "autoIncrement" : false,
-            "keyPath": "uid"
-		};
-        
-        $.indexedDB(this.options.dbname)
-		    .objectStore("herds",storeOptions)
-		    .each(function(elem){
-		        var options = {};
-		        options.uid = elem.value.uid;
-		        options.name = elem.value.name;
-		        options.active = elem.value.active;
-		        
-	            self.core.herds(options);
-	        });
-    },
-    putHerd: function(herd){
-        var record = {};
-        record.uid = herd.options.uid;
-        record.name = herd.options.name;
-        record.active = herd.options.active;
-        var request = $.indexedDB(this.options.dbname)
-		    .objectStore("herds",false)
-		    .put(record);
-		 request.onerror = function(e){
-            console.warn('Error adding: '+e);
-         };
-         
-    },
-    deleteHerd: function(uid){
-        $.indexedDB(this.options.dbname)
-		    .objectStore("herds",false)["delete"](uid);
-    },
     
 	// Transfers features from database to arrays
 	loadFromDB: function(){
@@ -106,7 +83,7 @@ $.Cow.LocalDbase.prototype = {
             "autoIncrement" : false,
             "keyPath": "key"
 		};
-		var tablename = core.activeherd();
+		var tablename = core.activeHerd;
 		var dbname = this.options.dbname;
 		var myFeatureList = [];
 		var iteration = $.indexedDB(dbname)
@@ -153,7 +130,7 @@ $.Cow.LocalDbase.prototype = {
 		newRecord.status = evt.status;
 		newRecord.feature = evt.feature;
 		$.indexedDB(this.options.dbname)
-		    .objectStore(core.activeherd(),false)
+		    .objectStore(core.activeHerd,false)
 		    .put(newRecord)//Advantage of putting is that we overwrite old features with same key
 		    .fail(function(error){
 		            console.warn('Fail! ' + error);
@@ -163,7 +140,7 @@ $.Cow.LocalDbase.prototype = {
 	deleteFeat: function(itemId){
 	    var core = this.core;
 		$.indexedDB(this.options.dbname)
-		    .objectStore(core.activeherd())["delete"](itemId)
+		    .objectStore(core.activeHerd)["delete"](itemId)
 		    .done(function(){
 				core.localdbase().loadFromDB();
 		});
