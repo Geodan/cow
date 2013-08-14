@@ -21,6 +21,7 @@ $.Cow.LocalDbase.prototype = {
 		        options.uid = elem.value.uid;
 		        options.name = elem.value.name;
 		        options.active = elem.value.active;
+		        
 	            self.core.herds(options);
 	        });
     },

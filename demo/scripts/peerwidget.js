@@ -43,7 +43,7 @@ $.widget("cow.PeersWidget", {
         core.bind("ws-peerInfo", {widget: self}, self._onPeerStoreChanged);
         core.bind("ws-peerGone", {widget: self}, self._onPeerStoreChanged);
         core.bind("peerStoreChanged" ,{widget: self}, self._onPeerStoreChanged);
-       core.bind("herdListChanged" ,{widget: self}, self._onPeerStoreChanged);
+        core.bind("herdListChanged" ,{widget: self}, self._onPeerStoreChanged);
         
         element.delegate('.location','click', function(){
             var owner = $(this).attr('owner');
@@ -122,18 +122,7 @@ $.widget("cow.PeersWidget", {
         
         element.delegate('.herd','click', function(){
             var herduid = $(this).attr('herd');
-            self.core.activeHerd = herduid;
-            var prevherd = self.core.getHerdByPeerUid(self.core.UID);
-            prevherd.removeMember(self.core.UID);
-            var herd = self.core.getHerdById(herduid);
-            herd.members(self.core.UID);
-            
-            self._updateList(self);
-            self.core.featurestore().clear(); //Clear featurestore
-            //self.core.options.storename = "store_"+herd; //TODO: the link between activeHerd and storename can be better
-            self.core.localdbase().loadFromDB();//Fill featurestore with what we have
-            
-            self.core.ws.sendData(herd.options, 'herdInfo');
+            self.core.setActiveHerdUid(herduid);
         });
         
         this.peerjsdiv.delegate("#cameraOnOff",'click',function(){
@@ -201,6 +190,7 @@ $.widget("cow.PeersWidget", {
             herds[i] = {};
             herds[i].uid = this.uid;
             herds[i].name = this.options.name;
+            herds[i].active = this.options.active;
             herds[i].peers = this.members();
         });
 
@@ -210,30 +200,33 @@ $.widget("cow.PeersWidget", {
         var names = '';
         $.each(herds,function() {
             var herd = this;
-            var remove = '';
-            if(this.uid != 0) {
-                remove = ' <span class="removeherd" title="remove this herd and delete all features">remove</span><div class="removeherdconfirm verborgen">are you sure? <span class="yesremove" title"this will remove the herd and all its features, not easily undone">yes</span><span class="notremove" title="alrighty">no</span></div>';
-            }
-            if(this.uid==self.core.activeHerd) {
-                names = names + '<div><span class="peerlist herd me" title="this is your herd" herd="'+this.uid+'">'+this.name+'</span></div>';
-            }
-            else {
-                names = names + '<div><span class="peerlist herd" title="click to activate this herd" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
-            }
-            $.each(this.peers, function(i){
-                var peer = self.core.getPeerByUid(herd.peers[i]);
-                if (peer){
-                    if (peer.video().state === "on")
-                        var videostring = '<img class="videoconnection" owner="'+this.uid+'" src="./css/img/camera.png">';
-                    else videostring = '';
-                    if(this.uid==self.core.UID) {
-                        names = names+ '<div class="peerlist peer me" title="this is you!" owner="'+this.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png"></div>';
-                        }
-                        else {
-                        names = names+ '<div class="peerlist peer owner" owner="'+this.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png">&nbsp;'+videostring+'</div>';
-                        }
+            if (herd.active){
+                var remove = '';
+                if(this.uid != 0) {
+                    remove = ' <span class="removeherd" title="remove this herd and delete all features">remove</span><div class="removeherdconfirm verborgen">are you sure? <span class="yesremove" title"this will remove the herd and all its features, not easily undone">yes</span><span class="notremove" title="alrighty">no</span></div>';
                 }
-            });
+                if(this.uid==self.core.activeHerd) {
+                    names = names + '<div><span class="peerlist herd me" title="this is your herd" herd="'+this.uid+'">'+this.name+'</span></div>';
+                }
+                else {
+                    names = names + '<div><span class="peerlist herd" title="click to activate this herd" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
+                }
+                $.each(this.peers, function(i){
+                    var peer = self.core.getPeerByUid(herd.peers[i]);
+                    if (peer){
+                        if (peer.video().state === "on")
+                            var videostring = '<img class="videoconnection" owner="'+this.uid+'" src="./css/img/camera.png">';
+                        else videostring = '';
+                        if(this.uid==self.core.UID) {
+                            names = names+ '<div class="peerlist peer me" title="this is you!" owner="'+this.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png"></div>';
+                            }
+                            else {
+                            names = names+ '<div class="peerlist peer owner" owner="'+this.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+this.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+this.uid+'" src="./css/img/extents.png">&nbsp;'+videostring+'</div>';
+                            }
+                    }
+                
+                });
+            }
         });
 
         

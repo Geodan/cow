@@ -202,6 +202,23 @@ $.Cow.Core.prototype = {
         var peer = this.getPeerByUid(this.UID);    
         return peer;
     },
+    
+    
+   setActiveHerdUid: function(herdUid){
+       this.activeHerd = herdUid;
+       var prevherd = this.getHerdByPeerUid(this.UID);
+       prevherd.removeMember(this.UID);
+       var herd = this.getHerdById(herdUid);
+       herd.members(this.UID);
+       this.featurestore().clear(); //Clear featurestore
+       this.localdbase().loadFromDB();//Fill featurestore with what we have
+       this.ws.sendData(herd.options, 'herdInfo');
+       this.trigger("herdListChanged", this.UID);
+       return this.activeHerd;
+   },
+   getActiveHerdUid: function(){
+       return this.activeHerd;
+   },
      /*
         center is an object containing:
         -position: a position().point
@@ -336,7 +353,7 @@ When adding herds, those are returned.
             herd =this.herdList[i]; 
         }
         else { //Herd is new
-            if (!options.active) //could be inactive from localdb
+            if (options.active == null) //could be inactive from localdb
                 options.active = true;
             herd = new $.Cow.Herd(this, options);
             if (options.peeruid)
@@ -360,7 +377,6 @@ When adding herds, those are returned.
     },
     getHerdByPeerUid: function(peeruid){
         var herds = this.herds();
-        //TODO: mag dit zo?
         var result;
         $.each(herds, function(id, herd){
             memberList = herd.members();
@@ -381,6 +397,7 @@ When adding herds, those are returned.
         $.each(herds, function(i){
             if(this.uid == herdGone) {            
                 this.active = false;
+                this.options.active = false; //needed for dbase
                 //Overwrite herd in dbase with new status
                 self.core.localdbase().putHerd(this);
                 
@@ -476,8 +493,12 @@ A Peer is on object containing:
     //Return feature collection of peer view extents
     getPeerExtents: function() {
         var collection = {"type":"FeatureCollection","features":[]};
-        $.each(core.peers(), function(){
-            if (this.uid != self.core.me().uid && this.view().feature) //TODO, check for same herd
+        var myherdmembers = this.getHerdByPeerUid(this.UID).members();
+        $.each(this.peers(), function(){
+            if (this.uid != self.core.me().uid 
+                && this.view().feature
+                && $.inArray(this.uid, myherdmembers) > -1 
+                )
                 collection.features.push(this.view().feature);
         });
         return collection;
@@ -485,8 +506,11 @@ A Peer is on object containing:
     //Return feature collection of peer positions
     getPeerPositions: function(){
         var collection = {"type":"FeatureCollection","features":[]};
-        $.each(core.peers(), function(){
-            if (this.position().feature)
+        var myherdmembers = this.getHerdByPeerUid(this.UID).members();
+        $.each(this.peers(), function(){
+            if (this.position().feature
+                && $.inArray(this.uid, myherdmembers) > -1
+                )
                 collection.features.push(this.position().feature);
         });
         return collection;
@@ -675,6 +699,7 @@ A Peer is on object containing:
     trigger: function() {
         // There is no point in using trigger() insted of triggerHandler(), as
         // we don't fire native events
+        console.debug('trigger: ' + arguments[0]);
         this.events.triggerHandler.apply(this.events, arguments);
         return this;
     },

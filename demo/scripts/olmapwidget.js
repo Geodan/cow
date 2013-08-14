@@ -49,6 +49,7 @@ $.widget("cow.OlMapWidget", {
 
 		core.bind("storeChanged", {widget: self}, self._onFeatureStoreChanged);
 		core.bind("peerStoreChanged", {widget: self}, self._onPeerStoreChanged);
+		core.bind("herdListChanged",  {widget: self}, self._onPeerStoreChanged);
 		core.bind("layoutChanged", {widget: self},self._updateSize);
 		core.bind("zoomToExtent", {widget: self},self._zoomToPeersView);
 		core.bind("zoomToPoint", {widget: self},self._zoomToPeersLocation);
