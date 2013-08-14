@@ -52,9 +52,10 @@ $.Cow.Core = function(element, options) {
     self.bind("disconnected", {widget: self}, self.removeAllPeers);
     
     //TODO: put this in a proper function
+    //TODO: deprecated fs functions
     self.bind('changeHerdRequest', {widget:self}, function(e,uid){
         self.featurestore().clear(); //Clear featurestore
-        self.activeHerd = uid;
+        self.activeherd(uid);
         self.options.storename = "store_"+uid; //TODO: the link between activeHerd and storename can be better
         self.localdbase().loadFromDB();//Fill featurestore with what we have
     });

@@ -40,8 +40,14 @@ Cow is a plugin for jQuery to use websockets to work together with geographical 
 * trigger()
 
 #### Herd
-* members()
-* removeMember()
+>cow.Herd([options])
+
+**description** The Herd object. It is constructed with the herd options object in cow.herds([options]). The Herd object is refered to as *herd* in the documentation
+
+[options]: { uid : int, name : string [,active: boolean] [,members: [peeruids]] }
+ 
+* members(peerid)
+* removeMember(peerid)
 * removeAllMembers()
 * bind()
 * trigger()
