@@ -11,85 +11,67 @@ API
 ===
 Cow is a plugin for jQuery to use websockets to work together with geographical data. Peers represent the people who connected to the same websocket. Peers share their physical location (if available) and their current viewextent of the map. Peers are member of an herd and members of the same herd can share features. 
 
-### Core
+#### Core
 >$(selector).cow([options])
 
 **description** initialise Cow and associate it with the matched element. The Cow object is refered to as *cow* in the documentation
 
-*options*: an object of key-value pairs with options for cow.
  * websocket (object with url to the websocket server ) - default: wss://localhost:443 
  
-#### me()
->cow.me()
+* me()
+* activeherd()
+* center()
+* herds()
+** getHerdById()
+** getHerdByPeerUid()
+** removeHerd()
+* peers()
+** getPeerExtents()
+** getPeerPositions()
+** getPeerByUid()
+** getPeerByCid()
+** removePeer()
+* featurestore()
+* localdbase()
+* websocket()
+* geolocator()
+* bind()
+* trigger()
 
-**description** shorthand to get the Peer object representing the local peer; the one controlled by the local user
+#### Herd
+* members()
+* removeMember()
+* removeAllMembers()
+* bind()
+* trigger()
 
-**returns:** me (Cow.Peer)
+#### Peer
+* view()
+* position()
+* owner()
+* video()
+* bind()
+* trigger()
 
-#### activeherd()
->cow.activeherd([options])
+#### Websocket
+* sendData()
+* openws()
+* closews()
+* bind()
+* trigger()
 
-**description** gets or sets the 'Active Herd' of the client, this is the herd the user is currently working in.
+#### FeatureStore
+* featureitems()
+* syncFids()
 
-*options*: an object of key-value pairs with options for activeHerd
- * activeHerdId (int with the UID of the active herd)
- 
-**returns:** id (int)
- 
-#### center()
->cow.center([options])
+#### LocalDbase
+* herdsdb()
+* featuresdb()
+* removeherd()
+* removefeature()
 
-**description** gets the postion of the user and the viewextent of the map or set zooms the map to the given viewextent or position
-
-*options*: an object of key-value pairs with options for center
- * position (an object containing latitude and longitude floats)
- * view (an object containing left, bottom, right and top floats)
- 
-**returns:** {position: [longitude, latitude], view: {left:float, bottom: float, right: float, top: float }}
-
-#### herds()
-#### peers()
-#### featurestore()
-#### localdbase()
-#### websocket()
-#### geolocator()
-#### bind()
-#### trigger()
-
-### Herd
-#### members()
-#### removeMember()
-#### removeAllMembers()
-#### bind()
-#### trigger()
-
-### Peer
-#### view()
-#### position()
-#### owner()
-#### video()
-#### bind()
-#### trigger()
-
-### Websocket
-#### sendData()
-#### openws()
-#### closews()
-#### bind()
-#### trigger()
-
-### FeatureStore
-#### featureitems()
-#### syncFids()
-
-### LocalDbase
-#### herdsdb()
-#### featuresdb()
-#### removeherd()
-#### removefeature()
-
-### GeoLocator
-#### getLocation()
+#### GeoLocator
+* getLocation()
 
 
 Dependencies Core
