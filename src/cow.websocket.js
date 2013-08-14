@@ -73,14 +73,14 @@ $.Cow.Websocket.prototype = {
             case 'newFeature':
                 if(uid != UID) {
                     var item = JSON.parse(payload);
-                    if (self.core.activeHerd == item.feature.properties.store)
+                    if (self.core.getActiveHerdUid == item.feature.properties.store)
                         core.featurestore().updateItem(item);
                 }
             break;
             case 'updateFeature':
                 if(uid != UID) {
                     var item = JSON.parse(payload);
-                    if (self.core.activeHerd == item.feature.properties.store)
+                    if (self.core.getActiveHerdUid == item.feature.properties.store)
                         core.featurestore().updateItem(item);
                 }
             break;
@@ -222,16 +222,15 @@ $.Cow.Websocket.prototype = {
         }
         else console.warn('badpeer '+uid);
     },
-    _amIAlpha: function(id,herd){ //find out wether I am alpha
-        if (this.core.me().herd().uid == herd){ //I need to be part of the herd
+    _amIAlpha: function(id,herduid){ //find out wether I am alpha
+        if (this.core.getActiveHerdUid == herduid){ //I need to be part of the herd
             if (this.core.me().options.cid == id) //yes, I certainly am (the oldest) 
                 return true;
             else { //check again if younger peer turns out not to be from alpha family or not part of my herd
                 id++; 
                 var nextpeer = this.core.getPeerByCid(id);
-                if ((nextpeer.options.family && nextpeer.options.family != 'alpha') ||
-                    (nextpeer.herd().uid && nextpeer.herd().uid != this.core.me().herd().uid))
-                    this._amIAlpha(id, herd);    //I might still be alpha
+                if ((nextpeer.options.family && nextpeer.options.family != 'alpha'))
+                    this._amIAlpha(id, herduid);    //I might still be alpha
             }
             return false; //Not the oldest in the herd
         }
@@ -241,7 +240,7 @@ $.Cow.Websocket.prototype = {
         var self = this; //TODO !! : alpha check must incorporate activeherd!!
         //if (this._amIAlpha(0, payload.storename)){ //Check wether I'm alpha 
             //console.log('I am alpha');
-            if (self.core.activeHerd == payload.storename){
+            if (self.core.getActiveHerdUid() == payload.storename){
                 var data = this.core.featurestore().compareIdList(payload.fids);
                 var message = {};
                 //First the requestlist
@@ -273,7 +272,7 @@ $.Cow.Websocket.prototype = {
     _onSyncPeer: function(payload,uid) {
         var requested_fids = payload.requestlist;
         var pushed_feats = payload.pushlist;
-        if (self.core.activeHerd == payload.storename){
+        if (self.core.getActiveHerdUid() == payload.storename){
             var store = this.core.featurestore();
             //First sent the features that are asked for
             if (requested_fids.length > 0){
@@ -291,7 +290,7 @@ $.Cow.Websocket.prototype = {
     //Peer sends back requested features, now store them
     _onRequestedFeats: function(payload,uid) {
         var requested_feats = payload;
-        if (self.core.me().herd().uid == payload.storename){
+        if (self.core.getActiveHerdUid() == payload.storename){
             var store = this.core.featurestore();
             if (requested_feats.length > 0){
                 store.putFeatures(requested_feats);
