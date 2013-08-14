@@ -170,8 +170,17 @@ $.Cow.Websocket.prototype = {
         //triggers _onNewPeer()
         
         var sendFidList = function(){
-            var store = core.featurestore();
-            var fids = store.getIdList();
+            var fids = [];
+            var items = core.featurestore().featureItems();
+            $.each(items, function(i,item){
+                var iditem = {};
+                iditem.key = item.key;
+                iditem.updated = item.updated;
+                iditem.status = item.status;
+                fids.push(iditem);    
+            });
+            //var store = core.featurestore();
+            //var fids = store.getIdList();
             var message = {};
             message.fids = fids;
             message.storename = self.core.activeherd();
