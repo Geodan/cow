@@ -160,6 +160,7 @@ $.Cow.LocalDbase = function(core, options) {
     this.loaded = false;
     this.core = core;
     this.options = options;
+    //TODO: make this configurable
     this.options.dbname = "cow";
     var iteration = self.loadFromDB(); //features are initialized from localdb
     self.initHerds(); //Herds are initialized from localdb
