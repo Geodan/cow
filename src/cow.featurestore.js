@@ -1,46 +1,52 @@
 $.Cow.FeatureStore.prototype = {
     /**
-        New functions, not yet implemented
+        In progress
     */
 
-    featureItems: function(options,source) {
+    featureItems: function(options) {
         var self = this;
 		switch(arguments.length) {
         case 0:
             return this._getFeatureItems();
         case 1:
-            if (!$.isArray(options)) {
-                return this._addFeatureItem(options, source);
-            }
-            else {
-				return $.core(options, function(item) {
-                    return self._addFeatureItem(item, source);
-                })
+            if (!$.isArray(options.data)) {
+                return this._addFeatureItem(options);
             }
             break;
         default:
             throw('wrong argument number');
         }
     },
-    _addFeatureItem: function(options, source){
-		var newitem = {"options": options};
-		//Check if existing
+    _addFeatureItem: function(options){
+		var newitem = {"options": options.data};
 		
-		//If not exists:
+		//Check if existing
+		var existing = false;
+		var ix;
+		var source = options.source;
+		$.each(this.itemList, function(i, obj){
+		    if (obj.options.key == options.data.key){
+		        ix = i;
+		        existing = true;
+		    }
+		});
+		if (!existing)
 		    this.itemList.push(newitem);
-		//If exists:
-		    this.itemList.splice
+		else
+		    this.itemList.splice(ix,1,newitem);
+		
 		if (source == 'db'){
 		    
-		    self.core.trigger('');
 		}
 		else if (source == 'user'){
-		    //Add to DB
-		    self.core.trigger('');
+		    self.core.localdbase().featuresdb(options.data);
+		    self.core.trigger('storeChanged');
+		    var message = JSON.stringify(newitem);//TODO, bit weird heh...?
+		    core.websocket().sendData(message, "newFeature");
 		}
 		else if (source == 'ws'){
-		    //Add to DB
-		    self.core.trigger('');
+		    self.core.localdbase().featuresdb(options.data);
+		    self.core.trigger('storeChanged');
 		}
 		else {
 		    throw 'unknown source given: ' + source
@@ -49,9 +55,21 @@ $.Cow.FeatureStore.prototype = {
 		return newitem;
     },
     _getFeatureItems: function(){
-        return this.itemList;
+        var items = [];
+        $.each(this.itemList, function(id, item) {
+            items.push(item);
+        });        
+        return items;
     },
-    
+    getFeatureItemById: function(uid){
+        var item;
+        $.each(this.itemList, function(i, obj){
+            if (obj.options.key == uid){
+                item = obj.options;
+            }
+        });
+        return item;
+    },
     
     syncFids: function(fids) {
     },
@@ -108,7 +126,7 @@ When adding items, those are returned.
 		this.itemList.push(newitem);
 		return newitem;
 	},
-
+	/* Obs
 	//only for updates from outside
 	updateItem: function(options){
 		var self = this;
@@ -128,6 +146,7 @@ When adding items, those are returned.
 		}
 		self.core.trigger('storeChanged');
 	},
+	*/
 	getItemByIid: function(iid) {
 		var items = this.items();
 		var item;
@@ -164,6 +183,23 @@ When adding items, those are returned.
 		});
 		self.core.trigger('storeChanged');
 	},
+	removeAllFeatureItems: function(){
+	    this.itemList = [];
+	},
+	//request - incoming request from world
+	//find features corresponding to request and send
+	requestFeatures: function(fidlist){
+		var pushlist = [];
+		$.each(this.items(), function(i, item){
+				var local_feature = item.options;
+				$.each(fidlist, function(j,rem_val){
+						if (rem_val == local_feature.key)
+							pushlist.push(local_feature);
+				});
+		});
+		return pushlist;
+	},
+	/* Obs
 	//Inject features from other local source into featurestore
 	injectFeatures: function(type, features){
 		var self = this;
@@ -189,6 +225,8 @@ When adding items, those are returned.
 			core.localdbase().featuresdb(item);
 		});
 	},
+	*/
+	/* Obs
 	//feature has been drawm, add it to featurestore including some extra data
 	saveLocalFeat: function(feature){
 		var self = this;
@@ -216,7 +254,8 @@ When adding items, those are returned.
 		core.localdbase().featuresdb(item);
 		core.trigger('storeChanged');
 	},
-
+	*/
+	/* Obs
 	//feature properties have been locally changed 
 	updateLocalFeat: function(feature){
 		var self = this;
@@ -235,7 +274,8 @@ When adding items, those are returned.
 		});
 		self.core.trigger('storeChanged');
 	},
-	
+	*/
+	/* Obs
 	//putFeatures - feature(s) incoming from world 
 	putFeatures: function(itemlist){
 		var self = this;
@@ -250,11 +290,9 @@ When adding items, those are returned.
 			core.localdbase().featuresdb(item);
 		});
 		core.trigger('storeChanged');
-	},
-	clear: function(){
-	    this.itemList = [];
-	},
+	},*/
 	
+	/* Obs
 	//fill - items go from localdbase to featurestore
 	fill: function(itemlist){
 		var self = this;
@@ -272,23 +310,14 @@ When adding items, those are returned.
         message.storename = self.core.activeherd();
         self.core.websocket().sendData(message, "newPeerFidList");
 	},
+	*/
 	
-	//request - incoming request from world
-	//find features corresponding to request and send
-	requestFeatures: function(fidlist){
-		var pushlist = [];
-		$.each(this.items(), function(i, item){
-				var local_feature = item.options;
-				$.each(fidlist, function(j,rem_val){
-						if (rem_val == local_feature.key)
-							pushlist.push(local_feature);
-				});
-		});
-		return pushlist;
-	},
+	/*Obs
 	getAllFeatures: function(){
 		return this.items();
 	},
+	*/
+	/* Obs
 	deleteAllFeatures: function(){
 		var items = this.items();
 		var self = this;
@@ -308,6 +337,8 @@ When adding items, those are returned.
 		self.core.trigger('storeChanged');
 
 	},
+	*/
+	/* Obs
 	//return list with only keys and update time to inform other peers
 	getIdList: function(){
 		var idlist = [];
@@ -321,6 +352,7 @@ When adding items, those are returned.
 		});
 		return idlist;
 	},
+	*/
 	/**
 	compareIdList - compares incoming fidlist with fidlist from current stack based on timestamp and status
 					generates 2 lists: requestlist and pushlist

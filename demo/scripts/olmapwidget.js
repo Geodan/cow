@@ -181,9 +181,9 @@ $.widget("cow.OlMapWidget", {
 	},
 	
 	_reloadLayer: function(e){
-		console.log('MW _reloadLayer');
 		self.core.editLayer.removeAllFeatures();
-		var items = self.core.featurestore().getAllFeatures();
+		//var items = self.core.featurestore().getAllFeatures();
+		var items = self.core.featurestore().featureItems();
 		$.each(items, function(i, object){
 			var feature = geojson_format.read(object.options.feature,"Feature");
 			feature.properties = {};
@@ -392,7 +392,6 @@ $.widget("cow.OlMapWidget", {
 					closebtn.addEventListener("click", self.savefeature, false);
 				},
 				featureunselected:function(evt){
-					console.log('MW featureunselected');
 					if (evt.feature.popup){
 						self.map.removePopup(evt.feature.popup);
 					}
@@ -454,7 +453,23 @@ $.widget("cow.OlMapWidget", {
 				self.controls.select.activate();
 				
 				var feature = JSON.parse(geojson_format.write(evt.feature));
-				core.featurestore().saveLocalFeat(feature);
+				var item = {};
+				var d = new Date();
+                var timestamp = d.getTime();
+                feature.properties.icon = self.core.current_icon; //TODO TT: not nice
+                feature.properties.linecolor = self.core.current_linecolor;
+                feature.properties.fillcolor = self.core.current_fillcolor;
+                feature.properties.polycolor = self.core.current_polycolor;
+                item.key = self.core.UID + "#" + timestamp;
+                feature.properties.key = item.key;
+                feature.properties.store = self.core.activeherd();
+                item.uid = self.core.UID;
+                item.created = timestamp;
+                item.updated = timestamp;
+                item.status = '';
+                item.feature = feature;
+				core.featurestore().featureItems({data: item, source: 'user'});
+				//core.featurestore().saveLocalFeat(feature);
 				evt.feature.destroy(); //Ridiculous.... without this the 'edited' feature stays on the map
 			}
 		);
@@ -462,7 +477,14 @@ $.widget("cow.OlMapWidget", {
 			{'self':this,layer:editlayer},
 			function(evt){
 				var feature = JSON.parse(geojson_format.write(evt.feature));
-				core.featurestore().updateLocalFeat(feature);
+				//core.featurestore().updateLocalFeat(feature);
+				//First transform into featurestore item
+				var item = core.featurestore().getFeatureItemById(feature.properties.key);
+				var d = new Date();
+				var timestamp = d.getTime();
+				item.feature = feature;
+				item.updated = timestamp;
+				core.featurestore().featureItems({data:item, source: 'user'});
 			}
 		);
 		this.controls.select.activate();
@@ -503,9 +525,16 @@ $.widget("cow.OlMapWidget", {
 			feature.popup.destroy(); //we have to destroy since the next line triggers a reload of all features
 			feature.popup = null;
 		}
-		var jsonfeature = JSON.parse(geojson_format.write(feature));
+		var jsonfeature = JSON.parse(geojson_format.write(feature));//TODO is this needed?
 		if (core.activeherd() == feature.properties.store){
-		    core.featurestore().updateLocalFeat(jsonfeature);
+		    //core.featurestore().updateLocalFeat(jsonfeature);
+		    var item = core.featurestore().getFeatureItemById(feature.properties.key);
+		    var d = new Date();
+            var timestamp = d.getTime();
+            item.feature = jsonfeature;
+            item.updated = timestamp;
+            core.featurestore().featureItems({data:item, source: 'user'});
+		    
 		}
 	}
 

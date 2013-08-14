@@ -72,16 +72,20 @@ $.Cow.Websocket.prototype = {
             //a new object was drawn or updated by a peer
             case 'newFeature':
                 if(uid != UID) {
-                    var item = JSON.parse(payload);
-                    if (self.core.activeherd() == item.feature.properties.store)
-                        core.featurestore().updateItem(item);
+                    var item = JSON.parse(payload).options;
+                    if (self.core.activeherd() == item.feature.properties.store){
+                        core.featurestore().featureItems({data:item, source: 'ws'});
+                        //core.featurestore().updateItem(item);
+                    }
                 }
             break;
             case 'updateFeature':
                 if(uid != UID) {
                     var item = JSON.parse(payload);
-                    if (self.core.activeherd() == item.feature.properties.store)
-                        core.featurestore().updateItem(item);
+                    if (self.core.activeherd() == item.feature.properties.store){
+                        core.featurestore().featureItems({data:item, source: 'ws'});
+                        //core.featurestore().updateItem(item);
+                        }
                 }
             break;
             //A peer request information about a herd
@@ -283,7 +287,10 @@ $.Cow.Websocket.prototype = {
             }
             //Now add the features that have been sent to the featurestore
             if (pushed_feats.length > 0){
-                store.putFeatures(pushed_feats);
+                $.each(pushed_feats, function(i,feat){
+                        store.featureItems({data: feat, source: 'ws'});
+                });
+                //store.putFeatures(pushed_feats);
             }
         }
     },
@@ -293,7 +300,10 @@ $.Cow.Websocket.prototype = {
         if (self.core.activeherd() == payload.storename){
             var store = this.core.featurestore();
             if (requested_feats.length > 0){
-                store.putFeatures(requested_feats);
+                $.each(requested_feats, function(i,feat){
+                        store.featureItems({data: feat, source: 'ws'});
+                });
+                //store.putFeatures(requested_feats);
             }
         }
     },

@@ -56,7 +56,7 @@ $.widget("cow.FeaturesWidget", {
 	},
 	_updateList: function(evt) {		
 		var self = evt.data.widget;
-		var features = core.featurestore().getAllFeatures();		//TT: we only use 1 store anyway... 
+		var features = core.featurestore().featureItems();		//TT: we only use 1 store anyway... 
         var element = self.element;
 		var names = '';
 		

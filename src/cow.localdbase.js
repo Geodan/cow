@@ -92,6 +92,7 @@ $.Cow.LocalDbase.prototype = {
 		var tablename = core.activeherd();
 		var dbname = this.options.dbname;
 		var myFeatureList = [];
+		var fids = [];
 		var iteration = $.indexedDB(dbname)
 		    .objectStore(tablename,this.storeOptions)
 		    .each(function(elem){
@@ -104,12 +105,24 @@ $.Cow.LocalDbase.prototype = {
                 item.status = elem.value.status 
                 item.feature	= elem.value.feature
                 
-                if (item.feature.properties && item.feature.properties.key)
-                    myFeatureList.push(item);
-                });    
+                if (item.feature.properties && item.feature.properties.key){
+                    core.featurestore().featureItems({data: item, source: 'db'});
+                    var iditem = {};
+                    iditem.key = item.key;
+                    iditem.updated = item.updated;
+                    iditem.status = item.status;
+                    fids.push(iditem);
+                    //myFeatureList.push(item);
+                }
+            });    
 		iteration.done(function(){
 		    //Callback that will fill featurestore
-		    core.featurestore().fill(myFeatureList);
+		    //core.featurestore().fill(myFeatureList);
+		    self.core.trigger('storeChanged');
+		    var message = {};
+            message.fids = fids;
+            message.storename = self.core.activeherd();
+		    self.core.websocket().sendData(message, "newPeerFidList");
 		});
 		iteration.fail(function(e){
 		    throw "Problem loading local indexeddb";        
