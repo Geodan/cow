@@ -129,8 +129,9 @@ function d3layer(layername, config){
 		            break;
 		        }
 		    }
-		    else
+		    else {
 		        textLocation[1] = textLocation[1] + 20; //a bit down..
+		    }
 		    return textLocation;
 		}
 		

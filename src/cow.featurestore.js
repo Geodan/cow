@@ -67,7 +67,6 @@ When adding items, those are returned.
 			self._addItem(options);
 			core.localdbase().addFeat(options);
 		}
-		console.log('FS updateItem: storeChanged');
 		self.core.trigger('storeChanged');
 	},
 	getItemByIid: function(iid) {
@@ -103,7 +102,6 @@ When adding items, those are returned.
 				self.core.websocket().sendData(message, "updateFeature");
 			}
 		});
-		console.log("FS removeItem: storeChanged");
 		self.core.trigger('storeChanged');
 	},
 	//Inject features from other local source into featurestore
@@ -113,11 +111,7 @@ When adding items, those are returned.
 			var item = {};
 			var d = new Date();
 			var timestamp = d.getTime();
-			feature.properties.type = type;
-			//feature.properties.icon = self.core.current_icon; //TODO TT: not nice
-			//feature.properties.linecolor = self.core.current_linecolor;
-			//feature.properties.fillcolor = self.core.current_fillcolor;
-			//feature.properties.polycolor = self.core.current_polycolor;
+			feature.properties.type = type; //TODO: why type in properties?
 			item.key = self.core.UID + "#" + timestamp;
 			feature.properties.key = item.key;
 			feature.properties.storename = self.core.activeHerd;
@@ -128,7 +122,6 @@ When adding items, those are returned.
 			item.feature = JSON.parse(geojson_format.write(feature));
 			//Add item to own stack
 			self.items(item);
-			console.log('FS injectFeatures: storeChanged');
 			core.trigger('storeChanged');
 			//Send item to world
 			var message = JSON.stringify(item);
@@ -161,7 +154,6 @@ When adding items, those are returned.
 		var message = JSON.stringify(item);
 		core.websocket().sendData(message, "newFeature");
 		core.localdbase().addFeat(item);
-		console.log("FS _onSketchComplete: storeChanged");
 		core.trigger('storeChanged');
 	},
 
@@ -180,30 +172,9 @@ When adding items, those are returned.
 					self.core.websocket().sendData(message, "updateFeature");
 				}
 		});
-		console.log('FS updateLocalFeat: storeChanged');
 		self.core.trigger('storeChanged');
 	},
-	/*Obs
-	//finished with modifying a features geometry
-	_onFeatureModified: function(evt, feature){
-		var self = evt.data.widget;
-		//var items = this.items();
-		var d = new Date();
-		var timestamp = d.getTime();
-		
-		$.each(self.itemList, function(i, obj){
-				if (obj.options.key == feature.properties.key){
-					obj.options.feature = feature;
-					obj.options.updated = timestamp;
-					self.core.localdbase().update(obj.options);
-					var message = JSON.stringify(obj.options);
-					self.core.websocket().sendData(message, "updateFeature");
-				}
-		});
-		console.log('FS _onFeatureModified: storeChanged');
-		self.core.trigger('storeChanged');
-	},
-	*/
+	
 	//putFeatures - feature(s) incoming from world 
 	putFeatures: function(itemlist){
 		var self = this;
@@ -217,19 +188,18 @@ When adding items, those are returned.
 				self._addItem(item);
 			core.localdbase().addFeat(item);
 		});
-		console.log('FS putFeatures: storeChanged');
 		core.trigger('storeChanged');
 	},
 	clear: function(){
 	    this.itemList = [];
 	},
+	
 	//fill - items go from localdbase to featurestore
 	fill: function(itemlist){
 		var self = this;
 		$.each(itemlist, function(i,item){
 			self._addItem(item);
 		});
-		console.log('FS fill: storeChanged');
 		self.core.trigger('storeChanged'); //This will reload the map
 		
 		//Send our featurelist to the world for syncing
@@ -273,7 +243,6 @@ When adding items, those are returned.
 		});
 		//TODO: need to notify other peers instantly about removal?
 		//Now it is delayed until next connection is made
-		console.log('FS deleteAllFeatures: storeChanged');
 		self.core.trigger('storeChanged');
 
 	},

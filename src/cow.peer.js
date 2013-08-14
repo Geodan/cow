@@ -133,7 +133,7 @@ $.Cow.Peer.prototype = {
         return _point;
     },
     _point2position: function(point) {
-        var attributes = { uid: this.uid, owner: this.options.owner};
+        var attributes = { uid: this.uid, owner: this.owner().name};
         if(point.time) {
             attributes.time = point.time;
         }

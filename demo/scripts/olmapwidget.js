@@ -242,8 +242,7 @@ $.widget("cow.OlMapWidget", {
 					}
 				},
 				style: {
-					fill: "steelBlue",
-					textLocation: "ul"
+					fill: "grey",
 				}
 			});
 		};
