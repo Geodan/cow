@@ -16,21 +16,22 @@ Cow is a plugin for jQuery to use websockets to work together with geographical 
 
 **description** initialise Cow and associate it with the matched element. The Cow object is refered to as *cow* in the documentation
 
- * websocket (object with url to the websocket server ) - default: wss://localhost:443 
- 
+[options]: websocket (object with url to the websocket server ) - default: wss://localhost:443 
+
+
 * me()
 * activeherd()
 * center()
 * herds()
-** getHerdById()
-** getHerdByPeerUid()
-** removeHerd()
+ * getHerdById()
+ * getHerdByPeerUid()
+ * removeHerd()
 * peers()
-** getPeerExtents()
-** getPeerPositions()
-** getPeerByUid()
-** getPeerByCid()
-** removePeer()
+ * getPeerExtents()
+ * getPeerPositions()
+ * getPeerByUid()
+ * getPeerByCid()
+ * removePeer()
 * featurestore()
 * localdbase()
 * websocket()
