@@ -49,6 +49,7 @@ $.Cow.Core = function(element, options) {
     self.bind("disconnected", {widget: self}, self.removeAllPeers);
     
     //TODO: put this in a proper function
+    //TODO: deprecated fs functions
     self.bind('changeHerdRequest', {widget:self}, function(e,uid){
         self.featurestore().clear(); //Clear featurestore
         self.activeherd(uid);
@@ -156,6 +157,7 @@ $.Cow.LocalDbase = function(core, options) {
     this.loaded = false;
     this.core = core;
     this.options = options;
+    //TODO: make this configurable
     this.options.dbname = "cow";
     var herds = self.herdsdb();//Herds are initialized from localdb
     var features = self.featuresdb(); //features are initialized from localdb
@@ -192,14 +194,21 @@ $.Cow.GeoLocator = function(core, options){
 
 $.Cow.Core.prototype = {
     /**
-    ##cow.me()
-    ###**Description**: returns the peer object representing the client it self
+    >cow.me()
+    **description** shorthand to get the Peer object representing the local peer; the one controlled by the local user
+    **returns:** me (Cow.Peer)
     */    
     me: function(){
         var peer = this.getPeerByUid(this.UID);    
         return peer;
     },
-    
+    /**
+    >cow.activeherd([options])
+    **description** get/set the 'Active Herd' of *cow*, this is the herd the user is currently working in.
+        * activeHerdId (int with the UID of the active herd)
+    **returns:** id (int)
+    Adding an activeherd triggers herdListChanged on *cow*
+    */
     activeherd: function(options) {
         var self = this;
         switch(arguments.length) {
@@ -227,10 +236,14 @@ $.Cow.Core.prototype = {
         }
     },
 
-     /*
-        center is an object containing:
-        -position: a position().point
-        -view: a view().extent
+    /**
+    >cow.center([options])
+    **description** get the postion of the user and the viewextent of the map or set zooms the map to the given viewextent or position
+     * position (an object containing latitude and longitude floats)
+     * view (an object containing left, bottom, right and top floats)
+    **returns:** {position: [longitude, latitude], view: {left:float, bottom: float, right: float, top: float }}
+    Adding a position triggers zoomToPoint on *cow*
+    Adding a view triggers zoomToExtent on *cow*
      */
      center: function (options) {
         var position;
@@ -256,54 +269,15 @@ $.Cow.Core.prototype = {
             this.trigger('zoomToPoint',options.position);
         }
     },
-/**
-##cow.websocket([options])
-###**Description**: get/set the websocket of the cow
-*/
-    websocket: function(options) {
-        var self = this;
-        switch(arguments.length) {
-        case 0:
-            return this._getWebsocket();
-        case 1:
-            if (!$.isArray(options)) {
-                return this._setWebsocket(options);
-            }
-            else {
-                throw('wrong argument number, only one websocket allowed');
-            }
-            break;
-        default:
-            throw('wrong argument number');
-        }
-    },
-    
-    _getWebsocket: function() {
-        return this.ws;
-    },
-    _setWebsocket: function(options) {
-        var websocket = new $.Cow.Websocket(this, options);
-        this.ws=websocket;
-    },
 
-/**
-##cow.herds([options])
-###**Description**: get/set the herds of the cow
-
-**options** an object of key-value pairs with options to create one or
-more herds
-
->Returns: [herd] (array of Cow.herd) _or_ false
-
-The `.herds()` method allows us to attach herds to a cow object. It takes
-an options object with herd options. To add multiple herds, create an array of
-herds options objects. If an options object is given, it will return the
-resulting herd(s). We can also use it to retrieve all herds currently attached
-to the cow.
-
-When adding herds, those are returned. 
-
-*/
+    /**
+    >cow.herds([options])
+    **description** get/set the herds of cow. 
+     * uid (int with the unique ID of the herd)
+     * name (string with the name of the herd)
+    **returns** [herd] (an array of Cow.Herd)
+    Adding an herd triggers herdListChanged on *cow*
+    */
 
     herds: function(options) {
     // console.log('herds()');
@@ -325,14 +299,7 @@ When adding herds, those are returned.
             throw('wrong argument number');
         }      
     },
-    _getHerds: function() {
-        //haal alleen de herds op uit de lijst waar de status != deleted
-        /* SMO obs: 12/8/13
-        var herds = [];
-        $.each(this.herdList, function(id, herd) {
-            if (herd.active)
-                herds.push(herd);
-        });        */
+    _getHerds: function() {      
         return this.herdList;
     },
     _addHerd: function(options) {
@@ -373,6 +340,12 @@ When adding herds, those are returned.
         return herd;
     },
     
+    /**
+    >cow.getHerdById(id)
+    **description** get the herd with a specific ID
+     * id (int with the unique ID of the herd)
+    **returns** herd (Cow.Herd)
+    */
     getHerdById: function(id) {
         var herds = this.herds();
         var herd;
@@ -383,6 +356,12 @@ When adding herds, those are returned.
         });
         return herd;
     },
+    /**
+    >cow.getHerdByPeerUid(peeruid)
+    **description** get the herd containing a specific peer, using the peer.uid
+     * peeruid (int with the unique ID of the peer)
+    **returns** herd (Cow.Herd)
+    */
     getHerdByPeerUid: function(peeruid){
         var herds = this.herds();
         var result;
@@ -397,7 +376,13 @@ When adding herds, those are returned.
         return result;
     },
     
-    
+    /**
+    >cow.removeHerd(id)
+    **description** remove the herd with the specific id from cow (in fact set it as inactive) 
+     * id (int with the unique ID of the herd)
+    **returns** [herd] (an array of Cow.Herd with the remaining herds)
+    Removing an herd triggers peerStoreChanged on *cow*
+    */
     removeHerd: function(id) {
         var herds = this.herds();
         var herdGone = id;
@@ -413,45 +398,17 @@ When adding herds, those are returned.
             }            
         });
         this.herdList = herds;  
+        return this.herdList;
     },
 
-
-/**
-##cow.peers([options])
-###**Description**: get/set the peers of the cow
-
-**options** an object of key-value pairs with options to create one or
-more peers
-
->Returns: [peer] (array of Cow.Peer) _or_ false
-
-The `.peers()` method allows us to attach peers to a cow object. It takes
-an options object with peer options. To add multiple peers, create an array of
-peers options objects. If an options object is given, it will return the
-resulting peer(s). We can also use it to retrieve all peers currently attached
-to the cow.
-
-When adding peers, those are returned. 
-
-=======
-A Peer is on object containing:
--view()
--position()
--owner()
--herd()
--uid
--options:
- =cid
- =uid 
- =family
--params
- =viewExtent
- =viewFeature
- =locationPoint
- =locationFeature
- =herd
- =owner
-*/
+    /**
+    >cow.peers([options])
+    **description** get/set the peers of cow. 
+     * uid (int with the unique ID of the herd)
+     * name (string with the name of the herd)
+    **returns** [herd] (an array of Cow.Herd)
+    Adding an herd triggers herdListChanged on *cow*
+    */
     peers: function(options) {
       //  console.log('peers()');
         var self = this;
@@ -580,62 +537,7 @@ A Peer is on object containing:
         this.peerList = [];
         //TODO: remove peer from d3 layers
     },
-        
-    /***
-    LOCAL DATABASE
-    ***/
-    localdbase: function(options){
-        var self = this;
-        switch(arguments.length) {
-        case 0:
-            return this._getLocalDbase();
-        case 1:
-            if (!$.isArray(options)) {
-                return this._setLocalDbase(options);
-            }
-            else {
-                throw('only one dbase allowed');
-            }
-            break;
-        default:
-            throw('wrong argument number');
-        }
-    },
-    _getLocalDbase: function(){
-        return this.localDbase;
-    },
-    _setLocalDbase: function(options){
-        var dbase = new $.Cow.LocalDbase(this, options);
-        this.localDbase = dbase;
-    },
      /***
-    GEO LOCATOR
-    ***/
-    geolocator: function(options){
-        var self = this;
-        switch(arguments.length) {
-        case 0:
-            return this._getGeoLocator();
-        case 1:
-            if (!$.isArray(options)) {
-                return this._setGeoLocator(options);
-            }
-            else {
-                throw('only one geolocator allowed');
-            }
-            break;
-        default:
-            throw('wrong argument number');
-        }
-    },
-    _getGeoLocator: function(){
-        return this.geoLocator;
-    },
-    _setGeoLocator: function(options){
-        var locator = new $.Cow.GeoLocator(this, options);
-        this.geoLocator = locator;
-    },
-    /***
     FEATURE STORES
     ***/
     featurestore: function(options){
@@ -663,7 +565,96 @@ A Peer is on object containing:
         this.featureStore = featureStore;
         return featureStore;
     },
+    /***
+    LOCAL DATABASE
+    ***/
+    localdbase: function(options){
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this._getLocalDbase();
+        case 1:
+            if (!$.isArray(options)) {
+                return this._setLocalDbase(options);
+            }
+            else {
+                throw('only one dbase allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+    },
+    _getLocalDbase: function(){
+        return this.localDbase;
+    },
+    _setLocalDbase: function(options){
+        var dbase = new $.Cow.LocalDbase(this, options);
+        this.localDbase = dbase;
+    },
     
+    /**
+##cow.websocket([options])
+###**Description**: get/set the websocket of the cow
+*/
+    websocket: function(options) {
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this._getWebsocket();
+        case 1:
+            if (!$.isArray(options)) {
+                return this._setWebsocket(options);
+            }
+            else {
+                throw('wrong argument number, only one websocket allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+    },
+    
+    _getWebsocket: function() {
+        return this.ws;
+    },
+    _setWebsocket: function(options) {
+        var websocket = new $.Cow.Websocket(this, options);
+        this.ws=websocket;
+    },
+
+
+
+        
+    
+     /***
+    GEO LOCATOR
+    ***/
+    geolocator: function(options){
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this._getGeoLocator();
+        case 1:
+            if (!$.isArray(options)) {
+                return this._setGeoLocator(options);
+            }
+            else {
+                throw('only one geolocator allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+    },
+    _getGeoLocator: function(){
+        return this.geoLocator;
+    },
+    _setGeoLocator: function(options){
+        var locator = new $.Cow.GeoLocator(this, options);
+        this.geoLocator = locator;
+    },
+   
     
     bind: function(types, data, fn) {
         var self = this;
