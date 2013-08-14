@@ -1,5 +1,15 @@
 $.Cow.FeatureStore.prototype = {
+    /**
+        New functions, not yet implemented
+    */
 
+    featureitems: function(options,source) {
+    },
+    syncFids: function(fids) {
+    },
+    /**
+        Deprecated functions
+    */
 	/**
 ##featurestore.items([options])
 ###**Description**: get/set the items of the cow

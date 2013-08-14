@@ -29,10 +29,60 @@ Dependencies Client
 ### jQuery-UI ###
 jQuery-UI version 1.10.2
 
+API
+===
+### Core
+#### me()
+#### center()
+#### herds()
+#### peers()
+#### featurestore()
+#### localdbase()
+#### websocket()
+#### geolocator()
+#### bind()
+#### trigger()
+
+### Herd
+#### members()
+#### removeMember()
+#### removeAllMembers()
+#### bind()
+#### trigger()
+
+### Peer
+#### view()
+#### position()
+#### owner()
+#### video()
+#### bind()
+#### trigger()
+
+### Websocket
+#### sendData()
+#### openws()
+#### closews()
+#### bind()
+#### trigger()
+
+### FeatureStore
+#### featureitems()
+#### syncFids()
+
+### LocalDbase
+#### herdsdb()
+#### featuresdb()
+#### removeherd()
+#### removefeature()
+
+### GeoLocator
+#### getLocation()
+
+
 Known Issues
 ============
 
-The demo application uses a self signed secure websocket, which fails if the SSL certificate hasn't been accepted previously.
+
 
 LICENSE
 =======
