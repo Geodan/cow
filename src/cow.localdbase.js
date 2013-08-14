@@ -12,7 +12,47 @@ $.Cow.LocalDbase.prototype = {
     */
 
     herdsdb: function(options) {
+        var self = this;
+		switch(arguments.length) {
+        case 0:
+            return this._getHerds();
+        case 1:
+            if (!$.isArray(options)) {
+                return this._addHerd(options);
+            }
     },
+    _addHerd: function(herd){
+        var record = {};
+        record.uid = herd.options.uid;
+        record.name = herd.options.name;
+        record.active = herd.options.active;
+        var request = $.indexedDB(this.options.dbname)
+		    .objectStore("herds",false)
+		    .put(record);
+		 request.onerror = function(e){
+            console.warn('Error adding: '+e);
+         };
+         return herd();
+    },
+    _getHerds: function() {
+        var storeOptions = {
+            "autoIncrement" : false,
+            "keyPath": "uid"
+		};
+		var herdList = [];
+        $.indexedDB(this.options.dbname)
+		    .objectStore("herds",storeOptions)
+		    .each(function(elem){
+		        var options = {};
+		        options.uid = elem.value.uid;
+		        options.name = elem.value.name;
+		        options.active = elem.value.active;
+		        
+	            herdList.push(options);
+	        });
+	    return herdList;
+    },
+    
     featuresdb: function(options) {
     },
     removeherd: function(herdId) {

@@ -3,8 +3,56 @@ $.Cow.FeatureStore.prototype = {
         New functions, not yet implemented
     */
 
-    featureitems: function(options,source) {
+    featureItems: function(options,source) {
+        var self = this;
+		switch(arguments.length) {
+        case 0:
+            return this._getFeatureItems();
+        case 1:
+            if (!$.isArray(options)) {
+                return this._addFeatureItem(options, source);
+            }
+            else {
+				return $.core(options, function(item) {
+                    return self._addFeatureItem(item, source);
+                })
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
     },
+    _addFeatureItem: function(options, source){
+		var newitem = {"options": options};
+		//Check if existing
+		
+		//If not exists:
+		    this.itemList.push(newitem);
+		//If exists:
+		    this.itemList.splice
+		if (source == 'db'){
+		    
+		    self.core.trigger('');
+		}
+		else if (source == 'user'){
+		    //Add to DB
+		    self.core.trigger('');
+		}
+		else if (source == 'ws'){
+		    //Add to DB
+		    self.core.trigger('');
+		}
+		else {
+		    throw 'unknown source given: ' + source
+		}
+		
+		return newitem;
+    },
+    _getFeatureItems: function(){
+        return this.itemList;
+    },
+    
+    
     syncFids: function(fids) {
     },
     /**
@@ -124,7 +172,7 @@ When adding items, those are returned.
 			feature.properties.type = type; //TODO: why type in properties?
 			item.key = self.core.UID + "#" + timestamp;
 			feature.properties.key = item.key;
-			feature.properties.storename = self.core.activeHerd;
+			feature.properties.storename = self.core.activeherd();
 			item.uid = self.core.UID;
 			item.created = timestamp;
 			item.updated = timestamp;
@@ -151,7 +199,7 @@ When adding items, those are returned.
 		feature.properties.polycolor = self.core.current_polycolor;
 		item.key = self.core.UID + "#" + timestamp;
 		feature.properties.key = item.key;
-		feature.properties.store = self.core.activeHerd;
+		feature.properties.store = self.core.activeherd();
 		item.uid = self.core.UID;
 		item.created = timestamp;
 		item.updated = timestamp;
@@ -218,7 +266,7 @@ When adding items, those are returned.
 		self.loaded = true;
 		var message = {};
         message.fids = fids;
-        message.storename = self.core.activeHerd;
+        message.storename = self.core.activeherd();
         self.core.websocket().sendData(message, "newPeerFidList");
 	},
 	
