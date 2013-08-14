@@ -490,7 +490,7 @@ $.widget("cow.OlMapWidget", {
 		if (feature.popup)
 			feature.popup.destroy();
 		var key = feature.properties.key;
-		if (core.getActiveHerdUid() == feature.properties.store){
+		if (core.activeherd() == feature.properties.store){
 		    core.featurestore().removeItem(key);
 		    core.trigger('storeChanged');
 		}
@@ -505,7 +505,7 @@ $.widget("cow.OlMapWidget", {
 			feature.popup = null;
 		}
 		var jsonfeature = JSON.parse(geojson_format.write(feature));
-		if (core.getActiveHerdUid() == feature.properties.store){
+		if (core.activeherd() == feature.properties.store){
 		    core.featurestore().updateLocalFeat(jsonfeature);
 		}
 	}

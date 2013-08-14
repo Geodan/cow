@@ -66,7 +66,7 @@ $.Cow.LocalDbase.prototype = {
             "autoIncrement" : false,
             "keyPath": "key"
 		};
-		var tablename = core.activeHerd;
+		var tablename = core.activeherd();
 		var dbname = this.options.dbname;
 		var myFeatureList = [];
 		var iteration = $.indexedDB(dbname)
@@ -113,7 +113,7 @@ $.Cow.LocalDbase.prototype = {
 		newRecord.status = evt.status;
 		newRecord.feature = evt.feature;
 		$.indexedDB(this.options.dbname)
-		    .objectStore(core.activeHerd,false)
+		    .objectStore(core.activeherd(),false)
 		    .put(newRecord)//Advantage of putting is that we overwrite old features with same key
 		    .fail(function(error){
 		            console.warn('Fail! ' + error);
@@ -123,7 +123,7 @@ $.Cow.LocalDbase.prototype = {
 	deleteFeat: function(itemId){
 	    var core = this.core;
 		$.indexedDB(this.options.dbname)
-		    .objectStore(core.activeHerd)["delete"](itemId)
+		    .objectStore(core.activeherd())["delete"](itemId)
 		    .done(function(){
 				core.localdbase().loadFromDB();
 		});
