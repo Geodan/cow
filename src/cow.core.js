@@ -382,6 +382,7 @@ $.Cow.Core.prototype = {
     **description** remove the herd with the specific id from cow (in fact set it as inactive) 
      * id (int with the unique ID of the herd)
     **returns** [herd] (an array of Cow.Herd with the remaining herds)
+    Removing an herd triggers peerStoreChanged on *cow*
     */
     removeHerd: function(id) {
         var herds = this.herds();
@@ -402,73 +403,13 @@ $.Cow.Core.prototype = {
     },
 
     /**
-##cow.websocket([options])
-###**Description**: get/set the websocket of the cow
-*/
-    websocket: function(options) {
-        var self = this;
-        switch(arguments.length) {
-        case 0:
-            return this._getWebsocket();
-        case 1:
-            if (!$.isArray(options)) {
-                return this._setWebsocket(options);
-            }
-            else {
-                throw('wrong argument number, only one websocket allowed');
-            }
-            break;
-        default:
-            throw('wrong argument number');
-        }
-    },
-    
-    _getWebsocket: function() {
-        return this.ws;
-    },
-    _setWebsocket: function(options) {
-        var websocket = new $.Cow.Websocket(this, options);
-        this.ws=websocket;
-    },
-
-
-
-/**
-##cow.peers([options])
-###**Description**: get/set the peers of the cow
-
-**options** an object of key-value pairs with options to create one or
-more peers
-
->Returns: [peer] (array of Cow.Peer) _or_ false
-
-The `.peers()` method allows us to attach peers to a cow object. It takes
-an options object with peer options. To add multiple peers, create an array of
-peers options objects. If an options object is given, it will return the
-resulting peer(s). We can also use it to retrieve all peers currently attached
-to the cow.
-
-When adding peers, those are returned. 
-
-=======
-A Peer is on object containing:
--view()
--position()
--owner()
--herd()
--uid
--options:
- =cid
- =uid 
- =family
--params
- =viewExtent
- =viewFeature
- =locationPoint
- =locationFeature
- =herd
- =owner
-*/
+    >cow.peers([options])
+    **description** get/set the peers of cow. 
+     * uid (int with the unique ID of the herd)
+     * name (string with the name of the herd)
+    **returns** [herd] (an array of Cow.Herd)
+    Adding an herd triggers herdListChanged on *cow*
+    */
     peers: function(options) {
       //  console.log('peers()');
         var self = this;
@@ -597,62 +538,7 @@ A Peer is on object containing:
         this.peerList = [];
         //TODO: remove peer from d3 layers
     },
-        
-    /***
-    LOCAL DATABASE
-    ***/
-    localdbase: function(options){
-        var self = this;
-        switch(arguments.length) {
-        case 0:
-            return this._getLocalDbase();
-        case 1:
-            if (!$.isArray(options)) {
-                return this._setLocalDbase(options);
-            }
-            else {
-                throw('only one dbase allowed');
-            }
-            break;
-        default:
-            throw('wrong argument number');
-        }
-    },
-    _getLocalDbase: function(){
-        return this.localDbase;
-    },
-    _setLocalDbase: function(options){
-        var dbase = new $.Cow.LocalDbase(this, options);
-        this.localDbase = dbase;
-    },
      /***
-    GEO LOCATOR
-    ***/
-    geolocator: function(options){
-        var self = this;
-        switch(arguments.length) {
-        case 0:
-            return this._getGeoLocator();
-        case 1:
-            if (!$.isArray(options)) {
-                return this._setGeoLocator(options);
-            }
-            else {
-                throw('only one geolocator allowed');
-            }
-            break;
-        default:
-            throw('wrong argument number');
-        }
-    },
-    _getGeoLocator: function(){
-        return this.geoLocator;
-    },
-    _setGeoLocator: function(options){
-        var locator = new $.Cow.GeoLocator(this, options);
-        this.geoLocator = locator;
-    },
-    /***
     FEATURE STORES
     ***/
     featurestore: function(options){
@@ -680,7 +566,96 @@ A Peer is on object containing:
         this.featureStore = featureStore;
         return featureStore;
     },
+    /***
+    LOCAL DATABASE
+    ***/
+    localdbase: function(options){
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this._getLocalDbase();
+        case 1:
+            if (!$.isArray(options)) {
+                return this._setLocalDbase(options);
+            }
+            else {
+                throw('only one dbase allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+    },
+    _getLocalDbase: function(){
+        return this.localDbase;
+    },
+    _setLocalDbase: function(options){
+        var dbase = new $.Cow.LocalDbase(this, options);
+        this.localDbase = dbase;
+    },
     
+    /**
+##cow.websocket([options])
+###**Description**: get/set the websocket of the cow
+*/
+    websocket: function(options) {
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this._getWebsocket();
+        case 1:
+            if (!$.isArray(options)) {
+                return this._setWebsocket(options);
+            }
+            else {
+                throw('wrong argument number, only one websocket allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+    },
+    
+    _getWebsocket: function() {
+        return this.ws;
+    },
+    _setWebsocket: function(options) {
+        var websocket = new $.Cow.Websocket(this, options);
+        this.ws=websocket;
+    },
+
+
+
+        
+    
+     /***
+    GEO LOCATOR
+    ***/
+    geolocator: function(options){
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this._getGeoLocator();
+        case 1:
+            if (!$.isArray(options)) {
+                return this._setGeoLocator(options);
+            }
+            else {
+                throw('only one geolocator allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+    },
+    _getGeoLocator: function(){
+        return this.geoLocator;
+    },
+    _setGeoLocator: function(options){
+        var locator = new $.Cow.GeoLocator(this, options);
+        this.geoLocator = locator;
+    },
+   
     
     bind: function(types, data, fn) {
         var self = this;
