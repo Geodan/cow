@@ -7,6 +7,22 @@ https://github.com/axemclion/jquery-indexeddb/blob/gh-pages/docs/README.md
 
 //var localdbase = {
 $.Cow.LocalDbase.prototype = {
+    /**
+        New functions, not yet implemented
+    */
+
+    herdsdb: function(options) {
+    },
+    featuresdb: function(options) {
+    },
+    removeherd: function(herdId) {
+    },
+    removefeature: function(fid) {
+    },
+    /**
+        Deprecated functions
+    */
+
     initHerds: function(){
         var self = this;
         var storeOptions = {
