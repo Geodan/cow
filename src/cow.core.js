@@ -213,7 +213,7 @@ $.Cow.Core.prototype = {
                this.activeHerd = options.activeHerdId;
                var prevherd = this.getHerdByPeerUid(this.UID);
                prevherd.removeMember(this.UID);
-               var herd = this.getHerdById(herdUid);
+               var herd = this.getHerdById(options.activeHerdId);
                herd.members(this.UID);
                this.featurestore().clear(); //Clear featurestore
                this.localdbase().loadFromDB();//Fill featurestore with what we have
