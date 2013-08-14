@@ -24,10 +24,7 @@ $.Cow.Core = function(element, options) {
     this.ws ={};
     this.peerList = [];
     this.herdList = [];
-    /* SMO: obsolete 7/8/2013
-    this.herdList = [{id:0,name:"sketch"},{id:1,name:"test"}]; //Altijd initiele sketch herd aanwezig
-    */
-    
+    this.activeHerd = 666; //Carefull, order matters! Make sure the activeHerd is set before localdbase is initialized
     this.localDbase;
     this.geoLocator;
     this.featureStore;
@@ -46,17 +43,17 @@ $.Cow.Core = function(element, options) {
     }
     element.data('cow', this);
     //Standard herd, always available
-    this.herds({uid:666,name:"sketch", peeruid: this.UID});
-    this.activeHerd = 666;
+    this.herds({uid:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
+    
     
     self.bind("disconnected", {widget: self}, self.removeAllPeers);
     
     //TODO: put this in a proper function
     self.bind('changeHerdRequest', {widget:self}, function(e,uid){
         self.featurestore().clear(); //Clear featurestore
-        self.activeHerd = uid;
+        self.activeherd(uid);
         self.options.storename = "store_"+uid; //TODO: the link between activeHerd and storename can be better
-        self.localdbase().loadFromDB();//Fill featurestore with what we have
+        var features = self.localdbase().featuresdb();//Fill featurestore with what we have
     });
     
     
@@ -160,8 +157,8 @@ $.Cow.LocalDbase = function(core, options) {
     this.core = core;
     this.options = options;
     this.options.dbname = "cow";
-    var iteration = self.loadFromDB(); //features are initialized from localdb
     var herds = self.herdsdb();//Herds are initialized from localdb
+    var features = self.featuresdb(); //features are initialized from localdb
 }
 /***
 $.Cow.FeatureStore
@@ -216,7 +213,7 @@ $.Cow.Core.prototype = {
                var herd = this.getHerdById(options.activeHerdId);
                herd.members(this.UID);
                this.featurestore().clear(); //Clear featurestore
-               this.localdbase().loadFromDB();//Fill featurestore with what we have
+               var features = this.localdbase().featuresdb();//Fill featurestore with what we have
                this.ws.sendData(herd.options, 'herdInfo');
                this.trigger("herdListChanged", this.UID);
                return this.activeHerd;

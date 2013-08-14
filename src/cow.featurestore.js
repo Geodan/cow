@@ -118,12 +118,13 @@ When adding items, those are returned.
 			if (item.options.key == options.key){
 				isnew = 0;
 				item.options = options; //slightly bizarre syntax
-				self.core.localdbase().update(item.options);
+				//self.core.localdbase().update(item.options);
+				self.core.localdbase().featuresdb(item.options);
 			}
 		});
 		if (isnew == 1) {
 			self._addItem(options);
-			core.localdbase().addFeat(options);
+			core.localdbase().featuresdb(options);
 		}
 		self.core.trigger('storeChanged');
 	},
@@ -154,7 +155,8 @@ When adding items, those are returned.
 				else
 					item.options.status = '';
 				item.options.updated = timestamp;
-				self.core.localdbase().update(item.options);
+				//self.core.localdbase().update(item.options);
+				self.core.localdbase().featuresdb(item.options);
 				//send to world
 				var message = JSON.stringify(item.options);
 				self.core.websocket().sendData(message, "updateFeature");
@@ -184,7 +186,7 @@ When adding items, those are returned.
 			//Send item to world
 			var message = JSON.stringify(item);
 			core.websocket().sendData(message, "newFeature");
-			core.localdbase().addFeat(item);
+			core.localdbase().featuresdb(item);
 		});
 	},
 	//feature has been drawm, add it to featurestore including some extra data
@@ -211,7 +213,7 @@ When adding items, those are returned.
 		//Send item to world
 		var message = JSON.stringify(item);
 		core.websocket().sendData(message, "newFeature");
-		core.localdbase().addFeat(item);
+		core.localdbase().featuresdb(item);
 		core.trigger('storeChanged');
 	},
 
@@ -225,7 +227,8 @@ When adding items, those are returned.
 					//obj.options.feature = JSON.parse(geojson_format.write(feature));
 					obj.options.feature = feature;
 					obj.options.updated = timestamp;
-					self.core.localdbase().update(obj.options);
+					self.core.localdbase().featuresdb(obj.options);
+					//self.core.localdbase().update(obj.options);
 					var message = JSON.stringify(obj.options);
 					self.core.websocket().sendData(message, "updateFeature");
 				}
@@ -244,7 +247,7 @@ When adding items, those are returned.
 					self.updateItem(item);
 			else
 				self._addItem(item);
-			core.localdbase().addFeat(item);
+			core.localdbase().featuresdb(item);
 		});
 		core.trigger('storeChanged');
 	},
@@ -290,14 +293,15 @@ When adding items, those are returned.
 		var items = this.items();
 		var self = this;
 		$.each(items, function(i, item){
-				var d = new Date();
-				var timestamp = d.getTime();
-				if (item.options.status != 'deleted')
-				{
-					item.options.status = 'deleted';
-					item.options.updated = timestamp;
-				}
-				self.core.localdbase().update(item.options);
+            var d = new Date();
+            var timestamp = d.getTime();
+            if (item.options.status != 'deleted')
+            {
+                item.options.status = 'deleted';
+                item.options.updated = timestamp;
+            }
+            //self.core.localdbase().update(item.options);
+            self.core.localdbase().featuresdb(item.options);
 		});
 		//TODO: need to notify other peers instantly about removal?
 		//Now it is delayed until next connection is made

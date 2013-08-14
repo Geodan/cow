@@ -11,6 +11,19 @@ $.Cow.LocalDbase.prototype = {
         New functions, not yet implemented
     */
 
+    _init: function(){
+        //Init herds db
+        var storeOptions = {
+            "autoIncrement" : false,
+            "keyPath": "uid"
+		};
+		$.indexedDB(this.options.dbname)
+		    .objectStore("herds",storeOptions);
+		//Init features db
+		var tablename = core.activeherd();
+		$.indexedDB(this.options.dbname)
+		    .objectStore("herds",storeOptions);
+    },
     herdsdb: function(options) {
         var self = this;
 		switch(arguments.length) {
@@ -41,19 +54,19 @@ $.Cow.LocalDbase.prototype = {
             "keyPath": "uid"
 		};
 		var herdList = [];
-        $.indexedDB(this.options.dbname)
+        var promise = $.indexedDB(this.options.dbname)
 		    .objectStore("herds",storeOptions)
 		    .each(function(elem){
 		        var options = {};
 		        options.uid = elem.value.uid;
 		        options.name = elem.value.name;
 		        options.active = elem.value.active;
-		        
-	            herdList.push(options);
+		        self.core.herds(options);
 	        });
-	    return herdList;
+	    return promise;
     },
     removeherd: function(uid){
+        //This will never happen....
         $.indexedDB(this.options.dbname)
 		    .objectStore("herds",false)["delete"](uid);
     },
@@ -70,90 +83,59 @@ $.Cow.LocalDbase.prototype = {
         }
     },
     
-    removefeature: function(fid) {
-    },
-    /**
-        Deprecated functions
-    */
-    
-	// Transfers features from database to arrays
-	loadFromDB: function(){
-		var core = this.core;
+    _getFeatures: function(){
+        var core = this.core;
 		this.storeOptions = {
             "autoIncrement" : false,
             "keyPath": "key"
 		};
-		var tablename = core.activeHerd;
+		var tablename = core.activeherd();
 		var dbname = this.options.dbname;
 		var myFeatureList = [];
 		var iteration = $.indexedDB(dbname)
 		    .objectStore(tablename,this.storeOptions)
 		    .each(function(elem){
-                    //array for use in map
-                    var item = new Object();
-                    item.key 	= elem.value.key 	
-                    item.uid 	= elem.value.uid 	
-                    item.created = elem.value.created 
-                    item.updated = elem.value.updated
-                    item.status = elem.value.status 
-                    item.feature	= elem.value.feature
-                    
-                    if (item.feature.properties && item.feature.properties.key)
-                        myFeatureList.push(item);
+                //array for use in map
+                var item = new Object();
+                item.key 	= elem.value.key 	
+                item.uid 	= elem.value.uid 	
+                item.created = elem.value.created 
+                item.updated = elem.value.updated
+                item.status = elem.value.status 
+                item.feature	= elem.value.feature
+                
+                if (item.feature.properties && item.feature.properties.key)
+                    myFeatureList.push(item);
                 });    
 		iteration.done(function(){
-			//TODO TT: rewrite to trigger
-			core.featurestore().fill(myFeatureList);
+		    //Callback that will fill featurestore
+		    core.featurestore().fill(myFeatureList);
 		});
 		iteration.fail(function(e){
-		    console.warn("Problem loading local indexeddb");        
+		    throw "Problem loading local indexeddb";        
 		});
 		return iteration;
-	},
-	deleteDB: function(){
-	// Delete the database 
-		$.indexedDB(this.options.dbname)
-		    .deleteDatabase();
-	},
-	emptyDB: function(storename){
-		$.indexedDB(this.options.dbname)
-		    .objectStore(storename,this.storeOptions)
-		    .clear();
-	},
-	addFeat: function(evt){
-	    var core = this.core;
+    },
+    
+    _addFeature: function(item){
+        var core = this.core;
 		var newRecord = {};
-		newRecord.key = evt.key;
-		newRecord.uid = evt.uid;
-		newRecord.created = evt.created;
-		newRecord.updated = evt.updated;
-		newRecord.status = evt.status;
-		newRecord.feature = evt.feature;
+		newRecord.key = item.key;
+		newRecord.uid = item.uid;
+		newRecord.created = item.created;
+		newRecord.updated = item.updated;
+		newRecord.status = item.status;
+		newRecord.feature = item.feature;
 		$.indexedDB(this.options.dbname)
-		    .objectStore(core.activeHerd,false)
+		    .objectStore(core.activeherd(),false)
 		    .put(newRecord)//Advantage of putting is that we overwrite old features with same key
 		    .fail(function(error){
 		            console.warn('Fail! ' + error);
 		    });
-	},
-	// Delete an item from featurestore
-	deleteFeat: function(itemId){
-	    var core = this.core;
-		$.indexedDB(this.options.dbname)
-		    .objectStore(core.activeHerd)["delete"](itemId)
-		    .done(function(){
-				core.localdbase().loadFromDB();
-		});
-	},
-	update: function(item){
-	    var core = this.core;
-		$.indexedDB(this.options.dbname)
-		    .objectStore(core.options.storename,false)
-		    .each(function(elem) {
-                if (elem.key == item.key) {
-                    elem.update(item);
-                }
-            });
-	}
+    },
+    
+    removefeature: function(fid) {
+        //This will never happen...
+    },
 }
 
