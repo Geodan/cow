@@ -727,9 +727,10 @@ $.fn.cow = function(options) {
 $.fn.cow.defaults = {
     core: function() {
         return {
-            map: 'map',
-            editlayer: 'editlayer',
-            namefield: 'myname'
+            websocket: {url: 'wss://localhost:443'},
+            featurestore: {},
+            localdbase: {},
+            geolocator: {}
         };
     }
 };

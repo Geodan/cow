@@ -31,8 +31,17 @@ jQuery-UI version 1.10.2
 
 API
 ===
+Cow is a plugin for jQuery to use websockets to work together with geographical data. Peers represent the people who connected to the same websocket. Peers share their physical location (if available) and their current viewextent of the map. Peers are member of an herd and members of the same herd can share features. 
+
 ### Core
+$(selector).cow([options])
+*description* initialise Cow and associate it with the matched element
+options: an object of key-value pairs with options for cow.
+possible pairs are:
+ * websocket (object with url to the websocket server ) - default: wss://localhost:443 
+ 
 #### me()
+
 #### center()
 #### herds()
 #### peers()
