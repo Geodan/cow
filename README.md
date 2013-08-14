@@ -31,52 +31,52 @@ jQuery-UI version 1.10.2
 
 API
 ===
-## Core
-### me()
-### center()
-### herds()
-### peers()
-### featurestore()
-### localdbase()
-### websocket()
-### geolocator()
-### bind()
-### trigger()
+### Core
+#### me()
+#### center()
+#### herds()
+#### peers()
+#### featurestore()
+#### localdbase()
+#### websocket()
+#### geolocator()
+#### bind()
+#### trigger()
 
-## Herd
-### members()
-### removeMember()
-### removeAllMembers()
-### bind()
-### trigger()
+### Herd
+#### members()
+#### removeMember()
+#### removeAllMembers()
+#### bind()
+#### trigger()
 
-## Peer
-### view()
-### position()
-### owner()
-### video()
-### bind()
-### trigger()
+### Peer
+#### view()
+#### position()
+#### owner()
+#### video()
+#### bind()
+#### trigger()
 
-## Websocket
-### sendData()
-### openws()
-### closews()
-### bind()
-### trigger()
+### Websocket
+#### sendData()
+#### openws()
+#### closews()
+#### bind()
+#### trigger()
 
-## FeatureStore
-### featureitems()
-### syncFids()
+### FeatureStore
+#### featureitems()
+#### syncFids()
 
-## LocalDbase
-### herdsdb()
-### featuresdb()
-### removeherd()
-### removefeature()
+### LocalDbase
+#### herdsdb()
+#### featuresdb()
+#### removeherd()
+#### removefeature()
 
-## GeoLocator
-### getLocation()
+### GeoLocator
+#### getLocation()
 
 
 Known Issues
