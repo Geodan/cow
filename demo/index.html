@@ -94,10 +94,8 @@ var core;
   
 $(document).ready(function(){
   $('#cow').cow({
-    websocket: {url: 'wss://websocket.geodan.nl:443/'},
-    featurestore: {},
-    localdbase: {},
-    geolocator: {}
+    websocket: {url: 'wss://websocket.geodan.nl:443/'}
+    
   });
   
   core =$('#cow').data('cow');

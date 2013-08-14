@@ -122,7 +122,7 @@ $.widget("cow.PeersWidget", {
         
         element.delegate('.herd','click', function(){
             var herduid = $(this).attr('herd');
-            self.core.setActiveHerdUid(herduid);
+            self.core.activeherd({activeHerdId:herduid});
         });
         
         this.peerjsdiv.delegate("#cameraOnOff",'click',function(){
@@ -205,7 +205,7 @@ $.widget("cow.PeersWidget", {
                 if(this.uid != 0) {
                     remove = ' <span class="removeherd" title="remove this herd and delete all features">remove</span><div class="removeherdconfirm verborgen">are you sure? <span class="yesremove" title"this will remove the herd and all its features, not easily undone">yes</span><span class="notremove" title="alrighty">no</span></div>';
                 }
-                if(this.uid==self.core.activeHerd) {
+                if(this.uid==self.core.activeherd()) {
                     names = names + '<div><span class="peerlist herd me" title="this is your herd" herd="'+this.uid+'">'+this.name+'</span></div>';
                 }
                 else {

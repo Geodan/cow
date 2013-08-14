@@ -203,22 +203,33 @@ $.Cow.Core.prototype = {
         return peer;
     },
     
-    
-   setActiveHerdUid: function(herdUid){
-       this.activeHerd = herdUid;
-       var prevherd = this.getHerdByPeerUid(this.UID);
-       prevherd.removeMember(this.UID);
-       var herd = this.getHerdById(herdUid);
-       herd.members(this.UID);
-       this.featurestore().clear(); //Clear featurestore
-       this.localdbase().loadFromDB();//Fill featurestore with what we have
-       this.ws.sendData(herd.options, 'herdInfo');
-       this.trigger("herdListChanged", this.UID);
-       return this.activeHerd;
-   },
-   getActiveHerdUid: function(){
-       return this.activeHerd;
-   },
+    activeherd: function(options) {
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this.activeHerd;
+        case 1:
+            if (!$.isArray(options)) {
+               this.activeHerd = options.activeHerdId;
+               var prevherd = this.getHerdByPeerUid(this.UID);
+               prevherd.removeMember(this.UID);
+               var herd = this.getHerdById(options.activeHerdId);
+               herd.members(this.UID);
+               this.featurestore().clear(); //Clear featurestore
+               this.localdbase().loadFromDB();//Fill featurestore with what we have
+               this.ws.sendData(herd.options, 'herdInfo');
+               this.trigger("herdListChanged", this.UID);
+               return this.activeHerd;
+            }
+            else {
+                throw('wrong argument number, only one activeHerd allowed');
+            }
+            break;
+        default:
+            throw('wrong argument number');
+        }
+    },
+
      /*
         center is an object containing:
         -position: a position().point
@@ -727,9 +738,10 @@ $.fn.cow = function(options) {
 $.fn.cow.defaults = {
     core: function() {
         return {
-            map: 'map',
-            editlayer: 'editlayer',
-            namefield: 'myname'
+            websocket: {url: 'wss://localhost:443'},
+            featurestore: {},
+            localdbase: {},
+            geolocator: {}
         };
     }
 };
