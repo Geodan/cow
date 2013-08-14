@@ -92,7 +92,7 @@ core: the cow object
 
 core: the cow object
 
-[options]: none
+[options]: none available
 
 * featureitems([options],[source])
 * syncFids([fids])
@@ -118,7 +118,7 @@ core: the cow object
 
 core: the cow object
 
-[options]: none
+[options]: none available
 
 * getLocation()
 
