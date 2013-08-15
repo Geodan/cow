@@ -174,9 +174,9 @@ $.Cow.Websocket.prototype = {
             var items = core.featurestore().featureItems();
             $.each(items, function(i,item){
                 var iditem = {};
-                iditem.key = item.key;
-                iditem.updated = item.updated;
-                iditem.status = item.status;
+                iditem.key = item.options.key;
+                iditem.updated = item.options.updated;
+                iditem.status = item.options.status;
                 fids.push(iditem);    
             });
             //var store = core.featurestore();

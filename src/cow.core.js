@@ -517,9 +517,11 @@ A Peer is on object containing:
         var myherdmembers = this.getHerdByPeerUid(this.UID).members();
         $.each(this.peers(), function(){
             if (this.position().feature
-                && $.inArray(this.uid, myherdmembers) > -1
-                )
-                collection.features.push(this.position().feature);
+                && $.inArray(this.uid, myherdmembers) > -1){
+                    var feature = this.position().feature; //TODO: adding the owner should happen earlier
+                    feature.properties.owner = this.owner().name;
+                    collection.features.push(this.position().feature);
+                }
         });
         return collection;
     },
