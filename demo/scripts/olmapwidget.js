@@ -56,6 +56,7 @@ $.widget("cow.OlMapWidget", {
 		
 		//openlayers stuff
 		this.map = new OpenLayers.Map("map");
+		tmp = this; //debug
 		var osmlayer = new OpenLayers.Layer.OSM("OpenStreetMap", null, {
 		   transitionEffect: 'resize'
 		});
@@ -234,6 +235,7 @@ $.widget("cow.OlMapWidget", {
 				divid:divid,
 				map: self.map,
 				type: "circle",
+				coolcircles: true,
 				labels: true,
 				labelconfig: {
 					field:"owner",
@@ -243,6 +245,7 @@ $.widget("cow.OlMapWidget", {
 				},
 				style: {
 					fill: "grey",
+					stroke: "steelBlue",
 				}
 			});
 		};
@@ -485,9 +488,14 @@ $.widget("cow.OlMapWidget", {
 				item.feature = feature;
 				item.updated = timestamp;
 				core.featurestore().featureItems({data:item, source: 'user'});
+				
+				self.controls.modify.deactivate();
+				self.controls.select.activate();
+				
 			}
 		);
-		this.controls.select.activate();
+		
+		self.controls.select.activate();
 		/** End of the big bad editlayer **/
 	},
 	
@@ -503,8 +511,8 @@ $.widget("cow.OlMapWidget", {
 		var controls = $('#map').OlMapWidget('getControls');//TODO: give self along with event so we can reach controls
 		controls.modify.mode = OpenLayers.Control.ModifyFeature.RESHAPE;
 		controls.modify.standalone = true;
-		controls.modify.activate();
 		controls.modify.selectFeature(feature);
+		controls.modify.activate();
 	},
 	deletefeature: function(){
 		var feature = core.editLayer.selectedFeatures[0];

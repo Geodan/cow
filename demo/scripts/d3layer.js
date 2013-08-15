@@ -135,6 +135,10 @@ function d3layer(layername, config){
 		    return textLocation;
 		}
 		
+		
+			
+		
+		
 		f.data = function(collection){
 			if (config.maptype == 'OpenLayers')
 				_this.set_svg();
@@ -190,6 +194,29 @@ function d3layer(layername, config){
 								return d.id; 
 					})
 			} //End of new label
+			if (_this.coolcircles){
+			 var coolcircle = newentity.append('g')
+			        .classed('coolcircle',true);
+			 coolcircle.append("circle")
+                  .attr("class", "ring")
+                  .attr("cx",function(d) { return _this.project(d.geometry.coordinates)[0]})
+                  .attr("cy",function(d) { return _this.project(d.geometry.coordinates)[1]})
+                  .attr("r", 100)
+                  .each(_this.styling)
+                  .style("stroke-width", 3)
+                  .style("fill","none")
+                .transition()
+                  .ease("linear")
+                  .duration(1500)
+                  .each(_this.styling)
+                  .style("stroke-opacity", 1e-6)
+                  .style("stroke-width", 1)
+                  .style("fill","none")
+                  .attr("cx",function(d) { return _this.project(d.geometry.coordinates)[0]})
+                  .attr("cy",function(d) { return _this.project(d.geometry.coordinates)[1]})
+                  .attr("r", 6)
+                  .remove();
+            }
 
 			//On update
 			entities.each(function(d,i){
@@ -217,31 +244,6 @@ function d3layer(layername, config){
 			});
 			//On exit	
 			entities.exit().remove().transition().duration(500);
-			
-			/* Markers disabled, need to incorporate in path
-			else if (_this.type == "marker"){
-				//Obs? f.collection = this.collection;
-				loc = g.selectAll("image")
-					.data(collection.features, function(d){return d.id;});
-				 
-				f.feature = loc.enter().append("image")
-				 	.attr("xlink:href", function(d){return d.properties.icon })
-				 	.attr("width", 30)
-				 	.attr("height", 30)
-					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0]})
-					.attr("y",function(d) { return _this.project(d.geometry.coordinates)[1]})
-					//.attr("class",layername)
-					.classed("zoomable",true)
-					.each(_this.styling)
-					
-				locUpdate = loc
-					.transition().duration(100).ease("linear")			
-					.attr("x",function(d) {return _this.project(d.geometry.coordinates)[0]})
-					.attr("y",function(d) { return _this.project(d.geometry.coordinates)[1]})
-					;
-				loc.exit().remove();
-			}
-			*/
 			return f;
         }
 		f.reset = function() {

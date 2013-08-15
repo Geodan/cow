@@ -292,6 +292,9 @@ $.Cow.Peer.prototype = {
         if(payload.position) {
             self.position(payload.position);
         }
+        if(payload.point) {
+            self.position(payload); //TODO: we're receiving the wrong payload. Should be payload.position.point
+        }
         
         self.core.trigger("peerStoreChanged", this.uid);
     },

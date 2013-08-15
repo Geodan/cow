@@ -112,8 +112,6 @@ $.widget("cow.PeersWidget", {
                   z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('#videoplace');
                   z.width(150);
                   z.click(function(evt){
-                      console.log(evt);
-                      tmp = this;
                       $('video').addClass('videobig');
                   });
               });
