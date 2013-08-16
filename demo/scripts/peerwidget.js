@@ -49,7 +49,7 @@ $.widget("cow.PeersWidget", {
             var owner = $(this).attr('owner');
             var peer = core.getPeerByUid(owner);
             var location = peer.position().point;
-            self.core.center({position:location});
+            self.core.center({position:location.coords});
         });
         
         element.delegate('.extent','click', function(){
@@ -215,7 +215,7 @@ $.widget("cow.PeersWidget", {
                         if (peer.video().state === "on")
                             var videostring = '<img class="videoconnection" owner="'+peer.uid+'" src="./css/img/camera.png">';
                         else videostring = '';
-                        if(this.uid==self.core.UID) {
+                        if(peer.uid==self.core.UID) {
                             names = names+ '<div class="peerlist peer me" title="this is you!" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+peer.uid+'" class="location" src="./css/img/crosshair.png"></div>';
                             }
                             else {

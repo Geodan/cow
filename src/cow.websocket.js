@@ -126,7 +126,7 @@ $.Cow.Websocket.prototype = {
     },
     _onError: function(event, error) {
         //alert(error);
-        console.warn('error: ' + event);
+        console.warn('error in websocket connection: ' + event.type);
     },
     sendData: function(data, action, target){
         //TODO: check if data is an object

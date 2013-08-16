@@ -118,7 +118,7 @@ $.Cow.Peer.prototype = {
             this.params.locationFeature = this._point2position(options.point);
         }
         if(this.uid == this.core.UID) {
-            this.core.trigger("meChanged", this.params.locationPoint);
+            this.core.trigger("meChanged", {"point":this.params.locationPoint});
         }
     },
     _position2point: function(pos) {
