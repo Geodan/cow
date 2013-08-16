@@ -43,9 +43,7 @@ $.Cow.Peer.prototype = {
             this.params.viewExtent = options.extent
             this.params.viewFeature = this._bbox2view(options.extent);
         }
-        this.core.trigger("peerStoreChanged", this.uid);
         if(this.uid == this.core.UID) {
-            
             this.core.trigger("meChanged", {"extent":this.view().extent});
         }
     },
@@ -119,7 +117,6 @@ $.Cow.Peer.prototype = {
             this.params.locationPoint = options.point;
             this.params.locationFeature = this._point2position(options.point);
         }
-        this.core.trigger("peerStoreChanged", this.uid);
         if(this.uid == this.core.UID) {
             this.core.trigger("meChanged", this.params.locationPoint);
         }
@@ -157,50 +154,6 @@ $.Cow.Peer.prototype = {
     },
     
     /*
-    herd is an object containing:    
-    -uid: unique ID of the herd, must be unique for ever
-    
-    herd() takes an options object: {uid:#}
-    */
-    /* Obs
-    herd: function(options) {
-        //console.log('herd()');
-        var self = this;
-        switch(arguments.length) {
-        case 0:
-            return this._getHerd();
-        case 1:
-            if (!$.isArray(options)) {                
-                return this._setHerd(options);
-            }
-            else {
-                throw('wrong argument number, only one herd per peer allowed');
-            }
-            break;
-        default:
-            throw('wrong argument number');
-        }
-    },
-    _getHerd: function() {
-        if(this.params.herd === undefined){
-            this.params.herd = {uid:this.core.activeHerd}
-        }
-        //return {uid:uid}
-        return this.params.herd;
-    },
-    _setHerd: function(options){
-        if(options.uid === undefined) {
-            throw "Herd without ID!";
-        }
-        this.params.herd = {uid:options.uid};
-        this.core.trigger("peerStoreChanged", this.uid);
-        if(this.uid == this.core.UID) {
-            this.core.trigger("meChanged", {"herd":this.params.herd});
-            
-        }
-    },
-    */
-    /*
     owner is an object containing:
     -name: the name of the owner
     
@@ -232,7 +185,6 @@ $.Cow.Peer.prototype = {
             options.name = "anonymous";
         }
         this.params.owner = options;
-        this.core.trigger("peerStoreChanged", this.uid);
         if(this.uid == this.core.UID) {
            
             this.core.trigger("meChanged", {"owner":this.params.owner});
@@ -270,7 +222,6 @@ $.Cow.Peer.prototype = {
             options.state = "off";
         }
         this.params.video = options;
-        this.core.trigger("peerStoreChanged", this.uid);
         if(this.uid == this.core.UID) {
             this.core.trigger("meChanged", {"video":this.params.video});
         }

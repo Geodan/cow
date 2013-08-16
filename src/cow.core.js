@@ -411,7 +411,7 @@ When adding herds, those are returned.
                 //Overwrite herd in dbase with new status
                 self.core.localdbase().herdsdb(this);
                 
-                self.core.trigger("peerStoreChanged", self.UID);
+                self.core.trigger("herdListChanged", self.UID);
             }            
         });
         this.herdList = herds;  
