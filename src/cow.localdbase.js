@@ -152,7 +152,7 @@ $.Cow.LocalDbase.prototype = {
 		var d_creation = new Date(item.updated);
         var d_now = new Date();
         var d_diff = (d_now - d_creation)/1000; //(age in seconds)
-        if (!tablename == 666 && !(d_diff > this.options.expirytime)){
+        if (!(tablename == 666 && d_diff > this.options.expirytime)){
             $.indexedDB(this.options.dbname)
                 .objectStore(core.activeherd(),false)
                 .put(newRecord)//Advantage of putting is that we overwrite old features with same key

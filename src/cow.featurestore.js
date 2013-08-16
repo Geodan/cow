@@ -354,10 +354,11 @@ When adding items, those are returned.
 	},
 	*/
 	/**
-	compareIdList - compares incoming fidlist with fidlist from current stack based on timestamp and status
+	syncFids - compares incoming fidlist with fidlist from current stack based on timestamp and status
 					generates 2 lists: requestlist and pushlist
 	**/
-	compareIdList: function(fidlist){
+	syncFids: function(payload,uid){
+	    var fidlist = payload.fids;
 		var syncMessage = {};
 		var copyof_rem_list = [];
 		syncMessage.requestlist = [];
@@ -397,6 +398,27 @@ When adding items, those are returned.
 		$.each(copyof_rem_list, function(i,val){
 			syncMessage.requestlist.push(val);	
 		});
-		return syncMessage;
+		var data = syncMessage; //TODO, remove artefacts of merging websocket code
+		var message = {};
+        //First the requestlist
+        message.requestlist = data.requestlist;
+        message.pushlist = []; //empty
+        message.storename = payload.storename;
+        self.core.websocket().sendData(message,'syncPeer',uid);
+        //Now the pushlist bit by bit
+        message.requestlist = []; //empty
+        var i = 0;
+        $.each(data.pushlist, function(id, item){
+                message.pushlist.push(item);
+                i++;
+                if (i >= 1) { //max 1 feat every time
+                    i = 0;
+                    self.core.websocket().sendData(message,'syncPeer',uid);
+                    message.pushlist = []; //empty
+                }
+        });
+        //sent the remainder of the list
+        if (i > 0)
+            self.core.websocket().sendData(message,'syncPeer',uid);
 	}
 };

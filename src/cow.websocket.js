@@ -254,28 +254,7 @@ $.Cow.Websocket.prototype = {
         //if (this._amIAlpha(0, payload.storename)){ //Check wether I'm alpha 
             //console.log('I am alpha');
             if (self.core.activeherd() == payload.storename){
-                var data = this.core.featurestore().compareIdList(payload.fids);
-                var message = {};
-                //First the requestlist
-                message.requestlist = data.requestlist;
-                message.pushlist = []; //empty
-                message.storename = payload.storename;
-                this.sendData(message,'syncPeer',uid);
-                //Now the pushlist bit by bit
-                message.requestlist = []; //empty
-                var i = 0;
-                $.each(data.pushlist, function(id, item){
-                        message.pushlist.push(item);
-                        i++;
-                        if (i >= 1) { //max 1 feat every time
-                            i = 0;
-                            self.sendData(message,'syncPeer',uid);
-                            message.pushlist = []; //empty
-                        }
-                });
-                //sent the remainder of the list
-                if (i > 0)
-                    this.sendData(message,'syncPeer',uid);
+                this.core.featurestore().syncFids(payload,uid);
             }
         //}
     },
