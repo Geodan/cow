@@ -85,12 +85,14 @@ $.Cow.LocalDbase.prototype = {
     
     _getFeatures: function(){
         var core = this.core;
+        var self = this;
 		this.storeOptions = {
             "autoIncrement" : false,
             "keyPath": "key"
 		};
 		var tablename = core.activeherd();
 		var dbname = this.options.dbname;
+		var expirytime = this.options.expirytime;
 		var myFeatureList = [];
 		var fids = [];
 		var iteration = $.indexedDB(dbname)
@@ -98,14 +100,18 @@ $.Cow.LocalDbase.prototype = {
 		    .each(function(elem){
                 //array for use in map
                 var item = new Object();
-                item.key 	= elem.value.key 	
-                item.uid 	= elem.value.uid 	
-                item.created = elem.value.created 
-                item.updated = elem.value.updated
-                item.status = elem.value.status 
-                item.feature	= elem.value.feature
+                item.key 	 = elem.value.key; 	
+                item.uid 	 = elem.value.uid; 	
+                item.created = elem.value.created; 
+                item.updated = elem.value.updated;
+                item.status  = elem.value.status; 
+                item.feature = elem.value.feature;
+                var d_creation = new Date(item.updated)
+                var d_now = new Date();
+                var d_diff = (d_now - d_creation)/1000; //(age in seconds)
                 
-                if (item.feature.properties && item.feature.properties.key){
+                if (item.feature.properties && item.feature.properties.key
+                    && !(tablename == 666 && d_diff > expirytime)){
                     core.featurestore().featureItems({data: item, source: 'db'});
                     var iditem = {};
                     iditem.key = item.key;
@@ -113,6 +119,9 @@ $.Cow.LocalDbase.prototype = {
                     iditem.status = item.status;
                     fids.push(iditem);
                     //myFeatureList.push(item);
+                }
+                else { //We can safely remove items that are over their expiry date
+                    self._removeFeature(item.key);
                 }
             });    
 		iteration.done(function(){
@@ -132,6 +141,7 @@ $.Cow.LocalDbase.prototype = {
     
     _addFeature: function(item){
         var core = this.core;
+        var tablename = core.activeherd();
 		var newRecord = {};
 		newRecord.key = item.key;
 		newRecord.uid = item.uid;
@@ -139,16 +149,22 @@ $.Cow.LocalDbase.prototype = {
 		newRecord.updated = item.updated;
 		newRecord.status = item.status;
 		newRecord.feature = item.feature;
-		$.indexedDB(this.options.dbname)
-		    .objectStore(core.activeherd(),false)
-		    .put(newRecord)//Advantage of putting is that we overwrite old features with same key
-		    .fail(function(error){
-		            console.warn('Fail! ' + error);
-		    });
+		var d_creation = new Date(item.updated);
+        var d_now = new Date();
+        var d_diff = (d_now - d_creation)/1000; //(age in seconds)
+        if (!tablename == 666 && !(d_diff > this.options.expirytime)){
+            $.indexedDB(this.options.dbname)
+                .objectStore(core.activeherd(),false)
+                .put(newRecord)//Advantage of putting is that we overwrite old features with same key
+                .fail(function(error){
+                        console.warn('Fail! ' + error);
+                });
+        }
     },
     
-    removefeature: function(fid) {
-        //This will never happen...
+    _removeFeature: function(fid) {
+        $.indexedDB(this.options.dbname)
+		    .objectStore(core.activeherd(),false)["delete"](fid);
     },
 }
 

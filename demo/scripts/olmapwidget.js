@@ -356,12 +356,16 @@ $.widget("cow.OlMapWidget", {
 					var feature = evt.feature;
 					var name = feature.properties.name || "";
 					var desc = feature.properties.desc || "";
+					var creator = feature.properties.creator || "unknown";
+					var owner = feature.properties.owner || "unknown";
 					var innerHtml = ''
 						//+'<input onBlur="">Title<br>'
 						//+'<textarea></textarea><br>'
 						//+ 'You can remove or change this feature using the buttons below<br/>'
 						+ 'Label: <input id="titlefld" name="name" value ="'+name+'""><br/>'
 						+ 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+						+ '<small>Created by: <i>'+ creator + '</i></small><br>'
+						+ '<small>Last edit by: <i>'+ owner + '</i></small><br>'
 						+ '<button class="popupbutton" id="editButton">edit</button><br>'
 						+ '<button class="popupbutton" id="deleteButton"">delete</button>'
 						+ '<button class="popupbutton" id="closeButton"">Done</button>';
@@ -466,9 +470,12 @@ $.widget("cow.OlMapWidget", {
                 item.key = self.core.UID + "#" + timestamp;
                 feature.properties.key = item.key;
                 feature.properties.store = self.core.activeherd();
+                feature.properties.creator = self.core.me().owner().name;
+                feature.properties.owner = self.core.me().owner().name;
                 item.uid = self.core.UID;
                 item.created = timestamp;
                 item.updated = timestamp;
+                
                 item.status = '';
                 item.feature = feature;
 				core.featurestore().featureItems({data: item, source: 'user'});
@@ -506,6 +513,7 @@ $.widget("cow.OlMapWidget", {
 		var feature = core.editLayer.selectedFeatures[0];
 		feature.attributes.name = document.getElementById('titlefld').value; //TODO. Yuck, yuck yuck....
 		feature.attributes.desc = document.getElementById('descfld').value;
+		feature.attributes.owner = self.core.me().owner().name;
 		if (feature.popup) 
 			feature.popup.destroy();
 		var controls = $('#map').OlMapWidget('getControls');//TODO: give self along with event so we can reach controls
@@ -528,6 +536,7 @@ $.widget("cow.OlMapWidget", {
 		var feature = core.editLayer.selectedFeatures[0];
 		feature.attributes.name = document.getElementById('titlefld').value; //TODO. Yuck, yuck yuck....
 		feature.attributes.desc = document.getElementById('descfld').value;
+		feature.attributes.owner = self.core.me().owner().name;
 		if (feature.popup){
 			//core.map.removePopup(feature.popup);
 			feature.popup.destroy(); //we have to destroy since the next line triggers a reload of all features

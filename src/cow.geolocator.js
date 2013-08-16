@@ -24,8 +24,13 @@ $.Cow.GeoLocator.prototype = {
 				position.coords.time = new Date().getTime();
 				
 				var point = {point: position.coords};
-				
-				self.core.me().position(point);
+				//Only update my position when my coords changed or maximum age exceeded
+				if (this.prevPosition
+				    && this.prevPosition.latitude != position.coords.latitude 
+				    && this.prevPosition.longitude != position.coords.longitude){
+				    self.core.me().position(point);
+				}
+				this.prevPosition = position.coords;
 				//peer.events.trigger('mylocationChange', [payload]);
 				//self.core.trigger('mylocationChange', [payload]);
 			}
@@ -49,18 +54,18 @@ $.Cow.GeoLocator.prototype = {
 		console.warn(innerHTML);
 	},
 	_setGeoLocation: function(){
-		//console.log('Start polling geolocation');
+		console.log('Start polling geolocation');
 		var geolocationid = window.navigator.geolocation.watchPosition( 
 			this._showPosition, 
 			this._showError, 
 			{
-				enableHighAccuracy: true,
-				timeout: 10000,
-  				maximumAge: 5000
+				enableHighAccuracy: true, //Wether or not to make use of GPS
+				timeout: 10000, //Maximum time allowed to get a fix
+  				maximumAge: 5000 //Maximum age allowed to use a cached position
 			} 
 		);
 		window.setTimeout( function () {
-				//console.log('Stop polling geolocation');
+				console.log('Stop polling geolocation');
 				window.navigator.geolocation.clearWatch( geolocationid ) 
 			}, 
 			5000 //stop checking after 5 seconds
@@ -72,11 +77,11 @@ $.Cow.GeoLocator.prototype = {
 		if (navigator.geolocation)
 		{
 			this._setGeoLocation();//first one
-			/*window.setInterval( function () {
+			window.setInterval( function () {
 				self._setGeoLocation();
 				}, 
 				10000 //check every 10 seconds
-			);*/
+			);
 		}
 	  else{alert("Geolocation is not supported by this browser.")}
 	}

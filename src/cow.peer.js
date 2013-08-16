@@ -121,7 +121,6 @@ $.Cow.Peer.prototype = {
         }
         this.core.trigger("peerStoreChanged", this.uid);
         if(this.uid == this.core.UID) {
-            
             this.core.trigger("meChanged", {"point":this.params.locationPoint});
         }
     },

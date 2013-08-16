@@ -157,6 +157,8 @@ $.Cow.LocalDbase = function(core, options) {
     this.core = core;
     this.options = options;
     this.options.dbname = "cow";
+    this.options.expirytime = 1 * 1 * 60 * 60;
+    //this.options.expirytime = 7 * 24 * 60 * 60; // Features in sketch are nog loaded anymore after a week
     var herds = self.herdsdb();//Herds are initialized from localdb
     var features = self.featuresdb(); //features are initialized from localdb
 }
