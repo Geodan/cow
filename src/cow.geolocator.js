@@ -5,34 +5,26 @@ getLocation - starts location polling and triggers a newlocation event
 ***/
 $.Cow.GeoLocator.prototype = {
 	self: null,
+	//TT: Need to parse the nsidom_obj for some reason i forgot...
 	_parsePosition: function(nsidom_obj){
 		var position = {};
 		position.coords = {};
 		position.coords.longitude = nsidom_obj.coords.longitude;
 		position.coords.latitude = nsidom_obj.coords.latitude;
-		position.timestamp = nsidom_obj.timestamp;
+		position.time = nsidom_obj.timestamp;
 		return position;
 	},
 	_showPosition: function(position){
 			position = self._parsePosition(position);
 			//console.log('locationChange');
-			var peer = self.core.me();
-			if (peer) {
-				var payload = {};
-				payload.uid = self.core.UID;
-				payload.position = position;
-				position.coords.time = new Date().getTime();
-				
-				var point = {point: position.coords};
+			var me = self.core.me();
+			if (me) {
 				//Only update my position when my coords changed or maximum age exceeded
-				if (this.prevPosition
-				    && this.prevPosition.latitude != position.coords.latitude 
-				    && this.prevPosition.longitude != position.coords.longitude){
-				    self.core.me().position(point);
+				//TODO: make a proper distance check
+				if (JSON.stringify(this.prevPosition) != JSON.stringify(position.coords)){ 
+				    me.position({point:position});
 				}
 				this.prevPosition = position.coords;
-				//peer.events.trigger('mylocationChange', [payload]);
-				//self.core.trigger('mylocationChange', [payload]);
 			}
 	},
 	_showError: function(error){

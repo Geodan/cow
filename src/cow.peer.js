@@ -27,7 +27,7 @@ $.Cow.Peer.prototype = {
     },
     //internal, use .view()
     _getView: function() {
-        var _view = {};
+        var _view =     {};
         _view.feature = this.params.viewFeature;
         _view.extent = this.params.viewExtent;
         return _view;
@@ -121,7 +121,7 @@ $.Cow.Peer.prototype = {
         }
         this.core.trigger("peerStoreChanged", this.uid);
         if(this.uid == this.core.UID) {
-            this.core.trigger("meChanged", {"point":this.params.locationPoint});
+            this.core.trigger("meChanged", this.params.locationPoint);
         }
     },
     _position2point: function(pos) {
@@ -148,7 +148,7 @@ $.Cow.Peer.prototype = {
             "type": "Feature",
             "geometry": {
                 "type": "Point",
-                "coordinates": [ point.longitude,point.latitude
+                "coordinates": [ point.coords.longitude,point.coords.latitude
                 ]
             },
             "properties": attributes
@@ -288,8 +288,8 @@ $.Cow.Peer.prototype = {
         if (payload.extent) {
             self.view({extent: payload.extent});
         }
-        if(payload.position) {
-            self.position(payload.position);
+        if(payload.point) {
+            self.position(payload);
         }
         if(payload.point) {
             self.position(payload); //TODO: we're receiving the wrong payload. Should be payload.position.point
