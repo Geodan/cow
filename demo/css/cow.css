@@ -148,27 +148,30 @@ padding: 2px;
 .map {
 	border: solid 1px #555753;
 	background: white;
-	position: absolute;
+	position: relative;
 	bottom: 0px;
-	top: 20px;
+	top: 0px;
 	left: 0px;
 	right: 0px;
 }
 #top {
-	position: absolute;
+	position: relative;
 	width: 100%;
 	right: 0px;
-	height:20px;
+	height:30px;
 	top: 0px;
 	left: 0px;
 	background: #eeeeec;
-	float: right;
+	float: left;
 	font-size: 10pt;
 }
 .welcome {
 	float: right;
 	margin-right: 5px;
-	
+}
+.header_right {
+    float: right;
+    padding: 10px;
 }
 .welcome input {
 	background: none;
@@ -178,6 +181,7 @@ padding: 2px;
 	color: #f57900;
 	font-size: 10pt;
 }
+
 .olControlAttribution  {
 	background: white;
 	padding: 2px;

@@ -56,7 +56,7 @@ $.widget("cow.OlMapWidget", {
 		
 		//openlayers stuff
 		this.map = new OpenLayers.Map("map");
-		tmp = this; //debug
+
 		var osmlayer = new OpenLayers.Layer.OSM("OpenStreetMap", null, {
 		   transitionEffect: 'resize'
 		});
@@ -200,6 +200,42 @@ $.widget("cow.OlMapWidget", {
 	
 	_createLayers: function(map) {
 		var self = this;
+		/* Testje met topojson data
+		var roadlayer  = new OpenLayers.Layer.Vector('Roadlayer');
+		roadlayer.afterAdd = function () {
+			var divid = roadlayer.div.id;
+			self.roadlayer = new d3layer("roadlayer",{
+				maptype: "OpenLayers",
+				divid:divid,
+				map: self.map,
+				type: "path",
+				labels: true,
+				labelconfig: {
+					field: "route",
+					style: {
+					    stroke: "steelBlue"
+					}
+				},
+				style: {
+					fill: "none",
+					stroke: "steelBlue",
+					'stroke-width': 2,
+					textlocation: "ul"
+				}
+			});
+			
+			d3.json("/main/d3test/data/nwb_hoofdwegen_topo.json", function(error, roads) {
+			//d3.json("/main/d3test/uk.json", function(error, roads) {
+			        console.log(error);
+			        var data = topojson.feature(roads, roads.objects.hoofdwegen);
+			        self.roadlayer.data(data);
+			});
+			
+		};
+		map.addLayer(roadlayer);
+		*/
+		
+		
 		var myd3layer = new OpenLayers.Layer.Vector('Extents layer');
 		// Add the container when the overlay is added to the map.
 		myd3layer.afterAdd = function () {
