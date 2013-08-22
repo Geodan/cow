@@ -121,7 +121,7 @@ $.Cow.LocalDbase.prototype = {
                     //myFeatureList.push(item);
                 }
                 else { //We can safely remove items that are over their expiry date
-                    self._removeFeature(item.key);
+                    self.removeFeature(item.key);
                 }
             });    
 		iteration.done(function(){
@@ -162,7 +162,7 @@ $.Cow.LocalDbase.prototype = {
         }
     },
     
-    _removeFeature: function(fid) {
+    removeFeature: function(fid) {
         $.indexedDB(this.options.dbname)
 		    .objectStore(core.activeherd(),false)["delete"](fid);
     },
