@@ -155,11 +155,11 @@ padding: 2px;
 	right: 0px;
 }
 #top {
-	position: relative;
+	position: absolute;
 	width: 100%;
 	right: 0px;
 	height:30px;
-	top: 0px;
+	top: 57px;
 	left: 0px;
 	background: #eeeeec;
 	float: left;

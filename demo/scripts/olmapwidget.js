@@ -564,7 +564,7 @@ $.widget("cow.OlMapWidget", {
 			feature.popup.destroy();
 		var key = feature.properties.key;
 		if (core.activeherd() == feature.properties.store){
-		    core.featurestore().removeItem(key);
+		    core.featurestore().removeFeatureItem(key);
 		    core.trigger('storeChanged');
 		}
 	},

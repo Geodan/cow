@@ -71,81 +71,13 @@ $.Cow.FeatureStore.prototype = {
         return item;
     },
     
-    syncFids: function(fids) {
-    },
-    /**
-        Deprecated functions
-    */
-	/**
-##featurestore.items([options])
-###**Description**: get/set the items of the cow
-
-**options** an object of key-value pairs with options to create one or
-more items
-
->Returns: [item] (array of Cow.Item) _or_ false
-
-The `.items()` method allows us to attach items to a cow object. It takes
-an options object with item options. To add multiple items, create an array of
-item options objects. If an options object is given, it will return the
-resulting item(s). We can also use it to retrieve all items currently attached
-to the cow.
-
-When adding items, those are returned. 
-
-*/
-	items: function(options) {
-		var self = this;
-		switch(arguments.length) {
-        case 0:
-            return this._getItems();
-        case 1:
-            if (!$.isArray(options)) {
-                return this._addItem(options);
-            }
-            else {
-				return $.core(options, function(item) {
-                    return self._addItem(item);
-                })
-            }
-            break;
-        default:
-            throw('wrong argument number');
-        }
-	},
-	_getItems: function() {
-        var items = [];
-        $.each(this.itemList, function(id, item) {
-            items.push(item);
-        });        
-        return items;
-    },
-	_addItem: function(options) {
-		var items = this.items();
-		var newitem = {"options": options};
-		this.itemList.push(newitem);
-		return newitem;
-	},
-	
-	getItemByIid: function(iid) {
-		var items = this.items();
-		var item;
-		$.each(items, function(i, obj){
-			if(obj.options.key == iid) {			
-				item = obj.options;
-			}			
-		});
-		return item;
-	},
 	/**
 	##cow.removeItem(iid)
 	###**Description**: removes the specific item from the list of items
 	*/
-	removeItem: function(iid) {
-		
-		var items = this.items();
+	removeFeatureItem: function(iid) {
 		var delItem;
-		$.each(items, function(i, item){
+		$.each(this.featureItems(), function(i, item){
 			if (item.options.key == iid){
 				var d = new Date();
 				var timestamp = d.getTime();
@@ -163,6 +95,7 @@ When adding items, those are returned.
 		});
 		self.core.trigger('storeChanged');
 	},
+
 	removeAllFeatureItems: function(){
 	    this.itemList = [];
 	},
@@ -170,7 +103,7 @@ When adding items, those are returned.
 	//find features corresponding to request and send
 	requestFeatures: function(fidlist){
 		var pushlist = [];
-		$.each(this.items(), function(i, item){
+		$.each(this.featureItems(), function(i, item){
 				var local_feature = item.options;
 				$.each(fidlist, function(j,rem_val){
 						if (rem_val == local_feature.key)
@@ -196,7 +129,7 @@ When adding items, those are returned.
 				if (val.status != 'deleted')
 					copyof_rem_list.push(val.key);	
 			});
-			$.each(this.items(), function(i,loc_val){
+			$.each(this.featureItems(), function(i,loc_val){
 					var local_item = loc_val.options;
 					var found = -1;
 					$.each(fidlist, function(j,rem_val){

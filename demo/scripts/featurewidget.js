@@ -30,7 +30,7 @@ $.widget("cow.FeaturesWidget", {
 		 
 		element.delegate('.owner','click', function(){
 			var key = $(this).attr('owner');
-			self.core.featurestore().removeItem(key);
+			self.core.featurestore().removeFeatureItem(key);
 			self.core.trigger('storeChanged');
 			//controls.select.activate();
 			//TODO TT: auw, we moeten een fid proberen toe te kennen
