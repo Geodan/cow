@@ -8,6 +8,16 @@ bottom: 0;
 font: arial 16px;
 overflow: hidden;
 }
+#fullscreen {
+    width: 2.4em;
+    height: 2.4em;
+    position: absolute;
+    right: 1em;
+    top: 1em;
+    border-radius: .2em;
+    background:rgba(255,255,255,.8) url('img/fullscreen.png') no-repeat center center;
+    border: 1px solid #babdb6;
+}
 #infobar {
     position: absolute;
     left: -0.3em;
@@ -16,6 +26,19 @@ overflow: hidden;
     display: flex;
     bottom: 3em;
     overflow: hidden;
+}
+.drawbtn {
+    width: 2em;
+    height: 2em;
+     border-radius: .2em;
+      border: 1px solid #babdb6;
+      display: inline-block;
+      margin: 0.2em;
+      background: no-repeat center center;
+      
+}
+.drawbtn > img {
+padding: 2px;
 }
 #left {
     width: 1.8em;
@@ -48,6 +71,7 @@ overflow: hidden;
     height: 2.4em;
     order: 3;    
     flex: 1;
+    overflow: hidden;
     border-top: 1px solid #babdb6;
     border-bottom: 1px solid #babdb6;
     border-left: 1px solid #babdb6;    
@@ -55,6 +79,27 @@ overflow: hidden;
     border-bottom-left-radius: .2em;
 
     background: rgba(255,255,255,.8) ;
+}
+#rightname {    
+    height: 2.2em;
+    order: 3;
+    flex: 1;
+    
+}
+ .nametext {
+order: 2;
+height: 1.4em;
+padding-top: 0.7em;
+max-width: 5.2em;
+flex: 1;
+}
+}
+  }
+#rightname .ui-input-text {
+    margin-right: 0.5em;
+}
+.gone {
+    display: none;
 }
 .small {
     width: 2.4em !important;
@@ -125,6 +170,7 @@ overflow: hidden;
     order: 1;
     flex: 1;
   }
+ 
   .icon {
     height: 2em;
     width: 2.4em;
@@ -155,17 +201,21 @@ overflow: hidden;
     background: rgba(238,238,236,.9);
   }
   #statusicon {
+    order: 1;
     border-radius: 50%;
     width: .7em;
     height: .7em;
     margin-top: 0.9em;
     margin-left: 0.5em;
+    margin-right: 0.5em;
+    margin-bottom: 0.9em;
     display: inline-block;
      -webkit-animation: button_pulse 2s infinite ease-out;
     -moz-animation: button_pulse 2s infinite ease-out;
     -ms-animation: button_pulse 2s infinite ease-out;
     -o-animation: button_pulse 2s infinite ease-out;
     animation: button_pulse 2s infinite ease-out;
+    cursor: pointer;
   }
   .down {
     
