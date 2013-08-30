@@ -15,6 +15,7 @@ $.Cow.GeoLocator.prototype = {
 		return position;
 	},
 	_showPosition: function(position){
+	        window.navigator.geolocation.clearWatch( self.geolocationid );
 			position = self._parsePosition(position);
 			//console.log('locationChange');
 			var me = self.core.me();
@@ -47,7 +48,7 @@ $.Cow.GeoLocator.prototype = {
 	},
 	_setGeoLocation: function(){
 		//console.log('Start polling geolocation');
-		var geolocationid = window.navigator.geolocation.watchPosition( 
+		self.geolocationid = window.navigator.geolocation.watchPosition( 
 			this._showPosition, 
 			this._showError, 
 			{
@@ -58,7 +59,7 @@ $.Cow.GeoLocator.prototype = {
 		);
 		window.setTimeout( function () {
 				//console.log('Stop polling geolocation');
-				window.navigator.geolocation.clearWatch( geolocationid ) 
+				window.navigator.geolocation.clearWatch( self.geolocationid ) 
 			}, 
 			5000 //stop checking after 5 seconds
 		);
