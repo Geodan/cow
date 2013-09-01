@@ -24,6 +24,7 @@ $.Cow.Core = function(element, options) {
     this.ws ={};
     this.peerList = [];
     this.herdList = [];
+    this._username = 'Anonymous';
     this.activeHerd = 666; //Carefull, order matters! Make sure the activeHerd is set before localdbase is initialized
     this.localDbase;
     this.geoLocator;
@@ -54,10 +55,7 @@ $.Cow.Core = function(element, options) {
         self.activeherd(uid);
         self.options.storename = "store_"+uid; //TODO: the link between activeHerd and storename can be better
         var features = self.localdbase().featuresdb();//Fill featurestore with what we have
-    });
-    
-    
-    
+    });    
 };
 /**
 #Cow.Websocket
@@ -201,6 +199,20 @@ $.Cow.Core.prototype = {
     me: function(){
         var peer = this.getPeerByUid(this.UID);    
         return peer;
+    },
+    username: function(name){
+        switch(arguments.length) {
+        case 0:
+            return this._username;
+        case 1:
+            this._username = name;
+            //Set username in page
+            $('#myname')[0].value = name;
+            //Change username in my peerobject
+            if (this.me()){
+                this.me().owner({name:name});
+            }
+        }
     },
     
     activeherd: function(options) {

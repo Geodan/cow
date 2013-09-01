@@ -36,12 +36,15 @@ $.widget("cow.MonitorWidget", {
         var core;
         var self = this;
         var element = this.element;
-
+        this.beats = 0;
         core = $(this.options.core).data('cow');
         core.bind("ws-connected", {widget: self}, self._onConnect);
         core.bind("ws-disconnected", {widget: self}, self._onDisConnect);
-        core.bind("peerStoreChanged",{widget: self},self._onPeerInfo);
+        core.bind("ws-peerInfo",{widget: self},self._onPeerInfo);
+        core.bind("ws-newPeer",{widget: self},self._onPeerInfo);
         core.bind("ws-peerGone",{widget: self},self._onPeerGone);
+        
+                
         
 		element.html("<div id='nodemap'></div><div id='heartbeat'><svg></svg></div>");
 		//Init nodemap
@@ -72,7 +75,7 @@ $.widget("cow.MonitorWidget", {
        });
         
 		
-		self.beats = 0;
+		
 		self.heartbeats(1);
 		window.setInterval(function(){
             self.heartbeats(self.beats);
@@ -90,28 +93,42 @@ $.widget("cow.MonitorWidget", {
     },
 	_onConnect: function(evt) {
 		var self = evt.data.widget;
-        var element = self.element;
-        self.nodemap.addNode(core.UID);
-		core.peers().forEach(function(peer){
-		        self.nodemap.addNode(peer.uid);
-		        //self.nodemap.addLink(peer.uid, core.UID, 1);
+		var socketnode = {"id":'Socket', name: 'Socket'};
+		self.nodemap.addNode(socketnode);
+		
+		//Everytime we connect, create a new listener to the ws element (because the old listener died with the ws)
+        core.websocket().ws.addEventListener("message",function(evt){
+          var data = JSON.parse(evt.data);
+          //Add heartbeat info
+          self.beats = self.beats + evt.data.length;
+          
+          //Show how the data prolongates in nodemap
+          var socketnode = {"id":'Socket','name':'Socket'};
+          self.nodemap.updateLink(data.uid);
+        });  
+		
+	},
+	_onPeerInfo: function(evt){
+	    var self = evt.data.widget;
+	    core.peers().forEach(function(peer){
+	       var node = {id: "peer" + peer.uid, name: peer.owner().name};
+	       self.nodemap.addNode(node);
 		});
+		self.nodemap.start();
 	},
 	_onDisConnect: function(evt) {
 		var self = evt.data.widget;
-        var element = self.element;
+		self.nodemap.clearNodes();
+		self.nodemap.start();
 	},
-	_onPeerInfo: function(evt) {
+	_onPeerGone: function(evt, x){
 	    var self = evt.data.widget;
-	    self.beats = self.beats + 5;
+	    self.nodemap.clearNodes();
 	    core.peers().forEach(function(peer){
-		        self.nodemap.addNode(peer.uid);
-		        //self.nodemap.addLink(peer.uid, core.UID, 1);
-		        
+	       var node = {id: "peer" + peer.uid, name: peer.owner().name};
+	       self.nodemap.addNode(node);
 		});
-	},
-	_onPeerGone: function(evt){
-	    console.log(evt);
+		self.nodemap.start();
 	}
 	});
 })(jQuery);

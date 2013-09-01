@@ -25,7 +25,7 @@ $.Cow.LocalDbase.prototype = {
 		    .objectStore("herds",storeOptions);
     },
     herdsdb: function(options) {
-        var self = this;
+        
 		switch(arguments.length) {
         case 0:
             return this._getHerds();
@@ -49,6 +49,7 @@ $.Cow.LocalDbase.prototype = {
          return herd;
     },
     _getHerds: function() {
+        var self = this;
         var storeOptions = {
             "autoIncrement" : false,
             "keyPath": "uid"
