@@ -61,13 +61,14 @@ function nodeMap(el) {
       nodeEnter.append("circle")
         .attr("class", "circle")
         .attr("class", function(d) { return "node " + d.id; })
+        .attr("id",function(d) { return d.id;})
         .attr("r", 8);
       nodeEnter.append("text")
         .attr("class", "nodetext")
         .attr("dx", 12)
         .attr("dy", ".35em")
         .text(function(d) {return d.name});
-      tmp = node;
+      
       node.selectAll('.nodetext').text(function(d){return d.name;});
       node.exit().remove();
       //d3.timer(force.resume);
@@ -104,8 +105,10 @@ function nodeMap(el) {
     var addNode = function(data){
         var isnew = true;
         nodes.forEach(function(node){
-            if (node.id == data.id) isnew = false;
-            node = data;
+            if (node.id == data.id){
+                isnew = false;
+                node.name = data.name;
+            }
         });
         if (isnew){
             nodes.push(data);
@@ -127,6 +130,17 @@ function nodeMap(el) {
         });
     }
     this.removeNode = removeNode;
+    
+    var updateNode = function(uid){
+        var node = d3.select('circle#peer' + uid);
+        if (node.length > 0){
+            node.style('fill','red')
+            .transition().duration(1000)
+            .style('fill','#dddddd')
+            ;
+        }
+    }
+    this.updateNode = updateNode;
     
     var updateLink = function(uid){
         var line = d3.select('line#peer' + uid);

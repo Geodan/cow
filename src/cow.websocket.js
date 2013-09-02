@@ -303,7 +303,7 @@ $.Cow.Websocket.prototype = {
         var newCid = payload.newCid;        
         this.core.removePeer(peerGone);        
         this.core.me().options.cid = newCid;
-        this.core.trigger('ws-peerGone'); //this.core.trigger('peerGinfromone',payload);    
+        this.core.trigger('ws-peerGone',payload); //this.core.trigger('peerGinfromone',payload);    
         var message = {};
         message.uid = this.core.me().uid;
         message.connectionID = this.core.me().options.cid;
@@ -324,6 +324,7 @@ $.Cow.Websocket.prototype = {
         var peer = this.core.getPeerByUid(uid);
         if(peer !== undefined) {
             peer.events.trigger('ws-updatePeer',payload);
+            this.core.trigger('ws-updatePeer',payload);
         }
         else console.warn('badpeer '+uid);
     },

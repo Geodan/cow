@@ -18,7 +18,7 @@ $.widget("cow.MonitorWidget", {
     _getHeartbeats: function() {
         var data = [
             {
-                "key": "Heartbeat",
+                "key": "Activity",
                 "values":  this._beats
             }
         ];
@@ -35,6 +35,7 @@ $.widget("cow.MonitorWidget", {
     _create: function() {
         var core;
         var self = this;
+        this.events = $({});
         var element = this.element;
         this.beats = 0;
         core = $(this.options.core).data('cow');
@@ -43,7 +44,7 @@ $.widget("cow.MonitorWidget", {
         core.bind("ws-peerInfo",{widget: self},self._onPeerInfo);
         core.bind("ws-newPeer",{widget: self},self._onPeerInfo);
         core.bind("ws-peerGone",{widget: self},self._onPeerGone);
-        
+        core.bind("peerStoreChanged",{widget: self},self._onPeerUpdate);
                 
         
 		element.html("<div id='nodemap'></div><div id='heartbeat'><svg></svg></div>");
@@ -83,7 +84,7 @@ $.widget("cow.MonitorWidget", {
             d3.select('#heartbeat svg').datum(self.heartbeats())
 				.transition().duration(100)
 				.call(self.chart);
-		},10000);
+		},2000);
 		
     },
     _destroy: function() {
@@ -105,6 +106,9 @@ $.widget("cow.MonitorWidget", {
           //Show how the data prolongates in nodemap
           var socketnode = {"id":'Socket','name':'Socket'};
           self.nodemap.updateLink(data.uid);
+          self.nodemap.updateNode(data.uid);
+          tmp = self.nodemap;
+          //
         });  
 		
 	},
@@ -115,6 +119,16 @@ $.widget("cow.MonitorWidget", {
 	       self.nodemap.addNode(node);
 		});
 		self.nodemap.start();
+	},
+	_onPeerUpdate: function(evt,payload){
+	    var self = evt.data.widget;
+	    var uid = payload.uid;
+	    core.peers().forEach(function(peer){
+	       var node = {id: "peer" + peer.uid, name: peer.owner().name};
+	       self.nodemap.addNode(node);
+		});
+		self.nodemap.start();
+	    
 	},
 	_onDisConnect: function(evt) {
 		var self = evt.data.widget;
