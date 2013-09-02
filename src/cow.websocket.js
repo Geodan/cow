@@ -143,7 +143,8 @@ $.Cow.Websocket.prototype = {
         var self = this;
         console.log('onConnect');
        
-        var name = $('#'+this.core.options.namefield).val();
+        //var name = $('#'+this.core.options.namefield).val();
+        var name = self.core.username();
        
         var options = {};
        

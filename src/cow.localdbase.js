@@ -1,5 +1,3 @@
-/** TODO: complete rewrite **/
-
 /**Thanks to jquery-indexeddb.js:
 https://github.com/axemclion/jquery-indexeddb/blob/gh-pages/docs/README.md
 **/
@@ -7,11 +5,7 @@ https://github.com/axemclion/jquery-indexeddb/blob/gh-pages/docs/README.md
 
 //var localdbase = {
 $.Cow.LocalDbase.prototype = {
-    /**
-        New functions, not yet implemented
-    */
-
-    _init: function(){
+   _init: function(){
         //Init herds db
         var storeOptions = {
             "autoIncrement" : false,
@@ -157,10 +151,13 @@ $.Cow.LocalDbase.prototype = {
             $.indexedDB(this.options.dbname)
                 .objectStore(core.activeherd(),false)
                 .put(newRecord)//Advantage of putting is that we overwrite old features with same key
-                .fail(function(error){
-                        console.warn('Fail! ' + error);
+                .then(function(){
+                    //console.log("Data added");
+                }, function(e){
+                    console.log("Error adding data " + e);
                 });
         }
+        
     },
     
     removeFeature: function(fid) {
