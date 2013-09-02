@@ -45,8 +45,8 @@ $.widget("cow.NewFeatureWidget", {
              $('#infopanel').hide('slide', {direction: 'down'},300);
         });
         
-        
-        element.append('<div class="points"></div>');
+        element.append('<div class="drawobjects">Click on one of the symbols to draw it on the map</div>');
+        element.append('<div class="points drawobjects"></div>');
         $.getJSON('./mapicons/imoov/list.js', function(data) {
             
             $.each(data.icons, function(key,val) {
@@ -54,21 +54,21 @@ $.widget("cow.NewFeatureWidget", {
                 element.find('.points').append('<span class=" drawbtn  newpoint" newpoint="./mapicons/' + val + '"><img width=30 height=30 src="./mapicons/'+val+'"></span>');
             });
         });
-        element.append('<div class="lines"></div>');
+        element.append('<div class="lines drawobjects"></div>');
         var lkleuren = ['#000','#204a87','#f57900','#204a87','#cc0000','#5c3566','#4e9a06'];
         $.each(lkleuren, function(key, val){
              element.find('.lines').append(
              '<span newline="'+val+'"class="drawbtn newline"><svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#"    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg"    xmlns="http://www.w3.org/2000/svg" version="1.1" width="29" height="29"><g  transform="translate(-27.086869,-417.52882)"><path   transform="translate(27.086869,429.63625)" d="M 7.3188002,12.071144 23.749999,2.4282866 10.267857,-1.9467135 20.401786,-5.8306419" style="stroke:'+val+';stroke-width:2;fill:none;" /></g></svg></span>'
              );
         });
-        element.append('<div class="polys"></div>');
+        element.append('<div class="polys drawobjects"></div>');
         var pkleuren = ['#000','#204a87','#f57900','#204a87','#cc0000','#5c3566','#4e9a06'];
         $.each(pkleuren, function(key, val){
              element.find('.polys').append(
              '<span newpoly="'+val+'"class="drawbtn newpoly"><svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#"    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg"    xmlns="http://www.w3.org/2000/svg" version="1.1" width="29" height="29"><g  transform="translate(-27.086869,-417.52882)"><path d="M 2.7731138,5.3788833 14.252526,11.064017 26.527918,3.1859009 20.874459,-6.2398619 7.3960719,-3.9366059 z" transform="translate(27.086869,429.63625)"      style="fill:'+val+';fill-opacity:0.7;stroke:'+val+';stroke-width:1;" /></g></svg></span>'
              );
         });
-        element.append('<div class="stopdraw"></div>');
+        element.append('<div class="stopdraw drawobjects"></div>');
          element.find('.stopdraw').append('<span class="drawbtn move" ></span>')
          
           /*  names = names + '<div class="peerlist linediv">';
