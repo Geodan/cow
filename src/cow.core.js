@@ -207,7 +207,8 @@ $.Cow.Core.prototype = {
         case 1:
             this._username = name;
             //Set username in page
-            $('#myname')[0].value = name;
+            //TODO: make this more flexible
+            $('#myname').val(name);
             //Change username in my peerobject
             if (this.me()){
                 this.me().owner({name:name});

@@ -21,7 +21,14 @@ $.widget("cow.ConnectWidget", {
 
         //get the mapquery object
         core = $(this.options.core).data('cow');
+        
+        var username=getCookie("username");
+        if (username!=null && username!="")
+        {
+          core.username(username);
+        }
 
+        $('#myname').val(core.username());
      
 
         core.bind("ws-connected", {widget: self}, self._onConnect);
@@ -29,6 +36,7 @@ $.widget("cow.ConnectWidget", {
 		element.find('.bar-content').prepend('<span id="statusicon" class="down">&nbsp;</span>');
 		$('#myname').on('change', function(e, ui) {
             core.username($(this).val());
+            setCookie("username",username,1);
             toggleRight();
         });
 		
