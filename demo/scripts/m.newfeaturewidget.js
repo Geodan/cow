@@ -44,6 +44,11 @@ $.widget("cow.NewFeatureWidget", {
             self.element.trigger("newpoly", key);
              $('#infopanel').hide('slide', {direction: 'down'},300);
         });
+        element.delegate('.stopdraw','click', function(){
+        $(self.icon).html('').addClass('move');
+            self.element.trigger("stopdraw"); 
+            $('#infopanel').hide('slide', {direction: 'down'},300);
+        });
         
         element.append('<div class="drawobjects">Click on one of the symbols to draw it on the map</div>');
         element.append('<div class="points drawobjects"></div>');

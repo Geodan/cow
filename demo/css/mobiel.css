@@ -205,7 +205,8 @@ flex: 1;
     background: rgba(238,238,236,.9);
   }
   .drawobjects {
-    margin: 0.2em;
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
     border-bottom: 1px solid #babdb6;
   }
   #statusicon {

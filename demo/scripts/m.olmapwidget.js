@@ -456,7 +456,11 @@ $.widget("cow.OlMapWidget", {
 		for(var key in this.controls) {
                 this.map.addControl(this.controls[key]);
         }
-        
+        $('#nfw').bind("stopdraw", function(evt){
+			self.controls.linecontrol.deactivate();
+			self.controls.polycontrol.deactivate();
+			self.controls.pointcontrol.deactivate();
+		});
 		$('#nfw').bind("newpoint", function(evt, key){
 			self.controls.linecontrol.deactivate();
 			self.controls.polycontrol.deactivate();
