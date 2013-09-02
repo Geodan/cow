@@ -66,7 +66,10 @@ function toggleFullScreen() {
 var right = false;
 var left = false;
 var map;
-
+var geojson_format = new OpenLayers.Format.GeoJSON({
+    'internalProjection': new OpenLayers.Projection("EPSG:900913"),
+    'externalProjection': new OpenLayers.Projection("EPSG:4326")
+   });
 var toggleLeft = function(evt){
     if(evt!==undefined) {
     $('#left').animate({width:['1.8em']},200);
@@ -179,7 +182,7 @@ $(document).on('ready',function(){
         <span id="middle" class=" shadow">
             <span class="bar-content">
                 <span class="text"></span>
-                <span class="icon"><div id="modeicon"></div></span>
+                <span class="icon"><div id="modeicon" class="move"></div></span>
             </span>
         </span>
         <span id="right" class="shadow small">

@@ -28,7 +28,8 @@ $.widget("cow.ConnectWidget", {
         core.bind("ws-disconnected", {widget: self}, self._onDisConnect);
 		element.find('.bar-content').prepend('<span id="statusicon" class="down">&nbsp;</span>');
 		$('#myname').on('change', function(e, ui) {
-            core.me().owner({name:$(this).val()});
+            core.username($(this).val());
+            toggleRight();
         });
 		
     },

@@ -457,21 +457,21 @@ $.widget("cow.OlMapWidget", {
                 this.map.addControl(this.controls[key]);
         }
         
-		$('#newfeatpanel').bind("newpoint", function(evt, key){
+		$('#nfw').bind("newpoint", function(evt, key){
 			self.controls.linecontrol.deactivate();
 			self.controls.polycontrol.deactivate();
 			self.controls.pointcontrol.activate();
 			var layer = self.editLayer;
 			core.current_icon = key;
 		});
-		$('#newfeatpanel').bind("newline", function(evt, key){
+		$('#nfw').bind("newline", function(evt, key){
 			self.controls.pointcontrol.deactivate();
 			self.controls.polycontrol.deactivate();
 			self.controls.linecontrol.activate();
 			var layer = self.editLayer;
 			core.current_linecolor = key;
 		});
-		$('#newfeatpanel').bind("newpoly", function(evt, key){
+		$('#nfw').bind("newpoly", function(evt, key){
 			self.controls.linecontrol.deactivate();
 			self.controls.pointcontrol.deactivate();
 			self.controls.polycontrol.activate();
@@ -491,6 +491,7 @@ $.widget("cow.OlMapWidget", {
 			{'self':this,layer:editlayer},
 			function(evt){
 				//Disable the draw control(s) after drawing a feature
+                $('#modeicon').html('').addClass('move');
 				$.each(self.controls,function(id,control){
 						control.deactivate();
 				});

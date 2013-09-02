@@ -12,7 +12,8 @@ _onConnect: function() {
 $.widget("cow.NewFeatureWidget", {
     options: {
         // The cow.core instance
-        core: undefined
+        core: undefined,
+        icon: '#modeicon'
     },
  _create: function() {
         var core;
@@ -20,26 +21,34 @@ $.widget("cow.NewFeatureWidget", {
         var element = this.element;
         var current_icon;
         core = $(this.options.core).data('cow');
+        icon = this.options.icon
         this.core=core;
+        this.icon = icon;
 
         /* Listeners to be found in olmapwidget */         
         element.delegate('.newpoint','click', function(){
+            $(self.icon).html($(this).children().clone()).removeClass('move');
             var key = $(this).attr('newpoint');
             self.element.trigger("newpoint", key);
+            $('#infopanel').hide('slide', {direction: 'down'},300);
         });
         element.delegate('.newline','click', function(){
+        $(self.icon).html($(this).children().clone()).removeClass('move');
             var key = $(this).attr('newline');
             self.element.trigger("newline", key);
+             $('#infopanel').hide('slide', {direction: 'down'},300);
         });
         element.delegate('.newpoly','click', function(){
+        $(self.icon).html($(this).children().clone()).removeClass('move');
             var key = $(this).attr('newpoly');
             self.element.trigger("newpoly", key);
+             $('#infopanel').hide('slide', {direction: 'down'},300);
         });
-        var btn = "<span class='drawbtn'></span>";
         
         
+        element.append('<div class="points"></div>');
         $.getJSON('./mapicons/imoov/list.js', function(data) {
-            element.append('<div class="points"></div>');
+            
             $.each(data.icons, function(key,val) {
                 
                 element.find('.points').append('<span class=" drawbtn  newpoint" newpoint="./mapicons/' + val + '"><img width=30 height=30 src="./mapicons/'+val+'"></span>');
@@ -56,9 +65,11 @@ $.widget("cow.NewFeatureWidget", {
         var pkleuren = ['#000','#204a87','#f57900','#204a87','#cc0000','#5c3566','#4e9a06'];
         $.each(pkleuren, function(key, val){
              element.find('.polys').append(
-             '<span newline="'+val+'"class="drawbtn newline"><svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#"    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg"    xmlns="http://www.w3.org/2000/svg" version="1.1" width="29" height="29"><g  transform="translate(-27.086869,-417.52882)"><path d="M 2.7731138,5.3788833 14.252526,11.064017 26.527918,3.1859009 20.874459,-6.2398619 7.3960719,-3.9366059 z" transform="translate(27.086869,429.63625)"      style="fill:'+val+';fill-opacity:0.7;stroke:'+val+';stroke-width:1;" /></g></svg></span>'
+             '<span newpoly="'+val+'"class="drawbtn newpoly"><svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#"    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg"    xmlns="http://www.w3.org/2000/svg" version="1.1" width="29" height="29"><g  transform="translate(-27.086869,-417.52882)"><path d="M 2.7731138,5.3788833 14.252526,11.064017 26.527918,3.1859009 20.874459,-6.2398619 7.3960719,-3.9366059 z" transform="translate(27.086869,429.63625)"      style="fill:'+val+';fill-opacity:0.7;stroke:'+val+';stroke-width:1;" /></g></svg></span>'
              );
         });
+        element.append('<div class="stopdraw"></div>');
+         element.find('.stopdraw').append('<span class="drawbtn move" ></span>')
          
           /*  names = names + '<div class="peerlist linediv">';
             names = names + '<b>Line colors </b><br/>';

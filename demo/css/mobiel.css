@@ -182,7 +182,11 @@ flex: 1;
   }
   #modeicon {
     height: 100%;
+    
   }
+  .move {
+  background: url('img/move.png') no-repeat center center;
+}
   #infopanel {
     position: absolute;
     height: 80%;
