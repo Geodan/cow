@@ -60,7 +60,7 @@ function nodeMap(el) {
             .attr("class", "node")
       nodeEnter.append("circle")
         .attr("class", "circle")
-        .attr("class", function(d) { return "node " + d.id; })
+        .attr("class", function(d) { return "node " + d.type; })
         .attr("id",function(d) { return d.id;})
         .attr("r", 8);
       nodeEnter.append("text")
@@ -71,8 +71,9 @@ function nodeMap(el) {
       
       node.selectAll('.nodetext').text(function(d){return d.name;});
       node.exit().remove();
-      //d3.timer(force.resume);
+      
       force.start();
+      d3.timer(force.resume);
     }
     this.start = start;
     
@@ -100,19 +101,39 @@ function nodeMap(el) {
     }, 6000);
 */    
 
-    var socketnode = {"id":'Socket', name: 'Socket'};
-    nodes.push(socketnode);
+    //var socketnode = {"id":'Socket', name: 'Socket'};
+    //nodes.push(socketnode);
+    
+    var addLink = function(data){
+        nodes.forEach(function(node){
+            if (node.id == data.herd){
+                links.push({source: node, target: data});
+            }
+        });
+    }
+    
     var addNode = function(data){
-        var isnew = true;
+        var isnew = true; 
         nodes.forEach(function(node){
             if (node.id == data.id){
                 isnew = false;
+                //Check if herd has changed
+                if (node.herd != data.herd){
+                    node.herd = data.herd;
+                    links.forEach(function(link,i){
+                        if (link.target.id == data.id) links.splice(i,1);
+                    });
+                    addLink(node);
+                }
                 node.name = data.name;
             }
         });
-        if (isnew){
+        if (isnew && data.type == 'herd'){
             nodes.push(data);
-            links.push({source: socketnode, target: data});
+        }
+        if (isnew && data.type == 'peer'){
+            nodes.push(data);
+            addLink(data);
         }
     }
     this.addNode = addNode;
@@ -120,7 +141,7 @@ function nodeMap(el) {
     var clearNodes = function(){
         nodes = [];
         links = [];
-        nodes.push(socketnode);
+        //nodes.push(socketnode);
     }
     this.clearNodes = clearNodes;
     
@@ -128,17 +149,19 @@ function nodeMap(el) {
         nodes.forEach(function(node,i){
             if (node.id == data.id) nodes.splice(i,1);
         });
+        
     }
     this.removeNode = removeNode;
     
     var updateNode = function(uid){
+        /*
         var node = d3.select('circle#peer' + uid);
         if (node.length > 0){
             node.style('fill','red')
             .transition().duration(1000)
             .style('fill','#dddddd')
             ;
-        }
+        }*/
     }
     this.updateNode = updateNode;
     
