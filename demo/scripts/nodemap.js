@@ -43,6 +43,7 @@ function nodeMap(el) {
         link = svg.selectAll(".link");
     
     var start = function() {
+      
       force.nodes(nodes);
       force.links(links);
       
@@ -54,17 +55,19 @@ function nodeMap(el) {
       link.exit().remove();
     
       node = node.data(force.nodes(), function(d) { return d.id;});
-      //node.enter().append("circle").attr("class", function(d) { return "node " + d.id; }).attr("r", 8);
       
       var nodeEnter = node.enter().append("g")
             .attr("class", "node")
+            .call(force.drag);
       nodeEnter.append("circle")
         .attr("class", "circle")
         .attr("class", function(d) { return "node " + d.type; })
         .attr("id",function(d) { return d.id;})
         .attr("r", 8);
+        
       nodeEnter.append("text")
         .attr("class", "nodetext")
+        .attr("class", function(d) { return "node " + d.type; })
         .attr("dx", 12)
         .attr("dy", ".35em")
         .text(function(d) {return d.name});
@@ -76,33 +79,7 @@ function nodeMap(el) {
       d3.timer(force.resume);
     }
     this.start = start;
-    
-/*    // 1. Add three nodes and three links.
-    window.setTimeout(function() {
-      var a = {id: 1377869343083}, b = {id: "b"}, c = {id: "c"};
-      nodes.push(a, b, c);
-      links.push({source: a, target: b}, {source: a, target: c}, {source: b, target: c});
-      start();
-    }, 0);
-    // 2. Remove node B and associated links.
-    setTimeout(function() {
-      nodes.splice(1, 1); // remove b
-      links.shift(); // remove a-b
-      links.pop(); // remove b-c
-      start();
-    }, 3000);
-    
-    // Add node B back.
-    setTimeout(function() {
-      var a = nodes[0], b = {id: "b"}, c = nodes[1];
-      nodes.push(b);
-      links.push({source: a, target: b}, {source: b, target: c});
-      start();
-    }, 6000);
-*/    
-
-    //var socketnode = {"id":'Socket', name: 'Socket'};
-    //nodes.push(socketnode);
+  
     
     var addLink = function(data){
         nodes.forEach(function(node){
@@ -141,7 +118,6 @@ function nodeMap(el) {
     var clearNodes = function(){
         nodes = [];
         links = [];
-        //nodes.push(socketnode);
     }
     this.clearNodes = clearNodes;
     

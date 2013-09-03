@@ -53,7 +53,7 @@ $.widget("cow.MonitorWidget", {
         core.bind("ws-disconnected", {widget: self}, self._onDisConnect);
         core.bind("ws-peerInfo",{widget: self},self._updateList);
         core.bind("ws-newPeer",{widget: self},self._updateList);
-        core.bind("ws-peerGone",{widget: self},self._updateList);
+        core.bind("ws-peerGone",{widget: self},self._onPeerGone);
         core.bind("peerStoreChanged",{widget: self},self._updateList);
         core.bind("herdListChanged", {widget: self},self._updateList);        
         
@@ -150,11 +150,7 @@ $.widget("cow.MonitorWidget", {
 	_onPeerGone: function(evt, payload){
 	    var self = evt.data.widget;
 	    self.nodemap.clearNodes();
-	    core.peers().forEach(function(peer){
-	       var node = {id: "peer" + peer.uid, name: peer.owner().name};
-	       self.nodemap.addNode(node);
-		});
-		self.nodemap.start();
+	    self._updateList(evt);
 	},
 	_updateList: function(evt){
 	    var self = evt.data.widget;
