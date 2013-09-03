@@ -34,10 +34,11 @@ $.widget("cow.ConnectWidget", {
         core.bind("ws-connected", {widget: self}, self._onConnect);
         core.bind("ws-disconnected", {widget: self}, self._onDisConnect);
 		element.find('.bar-content').prepend('<span id="statusicon" class="down">&nbsp;</span>');
-		$('#myname').on('change', function(e, ui) {
+        
+		element.delegate('#myname','blur change', function(e, ui) {
             core.username($(this).val());
-            setCookie("username",username,1);
-            toggleRight();
+            setCookie("username",core.username(),1);
+            toggleRight(true);
         });
 		
     },

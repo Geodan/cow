@@ -29,7 +29,9 @@
      <script src="scripts/m.olmapwidget.js" type="text/javascript"></script>
      <script src="scripts/m.connectwidget.js" type="text/javascript"></script>
       <script src="scripts/m.newfeaturewidget.js" type="text/javascript"></script>
+      <script src="scripts/m.peerwidget.js" type="text/javascript"></script>
   <script src="scripts/d3layer.js" type="text/javascript"></script>
+    <script type="text/javascript" src="../lib/peer.js"></script>
 <script>
 $(document).bind('webkitfullscreenchange mozfullscreenchange fullscreenchange',function(){
 var isFullScreen = document.fullScreen || 
@@ -94,7 +96,13 @@ var toggleLeft = function(evt){
     }
 };
 
-var toggleRight = function(){   
+var toggleRight = function(close){   
+    if (close) {
+        $('#middle').removeClass('small');
+         $('#right').addClass('small');
+         right = false;
+        return false;
+    }
     
     if(right) {
         
@@ -171,6 +179,7 @@ $(document).on('ready',function(){
    $('#map').OlMapWidget({core: '#cow'});
    $('#right').ConnectWidget({core: '#cow'});
    $('#nfw').NewFeatureWidget({core: '#cow'});
+   $('#peer').PeersWidget({core: '#cow'});
 });
 </script>
   </head>
@@ -179,7 +188,7 @@ $(document).on('ready',function(){
     <div id="sidebar"></div> 
     <div id="infopanel"><div id="nfw"></div></div>
     <div id="infobar">
-        <span id="left" class="shadow">&nbsp;</span>
+        <span id="left" class="shadow"></span>
         <span id="middle" class=" shadow">
             <span class="bar-content">
                 <span class="text"></span>
@@ -196,8 +205,8 @@ $(document).on('ready',function(){
         </span>
     </div>
     <div id="infopanel"></div>
-   <div id="sb-content" data-display="overlay" data-role="panel" >
-       <div class="content"></div>
+   <div id="sb-content" data-display="overlay" data-theme="b" data-role="panel" >
+       <div class="content"><div id="peer"></div></div>
    </div>
    
   <div id="sb-line"></div>
