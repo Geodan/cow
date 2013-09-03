@@ -39,13 +39,23 @@ $.widget("cow.MonitorWidget", {
         var element = this.element;
         this.beats = 0;
         core = $(this.options.core).data('cow');
+        this.core=core;
+        /*
         core.bind("ws-connected", {widget: self}, self._onConnect);
         core.bind("ws-disconnected", {widget: self}, self._onDisConnect);
         core.bind("ws-peerInfo",{widget: self},self._onPeerInfo);
         core.bind("ws-newPeer",{widget: self},self._onPeerInfo);
         core.bind("ws-peerGone",{widget: self},self._onPeerGone);
         core.bind("peerStoreChanged",{widget: self},self._onPeerUpdate);
-                
+        core.bind("herdListChanged", {widget: self},self._onHerdListChanged);
+        */
+        core.bind("ws-connected", {widget: self}, self._onConnect);
+        core.bind("ws-disconnected", {widget: self}, self._onDisConnect);
+        core.bind("ws-peerInfo",{widget: self},self._updateList);
+        core.bind("ws-newPeer",{widget: self},self._updateList);
+        core.bind("ws-peerGone",{widget: self},self._updateList);
+        core.bind("peerStoreChanged",{widget: self},self._updateList);
+        core.bind("herdListChanged", {widget: self},self._updateList);        
         
 		element.html("<div id='nodemap'></div><div id='heartbeat'><svg></svg></div>");
 		//Init nodemap
@@ -94,8 +104,8 @@ $.widget("cow.MonitorWidget", {
     },
 	_onConnect: function(evt) {
 		var self = evt.data.widget;
-		var socketnode = {"id":'Socket', name: 'Socket'};
-		self.nodemap.addNode(socketnode);
+		//var socketnode = {"id":'Socket', name: 'Socket'};
+		//self.nodemap.addNode(socketnode);
 		
 		//Everytime we connect, create a new listener to the ws element (because the old listener died with the ws)
         core.websocket().ws.addEventListener("message",function(evt){
@@ -104,7 +114,6 @@ $.widget("cow.MonitorWidget", {
           self.beats = self.beats + evt.data.length;
           
           //Show how the data prolongates in nodemap
-          var socketnode = {"id":'Socket','name':'Socket'};
           self.nodemap.updateLink(data.uid);
           self.nodemap.updateNode(data.uid);
           tmp = self.nodemap;
@@ -130,12 +139,15 @@ $.widget("cow.MonitorWidget", {
 		self.nodemap.start();
 	    
 	},
+	_onHerdListChanged: function(evt, payload){
+	    console.log('herdlistchanged: ' + payload);
+	},
 	_onDisConnect: function(evt) {
 		var self = evt.data.widget;
 		self.nodemap.clearNodes();
 		self.nodemap.start();
 	},
-	_onPeerGone: function(evt, x){
+	_onPeerGone: function(evt, payload){
 	    var self = evt.data.widget;
 	    self.nodemap.clearNodes();
 	    core.peers().forEach(function(peer){
@@ -143,6 +155,42 @@ $.widget("cow.MonitorWidget", {
 	       self.nodemap.addNode(node);
 		});
 		self.nodemap.start();
-	}
+	},
+	_updateList: function(evt){
+	    var self = evt.data.widget;
+	    var peers = self.core.peers();
+        var herds = [];
+        $.each(self.core.herds(),function(i) {
+            herds[i] = {};
+            herds[i].uid = this.uid;
+            herds[i].name = this.options.name;
+            herds[i].active = this.options.active;
+            herds[i].peers = this.members();
+        });
+        $.each(herds,function() {
+            var herd = this;
+            if (herd.active){
+                var herdnode = {
+                    id: "herd" + herd.uid, 
+                    name: this.name, 
+                    type: 'herd'
+                };
+                self.nodemap.addNode(herdnode);
+                $.each(this.peers, function(i){
+                   var peer = self.core.getPeerByUid(herd.peers[i]);
+                   if (peer){
+                       var node = {
+                            id: "peer" + peer.uid, 
+                            name: peer.owner().name,
+                            herd: "herd"  + herd.uid, 
+                            type: 'peer'
+                       };
+                       self.nodemap.addNode(node);
+                   }
+                });
+            }
+        });
+	    self.nodemap.start();
+	},
 	});
 })(jQuery);
