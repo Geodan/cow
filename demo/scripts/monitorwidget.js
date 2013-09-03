@@ -40,15 +40,7 @@ $.widget("cow.MonitorWidget", {
         this.beats = 0;
         core = $(this.options.core).data('cow');
         this.core=core;
-        /*
-        core.bind("ws-connected", {widget: self}, self._onConnect);
-        core.bind("ws-disconnected", {widget: self}, self._onDisConnect);
-        core.bind("ws-peerInfo",{widget: self},self._onPeerInfo);
-        core.bind("ws-newPeer",{widget: self},self._onPeerInfo);
-        core.bind("ws-peerGone",{widget: self},self._onPeerGone);
-        core.bind("peerStoreChanged",{widget: self},self._onPeerUpdate);
-        core.bind("herdListChanged", {widget: self},self._onHerdListChanged);
-        */
+        
         core.bind("ws-connected", {widget: self}, self._onConnect);
         core.bind("ws-disconnected", {widget: self}, self._onDisConnect);
         core.bind("ws-peerInfo",{widget: self},self._updateList);

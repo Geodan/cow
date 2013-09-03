@@ -72,7 +72,7 @@ function nodeMap(el) {
         .attr("dy", ".35em")
         .text(function(d) {return d.name});
       
-      node.selectAll('.nodetext').text(function(d){return d.name;});
+      node.selectAll('text').text(function(d){return d.name;});
       node.exit().remove();
       
       force.start();
