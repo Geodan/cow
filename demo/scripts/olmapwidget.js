@@ -53,6 +53,7 @@ $.widget("cow.OlMapWidget", {
 		core.bind("layoutChanged", {widget: self},self._updateSize);
 		core.bind("zoomToExtent", {widget: self},self._zoomToPeersView);
 		core.bind("zoomToPoint", {widget: self},self._zoomToPeersLocation);
+		core.bind("myPositionChanged",{widget: self},self._onPeerStoreChanged);
 		
 		//openlayers stuff
 		this.map = new OpenLayers.Map("map");
@@ -173,8 +174,7 @@ $.widget("cow.OlMapWidget", {
 	    var fromproj = new OpenLayers.Projection("EPSG:4326");
         var toproj = new OpenLayers.Projection("EPSG:900913");
         loc.transform(fromproj, toproj);
-	    self.map.setCenter(loc,14,true,true);
-	    //TODO: trigger an update for d3 layers
+	    self.map.setCenter(loc,14,false,false); //Weird OL behaviour. Setting 'dragging' to false triggers moved event.
 	},
 	_updateSize: function(evt){
 	    var map = evt.data.widget.map;

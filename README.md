@@ -20,6 +20,7 @@ Cow is a plugin for jQuery to use websockets to work together with geographical 
  
 * me()
 * activeherd([options])
+* username(string)
 * center([options])
 * herds([options])
  * getHerdById(id)

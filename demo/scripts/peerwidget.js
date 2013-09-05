@@ -105,7 +105,8 @@ $.widget("cow.PeersWidget", {
                 return;
             }
             $('#videopanel').show();
-            mc = self.peer1.call(owner, self.localstream);
+            var options = {};
+            mc = self.peer1.call(owner, self.localstream,options);
             mc.on('stream', function(s){
                 $('video').remove(); //Remove existing videos
                 window.remote = s;
