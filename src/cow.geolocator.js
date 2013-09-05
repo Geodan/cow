@@ -22,15 +22,17 @@ $.Cow.GeoLocator.prototype = {
 			if (me) {
 				//Only update my position when my coords changed or maximum age exceeded
 				//TODO: make a proper distance check in meters
-				var dx = self.prevPosition.longitude - position.coords.longitude;
-				var dy = self.prevPosition.latitude - position.coords.latitude;
-				var diff = Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2));
-				if ( diff > 0.001 ){ 
+				var dx = self.prevPosition.coords.longitude - position.coords.longitude;
+				var dy = self.prevPosition.coords.latitude - position.coords.latitude;
+				var diff = Math.sqrt(Math.pow(dx,2) + Math.pow(dy,2));//diff is in degrees couple of meters..
+				var timediff = (position.time - self.prevPosition.time) / 1000;
+				//TODO: make diff and timediff configurable
+				if (!(me.position().point) || diff > 0.00005 || timediff > (15 * 60)){ //first position or more than 0.000001 degrees diff or more than 15 mins old  
 				    me.position({point:position});
+				    self.core.trigger("myPositionChanged"); //Trigger needed to update myself
+				    self.prevPosition = position;
 				}
-				self.prevPosition = position.coords;
 			}
-			self.core.trigger("myPositionChanged");
 	},
 	_showError: function(error){
 	  switch(error.code) 
@@ -72,7 +74,7 @@ $.Cow.GeoLocator.prototype = {
 		self = this;
 		if (navigator.geolocation)
 		{
-		    this.prevPosition = {latitude: 0, longitude:0};
+		    this.prevPosition = {coords:{latitude: 0, longitude:0}};
 			this._setGeoLocation();//first one
 			//window.setInterval( function () {
 			//	self._setGeoLocation();

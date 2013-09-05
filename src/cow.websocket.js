@@ -6,7 +6,7 @@ $.Cow.Websocket.prototype = {
     },
     _onMessage: function(message) {
         var core = this.obj.core;
-        //console.debug('message: '+message.data);
+        console.debug('message: '+message.data);
         var data = JSON.parse(message.data);
         var uid = data.uid;
         var UID = core.UID; 
@@ -203,9 +203,9 @@ $.Cow.Websocket.prototype = {
         console.log('Got peerinfo from: '+uid);        
         if(payload.options.uid !== undefined && payload.options.cid !== undefined) {
             var it = this.core.peers(payload.options);
+            it.owner(payload.owner);
             it.view({"extent":payload.view});
             it.position({"point":payload.position});
-            it.owner(payload.owner);
             if (payload.video)
                 it.video(payload.video);
             this.core.trigger('ws-peerInfo');    
