@@ -53,6 +53,7 @@ $.widget("cow.OlMapWidget", {
 		core.bind("layoutChanged", {widget: self},self._updateSize);
 		core.bind("zoomToExtent", {widget: self},self._zoomToPeersView);
 		core.bind("zoomToPoint", {widget: self},self._zoomToPeersLocation);
+		core.bind("myPositionChanged",{widget: self},self._onPeerStoreChanged);
 		
 		//openlayers stuff
         var mapcontrols = [new OpenLayers.Control.Navigation(), new OpenLayers.Control.ArgParser(), new OpenLayers.Control.Attribution()];
@@ -174,7 +175,7 @@ $.widget("cow.OlMapWidget", {
 	    var fromproj = new OpenLayers.Projection("EPSG:4326");
         var toproj = new OpenLayers.Projection("EPSG:900913");
         loc.transform(fromproj, toproj);
-	    self.map.setCenter(loc,14,true,true);
+	    self.map.setCenter(loc,14,false,false);
 	    //TODO: trigger an update for d3 layers
 	},
 	_updateSize: function(evt){
