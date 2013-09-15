@@ -265,3 +265,22 @@ border: solid 1px #2e3436 !important;
     width: 200px;*/
     padding: 10px;
 }
+/* D3 Layer */
+
+.link {
+  stroke: steelBlue;
+  stroke-width: 1.5px;
+  z-index: 10001;
+}
+.nodeimg {
+    cursor: pointer;
+    stroke: red;
+    fill: red;
+}
+.nodetext {
+  fill: none;
+  stroke: steelBlue;
+  stroke-width: 0.5px;
+}
+
+/* End of D3 Layer */

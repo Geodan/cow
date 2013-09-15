@@ -215,7 +215,15 @@ $.Cow.Core.prototype = {
             }
         }
     },
-    
+    //TODO: future function, has to be implemented
+    location: function(location){
+        switch(arguments.length){
+            case 0:
+                return this._location;
+            case 1:
+                this._location = location;
+        }
+    },
     activeherd: function(options) {
         var self = this;
         switch(arguments.length) {

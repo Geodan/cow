@@ -43,7 +43,7 @@ $.widget("cow.OlMapWidget", {
         var core;
         var self = this;		
         var element = this.element;
-        
+        this._d3layers = [];
         core = $(this.options.core).data('cow');
 		this.core=core;
 
@@ -56,7 +56,8 @@ $.widget("cow.OlMapWidget", {
 		core.bind("myPositionChanged",{widget: self},self._onPeerStoreChanged);
 		
 		//openlayers stuff
-		this.map = new OpenLayers.Map("map");
+		this.map = new OpenLayers.Map("map",{
+		});
 
 		var osmlayer = new OpenLayers.Layer.OSM("OpenStreetMap", null, {
 		   transitionEffect: 'resize'
@@ -65,7 +66,7 @@ $.widget("cow.OlMapWidget", {
 		//this.map.addLayer(layer = new OpenLayers.Layer.Stamen("toner-lite", {opacity:0.5}));
 		this.map.addLayer(osmlayer);
 		//this.map.setCenter(new OpenLayers.LonLat(768708,6849389), 10);//Enschede
-		this.map.setCenter(new OpenLayers.LonLat(546467,6862526),10);//Amsterdam
+		this.map.setCenter(new OpenLayers.LonLat(546467,6862526),15);//Amsterdam
 		//this.map.addControl(new OpenLayers.Control.LayerSwitcher());
 		
 		
@@ -82,8 +83,10 @@ $.widget("cow.OlMapWidget", {
 					top: bounds.top
 			};
             self.core.me() && self.core.me().view({extent:extent}); //Set my own extent
-            self.viewlyr.reset();
-            self.locationlyr.reset();
+            //Reset/redraw layers
+            self._d3layers.forEach(function(l){
+                    l.reset();
+            });
 		};
 		
 		var handleNewExtent = function(data){
@@ -99,10 +102,13 @@ $.widget("cow.OlMapWidget", {
 					top: bounds.top
 			};
             self.core.me() && self.core.me().view({"extent":extent}); //Set my own extent
-            self.viewlyr.reset();
-            self.locationlyr.reset();
+            //Reset/redraw layers
+            self._d3layers.forEach(function(l){
+                    l.reset();
+            });
+            
         };
-		this._createLayers(this.map);
+		this._createLayers();
 		handleOnLoad();
 				
 		this.map.events.on({
@@ -115,6 +121,23 @@ $.widget("cow.OlMapWidget", {
         this.element.removeClass('ui-dialog ui-widget ui-widget-content ' +
                                  'ui-corner-all')
             .empty();
+    },
+    //Setter/getter for d3layers
+    d3Layers: function(layerobj) {
+        //TODO: check for existing layer on push
+        if (layerobj) this._d3layers.push(layerobj);
+        else return this._d3layers;
+    },
+    //Getter for d3 layer by name
+    getD3LayerByName: function(name){
+        //TODO: what a weird method the get the layer. Can't be done easier?
+        var returnlayer;
+        this._d3layers.forEach(function(layer){
+           if (layer.layername === name) {
+               returnlayer = layer;
+           }
+        });
+        return returnlayer;
     },
 	_onFeatureStoreChanged: function(evt) {
 		//console.log('_onFeatureStoreChanged');
@@ -142,11 +165,11 @@ $.widget("cow.OlMapWidget", {
 	    var extentCollection = self.core.getPeerExtents();
 	    var locationCollection = self.core.getPeerPositions();
 	    //Update layer with extents
-	    if (self.viewlyr){
-			self.viewlyr.data(extentCollection);
+	    if (self.getD3LayerByName('viewlayer')){
+			self.getD3LayerByName('viewlayer').data(extentCollection);
 		}
 		//Update layer with locations
-		if (self.locationlyr){
+		if (self.getD3LayerByName('locationlayer')){
 		    $.each(locationCollection.features, function(i,d){
                 var style = {}; 
                 if (d.id == self.core.me().uid)
@@ -154,7 +177,7 @@ $.widget("cow.OlMapWidget", {
                 else style.fill = "steelBlue";
                 d.style = style;
             });
-			self.locationlyr.data(locationCollection);
+			self.getD3LayerByName('locationlayer').data(locationCollection);
 		}
 	},
 	
@@ -200,97 +223,8 @@ $.widget("cow.OlMapWidget", {
 	
 	_createLayers: function(map) {
 		var self = this;
-		/* Testje met topojson data
-		var roadlayer  = new OpenLayers.Layer.Vector('Roadlayer');
-		roadlayer.afterAdd = function () {
-			var divid = roadlayer.div.id;
-			self.roadlayer = new d3layer("roadlayer",{
-				maptype: "OpenLayers",
-				divid:divid,
-				map: self.map,
-				type: "path",
-				labels: true,
-				labelconfig: {
-					field: "route",
-					style: {
-					    stroke: "steelBlue"
-					}
-				},
-				style: {
-					fill: "none",
-					stroke: "steelBlue",
-					'stroke-width': 2,
-					textlocation: "ul"
-				}
-			});
-			
-			d3.json("/main/d3test/data/nwb_hoofdwegen_topo.json", function(error, roads) {
-			//d3.json("/main/d3test/uk.json", function(error, roads) {
-			        console.log(error);
-			        var data = topojson.feature(roads, roads.objects.hoofdwegen);
-			        self.roadlayer.data(data);
-			});
-			
-		};
-		map.addLayer(roadlayer);
-		*/
-		
-		
-		var myd3layer = new OpenLayers.Layer.Vector('Extents layer');
-		// Add the container when the overlay is added to the map.
-		myd3layer.afterAdd = function () {
-			var divid = myd3layer.div.id;
-			self.viewlyr = new d3layer("viewlayer",{
-				maptype: "OpenLayers",
-				divid:divid,
-				map: self.map,
-				type: "path",
-				labels: true,
-				labelconfig: {
-					field: "owner",
-					style: {
-					    stroke: "steelBlue"
-					}
-				},
-				style: {
-					fill: "none",
-					stroke: "steelBlue",
-					'stroke-width': 2,
-					textlocation: "ul"
-				}
-			});
-		};
-		map.addLayer(myd3layer);
-		self.core.viewlyr = self.viewlyr;//FOR DEBUG
-		
-		var myLocationLayer = new OpenLayers.Layer.Vector('d3layer');
-		myLocationLayer.afterAdd = function () {
-			var divid = myLocationLayer.div.id;
-			self.locationlyr = new d3layer("locationlayer",{
-				maptype: "OpenLayers",
-				divid:divid,
-				map: self.map,
-				type: "circle",
-				coolcircles: true,
-				labels: true,
-				labelconfig: {
-					field:"owner",
-					style: {
-					    stroke: "steelBlue"
-					}
-				},
-				style: {
-					fill: "grey",
-					stroke: "steelBlue",
-				}
-			});
-		};
-		map.addLayer(myLocationLayer);
-		
-
-		var self = this;
-		
-	/** Here comes the big bad editlayer.. **/
+		var map = self.map;
+		/** Here comes the big bad editlayer.. **/
 		var context = {
 			getStrokeWidth: function(feature) {
 				if (feature.layer && feature.layer.map.getZoom() > 15)
@@ -390,6 +324,7 @@ $.widget("cow.OlMapWidget", {
 					//TODO TT: This whole system of creating a popup is ugly!
 					//create something nicer...
 					var feature = evt.feature;
+					var key = feature.properties.key || "";
 					var name = feature.properties.name || "";
 					var desc = feature.properties.desc || "";
 					var creator = feature.properties.creator || "unknown";
@@ -398,6 +333,7 @@ $.widget("cow.OlMapWidget", {
 						//+'<input onBlur="">Title<br>'
 						//+'<textarea></textarea><br>'
 						//+ 'You can remove or change this feature using the buttons below<br/>'
+						+ '<input id="popupid" type="hidden" name="popupid" value ="'+key+'"">'
 						+ 'Label: <input id="titlefld" name="name" value ="'+name+'""><br/>'
 						+ 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
 						+ '<small>Created by: <i>'+ creator + '</i></small><br>'
@@ -540,6 +476,67 @@ $.widget("cow.OlMapWidget", {
 		
 		self.controls.select.activate();
 		/** End of the big bad editlayer **/
+		
+		
+		
+		var myd3layer = new OpenLayers.Layer.Vector('Extents layer');
+		// Add the container when the overlay is added to the map.
+		myd3layer.afterAdd = function () {
+			var divid = myd3layer.div.id;
+			var viewlyr = new d3layer("viewlayer",{
+				maptype: "OpenLayers",
+				divid:divid,
+				map: self.map,
+				type: "path",
+				labels: true,
+				labelconfig: {
+					field: "owner",
+					style: {
+					    stroke: "steelBlue"
+					}
+				},
+				style: {
+					fill: "none",
+					stroke: "steelBlue",
+					'stroke-width': 2,
+					textlocation: "ul"
+				}
+			});
+			self.d3Layers(viewlyr);
+		};
+		map.addLayer(myd3layer);
+		tmp = this;//FOR DEBUG
+		
+		var myLocationLayer = new OpenLayers.Layer.Vector('d3layer');
+		myLocationLayer.afterAdd = function () {
+			var divid = myLocationLayer.div.id;
+			var locationlyr = new d3layer("locationlayer",{
+				maptype: "OpenLayers",
+				divid:divid,
+				map: self.map,
+				type: "circle",
+				coolcircles: true,
+				satellites: false,
+				labels: true,
+				labelconfig: {
+					field:"owner",
+					style: {
+					    stroke: "steelBlue"
+					}
+				},
+				style: {
+					fill: "grey",
+					stroke: "steelBlue",
+				}
+			});
+			self.d3Layers(locationlyr);
+		};
+		map.addLayer(myLocationLayer);
+		
+		//var vecLyr = map.getLayersByName('d3layer')[0];
+		//map.raiseLayer(vecLyr, map.layers.length);
+		//map.resetLayersZIndex();
+		
 	},
 	
 		
@@ -569,26 +566,34 @@ $.widget("cow.OlMapWidget", {
 		}
 	},
 	savefeature: function(evt){ //Just save the text...
-		var feature = core.editLayer.selectedFeatures[0];
-		feature.attributes.name = document.getElementById('titlefld').value; //TODO. Yuck, yuck yuck....
-		feature.attributes.desc = document.getElementById('descfld').value;
-		feature.attributes.owner = self.core.me().owner().name;
-		if (feature.popup){
-			//core.map.removePopup(feature.popup);
-			feature.popup.destroy(); //we have to destroy since the next line triggers a reload of all features
-			feature.popup = null;
-		}
-		var jsonfeature = JSON.parse(geojson_format.write(feature));//TODO is this needed?
-		if (core.activeherd() == feature.properties.store){
-		    //core.featurestore().updateLocalFeat(jsonfeature);
-		    var item = core.featurestore().getFeatureItemById(feature.properties.key);
-		    var d = new Date();
-            var timestamp = d.getTime();
-            item.feature = jsonfeature;
-            item.updated = timestamp;
-            core.featurestore().featureItems({data:item, source: 'user'});
-		    
-		}
+	    var popupkey = document.getElementById('popupid').value;
+		//var feature = core.editLayer.selectedFeatures[0];
+		var feature;
+		core.editLayer.features.forEach(function(f){
+		        if (f.data.key == popupkey){
+		            feature = f;
+		        }
+		});
+		if (feature){
+            feature.attributes.name = document.getElementById('titlefld').value; //TODO. Yuck, yuck yuck....
+            feature.attributes.desc = document.getElementById('descfld').value;
+            feature.attributes.owner = self.core.me().owner().name;
+            if (feature.popup){
+                //core.map.removePopup(feature.popup);
+                feature.popup.destroy(); //we have to destroy since the next line triggers a reload of all features
+                feature.popup = null;
+            }
+            var jsonfeature = JSON.parse(geojson_format.write(feature));//TODO is this needed?
+            if (core.activeherd() == feature.properties.store){
+                //core.featurestore().updateLocalFeat(jsonfeature);
+                var item = core.featurestore().getFeatureItemById(feature.properties.key);
+                var d = new Date();
+                var timestamp = d.getTime();
+                item.feature = jsonfeature;
+                item.updated = timestamp;
+                core.featurestore().featureItems({data:item, source: 'user'});
+            }
+        }
 	}
 
 	});

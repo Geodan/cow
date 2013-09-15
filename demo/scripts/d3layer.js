@@ -1,13 +1,17 @@
+var tmp;
 function d3layer(layername, config){
 		var f = {}, bounds, feature, collection;
 		this.f = f;
 		var _this = this;        
 		var layername = layername;
+		f.layername = layername;
+		this.data;
 		this.type = config.type || "path";
 		this.freq = 100;
 		this.g = config.g;
 		this.map = config.map;
 		this.style = config.style;
+		this.satellites = config.satellites || false;
 		this.coolcircles = config.coolcircles || false;
 		this.labels = config.labels || false;
 		this.labelconfig = config.labelconfig;
@@ -16,9 +20,10 @@ function d3layer(layername, config){
 		this.pointradius = config.pointradius || 5;
 		this.bounds = [[0,0],[1,1]];
 		var width, height,bottomLeft,topRight;
-		
+          
 		if (config.maptype == 'OpenLayers'){//Getting the correct OpenLayers SVG. 
 			var div = d3.selectAll("#" + config.divid);
+			div.attr("z-index",10001);
 			div.selectAll("svg").remove();
 			var svg = div.append("svg");
 		}
@@ -29,8 +34,8 @@ function d3layer(layername, config){
 		}
 		
 		var g = svg.append("g");
-		
-		// Projecting latlon to screen coordinates
+            
+        // Projecting latlon to screen coordinates
 		this.project = function(x) {
 		  if (config.maptype == 'Leaflet')
 		  	  var point = _this.map.map.latLngToLayerPoint(new L.LatLng(x[1], x[0])); //Leaflet version
@@ -67,11 +72,16 @@ function d3layer(layername, config){
 		}
 		if (config.maptype == 'OpenLayers')
 			this.set_svg();
-				
+		
+		//Add nodeoverlay object for force layout nodes
+		if (this.satellites){
+		    this.nodemap = new nodeOverlay(svg,width,height);
+		}
+		
 		var geoPath = d3.geo.path().projection(this.project);
 		
-		
-		this.styling = function(d){ //A per feature styling method
+		//A per feature styling method
+		this.styling = function(d){ 
 			for (var key in _this.style) { //First check for generic layer style
 				d3.select(this).style(key,function(d){
 					if (d.style && d.style[key])
@@ -88,7 +98,8 @@ function d3layer(layername, config){
 			}
 		};
 		
-		this.textstyling = function(d){ //A per feature styling method
+		//A per feature styling method
+		this.textstyling = function(d){ 
 			for (var key in _this.labelconfig.style) { //First check for generic layer style
 				d3.select(this).style(key,function(d){
 					if (d.labelconfig && d.labelconfig.style && d.labelconfig.style[key])
@@ -105,7 +116,8 @@ function d3layer(layername, config){
 			}
 		};
 		
-		this.pathStyler = function(d){ //Some path specific styles (point radius, label placement eg.)
+		//Some path specific styles (point radius, label placement eg.)
+		this.pathStyler = function(d){ 
 		    if (d.style && d.style.radius)
 		        geoPath.pointRadius(d.style.radius);
 		    else if (_this.style && _this.style.radius)
@@ -114,6 +126,7 @@ function d3layer(layername, config){
 		    return geoPath(d);
 		};
 		
+		//Calculating the location of the label, based on settings
 		this.textLocation = function(d){
 		    var textLocation = geoPath.centroid(d);
 		    var bounds = geoPath.bounds(d);
@@ -127,6 +140,7 @@ function d3layer(layername, config){
 		            textLocation[0] = bounds[1][0];
 		            textLocation[1] = bounds[1][1];
 		            break;
+		          //TODO: add other positions
 		        }
 		    }
 		    else {
@@ -135,14 +149,16 @@ function d3layer(layername, config){
 		    return textLocation;
 		}
 		
-		
-			
-		
-		
+		//The part where new data comes in
 		f.data = function(collection){
+		    if (!collection){
+		        return _this.data; 
+		    }
+		    _this.data = collection;
+	    
 			if (config.maptype == 'OpenLayers')
 				_this.set_svg();
-
+            
 			//Create a 'g' element first, in case we need to bind more then 1 elements to a data entry
 			var entities = g.selectAll(".entity")
 			    .data(collection.features, function(d){return d.id;});
@@ -161,6 +177,58 @@ function d3layer(layername, config){
 			        .each(_this.styling)
 			        ;
 			}
+			//TODO: This will become a forcelayout..
+			if (_this.satellites){
+			    entities.each(function(d,i){
+                    var x = _this.project(d.geometry.coordinates)[0];
+                    var y = _this.project(d.geometry.coordinates)[1];
+                    _this.nodemap.addNode({
+                        id: "nucleus" + d.id,  
+                        x:x,y:y,
+                        coords: d.geometry.coordinates, 
+                        //name: d.properties.owner, 
+                        type: 'nucleus', 
+                        fixed: true,
+                        imageurl: "./mapicons/stratego/stratego-sergeant.svg",
+                        _children: [
+                          {
+                            name: "Sold 1",
+                            id: "satellite" + d.id, 
+                            type: 'satellite',
+                            nucleus: "nucleus" + d.id,
+                            fixed: false,
+                            imageurl: "./mapicons/stratego/stratego-scout.svg",
+                            _children: [
+                              {
+                                name: "M 1",
+                                id: "satellite" + d.id + 'm', 
+                                type: 'satellite',
+                                nucleus: "nucleus" + d.id,
+                                fixed: false,
+                                imageurl: "./mapicons/stratego/stratego-miner.svg"
+                            }]
+                          },{
+                            name: "Sold 2",
+                            id: "satellite" + d.id +1, 
+                            type: 'satellite',
+                            nucleus: "nucleus" + d.id +1,
+                            fixed: false,
+                            imageurl: "./mapicons/stratego/stratego-scout.svg"
+                          }
+                         ]
+                    });
+                    //_this.nodemap.addNode({
+                    //    id: "satellite" + d.id, 
+                    //    //name: 'Sat', 
+                    //    type: 'satellite',
+                    //    nucleus: "nucleus" + d.id,
+                    //    fixed: false,
+                    //    imageurl: "./mapicons/stratego/stratego-scout.svg"
+                    //});
+			    });
+			    _this.nodemap.start();
+			}
+			
 			if (_this.labels){
 			    var label = newentity.append('g')
 			        .classed('place-label',true);
@@ -194,6 +262,7 @@ function d3layer(layername, config){
 								return d.id; 
 					})
 			} //End of new label
+			//Some cool looking effect upon new feature
 			if (_this.coolcircles){
 			 var coolcircle = newentity.append('g')
 			        .classed('coolcircle',true);
@@ -246,10 +315,12 @@ function d3layer(layername, config){
 			entities.exit().remove().transition().duration(500);
 			return f;
         }
+        
+        //Redraw all features
 		f.reset = function() {
 			if (config.maptype == 'OpenLayers')
 				_this.set_svg();
-
+			    
 			g.selectAll(".entity")
 			    .each(function(d,i){
 			        var entity = d3.select(this);
@@ -270,7 +341,14 @@ function d3layer(layername, config){
                             })
                     }
 			    });
+			//FORCETEST
+			if (_this.satellites){
+                _this.nodemap.redraw(_this.project);
+            }
 		}
 		f.reset();
+		
+		
+		
 		return f;
 	}

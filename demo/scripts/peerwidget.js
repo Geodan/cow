@@ -22,6 +22,8 @@ $.widget("cow.PeersWidget", {
        
         this.peer1;
         this.ls;
+        this.connectedPeers = {};
+        
         
         element.append('<div id="list"></div>');
         element.append('<span><input type="text" id="newHerd" value="Add a new herd" size="15"><span class="addHerd licht">Add</span></span>');
@@ -31,7 +33,7 @@ $.widget("cow.PeersWidget", {
         this.peerjsdiv.html('<br>Camera:' 
                 + '<input type="checkBox" id="cameraOnOff">'
                 + '<div id="videopanel">'
-                + '<h2>Video:</h2><button id="videoclosebtn">Close</button>'
+                + '<h2>Video:</h2>'
                 + '<div id="videoplace"></div>'
                 + '</div>');
         
@@ -39,6 +41,7 @@ $.widget("cow.PeersWidget", {
         this.core=core;
         this.oldherds = [];
         
+        core.bind("ws-connected", {widget: self}, self._onWebscoketConnection);
         core.bind("ws-disconnected", {widget: self}, self._onPeerStoreChanged);
         core.bind("ws-peerInfo", {widget: self}, self._onPeerStoreChanged);
         core.bind("ws-peerGone", {widget: self}, self._onPeerStoreChanged);
@@ -80,43 +83,17 @@ $.widget("cow.PeersWidget", {
             var herdID= $(this).parent().siblings('.herd').attr('herd');
             self.core.removeHerd(herdID);
             //$(this).parent().addClass('verborgen');
-            
         });
-         element.delegate('.addHerd','click', function(){
+        element.delegate('.addHerd','click', function(){
             var time = new Date().getTime();
             var name = $('#newHerd').val();
             self.core.herds({uid: time,name:name, peeruid: self.core.UID});
             $('#newHerd').val('Add a new herd');
             //$(this).parent().addClass('verborgen');
-            
         });
-        //Preliminary peerjs video connection
         element.delegate('.videoconnection','click', function(){
             var owner = $(this).attr('owner');
-            $('#videoclosebtn').click( function(e){
-                console.log("Closing "  + owner);
-                if (self.peer1.managers[owner])
-                    self.peer1.managers[owner].close();
-                
-                $('#videopanel').hide();
-            });
-            if (!self.peer1){
-                alert('Enable your own camera befor connecting');
-                return;
-            }
-            $('#videopanel').show();
-            var options = {};
-            mc = self.peer1.call(owner, self.localstream,options);
-            mc.on('stream', function(s){
-                $('video').remove(); //Remove existing videos
-                window.remote = s;
-                  z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('#videoplace');
-                  z.width(150);
-                  z.click(function(evt){
-                      $('video').addClass('videobig');
-                  });
-              });
-            
+            self._makeVideoConnection(owner);
          });
         
         element.delegate('.herd','click', function(){
@@ -125,41 +102,27 @@ $.widget("cow.PeersWidget", {
         });
         
         this.peerjsdiv.delegate("#cameraOnOff",'click',function(){
-                if (this.checked){
-                    //Turn on camera stream
-                    navigator.getMedia = ( navigator.webkitGetUserMedia ||
-                            navigator.getUserMedia ||
-                           navigator.mozGetUserMedia ||
-                           navigator.msGetUserMedia);
-                    navigator.getMedia({audio: false, video: true}, function(s){
-                      self.localstream = s;
-                      // Create a new Peer with our demo API key, with debug set to true so we can
-                      // see what's going on.
-                      self.peer1 = new Peer(self.core.UID, { key: 'lwjd5qra8257b9', debug: true });
-                      self.core.me().video({state:"on"});
-                      self.peer1.on('call', function(c){
-                        c.answer(s);
-                      //  c.on('stream', function(s){
-                      //    window.s = s;
-                      //    z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('body');
-                      //  });
-                      });
-                    }, function(){});
-                }
-                else if (!this.checked){
-                    //Turn off camers stream
-                    self.core.me().video({state:"off"});
-                    $('#videopanel').hide();
-                    if (self.peer1){
-                        $.each(self.peer1.managers, function(c){
-                            self.peer1.managers[c].close()
-                        });
-                            
-                        
-                        self.peer1.destroy();
-                        self.peer1 = null;
-                    }
-                }
+            if (this.checked){
+                var bigvid = $('body').append('<div id="bigvideo"></div>');
+                
+                //Turn on camera stream
+                navigator.getMedia = ( navigator.webkitGetUserMedia ||
+                       navigator.getUserMedia ||
+                       navigator.mozGetUserMedia ||
+                       navigator.msGetUserMedia);
+                navigator.getMedia({audio: false, video: true}, function(s){
+                    self.localstream = s;
+                    self.core.me().video({state:"on"});
+              }, function(){});
+            }
+            else if (!this.checked){
+                //Turn off camera stream.
+                self.core.me().video({state:"off"});
+                self.localstream.stop();
+                self.connectedPeers = []; //No more peers connected
+                p = $('#videoplace').empty(); //Sweep video place
+                $('#videopanel').hide();
+            }
 
         })
         
@@ -174,14 +137,70 @@ $.widget("cow.PeersWidget", {
                                  'ui-corner-all')
             .empty();
     },
-    
+    _onWebscoketConnection: function(evt){
+        var self = evt.data.widget;
+        // Create a new Peer with our demo API key
+        // TODO: in the future this has to move to our own websocket server
+        self.peer1 = new Peer(self.core.UID, { key: 'lwjd5qra8257b9', debug: true });
+        tmp = self.peer1;
+        self.peer1.on('open', function(id){
+          console.log('peerjs: Connected to socket');
+        });
+        self.peer1.on('connection', function(c){
+           console.log('peerjs: incoming dataconnection (do nothing)');
+        });
+        self.peer1.on('call', function(c){
+          console.log('peerjs: incoming call (responding with localstream)');
+          if (self.localstream){
+              c.answer(self.localstream);
+              //  c.on('stream', function(s){
+              //    window.s = s;
+              //    z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('body');
+              //  });
+          }
+        });
+    },
     
     _onPeerStoreChanged: function(evt) {
         
         var self = evt.data.widget;
         self._updateList(self);
     },
-    
+    _makeVideoConnection: function(peerid){
+        var self = this;
+        var videobox;
+        var mc;
+        function startVideo(stream){
+            $('#videopanel').show();
+            videobox = $('<div></div>').addClass('videoscreen').addClass('active').attr('id', peerid);
+            var header = $('<h4></h4>').html('Chat with <strong>' + peerid + '</strong>');
+            videobox.append(header);
+            z = $('<video></video>', {src: URL.createObjectURL(stream), autoplay: true});
+            z.width(150);
+            videobox.append(z).appendTo('body');
+            videobox.attr('position','absolute');
+            videobox.zIndex(10010);
+            videobox.on('click', function() {
+              if ($(this).attr('class').indexOf('active') === -1) {
+                $(this).addClass('active');
+              } else {
+                $(this).removeClass('active');
+              }
+            });
+        }
+        function stopVideo(){
+            console.log('peerjs: ' + mc.peer + ' has left the chat.');
+            videobox.remove();
+            delete self.connectedPeers[mc.peer];
+        }
+        if (!self.connectedPeers[peerid]) {
+            mc = self.peer1.call(peerid, self.localstream);
+            mc.on('error', function(err) { alert(err); });
+            mc.on('stream', startVideo);
+            mc.on('close', stopVideo);
+        }
+        self.connectedPeers[peerid] = 1;
+    },
     _updateList: function(self) {        
         var peers = self.core.peers();
         var herds = [];
