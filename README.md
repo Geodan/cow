@@ -153,7 +153,7 @@ the server noticed a peer disconnecting and send its connection-id to the pool
 }
 `````
 
-Client should: remove peer with peerCid from list. Assign newCid to self.
+Client should: remove peer with peerCid from list. Assign newCid to self and sent new Cid to world with 'updatePeers'.
 
 ### Messages from Peers: targeted messages
 #### informPeer
