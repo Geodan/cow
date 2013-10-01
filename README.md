@@ -124,14 +124,19 @@ core: the cow object
 * getLocation()
 
 
-Messenging
+Messaging
 ===
 COW makes use of websocket messages to communicate with peers. A peer is not necessarely a COW instance but can be any client that adheres to websocket standards and the COW messaging protocol.
 
 ### Messages from websocket server
 #### connected
 webscocket confirms connection by returning a CID
->{"action":"connected","payload":{"cid":3}} 
+`````javascript
+{
+    "action": "connected",
+    "payload": {"cid":3}
+}
+`````
 
 Client should: 
     1. assign CID to self. 
