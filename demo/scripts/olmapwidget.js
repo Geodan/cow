@@ -441,8 +441,8 @@ $.widget("cow.OlMapWidget", {
                 item.key = self.core.UID + "#" + timestamp;
                 feature.properties.key = item.key;
                 feature.properties.store = self.core.activeherd();
-                feature.properties.creator = self.core.me().owner().name;
-                feature.properties.owner = self.core.me().owner().name;
+                feature.properties.creator = self.core.username();
+                feature.properties.owner = self.core.username();
                 item.uid = self.core.UID;
                 item.created = timestamp;
                 item.updated = timestamp;
