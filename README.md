@@ -126,69 +126,97 @@ core: the cow object
 
 Messenging
 ===
-COW makes use of websocket messages to comminicate with peers. A peer is not necesseraly a COW instance but can be any client that adheres to websocket standards and the COW messaging protocol.
+COW makes use of websocket messages to communicate with peers. A peer is not necessarely a COW instance but can be any client that adheres to websocket standards and the COW messaging protocol.
 
-
+### Messages from websocket server
 #### connected
->{"action":"connected","payload":{"cid":0}} 
-
 webscocket confirms connection by returning a CID
+>{"action":"connected","payload":{"cid":3}} 
+
+Client should: 
+    1. assign CID to self. 
+    2. Let the world know about self with  'newPeer'
+    3. Let the world know about own herd with 'herdInfo'
+    4. Sent feature idlist to world with 'newPeerFidList'
 
 #### peerGone
->{"action":"peerGone","payload":{"peerCid":0,"newCid":0}} 
-
 the server noticed a peer disconnecting and send its connection-id to the pool
+>{"action":"peerGone","payload":{"peerCid":2,"newCid":2}} 
 
-##### Messages from Peers: targeted messages
+Client should: remove peer with peerCid from list. Assign newCid to self.
+
+### Messages from Peers: targeted messages
 #### informPeer
->{"uid":1380616779556,"target":1380616903327,"action":"informPeer","payload":{"options":{"uid":1380616779556,"cid":0,"family":"alpha"},"view":{"left":4.8860368751853,"bottom":52.335417998001,"right":4.9347028755515,"top":52.351568353647},"owner":{"name":"TomFF"},"position":{"coords":{"longitude":4.9128983,"latitude":52.3424068},"time":1380616803963},"video":{"state":"off"}}} 
+You joined and receive the status from peers like connection-id, uid, extent
+>{"uid":<origin-id>,"target":<target-id>,"action":"informPeer","payload":{"options":{"uid":<src-uid>,"cid":<src-cid>,"family":"alpha"},"view":{"left":<left long>,"bottom":<bottom lat>,"right":<right long>,"top":<top lat>},"owner":{"name":<name of peer owner>},"position":{"coords":{"longitude":<lon>,"latitude":<lat>},"time":<timestamp>},"video":{"state":<on/off>}}} 
 
-the client has joined and receives the status from peers: connection-id, uid, extent
+Client should: add peerinformation to peerslist 
 
 #### syncPeer
->{"uid":1380616779556,"target":1380616903327,"action":"syncPeer","payload":{"requestlist":[],"pushlist":[],"storename":666}} 
-the alpha peer sends a sync message with new features and a feature request
+The alpha peer sends a sync message with new features and a feature request
+>{"uid":<origin-id>,"target":<target-id>,"action":"syncPeer","payload":{"requestlist":[<feature ids>],"pushlist":[<features>],"storename":<herdid>}} 
+
+Client should:  
+    1. sent features from requestlist to other peers with 'requestedFeats' 
+    2. add features for own use from pushlist
 
 #### requestedFeats
->{"uid":1380617321116,"action":"requestedFeats","payload":{"features":[{"key":"1380617321116#1380617339537","uid":1380617321116,"created":1380617339537,"updated":1380617339537,"status":"","feature":{"type":"Feature","properties":{"icon":"./mapicons/imoov/s0880_B06---g.png","key":"1380617321116#1380617339537","store":666,"creator":"TomFF","owner":"TomFF"},"geometry":{"type":"Point","coordinates":[4.913888933595962,52.343493913247165]}}}],"storename":666}}
 requested feats are returning from peer
+>{"uid":<origin-id>,"action":"requestedFeats","payload":{"features":[<features>],"storename":<herdid>}}
 
+Client should: add features to own store
 
-##### Messages from Peers: broadcasted messages
+### Messages from Peers: broadcasted messages
 #### updatePeers
->{"uid":1380616903327,"action":"updatePeers","payload":{"uid":1380616903327,"connectionID":0}}
 a peer is gone and everybody has a new connection-id, recieve a connectionID with UID
+>{"uid":<origin-id>,"action":"updatePeers","payload":{"uid":<origin-id>,"connectionID":<origin-cid>}}
+
+Client should: update peerlist with new CID's 
 
 #### newPeer
->{"uid":1380616170654,"action":"newPeer","payload":{"uid":1380616170654,"cid":0,"family":"alpha"}}
 a new peer just joined, recieve its status: connection-id, uid, extent
+>{"uid":<origin-id>,"action":"newPeer","payload":{"uid":<origin-id>,"cid":<origin-cid>,"family":"alpha"}}
+
+Client should: 
+    1. Add peer to own peerslist
+    2. Sent own peerinformation with 'informPeer'
+    3. Sent info on own herd with 'herdInfo'
 
 #### newPeerFidList
->{"uid":1380616170654,"action":"newPeerFidList","payload":{"fids":[],"storename":666}} 
 a new peer just sent it's fidlist
+>{"uid":<origin-id>,"action":"newPeerFidList","payload":{"fids":[<fidlist>],"storename":<herdid>}} 
+
+Client should: (only when being the alphapeer) 
+    1. Find id's that are new(er) compared to own list and add to requestlist 
+    2. Find id's that are old(er) compared to own list and add to pushlist
+    3. Sent requestlist and pushlist with 'syncPeer'
 
 #### peerUpdated
->{"uid":1380616170654,"action":"peerUpdated","payload":{"video":{"state":"off"}}} 
->{"uid":1380616170654,"action":"peerUpdated","payload":{"owner":{"name":"Tom"}}} 
->{"uid":1380616170654,"action":"peerUpdated","payload":{"extent":{"bottom":0,"left":0,"top":1,"right":1}}}
->{"uid":1380616170654,"action":"peerUpdated","payload":{"point":{"coords":{"longitude":4.9128983,"latitude":52.3424068},"time":1380616176418}}} 
-a peer has changed, update the peer
+A peer has changed, update the peer
+>{"uid":<origin-id>,"action":"peerUpdated","payload":{"video":{"state":<on/off>}}} 
+>{"uid":<origin-id>,"action":"peerUpdated","payload":{"owner":{"name":<peers owner>}}} 
+>{"uid":<origin-id>,"action":"peerUpdated","payload":{"extent":{"bottom":0,"left":0,"top":1,"right":1}}}
+>{"uid":<origin-id>,"action":"peerUpdated","payload":{"point":{"coords":{"longitude":<lon>,"latitude":<lat>},"time":<timestamp>}}} 
+
+Client should: update the peer in the peerslist accordingly
 
 #### newFeature
->{"uid":1380616779556,"action":"newFeature","payload":"{\"options\":{\"key\":\"1380616779556#1380616812275\",\"uid\":1380616779556,\"created\":1380616812275,\"updated\":1380616812275,\"status\":\"\",\"feature\":{\"type\":\"Feature\",\"properties\":{\"icon\":\"./mapicons/imoov/s0400---g.png\",\"key\":\"1380616779556#1380616812275\",\"store\":666,\"creator\":\"TomFF\",\"owner\":\"TomFF\"},\"geometry\":{\"type\":\"Point\",\"coordinates\":[4.911271097597397,52.344306667178856]}}}}"} 
 a new object was drawn or updated by a peer
+>{"uid":<origin-id>,"action":"newFeature","payload":"{"options":<jsonfeature>}"} 
 
-#### updateFeature
->
+Client should: add feature to own store
+TODO: THERE's SOMETHING WRONG WITH THE JSON HERE, too complex
 
 #### getHerdInfo
 >
 A peer request information about a herd
 
 #### herdInfo
->{"uid":1380616170654,"action":"herdInfo","payload":{"uid":666,"name":"sketch","peeruid":1380616170654,"active":true}} 
 Info about a herd comes in...
+>{"uid":<origin-id>,"action":"herdInfo","payload":{"uid":<herdid>,"name":<herdname>,"peeruid":<????>,"active":<true/false>}} 
+Not sure what the purpose of peeruid is here 
 
+Client should: ......
 
 Dependencies Core
 =================
