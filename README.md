@@ -1,6 +1,8 @@
 Concurrent Online WebGIS
 ========================
 
+Versions: 1.0 Release
+
 COW is a real time multi-user geo-editing application for the browser. The application is based on OpenLayers and jQuery. It uses secure websockets to send changes to its peers and indexeddb to store features in the browser for offline usage.
 
 Currently the server is a normal websocket node.js server behind a haproxy which handles the secure bit.
