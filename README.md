@@ -146,20 +146,49 @@ Client should:
 
 #### peerGone
 the server noticed a peer disconnecting and send its connection-id to the pool
->{"action":"peerGone","payload":{"peerCid":2,"newCid":2}} 
+`````javascript
+{
+    "action":"peerGone",
+    "payload":{"peerCid":2,"newCid":2}
+}
+`````
 
 Client should: remove peer with peerCid from list. Assign newCid to self.
 
 ### Messages from Peers: targeted messages
 #### informPeer
 You joined and receive the status from peers like connection-id, uid, extent
->{"uid":<origin-id>,"target":<target-id>,"action":"informPeer","payload":{"options":{"uid":<src-uid>,"cid":<src-cid>,"family":"alpha"},"view":{"left":<left long>,"bottom":<bottom lat>,"right":<right long>,"top":<top lat>},"owner":{"name":<name of peer owner>},"position":{"coords":{"longitude":<lon>,"latitude":<lat>},"time":<timestamp>},"video":{"state":<on/off>}}} 
+`````javascript
+{
+    "uid":<origin-id>,
+    "target":<target-id>,
+    "action":"informPeer",
+    "payload":{
+        "options":{"uid":<src-uid>,"cid":<src-cid>,"family":"alpha"},
+        "view":{"left":<left long>,"bottom":<bottom lat>,"right":<right long>,"top":<top lat>},
+        "owner":{"name":<name of peer owner>},
+        "position":{"coords":{"longitude":<lon>,"latitude":<lat>},"time":<timestamp>},
+        "video":{"state":<on/off>}
+    }
+}
+`````
 
 Client should: add peerinformation to peerslist 
 
 #### syncPeer
 The alpha peer sends a sync message with new features and a feature request
->{"uid":<origin-id>,"target":<target-id>,"action":"syncPeer","payload":{"requestlist":[<feature ids>],"pushlist":[<features>],"storename":<herdid>}} 
+`````javascript
+{
+    "uid":<origin-id>,
+    "target":<target-id>,
+    "action":"syncPeer",
+    "payload":{
+        "requestlist":[<feature ids>],
+        "pushlist":[<features>],
+        "storename":<herdid>
+     }
+}
+`````
 
 Client should:  
     1. sent features from requestlist to other peers with 'requestedFeats' 
@@ -167,20 +196,48 @@ Client should:
 
 #### requestedFeats
 requested feats are returning from peer
->{"uid":<origin-id>,"action":"requestedFeats","payload":{"features":[<features>],"storename":<herdid>}}
+`````javascript
+{
+    "uid":<origin-id>,
+    "action":"requestedFeats",
+    "payload":{
+        "features":[<features>],
+        "storename":<herdid>
+    }
+}
+`````
 
 Client should: add features to own store
 
 ### Messages from Peers: broadcasted messages
 #### updatePeers
 a peer is gone and everybody has a new connection-id, recieve a connectionID with UID
->{"uid":<origin-id>,"action":"updatePeers","payload":{"uid":<origin-id>,"connectionID":<origin-cid>}}
+`````javascript
+{
+    "uid":<origin-id>,
+    "action":"updatePeers",
+    "payload":{
+        "uid":<origin-id>,
+        "connectionID":<origin-cid>
+    }
+}
+`````
 
 Client should: update peerlist with new CID's 
 
 #### newPeer
 a new peer just joined, recieve its status: connection-id, uid, extent
->{"uid":<origin-id>,"action":"newPeer","payload":{"uid":<origin-id>,"cid":<origin-cid>,"family":"alpha"}}
+`````javascript
+{
+    "uid":<origin-id>,
+    "action":"newPeer",
+    "payload":{
+        "uid":<origin-id>,
+        "cid":<origin-cid>,
+        "family":"alpha"
+     }
+}
+`````
 
 Client should: 
     1. Add peer to own peerslist
@@ -189,7 +246,16 @@ Client should:
 
 #### newPeerFidList
 a new peer just sent it's fidlist
->{"uid":<origin-id>,"action":"newPeerFidList","payload":{"fids":[<fidlist>],"storename":<herdid>}} 
+`````javascript
+{
+    "uid":<origin-id>,
+    "action":"newPeerFidList",
+    "payload":{
+        "fids":[<fidlist>],
+        "storename":<herdid>
+    }
+} 
+`````
 
 Client should: (only when being the alphapeer) 
     1. Find id's that are new(er) compared to own list and add to requestlist 
@@ -198,17 +264,31 @@ Client should: (only when being the alphapeer)
 
 #### peerUpdated
 A peer has changed, update the peer
->{"uid":<origin-id>,"action":"peerUpdated","payload":{"video":{"state":<on/off>}}} 
->{"uid":<origin-id>,"action":"peerUpdated","payload":{"owner":{"name":<peers owner>}}} 
->{"uid":<origin-id>,"action":"peerUpdated","payload":{"extent":{"bottom":0,"left":0,"top":1,"right":1}}}
->{"uid":<origin-id>,"action":"peerUpdated","payload":{"point":{"coords":{"longitude":<lon>,"latitude":<lat>},"time":<timestamp>}}} 
+`````javascript
+{
+    "uid":<origin-id>,
+    "action":"peerUpdated",
+    "payload":{
+`````
+`````javascript
+      "video":{"state":<on/off>}}} 
+or    "owner":{"name":<peers owner>}}} 
+or    "extent":{"bottom":0,"left":0,"top":1,"right":1}}}
+or    "point":{"coords":{"longitude":<lon>,"latitude":<lat>},"time":<timestamp>}
+}} 
+`````
 
 Client should: update the peer in the peerslist accordingly
 
 #### newFeature
 a new object was drawn or updated by a peer
->{"uid":<origin-id>,"action":"newFeature","payload":"{"options":<jsonfeature>}"} 
-
+`````javascript
+{
+    "uid":<origin-id>,
+    "action":"newFeature",
+    "payload":"{\"options\":<jsonfeature>}"
+} 
+`````
 Client should: add feature to own store
 TODO: THERE's SOMETHING WRONG WITH THE JSON HERE, too complex
 
@@ -218,7 +298,18 @@ A peer request information about a herd
 
 #### herdInfo
 Info about a herd comes in...
->{"uid":<origin-id>,"action":"herdInfo","payload":{"uid":<herdid>,"name":<herdname>,"peeruid":<????>,"active":<true/false>}} 
+`````javascript
+{
+    "uid":<origin-id>,
+    "action":"herdInfo",
+    "payload":{
+        "uid":<herdid>,
+        "name":<herdname>,
+        "peeruid":<????>,
+        "active":<true/false>
+    }
+}
+`````
 Not sure what the purpose of peeruid is here 
 
 Client should: ......
