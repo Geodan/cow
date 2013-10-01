@@ -131,15 +131,18 @@ COW makes use of websocket messages to comminicate with peers. A peer is not nec
 
 #### connected
 >{"action":"connected","payload":{"cid":0}} 
+
 webscocket confirms connection by returning a CID
 
 #### peerGone
 >{"action":"peerGone","payload":{"peerCid":0,"newCid":0}} 
+
 the server noticed a peer disconnecting and send its connection-id to the pool
 
 ##### Messages from Peers: targeted messages
 #### informPeer
 >{"uid":1380616779556,"target":1380616903327,"action":"informPeer","payload":{"options":{"uid":1380616779556,"cid":0,"family":"alpha"},"view":{"left":4.8860368751853,"bottom":52.335417998001,"right":4.9347028755515,"top":52.351568353647},"owner":{"name":"TomFF"},"position":{"coords":{"longitude":4.9128983,"latitude":52.3424068},"time":1380616803963},"video":{"state":"off"}}} 
+
 the client has joined and receives the status from peers: connection-id, uid, extent
 
 #### syncPeer
