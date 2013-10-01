@@ -206,7 +206,6 @@ $.widget("cow.OlMapWidget", {
 	
 	_reloadLayer: function(e){
 		self.core.editLayer.removeAllFeatures();
-		//var items = self.core.featurestore().getAllFeatures();
 		var items = self.core.featurestore().featureItems();
 		$.each(items, function(i, object){
 			var feature = geojson_format.read(object.options.feature,"Feature");

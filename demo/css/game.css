@@ -1,0 +1,39 @@
+.leaflet-container {
+    background: black;
+}
+
+.droogvallend	{fill: #cddbe7;}
+.meer, plas, ven, vijver:	{fill: #94cceb;}
+.waterloop		{fill: #003333;stroke:#003333;stroke-width:1}
+.zee			{fill: #93cae1;}
+
+.aanlegsteiger 	{fill: #6d616c;}
+.akkerland		{fill: #f5f3df;}
+.grasland		{fill: #deebc9;}
+.basaltblokken, steenglooiing {fill: #5d626a;}
+.bebouwd\%20gebied	{fill: #af9e92;}
+.dodenakker		{fill: #c0c09b;}
+
+.overig 		{fill: #cccccc;}
+.populieren		{fill: #cbddcb;}
+.spoorbaanlichaam	{fill: #7d7c7b;}
+.dodenakker met bos	{fill: #cbddcb;}
+.onbekend 		{fill: #aaa3a6;}
+.zand			{fill: #fdffe0;}
+.heide			{fill: #f3ddff;}
+.bos\%3A\%20loofbos	{fill: #cbddcb;}
+.bos\%3A\%20naaldbos	{fill: #cbddcb;}
+.bos\%3A\%20gemengd\%20bos	{fill: #cbddcb;}
+
+.gebouw {
+	fill: none;
+	stroke: #cc0000;
+	stroke-width: 1px;
+}
+
+.spoorbaan {
+  stroke: black;
+  fill: none;
+  stroke-width: 1px;
+  pointer-events: all;
+}

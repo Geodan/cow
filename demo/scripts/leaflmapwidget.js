@@ -16,6 +16,16 @@ _onConnect: function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
 (function($) {
 
 var _defaultOptions = {
@@ -33,25 +43,29 @@ $.widget("cow.LeaflMapWidget", {
         var core;
         var self = this;		
         var element = this.element;
-        
+        this._d3layers = [];
         core = $(this.options.core).data('cow');
 		this.core=core;
+		
         core.bind("storeChanged", {widget: self}, self._onFeatureStoreChanged);
 		core.bind("peerStoreChanged", {widget: self}, self._onPeerStoreChanged);
+		core.bind("herdListChanged",  {widget: self}, self._onPeerStoreChanged);
 		//core.bind("layoutChanged", {widget: self},self._updateSize);
 		core.bind("zoomToExtent", {widget: self},self._zoomToPeersView);
 		core.bind("zoomToPoint", {widget: self},self._zoomToPeersLocation);
+		core.bind("myPositionChanged",{widget: self},self._onPeerStoreChanged);
 		
 		//Creating the leaflet map
 		this.map = L.map('map',{ 
 			zoomControl:false
 		})
-		.setView([52.083726,5.111282], 9);//Utrecht
-		
+		//.setView([52.083726,5.111282], 9);//Utrecht
+		.setView([52.341921,4.912838], 17);//Geodan Adam
+		tmp = this.map;
 		// add an OpenStreetMap tile layer
-		var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-		}).addTo(this.map);
+		//var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+		//	attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+		//}).addTo(this.map);
 		
 		//Layer controls
 		//var baseLayers = {"OSM": osmLayer};
@@ -61,6 +75,20 @@ $.widget("cow.LeaflMapWidget", {
 			self.map.fitBounds([[bbox.bottom,bbox.left],[bbox.top,bbox.right]]);
 		});
 		
+		var handleOnLoad = function(){
+		    var bounds = self.map.getBounds();
+            var extent = {
+                left: bounds.getWest(),
+                bottom: bounds.getSouth(),
+                right: bounds.getEast(),
+                top: bounds.getNorth()
+            };
+            self.core.me() && self.core.me().view({extent:extent}); //Set my own extent
+            //Reset/redraw layers
+            self._d3layers.forEach(function(l){
+                    l.reset();
+            });
+		};
 		
 		var handleNewExtent = function(data){
 				var bounds = data.target.getBounds();
@@ -71,11 +99,13 @@ $.widget("cow.LeaflMapWidget", {
 					top: bounds.getNorth()
 				};
 				self.core.me() && self.core.me().view({"extent":extent}); //Set my own extent
-				self.viewlyr.reset();
-				self.locationlyr.reset();
+				//Reset/redraw layers
+				self._d3layers.forEach(function(l){
+                    l.reset();
+                });
 		};
 		this._createLayers(this.map);
-		
+		handleOnLoad();
 				
 		this.map.on('moveend',function(e){
 				handleNewExtent(e);
@@ -90,6 +120,23 @@ $.widget("cow.LeaflMapWidget", {
         this.element.removeClass('ui-dialog ui-widget ui-widget-content ' +
                                  'ui-corner-all')
             .empty();
+    },
+    //Setter/getter for d3layers
+    d3Layers: function(layerobj) {
+        //TODO: check for existing layer on push
+        if (layerobj) this._d3layers.push(layerobj);
+        else return this._d3layers;
+    },
+    //Getter for d3 layer by name
+    getD3LayerByName: function(name){
+        //TODO: what a weird method the get the layer. Can't be done easier?
+        var returnlayer;
+        this._d3layers.forEach(function(layer){
+           if (layer.layername === name) {
+               returnlayer = layer;
+           }
+        });
+        return returnlayer;
     },
 	_onFeatureStoreChanged: function(evt) {
 		//console.log('_onLoaded');
@@ -128,7 +175,11 @@ $.widget("cow.LeaflMapWidget", {
 			self.viewlyr.data(extentCollection);
 		}
 		//Update layer with locations
-		if (self.locationlyr){
+		if (self.getD3LayerByName('viewlayer')){
+			self.getD3LayerByName('viewlayer').data(extentCollection);
+		}
+		//Update layer with locations
+		if (self.getD3LayerByName('locationlayer')){
 		    $.each(locationCollection.features, function(i,d){
                 var style = {}; 
                 if (d.id == self.core.me().uid)
@@ -136,7 +187,7 @@ $.widget("cow.LeaflMapWidget", {
                 else style.fill = "steelBlue";
                 d.style = style;
             });
-			self.locationlyr.data(locationCollection);
+			self.getD3LayerByName('locationlayer').data(locationCollection);
 		}
 	},
 	_zoomToPeersView: function(evt, bbox){
@@ -153,12 +204,13 @@ $.widget("cow.LeaflMapWidget", {
 	
 
 	_reloadLayer: function(e){
-		self.core.editLayer.clearLayers();
-		var items = self.core.featurestore().getAllFeatures();
+	    var self = this;
+		self.editLayer.clearLayers();
+		var items = self.core.featurestore().featureItems();
 		$.each(items, function(i, object){
 			var feature = object.options.feature;
 			if (object.options.status != 'deleted')
-				self.core.editLayer.addData(feature)
+				self.editLayer.addData(feature)
 					.setStyle(self.layerstyle);
 		});
 	},
@@ -166,42 +218,8 @@ $.widget("cow.LeaflMapWidget", {
 	
 	_createLayers: function(map) {
 		var self = this;
-
-		self.viewlyr = new d3layer("viewlayer",{
-			maptype: "Leaflet",
-			map: self,
-			type: "path",
-			labels: true,
-			labelconfig: {
-                field: "owner",
-                style: {
-                    stroke: "steelBlue"
-                }
-            },
-			style: {
-					fill: "none",
-					stroke: "steelBlue",
-					'stroke-width': 2,
-					textlocation: "ul"
-				}
-		});
-        
-		self.locationlyr = new d3layer("locationlayer",{
-			maptype: "Leaflet",
-			map: self,
-			type: "circle",
-			labels: true,
-			labelconfig: {
-				field:"owner"
-			},
-			style: {
-				fill: "steelBlue"
-			}
-		});		
-
-		var self = this;
 		
-	/** Here comes the big bad editlayer.. **/
+		/** Here comes the big bad editlayer.. **/
 		this.layerstyle  = function (feature) {
 			var icon = L.icon({
 					iconUrl: feature.properties.icon,
@@ -251,14 +269,6 @@ $.widget("cow.LeaflMapWidget", {
 				.setContent(innerHtml)
 				.openOn(self.map);
 			
-			
-			var titlefld = document.getElementById('titlefld');
-			titlefld.addEventListener("blur", function(){
-					self.changeFeature(this, self, feature);
-			}, false);
-			var descfld = document.getElementById('descfld');
-			descfld.addEventListener("blur", self.changeFeature, false);
-			
 			var editbtn = document.getElementById('editButton');
 			//editbtn.addEventListener("touchstart", function(){
 			//		self.editfeature(self,feature);
@@ -277,7 +287,9 @@ $.widget("cow.LeaflMapWidget", {
 			
 			var closebtn = document.getElementById('closeButton');
 			//closebtn.addEventListener("touchstart", function(){self.closepopup(self);}, false);
-			closebtn.addEventListener("click", function(){self.closepopup(self);}, false);
+			closebtn.addEventListener("click", function(){
+			    self.changeFeature(self, feature);
+			}, false);
 		}
 		function onEachFeature(feature, layer) {
 			//layer.bindLabel(feature.properties.name);
@@ -301,7 +313,7 @@ $.widget("cow.LeaflMapWidget", {
 					;
 				}
 		}
-		).addTo(map);
+		).addTo(this.map);
 		
 		// Initialize the draw control and pass it the FeatureGroup of editable layers
 		this.drawControl = new L.Control.Draw({
@@ -314,9 +326,9 @@ $.widget("cow.LeaflMapWidget", {
 			}
 			
 		});
-		tmp = this.drawControl;
+
 		this.map.addControl(this.drawControl);
-		map.on('draw:created', function (e) {
+		this.map.on('draw:created', function (e) {
 			var type = e.layerType,
 				layer = e.layer;
 
@@ -329,7 +341,13 @@ $.widget("cow.LeaflMapWidget", {
 				
 				layers.eachLayer(function (layer) {
 				    var feature = layer.toGeoJSON()
-				    core.featurestore().updateLocalFeat(feature);
+				    //First transform into featurestore item
+                    var item = core.featurestore().getFeatureItemById(feature.properties.key);
+                    var d = new Date();
+                    var timestamp = d.getTime();
+                    item.feature = feature;
+                    item.updated = timestamp;
+                    core.featurestore().featureItems({data:item, source: 'user'});
 					//core.trigger('afterfeaturemodified',layer.toGeoJSON());
 				});
 		});
@@ -380,7 +398,7 @@ $.widget("cow.LeaflMapWidget", {
 		
 		
 		this.editLayer = editlayer;
-		core.editLayer = editlayer;
+		//core.editLayer = editlayer;
 		/*this.editLayer.events.on({
 			scope: this,
 			sketchcomplete: this.handlers.includeFeature//this.handlers.simple		
@@ -402,15 +420,49 @@ $.widget("cow.LeaflMapWidget", {
 		//}});
 //		this.controls.select.activate();
 		/** End of the big bad editlayer **/
-	},
-	_onSketchComplete: function(evt, feature){
-		var core = evt.data.widget.core;
-		//Disable the draw control(s) after drawing a feature
-/*		var controls = evt.data.widget.map.getControlsByClass('OpenLayers.Control.DrawFeature');
-		$.each(controls,function(id,control){
-				control.deactivate();
+		
+		var viewlyr = new d3layer("viewlayer",{
+			maptype: "Leaflet",
+			map: self,
+			type: "path",
+			labels: true,
+			labelconfig: {
+                field: "owner",
+                style: {
+                    stroke: "steelBlue"
+                }
+            },
+			style: {
+					fill: "none",
+					stroke: "steelBlue",
+					'stroke-width': 2,
+					textlocation: "ul"
+				}
 		});
-*/	},
+        self.d3Layers(viewlyr);
+        
+		var locationlyr = new d3layer("locationlayer",{
+			maptype: "Leaflet",
+			map: self,
+			type: "circle",
+			coolcircles: true,
+			satellites: true,
+			videobox: true,
+			labels: true,
+			labelconfig: {
+				field:"owner",
+				style: {
+				    stroke: "#000033"
+					}
+			},
+			style: {
+			    fill: "grey",
+				fill: "steelBlue"
+			}
+		});
+		self.d3Layers(locationlyr);
+		
+	},
 	
 	editfeature: function(self, feature){
 		self.map.closePopup();
@@ -420,25 +472,25 @@ $.widget("cow.LeaflMapWidget", {
 		//var feature = item.target.feature; 
 		var key = feature.properties.key;
 		var store = feature.properties.store || "store1";
-		core.featurestore().removeItem(key);
+		core.featurestore().removeFeatureItem(key);
 		self.map.closePopup();
 		console.log('storeChanged');
 		core.trigger('storeChanged');
-	},
-	changeFeature: function(evt,self, feature){
-		var key = evt.name;
-		var value = evt.value;
-		
-		if (feature){
-			var store = feature.properties.store || "store1";
-			 
-			if (key == "name")
-				feature.properties.name = value;
-			if (key == "desc")
-				feature.properties.desc = value;
-			self.map.closePopup(); //we have to destroy since the next line triggers a reload of all features
-			core.featurestore().updateLocalFeat(feature);
-		}
+	},                
+	changeFeature: function(self, feature){
+        feature.properties.name = document.getElementById('titlefld').value; //TODO. Yuck, yuck yuck....
+        feature.properties.desc = document.getElementById('descfld').value;
+        feature.properties.owner = self.core.username();
+        self.map.closePopup(); //we have to destroy since the next line triggers a reload of all features
+		if (self.core.activeherd() == feature.properties.store){
+		    //core.featurestore().updateLocalFeat(feature);
+            var item = core.featurestore().getFeatureItemById(feature.properties.key);
+            var d = new Date();
+            var timestamp = d.getTime();
+            item.feature = feature;
+            item.updated = timestamp;
+            self.core.featurestore().featureItems({data:item, source: 'user'});
+        }
 	},
 	closepopup: function(self){
 		self.map.closePopup();

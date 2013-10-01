@@ -11,8 +11,10 @@ function d3layer(layername, config){
 		this.g = config.g;
 		this.map = config.map;
 		this.style = config.style;
+		this.classfield = config.classfield;
 		this.satellites = config.satellites || false;
 		this.coolcircles = config.coolcircles || false;
+		this.videobox = config.videobox || false;
 		this.labels = config.labels || false;
 		this.labelconfig = config.labelconfig;
 		this.highlight = config.highlight || false;
@@ -167,17 +169,20 @@ function d3layer(layername, config){
 			var newentity = entities.enter()
 			    .append('g')
 			    .classed('entity',true)			    
-			    
 			    ;
 			
 			if (_this.type == "path" || _this.type == "circle"){
 			    newentity.append("path")
-			        .classed("zoomable",true)
-			        //.classed(function(d){return d.id;}),true)
+			        //.classed("zoomable",true)
+			        .attr('class',function(d){
+			            if (_this.classfield)
+			                return escape(d.properties[_this.classfield]);
+			            else return "foo";
+			        })
 			        .each(_this.styling)
 			        ;
 			}
-			//TODO: This will become a forcelayout..
+			//Forced tree layout
 			if (_this.satellites){
 			    entities.each(function(d,i){
                     var x = _this.project(d.geometry.coordinates)[0];
@@ -206,6 +211,13 @@ function d3layer(layername, config){
                                 nucleus: "nucleus" + d.id,
                                 fixed: false,
                                 imageurl: "./mapicons/stratego/stratego-miner.svg"
+                            }, {
+                                name: "M 2",
+                                id: "satellite" + d.id +1+ 'm', 
+                                type: 'satellite',
+                                nucleus: "nucleus" + d.id +1,
+                                fixed: false,
+                                imageurl: "./mapicons/stratego/stratego-miner.svg"
                             }]
                           },{
                             name: "Sold 2",
@@ -228,7 +240,16 @@ function d3layer(layername, config){
 			    });
 			    _this.nodemap.start();
 			}
-			
+			if (_this.videobox){
+			    var videobox = newentity.append('foreignObject')
+			        //.classed('zoomable',true)
+			        .classed('videobox',true)
+			        .style('position','relative')
+			        //.attr("x", function(d){return 500 + _this.project(d.geometry.coordinates)[0];} )
+                    //.attr("y", function(d){return 500 + _this.project(d.geometry.coordinates)[1];} )
+			        .attr('id',function(d){return 'videobox' + d.id;})
+			        ;
+			}
 			if (_this.labels){
 			    var label = newentity.append('g')
 			        .classed('place-label',true);
@@ -237,7 +258,7 @@ function d3layer(layername, config){
 					.append('text')
 					.attr("x",function(d) {return _this.textLocation(d)[0] ;})
 					.attr("y",function(d) {return _this.textLocation(d)[1] ;})
-					.classed("zoomable",true)
+					//.classed("zoomable",true)
 					.attr('text-anchor', 'left')
 					.style('stroke','white')
 					.style('stroke-width','3px')
@@ -252,7 +273,7 @@ function d3layer(layername, config){
 					.append('text')
 					.attr("x",function(d) {return _this.textLocation(d)[0] ;})
 					.attr("y",function(d) {return _this.textLocation(d)[1] ;})
-					.classed("zoomable",true)
+					//.classed("zoomable",true)
 					.attr('text-anchor', 'left')
 					.each(_this.textstyling)
 					.text(function(d) {
@@ -310,6 +331,14 @@ function d3layer(layername, config){
                                 return d.id; 
                         })
 			    }
+			    if (_this.videobox){
+			        entity.select('.videobox')
+			            .attr("x", function(d){
+			                return 500 + _this.project(d.geometry.coordinates)[0];
+			            } )
+			            .attr("y", function(d){return 500 + _this.project(d.geometry.coordinates)[1];} )
+                        ;
+			    }
 			});
 			//On exit	
 			entities.exit().remove().transition().duration(500);
@@ -339,6 +368,17 @@ function d3layer(layername, config){
                                 else
                                     return d.id; 
                             })
+                    }
+                    if (_this.videobox){
+                        entity.select('.videobox')
+                            .attr("x", function(d){
+                                var x = _this.project(d.geometry.coordinates)[0];
+                                return _this.project(d.geometry.coordinates)[0];
+                            } )
+                            .attr("y", function(d){
+                                return  _this.project(d.geometry.coordinates)[1];
+                            } )
+                            ;
                     }
 			    });
 			//FORCETEST

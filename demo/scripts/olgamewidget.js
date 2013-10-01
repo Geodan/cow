@@ -1,6 +1,6 @@
 //Game widget is an extent on OlMapWidget
 
-$.widget("cow.OlGameWidget", $.cow.OlMapWidget, {
+$.widget("cow.OlGameWidget", $.cow.LeaflMapWidget, {
     _create: function() {
         this._super( "_create" );
         var self = this;
@@ -12,70 +12,79 @@ $.widget("cow.OlGameWidget", $.cow.OlMapWidget, {
     _myPoints: function(p){
         var returnval;
         if (p) {
-            this.mypoints = this.mypoints + p;
+            this.mypoints = p;
             returnval = this.mypoints;
         }
         else{
             returnval = this.mypoints;
-            this.mypoints = 0;
         }
         $('#mypoints').html(this.mypoints);
         return returnval; 
     },
     _createLayers: function(){
-        this._super("_createLayers");
         var self = this;
-        /* Testje met geojson data */
-		var ollayer  = new OpenLayers.Layer.Vector('zones');
-		ollayer.afterAdd = function () {
-			var divid = ollayer.div.id;
-			var zonelayer = new d3layer("zones",{
-				maptype: "OpenLayers",
-				divid:divid,
-				map: self.map,
-				type: "path",
-				labels: true,
-				labelconfig: {
-					field: "name",
-					style: {
-					    stroke: "steelBlue"
-					}
-				},
-				style: {
-					fill: "none",
-					stroke: "steelBlue",
-					'stroke-width': 2,
-					textlocation: "ul"
-				}
-			});
-			self.d3Layers(zonelayer);
-			
-			d3.json("/main/cow/demo/scripts/zones.json", function(error, data) {
-			//d3.json("/main/d3test/uk.json", function(error, roads) {
-			    //self.features = data.features;
-			    console.log(error);
-			    self.getD3LayerByName('zones').data(data);
-			});
-			
-			
-		};
-		this.map.addLayer(ollayer);
-		/* */
+        
+        var lyr = new d3layer("waterlyr",{
+			maptype: "Leaflet",
+			map: self,
+			type: "path",
+			classfield: "typewater" 
+		});
+        this.d3Layers(lyr);
+        var lyr = new d3layer("terreinlyr",{
+			maptype: "Leaflet",
+			map: self,
+			type: "path",
+			style: {
+			    fill: 'none',
+			    'stroke-width': '1',
+			    stroke: 'steelBlue'
+			}
+			//classfield: "typelandgebruik" 
+		});
+        this.d3Layers(lyr);
+        var lyr = new d3layer("relieflyr",{
+			maptype: "Leaflet",
+			map: self,
+			type: "path",
+			style: {
+			    fill: "none",
+			    "stroke-width": "0.5px",
+			    stroke: "orange"
+			}
+		});
+        this.d3Layers(lyr);
+        var lyr = new d3layer("weglyr",{
+			maptype: "Leaflet",
+			map: self,
+			type: "path",
+			style: {
+			    fill: "grey",
+			    "stroke-width": "1px",
+			    stroke: "grey"
+			}
+		});
+        this.d3Layers(lyr);
+        
+        this._super("_createLayers");
+
 	},
 	updatePoints: function(feature,obj){
 	    var myteam = $('#myTeam').val();
 	    
 	    if (obj.TEAM == myteam){
-	        this._myPoints(1);
-	        obj.PUNTEN = parseInt(obj.PUNTEN) + 1;
+	        this._myPoints(this._myPoints()++);
+	        obj.PUNTEN = parseInt(obj.PUNTEN) + 1; //plus one point per x seconds
 	    }
 	    else {
+	        var objPunten = obj.PUNTEN;
 	        obj.PUNTEN = parseInt(obj.PUNTEN) - this._myPoints(); //At once my own points
-	        obj.PUNTEN = parseInt(obj.PUNTEN) - 1; //plus one point per x seconds
-	        if (obj.PUNTEN <= 0){
+	        obj.PUNTEN = parseInt(obj.PUNTEN) - 1; //minus one point per x seconds
+	        if (obj.PUNTEN <= 0){ //Capture object, 
 	            obj.TEAM = myteam;
-	            obj.PUNTEN + 1;
-	            this._myPoints(1);
+	            obj.PUNTEN = 1;
+	            var pointsleft = this._myPoints() - objPunten;
+	            this._myPoints(_this.myPoints() - objPunten); //adding what's left of my points
 	        }
 	    }
 	    
@@ -95,11 +104,79 @@ $.widget("cow.OlGameWidget", $.cow.OlMapWidget, {
             core.featurestore().featureItems({data:item, source: 'user'});
         }
 	},
+	_updateLayer: function(coords){
+	    var self = this;
+	    var mylat = coords.latitude;
+	    var mylon = coords.longitude;
+	    var range = 0.001;
+        var bbox = [mylon - range, mylat - range, mylon + range, mylat + range];
+        /*
+        var datasource = "/osgis/geoserver/top10nl/ows?"
+            + "service=WFS&"
+            + "version=1.0.0&"
+            + "request=GetFeature&"
+            + "typeName=top10nl:terrein&"
+            + "maxFeatures=1000000&"
+            + "outputFormat=json&"
+            + "srsName=EPSG:4326&"
+            + "bbox=" + bbox.join(",") + ",EPSG:4326";
+        d3.json(datasource,
+            function (json) {
+                if (self.getD3LayerByName('terreinlyr')){
+                    self.getD3LayerByName('terreinlyr').data(json);
+                }
+		});
+		*/
+		var datasource = "/osgis/geoserver/top10nl/ows?"
+            + "service=WFS&"
+            + "version=1.0.0&"
+            + "request=GetFeature&"
+            + "typeName=top10nl:waterdeel_vlak&"
+            + "maxFeatures=1000000&"
+            + "outputFormat=json&"
+            + "srsName=EPSG:4326&"
+            + "bbox=" + bbox.join(",") + ",EPSG:4326";
+        d3.json(datasource,
+            function (json) {
+                if (self.getD3LayerByName('waterlyr')){
+                    self.getD3LayerByName('waterlyr').data(json);
+                }
+		});
+		var datasource = "/osgis/geoserver/top10nl/ows?"
+            + "service=WFS&"
+            + "version=1.0.0&"
+            + "request=GetFeature&"
+            + "typeName=top10nl:wegdeel_vlak_auto&"
+            + "maxFeatures=1000000&"
+            + "outputFormat=json&"
+            + "srsName=EPSG:4326&"
+            + "bbox=" + bbox.join(",") + ",EPSG:4326";
+        d3.json(datasource,
+            function (json) {
+                if (self.getD3LayerByName('weglyr')){
+                    self.getD3LayerByName('weglyr').data(json);
+                }
+		});
+    },
+	
 	_onMyPositionChanged: function(evt){
 	    var self = evt.data.widget;
 	    console.log('positionchanged');
 	    //var features = self.getD3LayerByName('zones').data().features;
-	    var features = self.editLayer.features;
+	    var coords = self.core.me().position().point.coords;
+	    self._updateLayer(coords);
+	    //if (!self._viewIsset){
+            var mylat = coords.latitude;
+            var mylon = coords.longitude;
+            var range = 0.001;
+            var bounds = [[mylat - range, mylon - range], [mylat + range, mylon + range]];
+            self.map.setMaxBounds(bounds);
+            self.map.setView([coords.latitude, coords.longitude],20);
+	        self._viewIsset = true;
+	    //}
+	    tmp = self.editLayer;
+        var features = [];
+        self.editLayer.eachLayer(function(d){features.push(d.feature)});
 	    if (features){
 	        var html = '';
 	        var objarr = [];
@@ -116,8 +193,10 @@ $.widget("cow.OlGameWidget", $.cow.OlMapWidget, {
                 if ((obj.TYPE == 'VAK') || (obj.TYPE == 'PUNT')){ 
                 //var feat =  geojson_format.read(f)[0];
                     var feat =  f;
-                    var myloc = geojson_format.read(core.me().position().feature)[0];
-                    var distance = myloc.geometry.distanceTo(feat.geometry);
+                    var point = core.me().position().point.coords;
+                    var myloc = new L.LatLng(point.latitude,point.longitude);
+                    var featloc = feat.geometry.coordinates[0]; //TODO!!!!!
+                    var distance = myloc.distanceTo();
                     html = html + 'Distance to ' +  feat.properties.name + ': <br>' + distance + ' m.<hr>';
                     if (distance < 5 && !(self.intervals[feat.data.key])){
                         self.intervals[feat.data.key] = window.setInterval(function(){

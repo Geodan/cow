@@ -142,7 +142,7 @@ $.widget("cow.PeersWidget", {
         // Create a new Peer with our demo API key
         // TODO: in the future this has to move to our own websocket server
         self.peer1 = new Peer(self.core.UID, { key: 'lwjd5qra8257b9', debug: true });
-        tmp = self.peer1;
+        
         self.peer1.on('open', function(id){
           console.log('peerjs: Connected to socket');
         });
@@ -177,9 +177,18 @@ $.widget("cow.PeersWidget", {
             videobox.append(header);
             z = $('<video></video>', {src: URL.createObjectURL(stream), autoplay: true});
             z.width(150);
-            videobox.append(z).appendTo('body');
-            videobox.attr('position','absolute');
-            videobox.zIndex(10010);
+            z.height(150);
+            tmp = z;
+            var v = d3.select('#videobox' + peerid)
+                .append("xhtml:div")
+                //.style("position","relative")
+                .html('<video autoplay width="150"><source src=' + URL.createObjectURL(stream) + '></video>');
+            
+            //videobox.append(z).appendTo('#videoplace');
+            //
+            //videobox.attr('position','absolute');
+            //videobox.zIndex(10010);
+            
             videobox.on('click', function() {
               if ($(this).attr('class').indexOf('active') === -1) {
                 $(this).addClass('active');
