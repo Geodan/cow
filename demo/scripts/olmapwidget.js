@@ -36,6 +36,12 @@ var _defaultOptions = {
         core: undefined
 };
 
+//global map vars
+var geojson_format = new OpenLayers.Format.GeoJSON({
+    'internalProjection': new OpenLayers.Projection("EPSG:900913"),
+    'externalProjection': new OpenLayers.Projection("EPSG:4326")
+});
+
 $.widget("cow.OlMapWidget", {
 	options: $.extend({}, _defaultOptions),
 	

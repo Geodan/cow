@@ -93,13 +93,13 @@ $.widget("cow.OlGameWidget", $.cow.LeaflMapWidget, {
         feature.attributes.desc = desc;
         feature.attributes.owner = self.core.username();
         
-        var jsonfeature = JSON.parse(geojson_format.write(feature));//TODO is this needed?
+        //var jsonfeature = JSON.parse(geojson_format.write(feature));//TODO is this needed?
         if (core.activeherd() == feature.properties.store){
             //core.featurestore().updateLocalFeat(jsonfeature);
             var item = core.featurestore().getFeatureItemById(feature.properties.key);
             var d = new Date();
             var timestamp = d.getTime();
-            item.feature = jsonfeature;
+            item.feature = feature;
             item.updated = timestamp;
             core.featurestore().featureItems({data:item, source: 'user'});
         }
