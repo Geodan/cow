@@ -49,7 +49,7 @@ $.widget("cow.ConnectWidget", {
         var element = self.element;
 		element.addClass('connected').removeClass('disconnected');;
 		element.html(
-			'<span class="disconnect">' + $.i18n.map['txt_connected'] + '</span>'
+			'<span class="disconnect">' + translator.translate('txt_connected') + '</span>'
 		);
 		
 	},
@@ -58,7 +58,7 @@ $.widget("cow.ConnectWidget", {
         var element = self.element;
 		element.addClass('disconnected').removeClass('connected');
 		element.html(
-			'<span class="connect">' + $.i18n.map['txt_disconnected'] + '</span>'
+			'<span class="connect">' + translator.translate('txt_disconnected') + '</span>'
 		);
 		
 	}

@@ -83,7 +83,23 @@ WebSocketTest();
 var core;
   
 $(document).ready(function(){
-  translator.loadBundles();
+  var transcallback = function(){
+      //Translate some static texts
+        $('#myname').attr('title',$.i18n.prop('txt_clicktochangename'));
+        $('#connect').attr('title', $.i18n.prop('txt_clicktoconnect'));
+        $('#txt_welcome').html($.i18n.prop('txt_welcome'));
+        $('#maptitle').html($.i18n.prop('maptitle'));
+        $('#addfeattitle').html($.i18n.prop('addfeattitle'));
+        $('#deletedfeats').html($.i18n.prop('deletedfeats'));
+        $('#peerstitle').html($.i18n.prop('peerstitle'));
+  }
+
+  translator.loadBundles({
+    callback: transcallback,
+    path: 'lang/',
+    lang: 'en'
+  });
+  
   $('#cow').cow({
     websocket: {url: 'wss://websocket.geodan.nl:443/'}
     //websocket: {url: 'wss://websocket.geodan.nl:443/geofort'}
