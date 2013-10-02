@@ -36,32 +36,37 @@ $.widget("cow.NewFeatureWidget", {
         	self.element.trigger("newpoly", key);
 		});
 		
-        var names = 'Select an icon or a color and start drawing on the map';
-        names = names+ '<p><b>Marker icons</b><div class=/>';
-		$.getJSON('./mapicons/imoov/list.js', function(data) {
-			var items = [];
-			$.each(data.icons, function(key,val) {
-				names = names+ '<span class="peerlist newpoint" newpoint="./mapicons/' + val + '"><img width=30 height=30 src="./mapicons/'+val+'"></span>';
-			});
-			names = names + '<div class="peerlist linediv">';
-			names = names + '<b>Line colors </b><br/>';
-			names = names + '</div>';
-			names = names + '<span newline="black" class="peerlist newline" title="Black line"><hr color="black"></span>';
-			names = names + '<span newline="#204a87" class="peerlist newline" title="Blue line"><hr color="#204a87"></span>';
-			names = names + '<span newline="#f57900" class="peerlist newline" title="Orange line"><hr color="#f57900"></span>';
-			names = names + '<span newline="#cc0000" class="peerlist newline" title="Red line"><hr color="#cc0000"></span>';
-			names = names + '<span newline="#5c3566" class="peerlist newline" title="Purple line"><hr color="#5c3566"></span>';	
-			names = names + '<span newline="#4e9a06" class="peerlist newline" title="Green line"><hr color="#4e9a06"></span>';
+        var names = $.i18n.prop('txt_drawhelp');
+        names = names+ '<p><b>'+ $.i18n.prop('txt_markericons') + '</b><div class=/>';
+        names = names + '<div id="icons"></div>'; //Icons will be inserted here after loading
+        names = names + '<div class="peerlist linediv">';
+        names = names + '<b>'+ $.i18n.prop('txt_linecolors') + '</b><br/>';
+        names = names + '</div>';
+        names = names + '<span newline="black" class="peerlist newline" title="Black line"><hr color="black"></span>';
+        names = names + '<span newline="#204a87" class="peerlist newline" title="Blue line"><hr color="#204a87"></span>';
+        names = names + '<span newline="#f57900" class="peerlist newline" title="Orange line"><hr color="#f57900"></span>';
+        names = names + '<span newline="#cc0000" class="peerlist newline" title="Red line"><hr color="#cc0000"></span>';
+        names = names + '<span newline="#5c3566" class="peerlist newline" title="Purple line"><hr color="#5c3566"></span>';	
+        names = names + '<span newline="#4e9a06" class="peerlist newline" title="Green line"><hr color="#4e9a06"></span>';
 
-			names = names + '<div class="peerlist polydiv">';
-			names = names + '<p><b>Polygon colors</b></p>';
-			names = names + '</div>';		
-			names = names + '<span newpoly="#4e9a06" class="peerlist newpoly" title="Green polygon"><div style="background:#4e9a06">&nbsp;</div></span>';
-			names = names + '<span newpoly="#cc0000" class="peerlist newpoly" title="Red polygon"><div style="background:#cc0000">&nbsp;</div></span>';
-			names = names + '<span newpoly="#fce94f" class="peerlist newpoly" title="Yellow polygon"><div style="background:#fce94f">&nbsp;</div></span></p>';
-			names = names + '<span newpoly="#f57900" class="peerlist newpoly" title="f57900 polygon"><div style="background:#f57900">&nbsp;</div></span></p>';
-			element.html(names);
+        names = names + '<div class="peerlist polydiv">';
+        names = names + '<p><b>'+ $.i18n.prop('txt_polygoncolors') + '</b></p>';
+        names = names + '</div>';		
+        names = names + '<span newpoly="#4e9a06" class="peerlist newpoly" title="Green polygon"><div style="background:#4e9a06">&nbsp;</div></span>';
+        names = names + '<span newpoly="#cc0000" class="peerlist newpoly" title="Red polygon"><div style="background:#cc0000">&nbsp;</div></span>';
+        names = names + '<span newpoly="#fce94f" class="peerlist newpoly" title="Yellow polygon"><div style="background:#fce94f">&nbsp;</div></span></p>';
+        names = names + '<span newpoly="#f57900" class="peerlist newpoly" title="f57900 polygon"><div style="background:#f57900">&nbsp;</div></span></p>';
+        element.html(names);
+        
+        $.getJSON('./mapicons/imoov/list.js', function(data) {
+            var html = '';
+			$.each(data.icons, function(key,val) {
+				html = html+ '<span class="peerlist newpoint" newpoint="./mapicons/' + val + '"><img width=30 height=30 src="./mapicons/'+val+'"></span>';
+			});
+			$('#icons').html(html);
 		});
+			
+			
 		
 		//$(this.options.name).change(function(){self._updateName({data:{widget: self,name: $(this).val()}})});
     },

@@ -26,7 +26,7 @@ $.widget("cow.PeersWidget", {
         
         
         element.append('<div id="list"></div>');
-        element.append('<span><input type="text" id="newHerd" value="Add a new herd" size="15"><span class="addHerd licht">Add</span></span>');
+        element.append('<span><input type="text" id="newHerd" value="' + $.i18n.prop('txt_addnewherd')+ '" size="15"><span class="addHerd licht">' + $.i18n.prop('txt_add') + '</span></span>');
         element.append('<div id="peerjs"></div>');
         this.listdiv = element.find('#list');
         this.peerjsdiv = element.find('#peerjs');
@@ -230,13 +230,13 @@ $.widget("cow.PeersWidget", {
             if (herd.active){
                 var remove = '';
                 if(this.uid != 0) {
-                    remove = ' <span class="removeherd" title="remove this herd and delete all features">remove</span><div class="removeherdconfirm verborgen">are you sure? <span class="yesremove" title"this will remove the herd and all its features, not easily undone">yes</span><span class="notremove" title="alrighty">no</span></div>';
+                    remove = ' <span class="removeherd" title="' + $.i18n.prop('txt_herdwillberemoved') + '">' + $.i18n.prop('txt_remove') + '</span><div class="removeherdconfirm verborgen">' + $.i18n.prop('txt_yousure') + '<span class="yesremove" title"' + $.i18n.prop('txt_herdwillberemoved') + '">"' + $.i18n.prop('txt_yes')+'</span><span class="notremove" title="alrighty">"' + $.i18n.prop('txt_no') + '</span></div>';
                 }
                 if(this.uid==self.core.activeherd()) {
-                    names = names + '<div><span class="peerlist herd me" title="this is your herd" herd="'+this.uid+'">'+this.name+'</span></div>';
+                    names = names + '<div><span class="peerlist herd me" title="' + $.i18n.prop('txt_yourherd') + '" herd="'+this.uid+'">'+this.name+'</span></div>';
                 }
                 else {
-                    names = names + '<div><span class="peerlist herd" title="click to activate this herd" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
+                    names = names + '<div><span class="peerlist herd" title="' + $.i18n.prop('txt_activateherd') + '" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
                 }
                 $.each(this.peers, function(i){
                     var peer = self.core.getPeerByUid(herd.peers[i]);
@@ -245,7 +245,7 @@ $.widget("cow.PeersWidget", {
                             var videostring = '<img class="videoconnection" owner="'+peer.uid+'" src="./css/img/camera.png">';
                         else videostring = '';
                         if(peer.uid==self.core.UID) {
-                            names = names+ '<div class="peerlist peer me" title="this is you!" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+peer.uid+'" class="location" src="./css/img/crosshair.png"></div>';
+                            names = names+ '<div class="peerlist peer me" title="' + $.i18n.prop('txt_thisisyou') + '" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+peer.uid+'" class="location" src="./css/img/crosshair.png"></div>';
                             }
                             else {
                             names = names+ '<div class="peerlist peer owner" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+peer.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+peer.uid+'" src="./css/img/extents.png">&nbsp;'+videostring+'</div>';

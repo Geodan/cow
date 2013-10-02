@@ -569,7 +569,7 @@ $.widget("cow.OlMapWidget", {
 		//var feature = core.editLayer.selectedFeatures[0];
 		var feature;
 		core.editLayer.features.forEach(function(f){
-		        if (f.data.key == popupkey){
+		        if (f.data && f.data.key == popupkey){
 		            feature = f;
 		        }
 		});
