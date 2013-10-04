@@ -1,6 +1,6 @@
 //Game widget is an extent on OlMapWidget
 
-$.widget("cow.OlGameWidget", $.cow.LeaflMapWidget, {
+$.widget("cow.GameWidget", $.cow.LeaflMapWidget, {
     _create: function() {
         this._super( "_create" );
         var self = this;

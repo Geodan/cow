@@ -10,21 +10,6 @@ _onConnect: function() {
 */
 
 
-/**
-	TT: copied from featureswidget.js and adapted for map purpose
-**/
-
-
-
-
-
-
-
-
-
-
-
-
 
 (function($) {
 
@@ -63,9 +48,9 @@ $.widget("cow.LeaflMapWidget", {
 		.setView([52.341921,4.912838], 17);//Geodan Adam
 		tmp = this.map;
 		// add an OpenStreetMap tile layer
-		//var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-		//	attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-		//}).addTo(this.map);
+		var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+		}).addTo(this.map);
 		
 		//Layer controls
 		//var baseLayers = {"OSM": osmLayer};
@@ -292,7 +277,7 @@ $.widget("cow.LeaflMapWidget", {
 			}, false);
 		}
 		function onEachFeature(feature, layer) {
-			//layer.bindLabel(feature.properties.name);
+			layer.bindLabel(feature.properties.name,{ noHide: true });
 			layer.on({
 				mouseover: highlightFeature,
 				mouseout: resetHighlight,
@@ -309,7 +294,7 @@ $.widget("cow.LeaflMapWidget", {
 									iconUrl: feature.properties.icon,
 									iconSize: [40, 40]
 							})
-					})
+					}).bindLabel(feature.properties.name,{noHide: true})
 					;
 				}
 		}
