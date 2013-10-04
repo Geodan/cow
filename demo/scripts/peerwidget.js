@@ -250,11 +250,14 @@ $.widget("cow.PeersWidget", {
                         if (peer.video().state === "on")
                             var videostring = '<img class="videoconnection" owner="'+peer.uid+'" src="./css/img/camera.png">';
                         else videostring = '';
+                        if (peer.position().point)
+                            var positionstring = '<img owner="'+peer.uid+'" class="location" src="./css/img/locator.svg">';
+                        else positionstring = '';
                         if(peer.uid==self.core.UID) {
-                            names = names+ '<div class="peerlist peer me" title="' + translator.translate('txt_thisisyou') + '" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+peer.uid+'" class="location" src="./css/img/crosshair.png"></div>';
+                            names = names+ '<div class="peerlist peer me" title="' + translator.translate('txt_thisisyou') + '" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;'+positionstring+'</div>';
                             }
                             else {
-                            names = names+ '<div class="peerlist peer owner" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+peer.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+peer.uid+'" src="./css/img/extents.png">&nbsp;'+videostring+'</div>';
+                            names = names+ '<div class="peerlist peer owner" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;'+positionstring+'&nbsp;<img class="extent" owner="'+peer.uid+'" src="./css/img/extents.png">&nbsp;'+videostring+'</div>';
                             }
                     }
                 
