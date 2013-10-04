@@ -26,7 +26,7 @@ $.widget("cow.PeersWidget", {
         
         
         element.append('<div id="list"></div>');
-        element.append('<span><input type="text" id="newHerd" value="' + $.i18n.prop('txt_addnewherd')+ '" size="15"><span class="addHerd licht">' + $.i18n.prop('txt_add') + '</span></span>');
+        element.append('<span><input type="text" id="newHerd" value="' + translator.translate('txt_addnewherd')+ '" size="15"><span class="addHerd licht">' + translator.translate('txt_add') + '</span></span>');
         element.append('<div id="peerjs"></div>');
         this.listdiv = element.find('#list');
         this.peerjsdiv = element.find('#peerjs');
@@ -141,7 +141,13 @@ $.widget("cow.PeersWidget", {
         var self = evt.data.widget;
         // Create a new Peer with our demo API key
         // TODO: in the future this has to move to our own websocket server
-        self.peer1 = new Peer(self.core.UID, { key: 'lwjd5qra8257b9', debug: true });
+        self.peer1 = new Peer(self.core.UID, { 
+            //host: 'websocket.geodan.nl',
+            //port: 443,
+            //secure: true,
+            key: '3ryspwpldblc8fr', 
+            debug: 3 
+        });
         
         self.peer1.on('open', function(id){
           console.log('peerjs: Connected to socket');
@@ -230,13 +236,13 @@ $.widget("cow.PeersWidget", {
             if (herd.active){
                 var remove = '';
                 if(this.uid != 0) {
-                    remove = ' <span class="removeherd" title="' + $.i18n.prop('txt_herdwillberemoved') + '">' + $.i18n.prop('txt_remove') + '</span><div class="removeherdconfirm verborgen">' + $.i18n.prop('txt_yousure') + '<span class="yesremove" title"' + $.i18n.prop('txt_herdwillberemoved') + '">"' + $.i18n.prop('txt_yes')+'</span><span class="notremove" title="alrighty">"' + $.i18n.prop('txt_no') + '</span></div>';
+                    remove = ' <span class="removeherd" title="' + translator.translate('txt_herdwillberemoved') + '">' + translator.translate('txt_remove') + '</span><div class="removeherdconfirm verborgen">' + translator.translate('txt_yousure') + '<span class="yesremove" title"' + translator.translate('txt_herdwillberemoved') + '">"' + translator.translate('txt_yes')+'</span><span class="notremove" title="alrighty">"' + translator.translate('txt_no') + '</span></div>';
                 }
                 if(this.uid==self.core.activeherd()) {
-                    names = names + '<div><span class="peerlist herd me" title="' + $.i18n.prop('txt_yourherd') + '" herd="'+this.uid+'">'+this.name+'</span></div>';
+                    names = names + '<div><span class="peerlist herd me" title="' + translator.translate('txt_yourherd') + '" herd="'+this.uid+'">'+this.name+'</span></div>';
                 }
                 else {
-                    names = names + '<div><span class="peerlist herd" title="' + $.i18n.prop('txt_activateherd') + '" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
+                    names = names + '<div><span class="peerlist herd" title="' + translator.translate('txt_activateherd') + '" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
                 }
                 $.each(this.peers, function(i){
                     var peer = self.core.getPeerByUid(herd.peers[i]);
@@ -245,7 +251,7 @@ $.widget("cow.PeersWidget", {
                             var videostring = '<img class="videoconnection" owner="'+peer.uid+'" src="./css/img/camera.png">';
                         else videostring = '';
                         if(peer.uid==self.core.UID) {
-                            names = names+ '<div class="peerlist peer me" title="' + $.i18n.prop('txt_thisisyou') + '" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+peer.uid+'" class="location" src="./css/img/crosshair.png"></div>';
+                            names = names+ '<div class="peerlist peer me" title="' + translator.translate('txt_thisisyou') + '" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+peer.uid+'" class="location" src="./css/img/crosshair.png"></div>';
                             }
                             else {
                             names = names+ '<div class="peerlist peer owner" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+peer.uid+'" class="location" src="./css/img/crosshair.png">&nbsp;<img class="extent" owner="'+peer.uid+'" src="./css/img/extents.png">&nbsp;'+videostring+'</div>';

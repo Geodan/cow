@@ -13,7 +13,7 @@ $.widget("cow.HelpWidget", {
         core = $(this.options.core).data('cow');
 		this.core=core;
 		
-		var html = '<div class="namearrow"><img src="css/img/arrow.png"/><span class="text">' + $.i18n.prop('txt_changenamehere') + '</span></div>';
+		var html = '<div class="namearrow"><img src="css/img/arrow.png"/><span class="text">' + translator.translate('txt_changenamehere') + '</span></div>';
 		element.html(
 		html
 		);
@@ -23,7 +23,7 @@ $.widget("cow.HelpWidget", {
 	_onDisconnect: function(evt) {
 		var self = evt.data.widget;
 		var element = self.element;
-		var html = '<div class="disconnectarrow"><img src="css/img/arrow.png"/><div><span class="text">' + $.i18n.prop('txt_changenamehere') + '</span></div></div>';
+		var html = '<div class="disconnectarrow"><img src="css/img/arrow.png"/><div><span class="text">' + translator.translate('txt_changenamehere') + '</span></div></div>';
 		element.html(html);
 		element.find('.disconnectarrow').show('fade','slow').effect('bounce',{distance: -30,easing:'linear'},1500).delay(2000).hide('fade');
 	}

@@ -50,7 +50,7 @@ $.widget("cow.NewFeatureWidget", {
             $('#infopanel').hide('slide', {direction: 'down'},300);
         });
         
-        element.append('<div class="drawobjects">Click on one of the symbols to draw it on the map</div>');
+        element.append('<div class="drawobjects" data-i18n="drawobjects">' + (translator.translate('drawobjects') || 'Click on one of the symbols to draw it on the map') + '</div>');
         element.append('<div class="points drawobjects"></div>');
         $.getJSON('./mapicons/imoov/list.js', function(data) {
             

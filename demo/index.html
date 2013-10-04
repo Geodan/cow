@@ -6,6 +6,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    
 <!--  <link href='http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css' rel='stylesheet' type='text/css'>
 -->  <link href='http://fonts.googleapis.com/css?family=Dosis:300,500' rel='stylesheet' type='text/css'>
   
@@ -51,8 +53,10 @@
   <script src="../src/cow.featurestore.js" type="text/javascript"></script>
   <script src="../src/cow.localdbase.js" type="text/javascript"></script>
   <script src="../src/cow.geolocator.js" type="text/javascript"></script>
-  
+  <!--
   <script src="scripts/jquery.i18n.properties-min-1.0.9.js" type="text/javascript"></script>
+  -->
+  <script src="scripts/i18next-1.7.1/i18next-1.7.1.min.js" type="text/javascript"></script>
   <script src="scripts/translator.js" type="text/javascript"></script>
   <!--<script src="scripts/leaflmapwidget.js" type="text/javascript"></script>-->
   <script src="scripts/olmapwidget.js" type="text/javascript"></script>
@@ -81,24 +85,24 @@ function WebSocketTest()
 WebSocketTest();
 
 var core;
-  
-$(document).ready(function(){
-  var transcallback = function(){
-      //Translate some static texts
-        $('#myname').attr('title',$.i18n.prop('txt_clicktochangename'));
-        $('#connect').attr('title', $.i18n.prop('txt_clicktoconnect'));
-        $('#txt_welcome').html($.i18n.prop('txt_welcome'));
-        $('#maptitle').html($.i18n.prop('maptitle'));
-        $('#addfeattitle').html($.i18n.prop('addfeattitle'));
-        $('#deletedfeats').html($.i18n.prop('deletedfeats'));
-        $('#peerstitle').html($.i18n.prop('peerstitle'));
-  }
 
-  translator.loadBundles({
+var transcallback = function(){
+      //Translate some static texts
+      $('#myname').attr('title',translator.translate('txt_clicktochangename'));
+      $('#connect').attr('title', translator.translate('txt_clicktoconnect'));
+      $('#txt_welcome').html(translator.translate('txt_welcome'));
+      $('#maptitle').html(translator.translate('maptitle'));
+      $('#addfeattitle').html(translator.translate('addfeattitle'));
+      $('#deletedfeats').html(translator.translate('deletedfeats'));
+      $('#peerstitle').html(translator.translate('peerstitle'));
+  }
+translator.loadBundles({
     callback: transcallback,
     path: 'lang/',
-    lang: 'en'
-  });
+    lang: 'nl'
+});
+
+$(document).ready(function(){
   
   $('#cow').cow({
     websocket: {url: 'wss://websocket.geodan.nl:443/'}

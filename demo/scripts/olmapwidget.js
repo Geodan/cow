@@ -339,13 +339,13 @@ $.widget("cow.OlMapWidget", {
 						//+'<textarea></textarea><br>'
 						//+ 'You can remove or change this feature using the buttons below<br/>'
 						+ '<input id="popupid" type="hidden" name="popupid" value ="'+key+'"">'
-						+ 'Label: <input id="titlefld" name="name" value ="'+name+'""><br/>'
-						+ 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
-						+ '<small>Created by: <i>'+ creator + '</i></small><br>'
-						+ '<small>Last edit by: <i>'+ owner + '</i></small><br>'
-						+ '<button class="popupbutton" id="editButton">edit</button><br>'
-						+ '<button class="popupbutton" id="deleteButton"">delete</button>'
-						+ '<button class="popupbutton" id="closeButton"">Done</button>';
+						+ translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
+						+ translator.translate('Description') + ': <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+						+ '<small>' + translator.translate('Created_by') + ': <i>'+ creator + '</i></small><br>'
+						+ '<small>' + translator.translate('Last_edit_by') + ': <i>'+ owner + '</i></small><br>'
+						+ '<button class="popupbutton" id="editButton">' + translator.translate('edit')+'</button><br>'
+						+ '<button class="popupbutton" id="deleteButton"">' + translator.translate('delete')+'</button>'
+						+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>';
 					var anchor = {'size': new OpenLayers.Size(0,0), 'offset': new OpenLayers.Pixel(100, -100)};
 					var popup = new OpenLayers.Popup.Anchored("popup",
 						OpenLayers.LonLat.fromString(feature.geometry.getCentroid().toShortString()),

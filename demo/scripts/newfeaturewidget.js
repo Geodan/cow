@@ -36,11 +36,11 @@ $.widget("cow.NewFeatureWidget", {
         	self.element.trigger("newpoly", key);
 		});
 		
-        var names = $.i18n.prop('txt_drawhelp');
-        names = names+ '<p><b>'+ $.i18n.prop('txt_markericons') + '</b><div class=/>';
+        var names = translator.translate('txt_drawhelp');
+        names = names+ '<p><b>'+ translator.translate('txt_markericons') + '</b><div class=/>';
         names = names + '<div id="icons"></div>'; //Icons will be inserted here after loading
         names = names + '<div class="peerlist linediv">';
-        names = names + '<b>'+ $.i18n.prop('txt_linecolors') + '</b><br/>';
+        names = names + '<b>'+ translator.translate('txt_linecolors') + '</b><br/>';
         names = names + '</div>';
         names = names + '<span newline="black" class="peerlist newline" title="Black line"><hr color="black"></span>';
         names = names + '<span newline="#204a87" class="peerlist newline" title="Blue line"><hr color="#204a87"></span>';
@@ -50,7 +50,7 @@ $.widget("cow.NewFeatureWidget", {
         names = names + '<span newline="#4e9a06" class="peerlist newline" title="Green line"><hr color="#4e9a06"></span>';
 
         names = names + '<div class="peerlist polydiv">';
-        names = names + '<p><b>'+ $.i18n.prop('txt_polygoncolors') + '</b></p>';
+        names = names + '<p><b>'+ translator.translate('txt_polygoncolors') + '</b></p>';
         names = names + '</div>';		
         names = names + '<span newpoly="#4e9a06" class="peerlist newpoly" title="Green polygon"><div style="background:#4e9a06">&nbsp;</div></span>';
         names = names + '<span newpoly="#cc0000" class="peerlist newpoly" title="Red polygon"><div style="background:#cc0000">&nbsp;</div></span>';

@@ -25,7 +25,9 @@
     <script src="../src/cow.localdbase.js" type="text/javascript"></script>
     <script src="../src/cow.geolocator.js" type="text/javascript"></script>
   
-    <script src="scripts/jquery.i18n.properties-min-1.0.9.js" type="text/javascript"></script>
+    
+    <script src="scripts/i18next-1.7.1/i18next-1.7.1.min.js" type="text/javascript"></script>
+    <script src="scripts/translator.js" type="text/javascript"></script>
     <script src="scripts/translator.js" type="text/javascript"></script>
     <script src="scripts/cookies.js" type="text/javascript"></script>
      <script src="scripts/m.olmapwidget.js" type="text/javascript"></script>
@@ -163,16 +165,18 @@ $(document).on('pageinit',function(){
     });
 });
 $(document).on('ready',function(){
-
+    var transcallback = function(){
+        $('body').i18n();
+    }
   translator.loadBundles({
     callback: transcallback,
     path: 'lang/',
-    lang: 'en'
+    lang: 'nl'
   });
 
-    //for some reason the map doesn't fill nicely at the start
-   // map.invalidateSize();
-     $('#cow').cow({
+  //for some reason the map doesn't fill nicely at the start
+  // map.invalidateSize();
+  $('#cow').cow({
     activeHerd: 0,
     websocket: {url: 'wss://websocket.geodan.nl:443/'},
     featurestore: {},
@@ -186,6 +190,7 @@ $(document).on('ready',function(){
    $('#right').ConnectWidget({core: '#cow'});
    $('#nfw').NewFeatureWidget({core: '#cow'});
    $('#peer').PeersWidget({core: '#cow'});
+   $('body').i18n();
 });
 </script>
   </head>
@@ -203,7 +208,7 @@ $(document).on('ready',function(){
         </span>
         <span id="right" class="shadow small">
             <span class="bar-content">
-            <label class="nametext">Your name: </label>
+            <label class="nametext" data-i18n="yourname">Your name: </label>
             <span id="rightname">
                <input id="myname" name="myname" value="anonymous" size="13" data-mini="true" />
             </span>

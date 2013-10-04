@@ -24,7 +24,7 @@ $.widget("cow.PeersWidget", {
         this.ls;
         
         element.append('<div id="list"></div>');
-        element.append('<span><input type="text" id="newHerd" value="Add a new herd" data-mini="true" size="25"><span class="addHerd licht">Add</span></span>');
+        element.append('<span><input type="text" id="newHerd" data-i18n="txt_addnewherd" value="' + (translator.translate('txt_addnewherd') || 'Add a new herd') + '" data-mini="true" size="25"><span data-i18n="txt_add" class="addHerd licht">' + (translator.translate('txt_add') || 'Add')+'</span></span>');
         element.append('<div id="peerjs"></div>');
         this.listdiv = element.find('#list');
         this.peerjsdiv = element.find('#peerjs');
@@ -203,13 +203,13 @@ $.widget("cow.PeersWidget", {
             if (herd.active){
                 var remove = '';
                 if(this.uid != 0) {
-                    remove = ' <span class="removeherd" title="remove this herd and delete all features">remove</span><div class="removeherdconfirm verborgen">are you sure? <span class="yesremove" title"this will remove the herd and all its features, not easily undone">yes</span><span class="notremove" title="alrighty">no</span></div>';
+                    remove = ' <span class="removeherd" data-i18n="txt_remove" title="'+ (translator.translate('txt_removeherdfeats') || 'remove this herd and delete all features') + '">' + (translator.translate('txt_remove') || 'remove' ) + '</span><div data-18n="txt_yousure" class="removeherdconfirm verborgen">'+ (translator.translate('txt_yousure') || 'are you sure?') + '<span class="yesremove" data-i18n="txt_yes" title"' + (translator.translate('txt_herdwillberemoved') || 'this will remove the herd and all its features, not easily undone') + '">' + (translator.translate('txt_yes') || 'yes') + '</span><span class="notremove" data-i18n="txt_no" title="alrighty">' + (translator.translate('txt_no') || 'no') +'</span></div>';
                 }
                 if(this.uid==self.core.activeherd()) {
-                    names = names + '<div><span class="peerlist herd me" title="this is your herd" herd="'+this.uid+'">'+this.name+'</span></div>';
+                    names = names + '<div><span class="peerlist herd me" title="' + (translator.translate('txt_yourherd') ||  'this is your herd') + '" herd="'+this.uid+'">'+this.name+'</span></div>';
                 }
                 else {
-                    names = names + '<div><span class="peerlist herd" title="click to activate this herd" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
+                    names = names + '<div><span class="peerlist herd" title="' + (translator.translate('txt_activateherd') || 'click to activate this herd' ) + '" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
                 }
                 $.each(this.peers, function(i){
                     var peer = self.core.getPeerByUid(herd.peers[i]);
@@ -218,7 +218,7 @@ $.widget("cow.PeersWidget", {
                             var videostring = '<img class="videoconnection" owner="'+peer.uid+'" src="./css/img/camera.png">';
                         else videostring = '';
                         if(peer.uid==self.core.UID) {
-                            names = names+ '<div class="peerlist peer me" title="this is you!" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+peer.uid+'" class="location" src="./css/img/locator.svg"></div>';
+                            names = names+ '<div class="peerlist peer me" title="' + (translator.translate('txt_thisisyou') || 'this is you!') + '" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+peer.uid+'" class="location" src="./css/img/locator.svg"></div>';
                             }
                             else {
                             names = names+ '<div class="peerlist peer owner" owner="'+peer.uid+'">'+peer.owner().name+'&nbsp;<img owner="'+peer.uid+'" class="location" src="./css/img/locator.svg">&nbsp;<img class="extent" owner="'+peer.uid+'" src="./css/img/extent.svg">&nbsp;'+videostring+'</div>';
