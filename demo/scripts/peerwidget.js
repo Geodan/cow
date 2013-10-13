@@ -15,15 +15,68 @@ $.widget("cow.PeersWidget", {
         core: undefined,
         name: '#myname'
     },
- _create: function() {
+    
+    toggleFullScreen: function(element) {
+      
+      if (!document.fullscreenElement &&    // alternative standard method
+          !document.mozFullScreenElement && !document.webkitFullscreenElement) {  // current working methods
+        if (element.requestFullscreen) {
+          element.requestFullscreen();
+        } else if (element.mozRequestFullScreen) {
+          element.mozRequestFullScreen();
+        } else if (element.webkitRequestFullscreen) {
+          element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+        }
+      } else {
+        if (document.cancelFullScreen) {
+          document.cancelFullScreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.webkitCancelFullScreen) {
+          document.webkitCancelFullScreen();
+        }
+      }
+    },
+    
+    connectedPeersList: function(peerObj){
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this._connectedPeers;
+            break;
+        case 1:
+            var existing = false;
+            for (var i=0;i<this._connectedPeers.length;i++){
+                if (this._connectedPeers[i].id == peerObj.id) {
+                    existing = true; //Already a member
+                    return this._connectedPeers[i];
+                }
+            }
+            if (!existing)
+                this._connectedPeers.push(peerObj); //Adding to the list
+            return peerObj;
+            break;
+        default:
+            throw('wrong argument number');
+        }
+    },
+    removeConnection: function(id){
+        for (var i=0;i<this._connectedPeers.length;i++){
+            if (this._connectedPeers[i].id == id) {
+                this._connectedPeers.splice(i,1); //Remove from list
+                return;
+            }
+        }
+    },
+    _create: function() {
         var core;
         var self = this;        
         var element = this.element;
        
         this.peer1;
         this.ls;
+        this._connectedPeers = [];
         this.connectedPeers = {};
-        
         
         element.append('<div id="list"></div>');
         element.append('<span><input type="text" id="newHerd" value="' + translator.translate('txt_addnewherd')+ '" size="15"><span class="addHerd licht">' + translator.translate('txt_add') + '</span></span>');
@@ -111,6 +164,18 @@ $.widget("cow.PeersWidget", {
                        navigator.mozGetUserMedia ||
                        navigator.msGetUserMedia);
                 navigator.getMedia({audio: false, video: true}, function(s){
+                        /*
+                    var videoUrl = URL.createObjectURL(s);
+                    d3.select('#videodiv' + self.core.UID)
+                        .append('xhtml:video')
+                        .classed('myvideo',true)
+                        .attr("style", "display: block; margin-left: 0px; width: 100px; height: 100px;")
+                        .attr("autoPlay",true)
+                        .attr("muted",true)
+                        .append("source")
+                        .attr("src", videoUrl);    
+                       */ 
+                        
                     self.localstream = s;
                     self.core.me().video({state:"on"});
               }, function(){});
@@ -139,6 +204,7 @@ $.widget("cow.PeersWidget", {
     },
     _onWebscoketConnection: function(evt){
         var self = evt.data.widget;
+        self.mediaConnections = [];
         // Create a new Peer with our demo API key
         // TODO: in the future this has to move to our own websocket server
         self.peer1 = new Peer(self.core.UID, { 
@@ -159,10 +225,6 @@ $.widget("cow.PeersWidget", {
           console.log('peerjs: incoming call (responding with localstream)');
           if (self.localstream){
               c.answer(self.localstream);
-              //  c.on('stream', function(s){
-              //    window.s = s;
-              //    z = $('<video></video>', {src: URL.createObjectURL(s), autoplay: true}).appendTo('body');
-              //  });
           }
         });
     },
@@ -176,45 +238,104 @@ $.widget("cow.PeersWidget", {
         var self = this;
         var videobox;
         var mc;
+        var peerid = peerid;
+        if (!self.localstream){
+            alert('You need to enable your own camera first');
+            return;
+        }
         function startVideo(stream){
-            $('#videopanel').show();
-            videobox = $('<div></div>').addClass('videoscreen').addClass('active').attr('id', peerid);
-            var header = $('<h4></h4>').html('Chat with <strong>' + peerid + '</strong>');
-            videobox.append(header);
-            z = $('<video></video>', {src: URL.createObjectURL(stream), autoplay: true});
-            z.width(150);
-            z.height(150);
-            tmp = z;
-            var v = d3.select('#videobox' + peerid)
-                .append("xhtml:div")
-                //.style("position","relative")
-                .html('<video autoplay width="150"><source src=' + URL.createObjectURL(stream) + '></video>');
-            
-            //videobox.append(z).appendTo('#videoplace');
-            //
-            //videobox.attr('position','absolute');
-            //videobox.zIndex(10010);
-            
-            videobox.on('click', function() {
-              if ($(this).attr('class').indexOf('active') === -1) {
-                $(this).addClass('active');
-              } else {
-                $(this).removeClass('active');
-              }
-            });
+            var peerObj = {id: peerid, streamUrl: URL.createObjectURL(stream)}; 
+            self.connectedPeersList(peerObj);
+            self._updateVideos(self);
         }
         function stopVideo(){
             console.log('peerjs: ' + mc.peer + ' has left the chat.');
-            videobox.remove();
+            self.removeConnection(mc.peer);
             delete self.connectedPeers[mc.peer];
+            self._updateVideos(self);
         }
         if (!self.connectedPeers[peerid]) {
-            mc = self.peer1.call(peerid, self.localstream);
+            mc = self.peer1.call(peerid, self.localstream); //We need to add a localstream, even if the other peer doesnt need it
             mc.on('error', function(err) { alert(err); });
             mc.on('stream', startVideo);
             mc.on('close', stopVideo);
         }
         self.connectedPeers[peerid] = 1;
+        tmp = self;
+    },
+    _updateVideos: function(self){
+        //  DOING THE D3 way on the map:
+            var conns = self.connectedPeersList();
+            //Find how many available
+            //var curBoxes = d3.selectAll('.videobox').length;
+            
+            var videos = d3.select('#videolayer').selectAll('.videobox')
+                .data(conns, function(d){return d.id});
+            var svg = videos.enter().append('svg');
+            var defs = svg.append('defs');
+            var mask = defs.append('mask')
+                .attr('id','c1')
+                .attr('maskUnits','userSpaceOnUse')
+                .attr('maskContentUnits','userSpaceOnUse')
+                .append('g').attr('id','group')
+                .append('circle').attr('cx',100).attr('cy',100).attr('r',35).attr('fill','white')
+                .append('rect').attr('x',0).attr('y',0).attr('width',400).attr('height',400).attr('opacity',0);
+            svg.append('use').attr('xlink:href','#group');
+            
+            var clippath = defs.append('clipPath').attr('id','clippy');
+            clippath.append('circle').attr('cx',"100").attr('cy',"100").attr('r',50);
+            
+            svg.append('foreignObject')
+			    .append('xhtml:div')
+			    .attr('clip-path','url(#clippy)')
+			    .classed('videobox',true)
+			    .attr('id',function(d){return 'videobox' + d.id;})
+                .on('click',function(d){
+                    var box = d3.select('#videobox'+ d.id).select('video');
+                    
+                    //self.toggleFullScreen($('#videobox'+ d.id)[0]);
+                    
+                    if (box.attr('selected') == 'true'){
+                         box.transition().duration(500)
+                            .style('width','200px')
+                            .style('height','200px')
+                            .style('margin-left','0px')
+                            .style('margin-top','0px')
+                            .style("mask",'url("#c1")') //for firefox
+                            //.style('-webkit-mask','url("#c1")')//for chrome
+                            .attr('selected',false);
+                    }
+                    else{
+                        box.transition().duration(500)
+                            .style('width','1000px')
+                            .style('height','1000px')
+                            .style('margin-left','0px')
+                            .style('margin-top','-100px')
+                            .style("mask",'none') //for firefox
+                            //.style('-webkit-mask','none')//for chrome
+                            //.style("mask",'url("./css/videomask_big.svg#c1")') //for firefox
+                            //.style('-webkit-mask','url("./css/videomask_big.svg")')//for chrome
+                            .attr('selected',true);
+                    }
+                    
+                })
+                .append('xhtml:video')
+                .classed('myvideo',true)
+                .style('width','200px')
+                .style('height','200px')
+                .style('margin-left','0px')
+                .style('margin-top','0px')
+                .attr("style", "display: block; margin-left: 0px; width: 200px; height: 200px;")
+                .style("mask",'url("#c1")') //for firefox
+                //.style('-webkit-mask','url("#c1")')//for chrome
+                .attr("autoPlay",true)
+                .attr("muted",true)
+                .append("source")
+                .attr("src", function(d){
+                    return d.streamUrl;
+                })
+                ;
+            videos.exit().remove();
     },
     _updateList: function(self) {        
         var peers = self.core.peers();

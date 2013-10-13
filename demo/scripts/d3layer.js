@@ -11,6 +11,7 @@ function d3layer(layername, config){
 		this.g = config.g;
 		this.map = config.map;
 		this.style = config.style;
+		this.onClick = config.onClick;
 		this.classfield = config.classfield;
 		this.satellites = config.satellites || false;
 		this.coolcircles = config.coolcircles || false;
@@ -22,25 +23,40 @@ function d3layer(layername, config){
 		this.pointradius = config.pointradius || 5;
 		this.bounds = [[0,0],[1,1]];
 		var width, height,bottomLeft,topRight;
-          
+        
+        
 		if (config.maptype == 'OpenLayers'){//Getting the correct OpenLayers SVG. 
 			var div = d3.selectAll("#" + config.divid);
 			div.attr("z-index",10001);
 			div.selectAll("svg").remove();
 			var svg = div.append("svg");
+			var g = svg.append("g");
 		}
 		else { //Leaflet does it easier
 			/* Initialize the SVG layer */
-			this.map.map._initPathRoot()    
+			this.map.map._initPathRoot();
+			//var svg = d3.select(this.map.map.getPanes().overlayPane).append("svg"),
 			var svg = d3.select("#map").select("svg");
+			g = svg.append("g").attr("class", "leaflet-zoom-hide");
 		}
-		
-		var g = svg.append("g");
+		//In Chrome the transform element is not propagated to the foreignObject
+        //Therefore we have to calculate our own offset
+        this.offset = function(x){
+            var offset = {x:0,y:0}; 
+            if (navigator.userAgent.indexOf('Chrome') > -1)
+                if (config.maptype == 'Leaflet'){//only works in leaflet
+                    offset = _this.map.map.latLngToContainerPoint(new L.latLng(x[1],x[0]));
+                    //offset = _this.map.map.latLngToLayerPoint(new L.LatLng(x[1], x[0])); //Leaflet version
+                }
+            return offset;
+         }
             
         // Projecting latlon to screen coordinates
 		this.project = function(x) {
-		  if (config.maptype == 'Leaflet')
+		  if (config.maptype == 'Leaflet'){
 		  	  var point = _this.map.map.latLngToLayerPoint(new L.LatLng(x[1], x[0])); //Leaflet version
+		  	  //var point = _this.map.map.latLngToContainerPoint(new L.LatLng(x[1], x[0])); //Leaflet version
+		  }
 		  else if (config.maptype == 'OpenLayers'){
 		  	  var loc =  new OpenLayers.LonLat(x[0],x[1]);
 		  	  var fromproj = new OpenLayers.Projection("EPSG:4326");
@@ -60,20 +76,6 @@ function d3layer(layername, config){
 			var point = _this.map.getViewPortPxFromLonLat(new OpenLayers.LonLat(x[0],x[1]));
 			return [point.x,point.y];
 		}
-		//Set the SVG to the correct dimensions
-		this.set_svg = function(){
-			var extent = _this.map.getExtent();
-			bottomLeft = olextentproject([extent.left,extent.bottom]);
-			topRight = olextentproject([extent.right,extent.top]);
-			width = topRight[0] - bottomLeft[0];
-			height = bottomLeft[1] - topRight[1];
-			svg.attr("width", width)
-				.attr("height", height)
-				.style("margin-left", bottomLeft[0] + "px")
-				.style("margin-top", topRight[1] + "px");
-		}
-		if (config.maptype == 'OpenLayers')
-			this.set_svg();
 		
 		//Add nodeoverlay object for force layout nodes
 		if (this.satellites){
@@ -82,10 +84,35 @@ function d3layer(layername, config){
 		
 		var geoPath = d3.geo.path().projection(this.project);
 		
+		var click = function(d){
+		    if (_this.onClick)
+		        _this.onClick(d);
+		}
+		
 		//A per feature styling method
-		this.styling = function(d){ 
+		this.styling = function(d){
+		  var entity = d3.select(this);
+		  if (d.style && d.style.icon){
+		      var x = _this.project(d.geometry.coordinates)[0];
+              var y = _this.project(d.geometry.coordinates)[1];
+		      entity.append("image")
+		            .on("click", click)
+                    .attr("xlink:href", function(d){
+                            console.log('########### adding ' + d.style.icon);
+                            if (d.style.icon) return d.style.icon;
+                            else return "./mapicons/stratego/stratego-flag.svg";
+                    })
+                    .classed("nodeimg",true)
+                    .attr("width", 50)
+                    .attr("height", 50)
+                    .attr("x",x-25)
+                    .attr("y",y-25)
+		  }
+		  else{
+		    var path = entity.append("path")
+		        .on("click", click);
 			for (var key in _this.style) { //First check for generic layer style
-				d3.select(this).style(key,function(d){
+				entity.style(key,function(d){
 					if (d.style && d.style[key])
 						return d.style[key]; //Override with features style if present
  					else	
@@ -95,9 +122,10 @@ function d3layer(layername, config){
 			//Now apply remaining styles of feature (possible doing a bit double work from previous loop)
 			if (d.style) { //If feature has style information
 				for (var key in d.style){ //run through the styles
-					d3.select(this).style(key,d.style[key]); //and apply them
+					path.style(key,d.style[key]); //and apply them
 				}
 			}
+		  }
 		};
 		
 		//A per feature styling method
@@ -124,7 +152,6 @@ function d3layer(layername, config){
 		        geoPath.pointRadius(d.style.radius);
 		    else if (_this.style && _this.style.radius)
 		        geoPath.pointRadius(_this.style.radius);
-
 		    return geoPath(d);
 		};
 		
@@ -157,9 +184,7 @@ function d3layer(layername, config){
 		        return _this.data; 
 		    }
 		    _this.data = collection;
-	    
-			if (config.maptype == 'OpenLayers')
-				_this.set_svg();
+		    _this.bounds = d3.geo.bounds(collection);
             
 			//Create a 'g' element first, in case we need to bind more then 1 elements to a data entry
 			var entities = g.selectAll(".entity")
@@ -168,20 +193,12 @@ function d3layer(layername, config){
 			//On enter
 			var newentity = entities.enter()
 			    .append('g')
-			    .classed('entity',true)			    
+			    .classed('entity',true)
+                .attr('id',function(d){return 'entity'+ d.id})			    
 			    ;
-			
-			if (_this.type == "path" || _this.type == "circle"){
-			    newentity.append("path")
-			        //.classed("zoomable",true)
-			        .attr('class',function(d){
-			            if (_this.classfield)
-			                return escape(d.properties[_this.classfield]);
-			            else return "foo";
-			        })
-			        .each(_this.styling)
-			        ;
-			}
+
+            newentity.each(_this.styling);
+            
 			//Forced tree layout
 			if (_this.satellites){
 			    entities.each(function(d,i){
@@ -241,14 +258,17 @@ function d3layer(layername, config){
 			    _this.nodemap.start();
 			}
 			if (_this.videobox){
-			    var videobox = newentity.append('foreignObject')
-			        //.classed('zoomable',true)
-			        .classed('videobox',true)
-			        .style('position','relative')
-			        //.attr("x", function(d){return 500 + _this.project(d.geometry.coordinates)[0];} )
-                    //.attr("y", function(d){return 500 + _this.project(d.geometry.coordinates)[1];} )
-			        .attr('id',function(d){return 'videobox' + d.id;})
-			        ;
+			    //This is done from the peerwidget
+			    //var videobox = newentity.append('foreignObject')
+			    //    .classed('videobox',true)
+			    //    .attr('width','100px')
+			    //    .attr('height','100px')
+			    //    //.attr("x", function(d){return offset + _this.project(d.geometry.coordinates)[0];} )
+                //    //.attr("y", function(d){return offset + _this.project(d.geometry.coordinates)[1];} )
+			    //    .append('xhtml:div')
+			    //    .classed('videodiv',true)
+			    //    .attr('id',function(d){return 'videodiv' + d.id;})
+			    //    ;
 			}
 			if (_this.labels){
 			    var label = newentity.append('g')
@@ -311,13 +331,22 @@ function d3layer(layername, config){
 			//On update
 			entities.each(function(d,i){
 			    var entity = d3.select(this);
-			    if (_this.type == "path" || _this.type == "circle"){
-			        entity.select('path') //Only 1 path per entity
-			            .transition().duration(500)
-			            .attr("d",_this.pathStyler(d))
-			            ;
-
-			    }
+			    var x = geoPath.centroid(d)[0];
+                var y = geoPath.centroid(d)[1];
+                if (d.style && d.style.icon){
+                    var x = x;
+                    var y = y;
+                    entity.select('image')
+                        .transition().duration(500)
+                        .attr("x",x-25)
+                        .attr("y",y-25);
+                }
+                else{
+                    entity.select('path') //Only 1 path per entity
+                        .transition().duration(500)
+                        .attr("d",_this.pathStyler(d));
+                }
+			    
 			    if (_this.labels){
 			        entity.select('.place-label')
                         .selectAll('text')
@@ -332,12 +361,34 @@ function d3layer(layername, config){
                         })
 			    }
 			    if (_this.videobox){
-			        entity.select('.videobox')
-			            .attr("x", function(d){
-			                return 500 + _this.project(d.geometry.coordinates)[0];
-			            } )
-			            .attr("y", function(d){return 500 + _this.project(d.geometry.coordinates)[1];} )
-                        ;
+			        //Step 1: find videobox 
+			        var vb = d3.select('#videobox'+d.id);
+			        if (vb[0][0] != null){
+			            //Step 2: find location of videobox
+			            var vbx = vb.attr('x');
+			            var vby = vb.attr('y');
+			            //TODO: doesn't work in OpenLayers
+                        var cpoint = _this.map.map.containerPointToLayerPoint([vbx,vby]);
+                        //Step 3: draw line from point to videobox
+                        var line = entity.select('line');
+                        if (line[0][0] != null){
+                            line
+                                .attr('x1',x)
+                                .attr('y1',y)
+                                .attr('x2',cpoint.x)
+                                .attr('y2',cpoint.y);
+                            }
+                         else{
+                             entity.append('line')
+                                .style('stroke','red')
+                                .style('stroke-width','1')
+                                .style('stroke-dasharray',"5,5")
+                                .attr('x1',x)
+                                .attr('y1',y)
+                                .attr('x2',vbx)
+                                .attr('y2',vby);
+                         }
+                    }
 			    }
 			});
 			//On exit	
@@ -346,17 +397,44 @@ function d3layer(layername, config){
         }
         
         //Redraw all features
-		f.reset = function() {
-			if (config.maptype == 'OpenLayers')
-				_this.set_svg();
-			    
+		f.reset = function(e) {
+			
+			if (config.maptype == 'OpenLayers'){
+                var extent = _this.map.getExtent();
+                bottomLeft = olextentproject([extent.left,extent.bottom]);
+                topRight = olextentproject([extent.right,extent.top]);
+                width = topRight[0] - bottomLeft[0];
+                height = bottomLeft[1] - topRight[1];
+                svg.attr("width", width)
+                    .attr("height", height)
+                    .style("margin-left", bottomLeft[0] + "px")
+                    .style("margin-top", topRight[1] + "px");
+            }
+            else {
+                    //var bottomLeft = _this.project(_this.bounds[0]),
+                    //    topRight = _this.project(_this.bounds[1]);
+                    //svg.attr("width", (topRight[0] - bottomLeft[0]) + 200)
+                    //    .attr("height", (bottomLeft[1] - topRight[1]) + 200)
+                    //    .style("margin-left", bottomLeft[0] - 100 + "px")
+                    //    .style("margin-top", topRight[1] - 100 + "px");
+                    //g.attr("transform", "translate(" + -bottomLeft[0] + "," + -topRight[1] + ")");
+            }
 			g.selectAll(".entity")
 			    .each(function(d,i){
 			        var entity = d3.select(this);
-			        if (_this.type == "path" || _this.type == "circle"){
+			        var x = geoPath.centroid(d)[0];
+                    var y = geoPath.centroid(d)[1];
+
+                    if (d.style && d.style.icon){
+                        entity.select('image')
+                            .attr("x",x-25)
+                            .attr("y",y-25);
+                    }
+                    else{
                         entity.select('path') //Only 1 path per entity
                             .attr("d",_this.pathStyler(d));
                     }
+                    
                      if (_this.labels){
                         entity.select('.place-label')
                             .selectAll('text')
@@ -370,21 +448,41 @@ function d3layer(layername, config){
                             })
                     }
                     if (_this.videobox){
-                        entity.select('.videobox')
-                            .attr("x", function(d){
-                                var x = _this.project(d.geometry.coordinates)[0];
-                                return _this.project(d.geometry.coordinates)[0];
-                            } )
-                            .attr("y", function(d){
-                                return  _this.project(d.geometry.coordinates)[1];
-                            } )
-                            ;
+                        //Step 1: find videobox 
+                        var vb = d3.select('#videobox'+d.id);
+                        if (vb[0][0] != null){
+                            //Step 2: find location of videobox
+                            var vbx = vb.attr('x') ;
+                            var vby = vb.attr('y') ;
+                            //TODO: doesn't work in OpenLayers
+                            var cpoint = _this.map.map.containerPointToLayerPoint([vbx,vby]);
+                            //Step 3: draw line from point to videobox
+                            var line = entity.select('line');
+                            if (line[0][0] != null){
+                                line
+                                    .attr('x1',x)
+                                    .attr('y1',y)
+                                    .attr('x2',cpoint.x + 50)
+                                    .attr('y2',cpoint.y - 50);
+                                }
+                             else{
+                                 entity.append('line')
+                                    .style('stroke','red')
+                                    .style('stroke-width','1')
+                                    .style('stroke-dasharray',"5,5")
+                                    .attr('x1',x)
+                                    .attr('y1',y)
+                                    .attr('x2',vbx)
+                                    .attr('y2',vby);
+                             }
+                        }
                     }
 			    });
+			
 			//FORCETEST
 			if (_this.satellites){
                 _this.nodemap.redraw(_this.project);
-            }
+            }   
 		}
 		f.reset();
 		

@@ -46,7 +46,7 @@ $.widget("cow.LeaflMapWidget", {
 		})
 		//.setView([52.083726,5.111282], 9);//Utrecht
 		.setView([52.341921,4.912838], 17);//Geodan Adam
-		tmp = this.map;
+		
 		// add an OpenStreetMap tile layer
 		var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -75,8 +75,8 @@ $.widget("cow.LeaflMapWidget", {
             });
 		};
 		
-		var handleNewExtent = function(data){
-				var bounds = data.target.getBounds();
+		var handleNewExtent = function(e){
+				var bounds = e.target.getBounds();
 				var extent = {
 					left: bounds.getWest(),
 					bottom: bounds.getSouth(),
@@ -84,9 +84,9 @@ $.widget("cow.LeaflMapWidget", {
 					top: bounds.getNorth()
 				};
 				self.core.me() && self.core.me().view({"extent":extent}); //Set my own extent
-				//Reset/redraw layers
+				//Reset/redraw layers         
 				self._d3layers.forEach(function(l){
-                    l.reset();
+                    l.reset(e);
                 });
 		};
 		this._createLayers(this.map);
@@ -94,6 +94,9 @@ $.widget("cow.LeaflMapWidget", {
 				
 		this.map.on('moveend',function(e){
 				handleNewExtent(e);
+		});
+		this.map.on("viewreset", function(e){
+		        //handleNewExtent(e);
 		});
 		this.map.on('click',function(e){
 				self.controls.editcontrol.save();
@@ -192,12 +195,26 @@ $.widget("cow.LeaflMapWidget", {
 	    var self = this;
 		self.editLayer.clearLayers();
 		var items = self.core.featurestore().featureItems();
+		var collection = {"type":"FeatureCollection","features":[]};
 		$.each(items, function(i, object){
 			var feature = object.options.feature;
-			if (object.options.status != 'deleted')
-				self.editLayer.addData(feature)
-					.setStyle(self.layerstyle);
+			feature.id = feature.properties.key;
+			
+			feature.style = {
+				icon: feature.properties.icon,
+				stroke: feature.properties.linecolor,
+				fill:  feature.properties.polycolor,
+				"fill-opacity": 0.5
+			} 
+			
+			if (object.options.status != 'deleted'){
+			    collection.features.push(feature);
+				//self.editLayer.addData(feature)
+				//	.setStyle(self.layerstyle);
+			}
+			
 		});
+		self.getD3LayerByName('editlayer').data(collection);
 	},
 	
 	
@@ -205,6 +222,7 @@ $.widget("cow.LeaflMapWidget", {
 		var self = this;
 		
 		/** Here comes the big bad editlayer.. **/
+		
 		this.layerstyle  = function (feature) {
 			var icon = L.icon({
 					iconUrl: feature.properties.icon,
@@ -217,6 +235,7 @@ $.widget("cow.LeaflMapWidget", {
 			} 
 			return style;
 		};
+		
 		function highlightFeature(e) {
 			var layer = e.target;
 			if (layer.feature.geometry.type != "Point"){ //TODO: this is a workaround. In fact, we want to know whether it is a Marker layer or not 
@@ -238,6 +257,8 @@ $.widget("cow.LeaflMapWidget", {
 		function zoomToFeature(e) {
 			self.map.fitBounds(e.target.getBounds());
 		}
+		
+		/* Obsolete 
 		function openPopup(e) {
 			var feature = e.target.feature;
 			var layer = e.layer;
@@ -249,6 +270,7 @@ $.widget("cow.LeaflMapWidget", {
 					+ '<button class="popupbutton" id="editButton">edit</button><br />'
 					+ '<button class="popupbutton" id="deleteButton"">delete</button><br />'
 					+ '<button class="popupbutton" id="closeButton"">Done</button>';
+			
 			var popup = L.popup()
 				.setLatLng(e.latlng)
 				.setContent(innerHtml)
@@ -275,14 +297,16 @@ $.widget("cow.LeaflMapWidget", {
 			closebtn.addEventListener("click", function(){
 			    self.changeFeature(self, feature);
 			}, false);
-		}
+		}*/
 		function onEachFeature(feature, layer) {
+		    /*
 			layer.bindLabel(feature.properties.name,{ noHide: true });
 			layer.on({
 				mouseover: highlightFeature,
 				mouseout: resetHighlight,
-				click: openPopup
+				click: openPopup //Replaced by d3 layer click
 			});
+			*/
 		}
 		
 		var editlayer = L.geoJson(null,{
@@ -294,7 +318,7 @@ $.widget("cow.LeaflMapWidget", {
 									iconUrl: feature.properties.icon,
 									iconSize: [40, 40]
 							})
-					}).bindLabel(feature.properties.name,{noHide: true})
+					})//.bindLabel(feature.properties.name,{noHide: true})
 					;
 				}
 		}
@@ -335,6 +359,7 @@ $.widget("cow.LeaflMapWidget", {
                     core.featurestore().featureItems({data:item, source: 'user'});
 					//core.trigger('afterfeaturemodified',layer.toGeoJSON());
 				});
+				
 		});
 		//See following URL for custom draw controls in leaflet
 		//http://stackoverflow.com/questions/15775103/leaflet-draw-mapping-how-to-initiate-the-draw-function-without-toolbar
@@ -383,7 +408,7 @@ $.widget("cow.LeaflMapWidget", {
 		
 		
 		this.editLayer = editlayer;
-		//core.editLayer = editlayer;
+		core.editLayer = editlayer; //DEBUG
 		/*this.editLayer.events.on({
 			scope: this,
 			sketchcomplete: this.handlers.includeFeature//this.handlers.simple		
@@ -392,9 +417,25 @@ $.widget("cow.LeaflMapWidget", {
 		this.map.on('draw:created', function (e) {
 			var type = e.layerType,
 				layer = e.layer;
-			var feature = layer.toGeoJSON()
-			core.featurestore().saveLocalFeat(feature);
-			//self.core.trigger('sketchcomplete',layer.toGeoJSON());
+			var feature = layer.toGeoJSON();
+			var item = {};
+            var d = new Date();
+            var timestamp = d.getTime();
+            feature.properties.icon = self.core.current_icon; //TODO TT: not nice
+            feature.properties.linecolor = self.core.current_linecolor;
+            feature.properties.fillcolor = self.core.current_fillcolor;
+            feature.properties.polycolor = self.core.current_polycolor;
+            item.key = self.core.UID + "#" + timestamp;
+            feature.properties.key = item.key;
+            feature.properties.store = self.core.activeherd();
+            feature.properties.creator = self.core.username();
+            feature.properties.owner = self.core.username();
+            item.uid = self.core.UID;
+            item.created = timestamp;
+            item.updated = timestamp;
+            item.status = '';
+            item.feature = feature;
+			core.featurestore().featureItems({data: item, source: 'user'});
 		});
 		
 		
@@ -406,6 +447,61 @@ $.widget("cow.LeaflMapWidget", {
 //		this.controls.select.activate();
 		/** End of the big bad editlayer **/
 		
+		var editPopup = function(d){
+		    var feature = d;
+		    var key = feature.properties.key || "";
+            var name = feature.properties.name || "";
+            var desc = feature.properties.desc || "";
+            var creator = feature.properties.creator || "unknown";
+            var owner = feature.properties.owner || "unknown";
+		    var innerHtml = ''
+                    //+'<input onBlur="">Title<br>'
+                    //+'<textarea></textarea><br>'
+                    //+ 'You can remove or change this feature using the buttons below<br/>'
+                    + '<input id="popupid" type="hidden" name="popupid" value ="'+key+'"">'
+                    + translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
+                    + translator.translate('Description') + ': <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+                    + '<small>' + translator.translate('Created_by') + ': <i>'+ creator + '</i></small><br>'
+                    + '<small>' + translator.translate('Last_edit_by') + ': <i>'+ owner + '</i></small><br>'
+                    + '<button class="popupbutton" id="editButton">' + translator.translate('edit')+'</button><br>'
+                    + '<button class="popupbutton" id="deleteButton"">' + translator.translate('delete')+'</button>'
+                    + '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>';
+            $('#debugpopup').html(innerHtml);
+            self.editLayer.addData(feature);
+            var editbtn = document.getElementById('editButton');
+            editbtn.addEventListener("click", function(){
+					self.editfeature(self,feature);
+			}, false);
+			var deletebtn = document.getElementById('deleteButton');
+			deletebtn.addEventListener("click", function() {
+				self.deletefeature(self,feature);
+			}, false);
+			var closebtn = document.getElementById('closeButton');
+			closebtn.addEventListener("click", function(){
+			    self.changeFeature(self, feature);
+			}, false);
+		};
+		
+		var d3editlyr = new d3layer("editlayer",{
+		    maptype: "Leaflet",
+			map: self,
+			onClick: editPopup,
+			type: "path",
+			labels: true,
+			labelconfig: {
+                field: "name",
+                style: {
+                    stroke: "steelBlue"
+                }
+            },
+			style: {
+					fill: "none",
+					stroke: "steelBlue",
+					'stroke-width': 2,
+					textlocation: "ul"
+				}
+		});
+        self.d3Layers(d3editlyr);
 		var viewlyr = new d3layer("viewlayer",{
 			maptype: "Leaflet",
 			map: self,
@@ -431,7 +527,7 @@ $.widget("cow.LeaflMapWidget", {
 			map: self,
 			type: "circle",
 			coolcircles: true,
-			satellites: true,
+			satellites: false,
 			videobox: true,
 			labels: true,
 			labelconfig: {
@@ -446,7 +542,6 @@ $.widget("cow.LeaflMapWidget", {
 			}
 		});
 		self.d3Layers(locationlyr);
-		
 	},
 	
 	editfeature: function(self, feature){
@@ -459,7 +554,6 @@ $.widget("cow.LeaflMapWidget", {
 		var store = feature.properties.store || "store1";
 		core.featurestore().removeFeatureItem(key);
 		self.map.closePopup();
-		console.log('storeChanged');
 		core.trigger('storeChanged');
 	},                
 	changeFeature: function(self, feature){
@@ -476,8 +570,10 @@ $.widget("cow.LeaflMapWidget", {
             item.updated = timestamp;
             self.core.featurestore().featureItems({data:item, source: 'user'});
         }
+        //self.editLayer.clearLayers();
 	},
 	closepopup: function(self){
+	    $('#debugpopup').html('');//TODO
 		self.map.closePopup();
 	}
 	

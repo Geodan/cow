@@ -79,7 +79,7 @@ $.Cow.Websocket.prototype = {
                     }
                 }
             break;
-            /* Obsolete, everything uses newFeature now
+            /* This can be replace by newFeature, they do the same thing */
             case 'updateFeature':
                 if(uid != UID) {
                     var item = JSON.parse(payload);
@@ -89,7 +89,7 @@ $.Cow.Websocket.prototype = {
                         }
                 }
             break;
-            */
+            
             //A peer request information about a herd
             case 'getHerdInfo':
                 if(uid != UID) {
