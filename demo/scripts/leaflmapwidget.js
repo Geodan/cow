@@ -465,7 +465,8 @@ $.widget("cow.LeaflMapWidget", {
                     + '<small>' + translator.translate('Last_edit_by') + ': <i>'+ owner + '</i></small><br>'
                     + '<button class="popupbutton" id="editButton">' + translator.translate('edit')+'</button><br>'
                     + '<button class="popupbutton" id="deleteButton"">' + translator.translate('delete')+'</button>'
-                    + '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>';
+                    + '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
+                    + '<button class="popupbutton" id="routeButton"">' + translator.translate('Route')+'</button>';
             $('#debugpopup').html(innerHtml);
             self.editLayer.addData(feature);
             var editbtn = document.getElementById('editButton');
@@ -479,6 +480,10 @@ $.widget("cow.LeaflMapWidget", {
 			var closebtn = document.getElementById('closeButton');
 			closebtn.addEventListener("click", function(){
 			    self.changeFeature(self, feature);
+			}, false);
+			var routebtn = document.getElementById('routeButton');
+			routebtn.addEventListener("click", function(){
+			    self.findRoute(self, feature);
 			}, false);
 		};
 		
@@ -542,6 +547,20 @@ $.widget("cow.LeaflMapWidget", {
 			}
 		});
 		self.d3Layers(locationlyr);
+		
+		var routelayer = new d3layer("routelayer",{
+            maptype: "Leaflet",
+            map: self,
+            type: "path",
+            style: {
+                stroke: "purple",
+                'stroke-width': '3px',
+                fill: 'none',
+                'stroke-opacity': 0.8,
+                'fill-opacity': 0.2
+            }
+        });
+        self.d3Layers(routelayer);
 	},
 	
 	editfeature: function(self, feature){
@@ -575,6 +594,35 @@ $.widget("cow.LeaflMapWidget", {
 	closepopup: function(self){
 	    $('#debugpopup').html('');//TODO
 		self.map.closePopup();
+	},
+	findRoute: function(self, feature){
+	    tmp = feature;
+	    var routefeats = {"type": "FeatureCollection","features":[]};
+	    var mypoint = self.core.me().position().point.coords;
+	    var topoint = L.geoJson(feature).getBounds().getCenter();
+	    //var topoint = feature.geometry.coordinates;
+	    var fromcoordx = mypoint.longitude;
+        var fromcoordy = mypoint.latitude;
+        var tocoordx = topoint['lng'];
+        var tocoordy = topoint['lat'];
+        var url = "http://services.geodan.nl/data/route?Request=getroute&fromcoordx="+fromcoordx+"&fromcoordy="+fromcoordy+"&tocoordx="+tocoordx+"&tocoordy="+tocoordy+"&returntype=coords&srs=epsg:4326&routetype=fastest&format=min-km&outputformat=geojson&uid=tom_demo_6324b0360cc87fc0b70225c8fd29210";
+        var respons = function(data){
+            data.features.forEach(function(d){
+               d.id = new Date().getTime();
+               d.style = {'stroke':'blue'};
+               if (d.properties.distance > 40) d.style.stroke = 'red';
+               else if (d.properties.distance > 30) d.style.stroke = 'orange';
+               else d.style.stroke = 'green';
+               d.mouseoverhtml = Math.round(d.properties.distance) + "km  / " + Math.round(d.properties.duration) + "min.";
+               routefeats.features.push(d);     
+            });
+            var routelayer = self.getD3LayerByName('routelayer');
+            routelayer.data(routefeats);
+        }
+        
+        d3.json(url, function(data){
+           respons(data); 
+        });
 	}
 	
 	
