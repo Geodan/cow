@@ -1,0 +1,3 @@
+$.Cow.Item.prototype = {
+
+};

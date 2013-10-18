@@ -13,7 +13,7 @@ $.Cow.LocalDbase.prototype = {
 		};
 		$.indexedDB(this.options.dbname)
 		    .objectStore("herds",storeOptions);
-		//Init features db
+		//Init items db
 		var tablename = core.activeherd();
 		$.indexedDB(this.options.dbname)
 		    .objectStore("herds",storeOptions);
@@ -68,19 +68,19 @@ $.Cow.LocalDbase.prototype = {
     },
     
     //ITEMS
-    featuresdb: function(options) {
+    itemsdb: function(options) {
         var self = this;
 		switch(arguments.length) {
         case 0:
-            return this._getFeatures();
+            return this._getItems();
         case 1:
             if (!$.isArray(options)) {
-                return this._addFeature(options);
+                return this._addItem(options);
             }
         }
     },
     
-    _getFeatures: function(){
+    _getItems: function(){
         var core = this.core;
         var self = this;
 		this.storeOptions = {
@@ -90,26 +90,27 @@ $.Cow.LocalDbase.prototype = {
 		var tablename = core.activeherd();
 		var dbname = this.options.dbname;
 		var expirytime = this.options.expirytime;
-		var myFeatureList = [];
+		var myItemList = [];
 		var fids = [];
 		var iteration = $.indexedDB(dbname)
 		    .objectStore(tablename,this.storeOptions)
 		    .each(function(elem){
                 //array for use in map
+                //SMO: replace this with an $.Cow.Item
                 var item = new Object();
                 item.key 	 = elem.value.key; 	
                 item.uid 	 = elem.value.uid; 	
                 item.created = elem.value.created; 
                 item.updated = elem.value.updated;
                 item.status  = elem.value.status; 
-                item.feature = elem.value.feature;
+                item.data = elem.value.data;
                 var d_creation = new Date(item.updated)
                 var d_now = new Date();
                 var d_diff = (d_now - d_creation)/1000; //(age in seconds)
                 
-                if (item.feature.properties && item.feature.properties.key
+                if (item.data && item.data.properties && item.data.properties.key
                     && !(tablename == 666 && d_diff > expirytime)){
-                    core.featurestore().featureItems({data: item, source: 'db'});
+                    core.itemstore().items({data: item, source: 'db'});
                     var iditem = {};
                     iditem.key = item.key;
                     iditem.updated = item.updated;
@@ -118,12 +119,13 @@ $.Cow.LocalDbase.prototype = {
                     //myFeatureList.push(item);
                 }
                 else { //We can safely remove items that are over their expiry date
-                    self.removeFeature(item.key);
+                    self.removeItem(item.key);
                 }
+                //SMO: TODO till here
             });    
 		iteration.done(function(){
-		    //Callback that will fill featurestore
-		    //core.featurestore().fill(myFeatureList);
+		    //Callback that will fill itemstore
+		    //core.itemstore().fill(myitemList);
 		    self.core.trigger('storeChanged');
 		    var message = {};
             message.fids = fids;
@@ -136,7 +138,7 @@ $.Cow.LocalDbase.prototype = {
 		return iteration;
     },
     
-    _addFeature: function(item){
+    _addItem: function(item){
         var core = this.core;
         var tablename = core.activeherd();
 		var newRecord = {};
@@ -145,14 +147,14 @@ $.Cow.LocalDbase.prototype = {
 		newRecord.created = item.created;
 		newRecord.updated = item.updated;
 		newRecord.status = item.status;
-		newRecord.feature = item.feature;
+		newRecord.data = item.data;
 		var d_creation = new Date(item.updated);
         var d_now = new Date();
         var d_diff = (d_now - d_creation)/1000; //(age in seconds)
         if (!(tablename == 666 && d_diff > this.options.expirytime)){
             $.indexedDB(this.options.dbname)
                 .objectStore(core.activeherd(),false)
-                .put(newRecord)//Advantage of putting is that we overwrite old features with same key
+                .put(newRecord)//Advantage of putting is that we overwrite old items with same key
                 .then(function(){
                     //console.log("Data added");
                 }, function(e){
@@ -162,7 +164,7 @@ $.Cow.LocalDbase.prototype = {
         
     },
     
-    removeFeature: function(fid) {
+    removeItem: function(fid) {
         $.indexedDB(this.options.dbname)
 		    .objectStore(core.activeherd(),false)["delete"](fid);
     },

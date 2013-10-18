@@ -30,7 +30,7 @@ $.Cow.Websocket.prototype = {
                     this.obj._onInformPeer(payload,uid);
                 }
             break;
-            //the alpha peer sends a sync message with new features and a feature request
+            //the alpha peer sends a sync message with new items and a item request
             case 'syncPeer':
                 if(target == this.obj.core.UID) {
                     this.obj._onSyncPeer(payload,uid);
@@ -70,21 +70,21 @@ $.Cow.Websocket.prototype = {
                 }
             break;
             //a new object was drawn or updated by a peer
-            case 'newFeature':
+            case 'newItem':
                 if(uid != UID) {
                     var item = JSON.parse(payload).options;
-                    if (self.core.activeherd() == item.feature.properties.store){
-                        core.featurestore().featureItems({data:item, source: 'ws'});
+                    if (self.core.activeherd() == item.data.properties.store){
+                        core.itemstore().items({data:item, source: 'ws'});
                         //core.featurestore().updateItem(item);
                     }
                 }
             break;
-            /* This can be replace by newFeature, they do the same thing */
-            case 'updateFeature':
+            /* This can be replace by newItem, they do the same thing */
+            case 'updateItem':
                 if(uid != UID) {
                     var item = JSON.parse(payload);
-                    if (self.core.activeherd() == item.feature.properties.store){
-                        core.featurestore().featureItems({data:item, source: 'ws'});
+                    if (self.core.activeherd() == item.data.properties.store){
+                        core.itemstore().items({data:item, source: 'ws'});
                         //core.featurestore().updateItem(item);
                         }
                 }
@@ -174,7 +174,7 @@ $.Cow.Websocket.prototype = {
         
         var sendFidList = function(){
             var fids = [];
-            var items = core.featurestore().featureItems();
+            var items = core.itemstore().items();
             $.each(items, function(i,item){
                 var iditem = {};
                 iditem.key = item.options.key;
@@ -182,7 +182,7 @@ $.Cow.Websocket.prototype = {
                 iditem.status = item.options.status;
                 fids.push(iditem);    
             });
-            //var store = core.featurestore();
+            //var store = core.itemstore();
             //var fids = store.getIdList();
             var message = {};
             message.fids = fids;
@@ -190,10 +190,7 @@ $.Cow.Websocket.prototype = {
             self.core.websocket().sendData(message, "newPeerFidList");
             
         }
-        //TODO TT: at the moment we only check for 1 store to be loaded
-        if (this.core.featurestore().loaded == true)
-            sendFidList();
-        else
+            //SMO TODO: turn this into a proper callback
             setTimeout(sendFidList, 2000);
             
         
@@ -214,7 +211,7 @@ $.Cow.Websocket.prototype = {
         }
         else console.log('badpeer '+uid);
     },
-    //A new peer has joined, send it your info, compare its features and add it to your
+    //A new peer has joined, send it your info, compare its items and add it to your
     //peerList
     _onNewPeer: function(payload,uid) {
         console.log('This peer just connected: '+uid);
@@ -257,42 +254,42 @@ $.Cow.Websocket.prototype = {
         //if (this._amIAlpha(0, payload.storename)){ //Check wether I'm alpha 
             //console.log('I am alpha');
             if (self.core.activeherd() == payload.storename){
-                this.core.featurestore().syncFids(payload,uid);
+                this.core.itemstore().syncFids(payload,uid);
             }
         //}
     },
     
-    //The alpha peer sends a sync message including a list with new features and 
-    //a request list with features it wants from us
+    //The alpha peer sends a sync message including a list with new items and 
+    //a request list with items it wants from us
     _onSyncPeer: function(payload,uid) {
         var requested_fids = payload.requestlist;
         var pushed_feats = payload.pushlist;
         if (self.core.activeherd() == payload.storename){
-            var store = this.core.featurestore();
-            //First sent the features that are asked for
+            var store = this.core.itemstore();
+            //First sent the items that are asked for
             if (requested_fids.length > 0){
                 var message = {};
-                message.features = store.requestFeatures(requested_fids);
+                message.items = store.requestItems(requested_fids);
                 message.storename = payload.storename;
                 this.sendData(message, 'requestedFeats');
             }
-            //Now add the features that have been sent to the featurestore
+            //Now add the items that have been sent to the itemstore
             if (pushed_feats.length > 0){
                 $.each(pushed_feats, function(i,feat){
-                        store.featureItems({data: feat, source: 'ws'});
+                        store.items({data: feat, source: 'ws'});
                 });
                 //store.putFeatures(pushed_feats);
             }
         }
     },
-    //Peer sends back requested features, now store them
+    //Peer sends back requested items, now store them
     _onRequestedFeats: function(payload,uid) {
         var requested_feats = payload;
         if (self.core.activeherd() == payload.storename){
-            var store = this.core.featurestore();
+            var store = this.core.itemstore();
             if (requested_feats.length > 0){
                 $.each(requested_feats, function(i,feat){
-                        store.featureItems({data: feat, source: 'ws'});
+                        store.items({data: feat, source: 'ws'});
                 });
                 //store.putFeatures(requested_feats);
             }

@@ -1,23 +1,23 @@
-$.Cow.FeatureStore.prototype = {
+$.Cow.ItemStore.prototype = {
     /**
         In progress
     */
 
-    featureItems: function(options) {
+    items: function(options) {
         var self = this;
 		switch(arguments.length) {
         case 0:
-            return this._getFeatureItems();
+            return this._getItems();
         case 1:
             if (!$.isArray(options.data)) {
-                return this._addFeatureItem(options);
+                return this._addItem(options);
             }
             break;
         default:
             throw('wrong argument number');
         }
     },
-    _addFeatureItem: function(options){
+    _addItem: function(options){
 		var newitem = {"options": options.data};
 		
 		//Check if existing
@@ -39,13 +39,13 @@ $.Cow.FeatureStore.prototype = {
 		    
 		}
 		else if (source == 'user'){
-		    self.core.localdbase().featuresdb(options.data);
+		    self.core.localdbase().itemsdb(options.data);
 		    self.core.trigger('storeChanged');
 		    var message = JSON.stringify(newitem);//TODO, bit weird heh...?
-		    core.websocket().sendData(message, "newFeature");
+		    core.websocket().sendData(message, "newItem");
 		}
 		else if (source == 'ws'){
-		    self.core.localdbase().featuresdb(options.data);
+		    self.core.localdbase().itemsdb(options.data);
 		    self.core.trigger('storeChanged');
 		}
 		else {
@@ -54,14 +54,14 @@ $.Cow.FeatureStore.prototype = {
 		
 		return newitem;
     },
-    _getFeatureItems: function(){
+    _getItems: function(){
         var items = [];
         $.each(this.itemList, function(id, item) {
             items.push(item);
         });        
         return items;
     },
-    getFeatureItemById: function(uid){
+    getItemById: function(uid){
         var item;
         $.each(this.itemList, function(i, obj){
             if (obj.options.key == uid){
@@ -75,9 +75,9 @@ $.Cow.FeatureStore.prototype = {
 	##cow.removeItem(iid)
 	###**Description**: removes the specific item from the list of items
 	*/
-	removeFeatureItem: function(iid) {
+	removeItem: function(iid) {
 		var delItem;
-		$.each(this.featureItems(), function(i, item){
+		$.each(this.items(), function(i, item){
 			if (item.options.key == iid){
 				var d = new Date();
 				var timestamp = d.getTime();
@@ -87,27 +87,27 @@ $.Cow.FeatureStore.prototype = {
 					item.options.status = '';
 				item.options.updated = timestamp;
 				//self.core.localdbase().update(item.options);
-				self.core.localdbase().featuresdb(item.options);
+				self.core.localdbase().itemsdb(item.options);
 				//send to world
 				var message = JSON.stringify(item.options);
-				self.core.websocket().sendData(message, "updateFeature");
+				self.core.websocket().sendData(message, "updateItem");
 			}
 		});
 		self.core.trigger('storeChanged');
 	},
 
-	removeAllFeatureItems: function(){
+	removeAllItems: function(){
 	    this.itemList = [];
 	},
 	//request - incoming request from world
-	//find features corresponding to request and send
-	requestFeatures: function(fidlist){
+	//find items corresponding to request and send
+	requestItems: function(fidlist){
 		var pushlist = [];
-		$.each(this.featureItems(), function(i, item){
-				var local_feature = item.options;
+		$.each(this.items(), function(i, item){
+				var local_item = item.options;
 				$.each(fidlist, function(j,rem_val){
-						if (rem_val == local_feature.key)
-							pushlist.push(local_feature);
+						if (rem_val == local_item.key)
+							pushlist.push(local_item);
 				});
 		});
 		return pushlist;
@@ -129,7 +129,7 @@ $.Cow.FeatureStore.prototype = {
 				if (val.status != 'deleted')
 					copyof_rem_list.push(val.key);	
 			});
-			$.each(this.featureItems(), function(i,loc_val){
+			$.each(this.items(), function(i,loc_val){
 					var local_item = loc_val.options;
 					var found = -1;
 					$.each(fidlist, function(j,rem_val){

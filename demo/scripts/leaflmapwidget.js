@@ -32,7 +32,7 @@ $.widget("cow.LeaflMapWidget", {
         core = $(this.options.core).data('cow');
 		this.core=core;
 		
-        core.bind("storeChanged", {widget: self}, self._onFeatureStoreChanged);
+        core.bind("storeChanged", {widget: self}, self._onItemStoreChanged);
 		core.bind("peerStoreChanged", {widget: self}, self._onPeerStoreChanged);
 		core.bind("herdListChanged",  {widget: self}, self._onPeerStoreChanged);
 		//core.bind("layoutChanged", {widget: self},self._updateSize);
@@ -126,12 +126,12 @@ $.widget("cow.LeaflMapWidget", {
         });
         return returnlayer;
     },
-	_onFeatureStoreChanged: function(evt) {
+	_onItemStoreChanged: function(evt) {
 		//console.log('_onLoaded');
 		var self = evt.data.widget;
 		self._updateMap(evt);
 	},
-	_onNewFeature: function(evt) {
+	_onNewItem: function(evt) {
 		//console.log('_onNewFeature');
 		var self = evt.data.widget;
 		self._updateMap(evt);
@@ -153,7 +153,7 @@ $.widget("cow.LeaflMapWidget", {
 	getControls: function(){
 		return this.controls;
 	},
-	//Anything changed in the peers store results in redraw of peer features (extents & points)
+	//Anything changed in the peers store results in redraw of peer items (extents & points)
 	_onPeerStoreChanged: function(evt) {
 	    var self = evt.data.widget;
 	    var extentCollection = self.core.getPeerExtents();
@@ -194,10 +194,15 @@ $.widget("cow.LeaflMapWidget", {
 	_reloadLayer: function(e){
 	    var self = this;
 		self.editLayer.clearLayers();
-		var items = self.core.featurestore().featureItems();
+        //TODO: make sure it only requests items with type 'feature'
+		var items = self.core.itemstore().items();
 		var collection = {"type":"FeatureCollection","features":[]};
 		$.each(items, function(i, object){
-			var feature = object.options.feature;
+			var feature = object.options.data;
+            if(feature === undefined) {
+                console.warn('old item type');
+                return false;
+            }
 			feature.id = feature.properties.key;
 			
 			feature.style = {
@@ -351,12 +356,13 @@ $.widget("cow.LeaflMapWidget", {
 				layers.eachLayer(function (layer) {
 				    var feature = layer.toGeoJSON()
 				    //First transform into featurestore item
-                    var item = core.featurestore().getFeatureItemById(feature.properties.key);
+                    var item = core.itemstore().getItemById(feature.properties.key);
                     var d = new Date();
                     var timestamp = d.getTime();
-                    item.feature = feature;
+                    item.data = feature;
                     item.updated = timestamp;
-                    core.featurestore().featureItems({data:item, source: 'user'});
+                    //TODO: set type
+                    core.itemstore().items({data:item, source: 'user'});
 					//core.trigger('afterfeaturemodified',layer.toGeoJSON());
 				});
 				
@@ -418,6 +424,7 @@ $.widget("cow.LeaflMapWidget", {
 			var type = e.layerType,
 				layer = e.layer;
 			var feature = layer.toGeoJSON();
+            //TODO: $.cow.item
 			var item = {};
             var d = new Date();
             var timestamp = d.getTime();
@@ -434,8 +441,9 @@ $.widget("cow.LeaflMapWidget", {
             item.created = timestamp;
             item.updated = timestamp;
             item.status = '';
-            item.feature = feature;
-			core.featurestore().featureItems({data: item, source: 'user'});
+            item.data = feature;
+            //TODO: items()
+			core.itemstore().items({data: item, source: 'user'});
 		});
 		
 		
@@ -571,7 +579,7 @@ $.widget("cow.LeaflMapWidget", {
 		//var feature = item.target.feature; 
 		var key = feature.properties.key;
 		var store = feature.properties.store || "store1";
-		core.featurestore().removeFeatureItem(key);
+		core.itemstore().removeItem(key);
 		self.map.closePopup();
 		core.trigger('storeChanged');
 	},                
@@ -582,12 +590,13 @@ $.widget("cow.LeaflMapWidget", {
         self.map.closePopup(); //we have to destroy since the next line triggers a reload of all features
 		if (self.core.activeherd() == feature.properties.store){
 		    //core.featurestore().updateLocalFeat(feature);
-            var item = core.featurestore().getFeatureItemById(feature.properties.key);
+            var item = core.itemstore().getItemById(feature.properties.key);
             var d = new Date();
             var timestamp = d.getTime();
-            item.feature = feature;
+            item.data = feature;
             item.updated = timestamp;
-            self.core.featurestore().featureItems({data:item, source: 'user'});
+            //TODO: items()
+            self.core.itemstore().items({data:item, source: 'user'});
         }
         //self.editLayer.clearLayers();
 	},
@@ -595,8 +604,7 @@ $.widget("cow.LeaflMapWidget", {
 	    $('#debugpopup').html('');//TODO
 		self.map.closePopup();
 	},
-	findRoute: function(self, feature){
-	    tmp = feature;
+	findRoute: function(self, feature){    
 	    var routefeats = {"type": "FeatureCollection","features":[]};
 	    var mypoint = self.core.me().position().point.coords;
 	    var topoint = L.geoJson(feature).getBounds().getCenter();
