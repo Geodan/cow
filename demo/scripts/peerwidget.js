@@ -287,7 +287,7 @@ $.widget("cow.PeersWidget", {
             
             svg.append('foreignObject')
 			    .append('xhtml:div')
-			    .attr('clip-path','url(#clippy)')
+			    //.attr('clip-path','url(#clippy)') //TODO: doesn't work
 			    .classed('videobox',true)
 			    .attr('id',function(d){return 'videobox' + d.id;})
                 .on('click',function(d){
@@ -301,7 +301,7 @@ $.widget("cow.PeersWidget", {
                             .style('height','200px')
                             .style('margin-left','0px')
                             .style('margin-top','0px')
-                            .style("mask",'url("#c1")') //for firefox
+                            //.style("mask",'url("#c1")') //for firefox
                             //.style('-webkit-mask','url("#c1")')//for chrome
                             .attr('selected',false);
                     }
@@ -326,7 +326,7 @@ $.widget("cow.PeersWidget", {
                 .style('margin-left','0px')
                 .style('margin-top','0px')
                 .attr("style", "display: block; margin-left: 0px; width: 200px; height: 200px;")
-                .style("mask",'url("#c1")') //for firefox
+                //.style("mask",'url("#c1")') //for firefox
                 //.style('-webkit-mask','url("#c1")')//for chrome
                 .attr("autoPlay",true)
                 .attr("muted",true)

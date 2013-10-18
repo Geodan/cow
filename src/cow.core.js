@@ -24,6 +24,7 @@ $.Cow.Core = function(element, options) {
     this.ws ={};
     this.peerList = [];
     this.herdList = [];
+    this.groupList = [];
     this._username = 'Anonymous';
     this.activeHerd = 666; //Carefull, order matters! Make sure the activeHerd is set before localdbase is initialized
     this.localDbase;
@@ -44,8 +45,9 @@ $.Cow.Core = function(element, options) {
     }
     element.data('cow', this);
     //Standard herd, always available
-    this.herds({uid:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
-    
+    var startherd = this.herds({uid:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
+    //Standard public group, always available
+    var startgroup = startherd.groups({uid:1, name: 'public', peeruid:this.UID});
     
     self.bind("disconnected", {widget: self}, self.removeAllPeers);
     
@@ -142,6 +144,17 @@ $.Cow.Herd = function(core, options) {
     this.options = options;
     this.uid = options.uid;
     this.memberList = [];
+    this.groupList = [];
+}
+
+$.Cow.Group = function(core, options) {
+    var self=this;
+    this.core = core;
+    this.options = options;
+    this.uid = options.uid;
+    this.name = options.name || "noname";
+    this.memberList = options.memberList || [];
+    this.groupList = [];
 }
 
 /***

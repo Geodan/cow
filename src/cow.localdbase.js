@@ -18,6 +18,7 @@ $.Cow.LocalDbase.prototype = {
 		$.indexedDB(this.options.dbname)
 		    .objectStore("herds",storeOptions);
     },
+    //HERDS
     herdsdb: function(options) {
         
 		switch(arguments.length) {
@@ -66,6 +67,7 @@ $.Cow.LocalDbase.prototype = {
 		    .objectStore("herds",false)["delete"](uid);
     },
     
+    //ITEMS
     featuresdb: function(options) {
         var self = this;
 		switch(arguments.length) {
