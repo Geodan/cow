@@ -23,10 +23,10 @@ $.Cow.Core = function(element, options) {
     this.map = window[this.options.map];
     this.ws ={};
     this.peerList = [];
-    this.herdList = [];
+    this.projectList = [];
     this.groupList = [];
     this._username = 'Anonymous';
-    this.activeHerd = 666; //Carefull, order matters! Make sure the activeHerd is set before localdbase is initialized
+    this.activeProject = 666; //Carefull, order matters! Make sure the activeProject is set before localdbase is initialized
     this.localDbase;
     this.geoLocator;
     this.featureStore;
@@ -44,19 +44,18 @@ $.Cow.Core = function(element, options) {
         this.geolocator(this.options.geolocator);
     }
     element.data('cow', this);
-    //Standard herd, always available
-    var startherd = this.herds({uid:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
+    //Standard project, always available
+    var startproject = this.projects({uid:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
     //Standard public group, always available
-    startherd.groups({uid:1, name: 'public', peeruid:this.UID});
-    startherd.groups({uid:2, name: 'admin'});
+    var startgroup = startproject.groups({uid:1, name: 'public', peeruid:this.UID});
     
     self.bind("disconnected", {widget: self}, self.removeAllPeers);
     
     //TODO: put this in a proper function
-    self.bind('changeHerdRequest', {widget:self}, function(e,uid){
+    self.bind('changeProjectRequest', {widget:self}, function(e,uid){
         self.featurestore().removeAllFeatureItems(); //Clear featurestore
-        self.activeherd(uid);
-        self.options.storename = "store_"+uid; //TODO: the link between activeHerd and storename can be better
+        self.activeproject(uid);
+        self.options.storename = "store_"+uid; //TODO: the link between activeProject and storename can be better
         var features = self.localdbase().featuresdb();//Fill featurestore with what we have
     });    
 };
@@ -139,7 +138,7 @@ $.Cow.Peer = function(core, options) {
     };
 };
 
-$.Cow.Herd = function(core, options) {
+$.Cow.Project = function(core, options) {
     var self = this;
     this.core = core;
     this.options = options;
@@ -172,8 +171,7 @@ $.Cow.LocalDbase = function(core, options) {
     // Features in sketch are not loaded anymore after x secs
     this.options.expirytime = 1 * 12 * 60 * 60; //1/2 day
     //this.options.expirytime = 7 * 24 * 60 * 60; //1 week
-    var herds = self.herdsdb();//Herds are initialized from localdb
-    var groups = self.groupsdb();//Groups are initialized from localdb
+    var projects = self.projectsdb();//Projects are initialized from localdb
     var features = self.featuresdb(); //features are initialized from localdb
 }
 /***
@@ -239,26 +237,26 @@ $.Cow.Core.prototype = {
                 this._location = location;
         }
     },
-    activeherd: function(options) {
+    activeproject: function(options) {
         var self = this;
         switch(arguments.length) {
         case 0:
-            return this.activeHerd;
+            return this.activeProject;
         case 1:
             if (!$.isArray(options)) {
-               this.activeHerd = options.activeHerdId;
-               var prevherd = this.getHerdByPeerUid(this.UID);
-               prevherd.removeMember(this.UID);
-               var herd = this.getHerdById(options.activeHerdId);
-               herd.members(this.UID);
+               this.activeProject = options.activeProjectId;
+               var prevproject = this.getProjectByPeerUid(this.UID);
+               prevproject.removeMember(this.UID);
+               var project = this.getProjectById(options.activeProjectId);
+               project.members(this.UID);
                this.featurestore().removeAllFeatureItems(); //Clear featurestore
                var features = this.localdbase().featuresdb();//Fill featurestore with what we have
-               this.ws.sendData(herd.options, 'herdInfo');
-               this.trigger("herdListChanged", this.UID);
-               return this.activeHerd;
+               this.ws.sendData(project.options, 'projectInfo');
+               this.trigger("projectListChanged", this.UID);
+               return this.activeProject;
             }
             else {
-                throw('wrong argument number, only one activeHerd allowed');
+                throw('wrong argument number, only one activeProject allowed');
             }
             break;
         default:
@@ -326,37 +324,37 @@ $.Cow.Core.prototype = {
     },
 
 /**
-##cow.herds([options])
-###**Description**: get/set the herds of the cow
+##cow.projects([options])
+###**Description**: get/set the projects of the cow
 
 **options** an object of key-value pairs with options to create one or
-more herds
+more projects
 
->Returns: [herd] (array of Cow.herd) _or_ false
+>Returns: [project] (array of Cow.project) _or_ false
 
-The `.herds()` method allows us to attach herds to a cow object. It takes
-an options object with herd options. To add multiple herds, create an array of
-herds options objects. If an options object is given, it will return the
-resulting herd(s). We can also use it to retrieve all herds currently attached
+The `.projects()` method allows us to attach projects to a cow object. It takes
+an options object with project options. To add multiple projects, create an array of
+projects options objects. If an options object is given, it will return the
+resulting project(s). We can also use it to retrieve all projects currently attached
 to the cow.
 
-When adding herds, those are returned. 
+When adding projects, those are returned. 
 
 */
 
-    herds: function(options) {
-    // console.log('herds()');
+    projects: function(options) {
+    // console.log('projects()');
         var self = this;
         switch(arguments.length) {
         case 0:
-            return this._getHerds();
+            return this._getProjects();
         case 1:
             if (!$.isArray(options)) {
-                return this._addHerd(options);
+                return this._addProject(options);
             }
             else {
-                return $.core(options, function(herd) {
-                    return self._addHerd(herd);
+                return $.core(options, function(project) {
+                    return self._addProject(project);
                 })
             }
             break;
@@ -364,72 +362,72 @@ When adding herds, those are returned.
             throw('wrong argument number');
         }      
     },
-    _getHerds: function() {
-        //haal alleen de herds op uit de lijst waar de status != deleted
+    _getProjects: function() {
+        //haal alleen de projects op uit de lijst waar de status != deleted
         /* SMO obs: 12/8/13
-        var herds = [];
-        $.each(this.herdList, function(id, herd) {
-            if (herd.active)
-                herds.push(herd);
+        var projects = [];
+        $.each(this.projectList, function(id, project) {
+            if (project.active)
+                projects.push(project);
         });        */
-        return this.herdList;
+        return this.projectList;
     },
-    _addHerd: function(options) {
+    _addProject: function(options) {
         if (!options.uid || !options.name){
-            throw('Missing herd parameters '+JSON.stringify(options));
+            throw('Missing project parameters '+JSON.stringify(options));
         }
-        var herd;        
+        var project;        
         var existing;
         var i;
-        //Remove peer from previous herd
-        if (this.getHerdByPeerUid(options.peeruid))
-            this.getHerdByPeerUid(options.peeruid).removeMember(options.peeruid);
+        //Remove peer from previous project
+        if (this.getProjectByPeerUid(options.peeruid))
+            this.getProjectByPeerUid(options.peeruid).removeMember(options.peeruid);
         
-        //check if herd exists
-        $.each(this.herdList, function(id, herd) {
-                if (options.uid == herd.uid) {
+        //check if project exists
+        $.each(this.projectList, function(id, project) {
+                if (options.uid == project.uid) {
                     i = id;
                     existing = true;
                 }
         });
         if (existing){
             if (options.peeruid){
-             this.herdList[i].members(options.peeruid); //Update membership of herd
+             this.projectList[i].members(options.peeruid); //Update membership of project
             }
-            this.localdbase().herdsdb(this.herdList[i]); //Write to db
-            herd =this.herdList[i]; 
+            this.localdbase().projectsdb(this.projectList[i]); //Write to db
+            project =this.projectList[i]; 
         }
-        else { //Herd is new
+        else { //Project is new
             if (options.active == null) //could be inactive from localdb
                 options.active = true;
-            herd = new $.Cow.Herd(this, options);
+            project = new $.Cow.Project(this, options);
             if (options.peeruid)
-                herd.members(options.peeruid);
-            this.herdList.push(herd); //Add herd to list
-            this.localdbase().herdsdb(herd); //Write to db
+                project.members(options.peeruid);
+            this.projectList.push(project); //Add project to list
+            this.localdbase().projectsdb(project); //Write to db
         }
-        this.trigger("herdListChanged", self.UID);
-        return herd;
+        this.trigger("projectListChanged", self.UID);
+        return project;
     },
     
-    getHerdById: function(id) {
-        var herds = this.herds();
-        var herd;
-        $.each(herds, function(){
+    getProjectById: function(id) {
+        var projects = this.projects();
+        var project;
+        $.each(projects, function(){
             if(this.uid == id) {            
-                herd = this;
+                project = this;
             }            
         });
-        return herd;
+        return project;
     },
-    getHerdByPeerUid: function(peeruid){
-        var herds = this.herds();
+    getProjectByPeerUid: function(peeruid){
+        var projects = this.projects();
         var result;
-        $.each(herds, function(id, herd){
-            memberList = herd.members();
+        $.each(projects, function(id, project){
+            memberList = project.members();
             for (var i=0;i<memberList.length;i++){
                 if (memberList[i] == peeruid) {
-                    result = herd;
+                    result = project;
                 }
             }
         });
@@ -437,21 +435,21 @@ When adding herds, those are returned.
     },
     
     
-    removeHerd: function(id) {
-        var herds = this.herds();
-        var herdGone = id;
-        var delHerd;
-        $.each(herds, function(i){
-            if(this.uid == herdGone) {            
+    removeProject: function(id) {
+        var projects = this.projects();
+        var projectGone = id;
+        var delProject;
+        $.each(projects, function(i){
+            if(this.uid == projectGone) {            
                 this.active = false;
                 this.options.active = false; //needed for dbase
-                //Overwrite herd in dbase with new status
-                self.core.localdbase().herdsdb(this);
+                //Overwrite project in dbase with new status
+                self.core.localdbase().projectsdb(this);
                 
-                self.core.trigger("herdListChanged", self.UID);
+                self.core.trigger("projectListChanged", self.UID);
             }            
         });
-        this.herdList = herds;  
+        this.projectList = projects;  
     },
 
 
@@ -477,7 +475,7 @@ A Peer is on object containing:
 -view()
 -position()
 -owner()
--herd()
+-project()
 -uid
 -options:
  =cid
@@ -488,7 +486,7 @@ A Peer is on object containing:
  =viewFeature
  =locationPoint
  =locationFeature
- =herd
+ =project
  =owner
 */
     peers: function(options) {
@@ -540,11 +538,11 @@ A Peer is on object containing:
     //Return feature collection of peer view extents
     getPeerExtents: function() {
         var collection = {"type":"FeatureCollection","features":[]};
-        var myherdmembers = this.getHerdByPeerUid(this.UID).members();
+        var myprojectmembers = this.getProjectByPeerUid(this.UID).members();
         $.each(this.peers(), function(){
             if (this.uid != self.core.me().uid 
                 && this.view().feature
-                && $.inArray(this.uid, myherdmembers) > -1 
+                && $.inArray(this.uid, myprojectmembers) > -1 
                 )
                 collection.features.push(this.view().feature);
         });
@@ -553,10 +551,10 @@ A Peer is on object containing:
     //Return feature collection of peer positions
     getPeerPositions: function(){
         var collection = {"type":"FeatureCollection","features":[]};
-        var myherdmembers = this.getHerdByPeerUid(this.UID).members();
+        var myprojectmembers = this.getProjectByPeerUid(this.UID).members();
         $.each(this.peers(), function(){
             if (this.position().feature
-                && $.inArray(this.uid, myherdmembers) > -1){
+                && $.inArray(this.uid, myprojectmembers) > -1){
                     var feature = this.position().feature; //TODO: adding the owner should happen earlier
                     feature.properties.owner = this.owner().name;
                     collection.features.push(this.position().feature);

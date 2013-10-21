@@ -34,7 +34,7 @@ $.widget("cow.LeaflMapWidget", {
 		
         core.bind("storeChanged", {widget: self}, self._onFeatureStoreChanged);
 		core.bind("peerStoreChanged", {widget: self}, self._onPeerStoreChanged);
-		core.bind("herdListChanged",  {widget: self}, self._onPeerStoreChanged);
+		core.bind("projectListChanged",  {widget: self}, self._onPeerStoreChanged);
 		//core.bind("layoutChanged", {widget: self},self._updateSize);
 		core.bind("zoomToExtent", {widget: self},self._zoomToPeersView);
 		core.bind("zoomToPoint", {widget: self},self._zoomToPeersLocation);
@@ -427,7 +427,7 @@ $.widget("cow.LeaflMapWidget", {
             feature.properties.polycolor = self.core.current_polycolor;
             item.key = self.core.UID + "#" + timestamp;
             feature.properties.key = item.key;
-            feature.properties.store = self.core.activeherd();
+            feature.properties.store = self.core.activeproject();
             feature.properties.creator = self.core.username();
             feature.properties.owner = self.core.username();
             item.uid = self.core.UID;
@@ -580,7 +580,7 @@ $.widget("cow.LeaflMapWidget", {
         feature.properties.desc = document.getElementById('descfld').value;
         feature.properties.owner = self.core.username();
         self.map.closePopup(); //we have to destroy since the next line triggers a reload of all features
-		if (self.core.activeherd() == feature.properties.store){
+		if (self.core.activeproject() == feature.properties.store){
 		    //core.featurestore().updateLocalFeat(feature);
             var item = core.featurestore().getFeatureItemById(feature.properties.key);
             var d = new Date();

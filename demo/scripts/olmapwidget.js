@@ -55,7 +55,7 @@ $.widget("cow.OlMapWidget", {
 
 		core.bind("storeChanged", {widget: self}, self._onFeatureStoreChanged);
 		core.bind("peerStoreChanged", {widget: self}, self._onPeerStoreChanged);
-		core.bind("herdListChanged",  {widget: self}, self._onPeerStoreChanged);
+		core.bind("projectListChanged",  {widget: self}, self._onPeerStoreChanged);
 		core.bind("layoutChanged", {widget: self},self._updateSize);
 		core.bind("zoomToExtent", {widget: self},self._zoomToPeersView);
 		core.bind("zoomToPoint", {widget: self},self._zoomToPeersLocation);
@@ -446,7 +446,7 @@ $.widget("cow.OlMapWidget", {
                 feature.properties.polycolor = self.core.current_polycolor;
                 item.key = self.core.UID + "#" + timestamp;
                 feature.properties.key = item.key;
-                feature.properties.store = self.core.activeherd();
+                feature.properties.store = self.core.activeproject();
                 feature.properties.creator = self.core.username();
                 feature.properties.owner = self.core.username();
                 item.uid = self.core.UID;
@@ -565,7 +565,7 @@ $.widget("cow.OlMapWidget", {
 		if (feature.popup)
 			feature.popup.destroy();
 		var key = feature.properties.key;
-		if (core.activeherd() == feature.properties.store){
+		if (core.activeproject() == feature.properties.store){
 		    core.featurestore().removeFeatureItem(key);
 		    core.trigger('storeChanged');
 		}
@@ -589,7 +589,7 @@ $.widget("cow.OlMapWidget", {
                 feature.popup = null;
             }
             var jsonfeature = JSON.parse(geojson_format.write(feature));//TODO is this needed?
-            if (core.activeherd() == feature.properties.store){
+            if (core.activeproject() == feature.properties.store){
                 //core.featurestore().updateLocalFeat(jsonfeature);
                 var item = core.featurestore().getFeatureItemById(feature.properties.key);
                 var d = new Date();

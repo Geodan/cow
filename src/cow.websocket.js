@@ -73,7 +73,7 @@ $.Cow.Websocket.prototype = {
             case 'newFeature':
                 if(uid != UID) {
                     var item = JSON.parse(payload).options;
-                    if (self.core.activeherd() == item.feature.properties.store){
+                    if (self.core.activeproject() == item.feature.properties.store){
                         core.featurestore().featureItems({data:item, source: 'ws'});
                         //core.featurestore().updateItem(item);
                     }
@@ -83,26 +83,25 @@ $.Cow.Websocket.prototype = {
             case 'updateFeature':
                 if(uid != UID) {
                     var item = JSON.parse(payload);
-                    if (self.core.activeherd() == item.feature.properties.store){
+                    if (self.core.activeproject() == item.feature.properties.store){
                         core.featurestore().featureItems({data:item, source: 'ws'});
                         //core.featurestore().updateItem(item);
                         }
                 }
             break;
             
-            //A peer request information about a herd
-            case 'getHerdInfo':
+            //A peer request information about a project
+            case 'getProjectInfo':
                 if(uid != UID) {
-                    this.obj._onGetHerdInfo(payload);
+                    this.obj._onGetProjectInfo(payload);
                 }
             break;
-            //Info about a herd comes in...
-            case 'herdInfo':
+            //Info about a project comes in...
+            case 'projectInfo':
                 if(uid != UID) {
-                    this.obj._onHerdInfo(payload,uid);
+                    this.obj._onProjectInfo(payload,uid);
                 }
             break;
-            
             
         }
     },
@@ -158,11 +157,11 @@ $.Cow.Websocket.prototype = {
         var me = this.core.peers(options);
         
         //let everybody know you exist, before sending peerupdates
-        this.sendData(options,'newPeer');// we don't want to trigger anything with this herd
+        this.sendData(options,'newPeer');// we don't want to trigger anything with this project
       
-        //Immediately give a herdInfo
-        var herd = this.core.getHerdByPeerUid(this.core.UID);
-        this.sendData(herd.options,'herdInfo');
+        //Immediately give a projectInfo
+        var project = this.core.getProjectByPeerUid(this.core.UID);
+        this.sendData(project.options,'projectInfo');
         
         me.view({"extent":{"bottom":0,"left":0,"top":1,"right":1}});
 
@@ -187,7 +186,7 @@ $.Cow.Websocket.prototype = {
             //var fids = store.getIdList();
             var message = {};
             message.fids = fids;
-            message.storename = self.core.activeherd();
+            message.storename = self.core.activeproject();
             self.core.websocket().sendData(message, "newPeerFidList");
             
         }
@@ -233,31 +232,31 @@ $.Cow.Websocket.prototype = {
             this.sendData(message,'informPeer',uid);
             this.core.trigger('ws-newPeer');
             
-            var herd = this.core.getHerdByPeerUid(this.core.me().uid);
-            this.sendData(herd.options,'herdInfo');
+            var project = this.core.getProjectByPeerUid(this.core.me().uid);
+            this.sendData(project.options,'projectInfo');
             
         }
         else console.warn('badpeer '+uid);
     },
-    _amIAlpha: function(id,herduid){ //find out wether I am alpha
-        if (this.core.activeherd() == herduid){ //I need to be part of the herd
+    _amIAlpha: function(id,projectuid){ //find out wether I am alpha
+        if (this.core.activeproject() == projectuid){ //I need to be part of the project
             if (this.core.me().options.cid == id) //yes, I certainly am (the oldest) 
                 return true;
-            else { //check again if younger peer turns out not to be from alpha family or not part of my herd
+            else { //check again if younger peer turns out not to be from alpha family or not part of my project
                 id++; 
                 var nextpeer = this.core.getPeerByCid(id);
                 if ((nextpeer.options.family && nextpeer.options.family != 'alpha'))
-                    this._amIAlpha(id, herduid);    //I might still be alpha
+                    this._amIAlpha(id, projectuid);    //I might still be alpha
             }
-            return false; //Not the oldest in the herd
+            return false; //Not the oldest in the project
         }
-        else return false; //Not part of herd
+        else return false; //Not part of project
     },
     _onNewPeerFidList: function(payload, uid) {
-        var self = this; //TODO !! : alpha check must incorporate activeherd!!
+        var self = this; //TODO !! : alpha check must incorporate activeproject!!
         //if (this._amIAlpha(0, payload.storename)){ //Check wether I'm alpha 
             //console.log('I am alpha');
-            if (self.core.activeherd() == payload.storename){
+            if (self.core.activeproject() == payload.storename){
                 this.core.featurestore().syncFids(payload,uid);
             }
         //}
@@ -268,7 +267,7 @@ $.Cow.Websocket.prototype = {
     _onSyncPeer: function(payload,uid) {
         var requested_fids = payload.requestlist;
         var pushed_feats = payload.pushlist;
-        if (self.core.activeherd() == payload.storename){
+        if (self.core.activeproject() == payload.storename){
             var store = this.core.featurestore();
             //First sent the features that are asked for
             if (requested_fids.length > 0){
@@ -289,7 +288,7 @@ $.Cow.Websocket.prototype = {
     //Peer sends back requested features, now store them
     _onRequestedFeats: function(payload,uid) {
         var requested_feats = payload;
-        if (self.core.activeherd() == payload.storename){
+        if (self.core.activeproject() == payload.storename){
             var store = this.core.featurestore();
             if (requested_feats.length > 0){
                 $.each(requested_feats, function(i,feat){
@@ -330,28 +329,28 @@ $.Cow.Websocket.prototype = {
         }
         else console.warn('badpeer '+uid);
     },
-    //A peer wants to have more info about a herd. send it
-    _onGetHerdInfo: function(payload){
+    //A peer wants to have more info about a project. send it
+    _onGetProjectInfo: function(payload){
         //Everybody sends data back, if available
-        // make sure you're actually aware of the herd, not 'new herd'
-        var herdId = payload.herdId;
-        var myherds = this.core.herds();
+        // make sure you're actually aware of the project, not 'new project'
+        var projectId = payload.projectId;
+        var myprojects = this.core.projects();
         var self = this;
-        $.each(myherds, function(i, herd){
-             if (herd.uid == herdId.uid){
-                 message = herd;
+        $.each(myprojects, function(i, project){
+             if (project.uid == projectId.uid){
+                 message = project;
                  delete message.active;
                  console.log(JSON.stringify(message));
-                 self.sendData(message,'herdUpdate');
+                 self.sendData(message,'projectUpdate');
              }
         })
     },
-    _onHerdInfo: function(payload,uid){
+    _onProjectInfo: function(payload,uid){
         var options = {};
         options.uid = payload.uid;
         options.name = payload.name;
         options.peeruid = uid;
-        this.core.herds(options);
+        this.core.projects(options);
     },
     //My stuff has changed, send over the changed data to the other peers
     _onMeChanged: function(evt, payload) {

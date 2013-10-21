@@ -1,4 +1,4 @@
-$.Cow.Group.prototype = {
+$.Cow.Project.prototype = {
     members: function(peerid){
         var self = this;
         switch(arguments.length) {
@@ -38,16 +38,15 @@ $.Cow.Group.prototype = {
     removeAllMembers: function(){
         this.memberList = [];
     },
-    //Next can be confusing: groups can be member of another group, hence the groups item in a group
-    //They are not the same in functionality, the groups is only an array of group id's
-    groups: function(groupid){
+    //GROUPS
+    groups: function(options){
         var self = this;
         switch(arguments.length) {
             case 0:
                 return this._getGroups();
                 break;
             case 1:
-                return this._addGroup(groupid);
+                return this._addGroup(options);
                 break;
             default:
                 throw('wrong argument number');
@@ -56,21 +55,35 @@ $.Cow.Group.prototype = {
     _getGroups: function(){
         return this.groupList;
     },
-    _addGroup: function(groupid){
+    _addGroup: function(options){
+        if (!options.uid || !options.name){
+            throw('Missing group parameters '+JSON.stringify(options));
+        }
+        var group,i;
         var existing = false;
-        for (var i=0;i<this.groupList.length;i++){
-            if (this.groupList[i] == groupid) {
-                existing = true; //Already a member
-                return groupid;
+        $.each(this.groupList, function(id, group) {
+                if (options.uid == group.uid) {
+                    i = id;
+                    existing = true;
+                }
+        });
+        if (existing){
+            if (options.name){
+             this.groupList[i].name = options.name; //Update name of group
+             group = this.groupList[i];
             }
         }
         if (!existing)
-            this.groupList.push(groupid); //Adding to the list
-        return groupid;
+            group = new $.Cow.Group(this, options);
+            if (options.peeruid)
+                group.members(options.peeruid);
+            this.groupList.push(group); //Adding to the list
+        //TODO: probably need trigger here
+        return group;
     },
-    removeGroup: function(groupid){
+    removeGroup: function(uid){
         for (var i=0;i<this.groupList.length;i++){
-            if (this.groupList[i] == groupid) {
+            if (this.groupList[i].uid == uid) {
                 this.groupList.splice(i,1); //Remove from list
                 return;
             }
@@ -79,26 +92,16 @@ $.Cow.Group.prototype = {
     removeAllGroups: function(){
         this.groupList = [];
     },
-    //Find out if a peer is in a group
-    hasMember: function(peerid){
-        //See if member is in this group
-        var hasmember = false;
-        for (var i=0;i<this.memberList.length;i++){
-            if (this.memberList[i] == peerid) {
-                hasmember = true;
-            }
-        }
-        //See if member is in other group that inherits this group
-        var groupsChecked = [this.uid];
+    getGroupById: function(uid){
         for (var i=0;i<this.groupList.length;i++){
-            var groupId = groupList[i].uid;
-            if (groupsChecked.indexOf(groupId) < 0){// avoid looping
-                groupsChecked.push(groupId);
-                var group = this.core.getProjectById(this.core.activeproject()).getGroupById(groupId);
-                hasmember = group.hasMember(peerid);
+            if (this.groupList[i].uid == uid) {
+                return this.groupList[i];
             }
         }
-        return hasmember;
+        return;
+    },
+    
+    groupMemberShip: function(peerid){
     },
     bind: function(types, data, fn) {
         var self = this;

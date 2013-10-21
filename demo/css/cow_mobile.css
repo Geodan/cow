@@ -66,17 +66,17 @@ margin-top: 2px;
     cursor: pointer;
 }
 
-.herd {
+.project {
 	cursor: pointer;
     font-size: 120%;
 }
-.removeherd {
+.removeproject {
     color: red;
     font-size: 70%;
     float: right;
     cursor: pointer;
 }
-.yesremove, .addHerd {
+.yesremove, .addProject {
 padding-left: 0.4em;
 padding-right: 0.4em;
 cursor: pointer;
@@ -91,7 +91,7 @@ border: solid 1px #333;
 margin-left: 0.4em;
 background: #eeeeec;
 }
-.removeherdconfirm {
+.removeprojectconfirm {
     text-align: right;
 }
 .verborgen {
@@ -104,15 +104,15 @@ background: #eeeeec;
 
     padding-left: 1em;
 }
-#newHerd {
+#newProject {
     border: solid 1px #eeeeec;
     color: #eeeeec;
 }
-#newHerd:hover {
+#newProject:hover {
     border: solid 1px #999;
     color: #999;
 }
-#newHerd.newHerdActive {
+#newProject.newProjectActive {
     color: #555753;
 }
 .key {
