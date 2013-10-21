@@ -13,10 +13,19 @@ $.Cow.LocalDbase.prototype = {
 		};
 		$.indexedDB(this.options.dbname)
 		    .objectStore("herds",storeOptions);
-		//Init features db
+		//Init groupstable
+		var tablename = "groups_"+ this.core.activeherd();
+		$.indexedDB(this.options.dbname)
+		    .objectStore(tablename,storeOptions);
+		//Init featuredb
+		var storeOptions = {
+            "autoIncrement" : false,
+            "keyPath": "key"
+		};
 		var tablename = core.activeherd();
 		$.indexedDB(this.options.dbname)
-		    .objectStore("herds",storeOptions);
+		    .objectStore(tablename,storeOptions);
+		 
     },
     //HERDS
     herdsdb: function(options) {
@@ -35,10 +44,11 @@ $.Cow.LocalDbase.prototype = {
         record.uid = herd.options.uid;
         record.name = herd.options.name;
         record.active = herd.options.active;
+        
         var request = $.indexedDB(this.options.dbname)
 		    .objectStore("herds",false)
 		    .put(record);
-		 request.onerror = function(e){
+		 request.fail = function(e){
             console.warn('Error adding: '+e);
          };
          return herd;
@@ -66,7 +76,66 @@ $.Cow.LocalDbase.prototype = {
         $.indexedDB(this.options.dbname)
 		    .objectStore("herds",false)["delete"](uid);
     },
-    
+    //GROUPS
+    groupsdb: function(group) {
+		switch(arguments.length) {
+        case 0:
+            return this._getGroups();
+        case 1:
+            return this._addGroup(group);
+        }
+    },
+    _addGroup: function(group){
+        var record = {};
+        record.uid = group.uid;
+        record.name = group.name;
+        record.members = group.members();
+        record.groups = group.groups();
+        var storeOptions = {
+            "autoIncrement" : false,
+            "keyPath": "uid"
+		};
+        var tablename = 'groups_' + this.core.activeherd();
+        var request = $.indexedDB(this.options.dbname)
+		    .objectStore(tablename,storeOptions)
+		    .put(record);
+		 request.fail = function(e){
+		    console.warn(e.message);
+         };
+         return group;
+    },
+    _getGroups: function() {
+        var self = this;
+        var storeOptions = {
+            "autoIncrement" : false,
+            "keyPath": "uid"
+		};
+		var herdList = [];
+		var tablename = 'groups_' + self.core.activeherd();
+        var promise = $.indexedDB(this.options.dbname)
+		    .objectStore(tablename,storeOptions)
+		    .each(function(elem){
+		        var options = {};
+		        options.uid = elem.value.uid;
+		        options.name = elem.value.name;
+		        var project = self.core.getHerdById(self.core.activeherd());
+		        var group = project.groups(options);
+		        var members = elem.value.members || [];
+		        var groups = elem.value.groups || [];
+		        $.each(members,function(i,d){
+		                group.members(d);
+		        });
+		        $.each(groups,function(i,d){
+		                group.groups(d);
+		        })
+	        });
+	    return promise;
+    },
+    removeherd: function(uid){
+        //This will never happen....
+        $.indexedDB(this.options.dbname)
+		    .objectStore("herds",false)["delete"](uid);
+    },
     //ITEMS
     featuresdb: function(options) {
         var self = this;
@@ -131,6 +200,7 @@ $.Cow.LocalDbase.prototype = {
 		    self.core.websocket().sendData(message, "newPeerFidList");
 		});
 		iteration.fail(function(e){
+		    console.warn(e.message);
 		    throw "Problem loading local indexeddb";        
 		});
 		return iteration;
@@ -156,7 +226,7 @@ $.Cow.LocalDbase.prototype = {
                 .then(function(){
                     //console.log("Data added");
                 }, function(e){
-                    console.log("Error adding data " + e);
+                    console.warn("Error adding data " + e);
                 });
         }
         

@@ -103,6 +103,7 @@ $.Cow.Websocket.prototype = {
                 }
             break;
             
+            
         }
     },
     _onClose: function(event) {

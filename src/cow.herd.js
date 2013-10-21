@@ -67,18 +67,20 @@ $.Cow.Herd.prototype = {
                     existing = true;
                 }
         });
-        if (existing){
+        if (existing == true){
             if (options.name){
              this.groupList[i].name = options.name; //Update name of group
              group = this.groupList[i];
             }
         }
-        if (!existing)
+        if (existing == false){
             group = new $.Cow.Group(this, options);
             if (options.peeruid)
                 group.members(options.peeruid);
             this.groupList.push(group); //Adding to the list
+        }
         //TODO: probably need trigger here
+        this.core.localdbase().groupsdb(group);
         return group;
     },
     removeGroup: function(uid){
@@ -100,9 +102,18 @@ $.Cow.Herd.prototype = {
         }
         return;
     },
-    
-    groupMemberShip: function(peerid){
+    //Get the plain groupsdata without the functions (needed to transfer data)
+    getGroupsData: function(){
+        var groups = [];
+        $.each(this.groupList,function(i,d){
+            var group = {
+                members: d.members(),
+                groups: d.groups()
+            };
+            groups.push(group);
+        });
     },
+    
     bind: function(types, data, fn) {
         var self = this;
 

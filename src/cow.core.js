@@ -47,7 +47,8 @@ $.Cow.Core = function(element, options) {
     //Standard herd, always available
     var startherd = this.herds({uid:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
     //Standard public group, always available
-    var startgroup = startherd.groups({uid:1, name: 'public', peeruid:this.UID});
+    startherd.groups({uid:1, name: 'public', peeruid:this.UID});
+    startherd.groups({uid:2, name: 'admin'});
     
     self.bind("disconnected", {widget: self}, self.removeAllPeers);
     
@@ -172,6 +173,7 @@ $.Cow.LocalDbase = function(core, options) {
     this.options.expirytime = 1 * 12 * 60 * 60; //1/2 day
     //this.options.expirytime = 7 * 24 * 60 * 60; //1 week
     var herds = self.herdsdb();//Herds are initialized from localdb
+    var groups = self.groupsdb();//Groups are initialized from localdb
     var features = self.featuresdb(); //features are initialized from localdb
 }
 /***
