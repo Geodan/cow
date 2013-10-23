@@ -124,9 +124,7 @@ $.Cow.LocalDbase.prototype = {
 		        $.each(groups,function(i,d){
 	                group.groups(d);
 		        })
-=======
 		        self.core.projects(options);
->>>>>>> 1d9f24367930a1ea4fcbf5d19cdbf69125b080d0
 	        });
 	    return promise;
     },
