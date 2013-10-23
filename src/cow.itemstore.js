@@ -2,23 +2,34 @@ $.Cow.ItemStore.prototype = {
     /**
         In progress
     */
-
-    items: function(options) {
+    /**
+        items() returns all items
+        items('string') returns all items of type 'string'
+        items('string',{data}) creates a new item with type 'string' and payload data
+        
+    */
+    items: function(name, value) {
         var self = this;
 		switch(arguments.length) {
         case 0:
             return this._getItems();
         case 1:
-            if (!$.isArray(options.data)) {
-                return this._addItem(options);
+            if(typeof name == "string") {
+                return this._getItems(name);
             }
+            break;
+        case 2:
+            return this._addItem(name,value);
             break;
         default:
             throw('wrong argument number');
         }
     },
-    _addItem: function(options){
-		var newitem = {"options": options.data};
+    _addItem: function(name,value){
+        var options = {};
+        options.type = name;
+        options.data = value;
+		var newitem =new $.Cow.Item(this.core, options );
 		
 		//Check if existing
 		var existing = false;
@@ -39,13 +50,13 @@ $.Cow.ItemStore.prototype = {
 		    
 		}
 		else if (source == 'user'){
-		    self.core.localdbase().itemsdb(options.data);
+		    self.core.localdbase().itemsdb(newitem);
 		    self.core.trigger('storeChanged');
 		    var message = JSON.stringify(newitem);//TODO, bit weird heh...?
 		    core.websocket().sendData(message, "newItem");
 		}
 		else if (source == 'ws'){
-		    self.core.localdbase().itemsdb(options.data);
+		    self.core.localdbase().itemsdb(newitem);
 		    self.core.trigger('storeChanged');
 		}
 		else {
