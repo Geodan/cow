@@ -28,6 +28,9 @@ $.Cow.Core = function(element, options) {
     this._username = 'Anonymous';
     this.activeHerd = 666; //Carefull, order matters! Make sure the activeHerd is set before localdbase is initialized
     this.localDbase;
+    this.projectStore;
+    this.groupStore;
+    this.itemStore;
     this.geoLocator;
     this.featureStore;
     this.events = $({});
@@ -37,12 +40,22 @@ $.Cow.Core = function(element, options) {
     if(this.options.featurestore!==undefined) {
         this.featurestore(this.options.featurestore);
     }
+    if(this.options.projectstore!==undefined) {
+        this.projectstore(this.options.projectstore);
+    }
+    if(this.options.groupstore!==undefined) {
+        this.groupstore(this.options.groupstore);
+    }
+    if(this.options.itemstore!==undefined) {
+        this.itemstore(this.options.itemstore);
+    }
     if(this.options.localdbase!==undefined) {
         this.localdbase(this.options.localdbase);
     }
     if(this.options.geolocator!==undefined) {
         this.geolocator(this.options.geolocator);
     }
+    
     element.data('cow', this);
     //Standard herd, always available
     var startherd = this.herds({uid:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
@@ -176,6 +189,19 @@ $.Cow.LocalDbase = function(core, options) {
     var groups = self.groupsdb();//Groups are initialized from localdb
     var features = self.featuresdb(); //features are initialized from localdb
 }
+
+/*** 
+$.Cow.Store object
+Pouchdb access
+***/
+
+$.Cow.Store = function(core, options){
+    var self = this;
+    this.core = core;
+    this.dbname = options.dbname;
+};
+
+
 /***
 $.Cow.FeatureStore
 ***/
@@ -188,10 +214,11 @@ $.Cow.FeatureStore = function(core, options) {
     this.uid = this.core.UID;
     this.itemList = [];
     //this.name = this.options.name || "store1";
-    
     //Obs: this.core.bind('sketchcomplete', {widget: self}, self._onSketchComplete);
     //Obs: this.core.bind('afterfeaturemodified', {widget: self}, self._onFeatureModified);
 }
+
+
 
 /***
 $.Cow.GeoLocator
@@ -649,6 +676,49 @@ A Peer is on object containing:
         var dbase = new $.Cow.LocalDbase(this, options);
         this.localDbase = dbase;
     },
+    
+    /***
+    POUCH DB stores
+    ****/
+    
+    groupstore: function(options){
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this.groupStore;
+        case 1:
+            this.groupStore = new $.Cow.Store(this, {dbname: 'group'});
+            this.groupStore.init();
+            return this.groupStore;
+            break;
+        }
+    },
+    projectstore: function(options){
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this.projectStore;
+        case 1:
+            this.projectStore = new $.Cow.Store(this, {dbname: 'project'});
+            this.projectStore.init();
+            return this.projectStore;
+            break;
+        }
+    },
+    itemstore: function(options){
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this.itemStore;
+        case 1:
+            this.itemStore = new $.Cow.Store(this, {dbname: 'item'});
+            this.itemStore.init();
+            return this.itemStore;
+            break;
+        }
+    },
+    
+    
      /***
     GEO LOCATOR
     ***/
@@ -779,7 +849,10 @@ $.fn.cow.defaults = {
             websocket: {url: 'wss://localhost:443'},
             featurestore: {},
             localdbase: {},
-            geolocator: {}
+            geolocator: {},
+            groupstore: {},
+            projectstore: {},
+            itemstore: {}
         };
     }
 };

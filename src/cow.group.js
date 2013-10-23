@@ -18,19 +18,21 @@ $.Cow.Group.prototype = {
     _addMember: function(peerid){
         var existing = false;
         for (var i=0;i<this.memberList.length;i++){
-            if (this.memberList[i] == peerid) {
+            if (this.memberList[i].id == peerid) {
                 existing = true; //Already a member
                 return peerid;
             }
         }
-        if (!existing)
-            this.memberList.push(peerid); //Adding to the list
+        if (!existing){
+            this.memberList.push({id: peerid, status:'active'}); //Adding to the list
+        }
         return peerid;
     },
     removeMember: function(peerid){
         for (var i=0;i<this.memberList.length;i++){
-            if (this.memberList[i] == peerid) {
-                this.memberList.splice(i,1); //Remove from list
+            if (this.memberList[i].id == peerid) {
+                //this.memberList.splice(i,1); //Remove from list
+                this.memberList[i].status = 'deleted';
                 return;
             }
         }
@@ -59,19 +61,21 @@ $.Cow.Group.prototype = {
     _addGroup: function(groupid){
         var existing = false;
         for (var i=0;i<this.groupList.length;i++){
-            if (this.groupList[i] == groupid) {
+            if (this.groupList[i].id == groupid) {
                 existing = true; //Already a member
                 return groupid;
             }
         }
-        if (!existing)
-            this.groupList.push(groupid); //Adding to the list
+        if (!existing){
+            this.groupList.push({id:groupid, status:'active'}); //Adding to the list
+        }
         return groupid;
     },
     removeGroup: function(groupid){
         for (var i=0;i<this.groupList.length;i++){
-            if (this.groupList[i] == groupid) {
-                this.groupList.splice(i,1); //Remove from list
+            if (this.groupList[i].id == groupid) {
+                //this.groupList.splice(i,1); //Remove from list
+                this.groupList[i].status = 'deleted';
                 return;
             }
         }
@@ -84,14 +88,14 @@ $.Cow.Group.prototype = {
         //See if member is in this group
         var hasmember = false;
         for (var i=0;i<this.memberList.length;i++){
-            if (this.memberList[i] == peerid) {
+            if (this.memberList[i].id == peerid && this.memberList[i].status != 'deleted') {
                 hasmember = true;
             }
         }
         //See if member is in other group that inherits this group
         var groupsChecked = [this.uid];
         for (var i=0;i<this.groupList.length;i++){
-            var groupId = groupList[i].uid;
+            var groupId = groupList[i].id;
             if (groupsChecked.indexOf(groupId) < 0){// avoid looping
                 groupsChecked.push(groupId);
                 var group = this.core.getHerdById(this.core.activeherd()).getGroupById(groupId);

@@ -14,6 +14,12 @@ $.Cow.Websocket.prototype = {
         var payload = data.payload;    
         var target = data.target;
         switch (action) {
+        /* TEST FOR POUCHDB sync */    
+            case 'pdb':
+                console.log(payload)
+            break;
+            
+            
         //Messages from Server
             //webscocket confirms connection by returning a CID
             case 'connected':

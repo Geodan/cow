@@ -29,7 +29,7 @@ $.Cow.LocalDbase.prototype = {
     },
     //HERDS
     herdsdb: function(options) {
-        
+        this.herdspdb = new PouchDB('projects');
 		switch(arguments.length) {
         case 0:
             return this._getHerds();
@@ -44,13 +44,16 @@ $.Cow.LocalDbase.prototype = {
         record.uid = herd.options.uid;
         record.name = herd.options.name;
         record.active = herd.options.active;
-        
+        /*
         var request = $.indexedDB(this.options.dbname)
 		    .objectStore("herds",false)
 		    .put(record);
 		 request.fail = function(e){
             console.warn('Error adding: '+e);
          };
+         */
+         
+         this.herdspdb.post({data:record});
          return herd;
     },
     _getHerds: function() {
@@ -60,6 +63,7 @@ $.Cow.LocalDbase.prototype = {
             "keyPath": "uid"
 		};
 		var herdList = [];
+		/*
         var promise = $.indexedDB(this.options.dbname)
 		    .objectStore("herds",storeOptions)
 		    .each(function(elem){
@@ -70,6 +74,24 @@ $.Cow.LocalDbase.prototype = {
 		        self.core.herds(options);
 	        });
 	    return promise;
+	    */
+	    var deferred = jQuery.Deferred();
+        this.herdspdb.allDocs({include_docs:true,descending: true}, function(err,doc){
+            if (err) {
+                deferred.reject('Dbase error: ' + err.reason)
+            }
+            else {
+                $.each(doc.rows, function(i,elem){
+                    var options = {};
+                    options.uid = elem.doc.data.uid;
+                    options.name = elem.doc.data.name;
+                    options.active = elem.doc.data.active;
+                    self.core.herds(options);
+                })
+                deferred.resolve(doc);
+            };
+        });
+        return deferred.promise();
     },
     removeherd: function(uid){
         //This will never happen....
@@ -123,10 +145,10 @@ $.Cow.LocalDbase.prototype = {
 		        var members = elem.value.members || [];
 		        var groups = elem.value.groups || [];
 		        $.each(members,function(i,d){
-		                group.members(d);
+                    group.members(d);
 		        });
 		        $.each(groups,function(i,d){
-		                group.groups(d);
+	                group.groups(d);
 		        })
 	        });
 	    return promise;

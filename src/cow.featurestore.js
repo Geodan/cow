@@ -42,7 +42,7 @@ $.Cow.FeatureStore.prototype = {
 		    self.core.localdbase().featuresdb(options.data);
 		    self.core.trigger('storeChanged');
 		    var message = JSON.stringify(newitem);//TODO, bit weird heh...?
-		    core.websocket().sendData(message, "newFeature");
+		    self.core.websocket().sendData(message, "newFeature");
 		}
 		else if (source == 'ws'){
 		    self.core.localdbase().featuresdb(options.data);
