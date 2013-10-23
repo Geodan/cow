@@ -155,14 +155,23 @@ $.Cow.Group = function(core, options) {
 
 /**
     $.Cow.Item object
-    This is used to share data around, it contains metadata; eg owner, lastchanged and permissions
+    This is used to share data around, it contains metadata; eg owner, _id, _rev and permissions
     and data: eg. a geojson for a feature
+    to initialise an Item object, give it at least an id, rev and type
 */
 $.Cow.Item = function(core, options) {
     var self=this;
-    this.core = core;
+    this.core = core;    
+    this._creator = core.UID;
+    this._timestamp = new Date().getTime();
+    this._changer = core.UID;
     this.options = options;
-    this.uid = options.uid;
+    this._id = options.id;
+    this._rev = options.rev;
+    this._type = options.type;
+    this._permissions = [];
+    this._data = {};
+    this._status;
 }
 
 /***
