@@ -347,7 +347,8 @@ $.Cow.Websocket.prototype = {
     },
     _onProjectInfo: function(payload,uid){
         var options = {};
-        options.uid = payload.uid;
+        if (payload.uid) options._id = payload.uid //COUCHDB temporary solution
+        else options._id = payload._id;
         options.name = payload.name;
         options.peeruid = uid;
         this.core.projects(options);

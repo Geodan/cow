@@ -57,7 +57,7 @@ $.Cow.Core = function(element, options) {
     }
     element.data('cow', this);
     //Standard project, always available
-    var startproject = this.projects({uid:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
+    var startproject = this.projects({_id:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
     //Standard public group, always available
     var startgroup = startproject.groups({uid:1, name: 'public', peeruid:this.UID});
     
@@ -159,7 +159,7 @@ $.Cow.Project = function(core, options) {
     var self = this;
     this.core = core;
     this.options = options;
-    this.uid = options.uid;
+    this._id = options._id;
     this.memberList = [];
     this.groupList = [];
 }
@@ -188,8 +188,8 @@ $.Cow.LocalDbase = function(core, options) {
     // Features in sketch are not loaded anymore after x secs
     this.options.expirytime = 1 * 12 * 60 * 60; //1/2 day
     //this.options.expirytime = 7 * 24 * 60 * 60; //1 week
-    var projects = self.projectsdb();//Projects are initialized from localdb
-    var features = self.featuresdb(); //features are initialized from localdb
+    //obs by COUCHDB self.projectsdb();//Projects are initialized from localdb
+    self.featuresdb(); //features are initialized from localdb
 }
 
 /*** 
@@ -379,6 +379,7 @@ When adding projects, those are returned.
             return this._getProjects();
         case 1:
             if (!$.isArray(options)) {
+                if (options.uid) options._id = options.uid;//POUCHDB translation
                 return this._addProject(options);
             }
             else {
@@ -402,7 +403,7 @@ When adding projects, those are returned.
         return this.projectList;
     },
     _addProject: function(options) {
-        if (!options.uid || !options.name){
+        if (!options._id || !options.name){
             throw('Missing project parameters '+JSON.stringify(options));
         }
         var project;        
@@ -414,7 +415,7 @@ When adding projects, those are returned.
         
         //check if project exists
         $.each(this.projectList, function(id, project) {
-                if (options.uid == project.uid) {
+                if (options._id == project._id) {
                     i = id;
                     existing = true;
                 }
@@ -424,6 +425,7 @@ When adding projects, those are returned.
              this.projectList[i].members(options.peeruid); //Update membership of project
             }
             this.localdbase().projectsdb(this.projectList[i]); //Write to db
+            
             project =this.projectList[i]; 
         }
         else { //Project is new
@@ -433,7 +435,11 @@ When adding projects, those are returned.
             if (options.peeruid)
                 project.members(options.peeruid);
             this.projectList.push(project); //Add project to list
-            this.localdbase().projectsdb(project); //Write to db
+            
+            //WORK IN PROGRESS POUCHDB
+            //this.localdbase().projectsdb(project); //Write to db
+            
+            this.projectstore().addRecord_UI(project.options);
         }
         this.trigger("projectListChanged", self.UID);
         return project;
@@ -443,7 +449,7 @@ When adding projects, those are returned.
         var projects = this.projects();
         var project;
         $.each(projects, function(){
-            if(this.uid == id) {            
+            if(this._id == id) {            
                 project = this;
             }            
         });
@@ -469,7 +475,7 @@ When adding projects, those are returned.
         var projectGone = id;
         var delProject;
         $.each(projects, function(i){
-            if(this.uid == projectGone) {            
+            if(this._id == projectGone) {            
                 this.active = false;
                 this.options.active = false; //needed for dbase
                 //Overwrite project in dbase with new status
@@ -688,9 +694,24 @@ A Peer is on object containing:
         case 1:
             this.projectStore = new $.Cow.Store(this, {dbname: 'project'});
             this.projectStore.init();
-            if (options.data){
+            var changes = this.projectStore._db.changes({
+              continuous: true,
+              include_docs: true,
+              onChange: function(change) {
+                  self.projects(change.doc);
+                  console.log('Projects changed',change);
+              }
+            });
+            if (options.data){//initial data (sketch project)
                 $.each(options.data, function(i,d){
-                    self.projectStore.addRecord_UI(d);
+                    self.projectStore.getRecord(d._id)
+                        .fail(function(d1){//Not found so adding
+                            self.projectStore.addRecord_UI(d);
+                        })
+                        .then(function(d){
+                            //Project already in dbase, skipping
+                        });
+                    
                 });
             }
             return this.projectStore;
