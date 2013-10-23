@@ -28,6 +28,9 @@ $.Cow.Core = function(element, options) {
     this._username = 'Anonymous';
     this.activeProject = 666; //Carefull, order matters! Make sure the activeProject is set before localdbase is initialized
     this.localDbase;
+    this.projectStore;
+    this.groupStore;
+    this.itemStore;
     this.geoLocator;
     this.featureStore;
     this.events = $({});
@@ -36,6 +39,15 @@ $.Cow.Core = function(element, options) {
     }
     if(this.options.featurestore!==undefined) {
         this.featurestore(this.options.featurestore);
+    }
+    if(this.options.projectstore!==undefined) {
+        this.projectstore(this.options.projectstore);
+    }
+    if(this.options.groupstore!==undefined) {
+        this.groupstore(this.options.groupstore);
+    }
+    if(this.options.itemstore!==undefined) {
+        this.itemstore(this.options.itemstore);
     }
     if(this.options.localdbase!==undefined) {
         this.localdbase(this.options.localdbase);
@@ -174,6 +186,18 @@ $.Cow.LocalDbase = function(core, options) {
     var projects = self.projectsdb();//Projects are initialized from localdb
     var features = self.featuresdb(); //features are initialized from localdb
 }
+
+/*** 
+$.Cow.Store object
+Pouchdb access
+***/
+
+$.Cow.Store = function(core, options){
+    var self = this;
+    this.core = core;
+    this.dbname = options.dbname;
+};
+
 /***
 $.Cow.FeatureStore
 ***/
@@ -647,6 +671,47 @@ A Peer is on object containing:
         var dbase = new $.Cow.LocalDbase(this, options);
         this.localDbase = dbase;
     },
+    
+    /***
+    POUCH DB stores
+    ****/
+    projectstore: function(options){
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this.projectStore;
+        case 1:
+            this.projectStore = new $.Cow.Store(this, {dbname: 'project'});
+            this.projectStore.init();
+            return this.projectStore;
+            break;
+        }
+    },
+    groupstore: function(options){
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this.groupStore;
+        case 1:
+            this.groupStore = new $.Cow.Store(this, {dbname: 'group_' + this.activeproject()});
+            this.groupStore.init();
+            return this.groupStore;
+            break;
+        }
+    },
+    itemstore: function(options){
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this.itemStore;
+        case 1:
+            this.itemStore = new $.Cow.Store(this, {dbname: 'item_' + this.activeproject()});
+            this.itemStore.init();
+            return this.itemStore;
+            break;
+        }
+    },
+    
      /***
     GEO LOCATOR
     ***/
@@ -777,7 +842,10 @@ $.fn.cow.defaults = {
             websocket: {url: 'wss://localhost:443'},
             featurestore: {},
             localdbase: {},
-            geolocator: {}
+            geolocator: {},
+            projectstore: {data:[{name:'sketch',id:'666'}]},
+            groupstore: {data:[{name:'public',id:'1'},{name:'admin',id:'2'}]},
+            itemstore: {}
         };
     }
 };
