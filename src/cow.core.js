@@ -69,6 +69,11 @@ $.Cow.Core = function(element, options) {
         self.activeproject(uid);
         self.options.storename = "store_"+uid; //TODO: the link between activeProject and storename can be better
         var features = self.localdbase().featuresdb();//Fill featurestore with what we have
+        
+        //POUCHDB
+        //var itemstore = self.itemstore();
+        //itemstore.init();
+        
     });    
 };
 /**
@@ -683,6 +688,11 @@ A Peer is on object containing:
         case 1:
             this.projectStore = new $.Cow.Store(this, {dbname: 'project'});
             this.projectStore.init();
+            if (options.data){
+                $.each(options.data, function(i,d){
+                    self.projectStore.addRecord_UI(d);
+                });
+            }
             return this.projectStore;
             break;
         }
@@ -843,8 +853,8 @@ $.fn.cow.defaults = {
             featurestore: {},
             localdbase: {},
             geolocator: {},
-            projectstore: {data:[{name:'sketch',id:'666'}]},
-            groupstore: {data:[{name:'public',id:'1'},{name:'admin',id:'2'}]},
+            projectstore: {data:[{name:'sketch',_id:'666'}]},
+            groupstore: {data:[{name:'public',_id:'1'},{name:'admin',_id:'2'}]},
             itemstore: {}
         };
     }
