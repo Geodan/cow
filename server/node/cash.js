@@ -69,11 +69,11 @@ wsServer.on('request', function(request) {
   connection.sendUTF('{"action":"connected","payload":{"cid":'+ci+'}}');
   
   /*
-   Once a connection is established messages can be recieved, these
+   Once a connection is established messages can be received, these
    need to be passed around to all other members.
-   A cow-client belongs to a herd, certain messages are only meant
-   for herd-members and cash should make sure that it knows which
-   cow is in which herd and pass the messages on to the correct members.
+   A cow-client belongs to a project, certain messages are only meant
+   for project-members and cash should make sure that it knows which
+   cow is in which project and pass the messages on to the correct members.
   */
   connection.on('message', function(message) {
     if (message.type === 'utf8'&& message.utf8Data !==undefined) {

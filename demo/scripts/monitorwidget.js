@@ -47,7 +47,7 @@ $.widget("cow.MonitorWidget", {
         core.bind("ws-newPeer",{widget: self},self._updateList);
         core.bind("ws-peerGone",{widget: self},self._onPeerGone);
         core.bind("peerStoreChanged",{widget: self},self._updateList);
-        core.bind("herdListChanged", {widget: self},self._updateList);        
+        core.bind("projectListChanged", {widget: self},self._updateList);        
         
 		element.html("<div id='nodemap'></div><div id='heartbeat'><svg></svg></div>");
 		//Init nodemap
@@ -131,8 +131,8 @@ $.widget("cow.MonitorWidget", {
 		self.nodemap.start();
 	    
 	},
-	_onHerdListChanged: function(evt, payload){
-	    console.log('herdlistchanged: ' + payload);
+	_onProjectListChanged: function(evt, payload){
+	    console.log('projectlistchanged: ' + payload);
 	},
 	_onDisConnect: function(evt) {
 		var self = evt.data.widget;
@@ -147,30 +147,30 @@ $.widget("cow.MonitorWidget", {
 	_updateList: function(evt){
 	    var self = evt.data.widget;
 	    var peers = self.core.peers();
-        var herds = [];
-        $.each(self.core.herds(),function(i) {
-            herds[i] = {};
-            herds[i].uid = this.uid;
-            herds[i].name = this.options.name;
-            herds[i].active = this.options.active;
-            herds[i].peers = this.members();
+        var projects = [];
+        $.each(self.core.projects(),function(i) {
+            projects[i] = {};
+            projects[i].uid = this.uid;
+            projects[i].name = this.options.name;
+            projects[i].active = this.options.active;
+            projects[i].peers = this.members();
         });
-        $.each(herds,function() {
-            var herd = this;
-            if (herd.active){
-                var herdnode = {
-                    id: "herd" + herd.uid, 
+        $.each(projects,function() {
+            var project = this;
+            if (project.active){
+                var projectnode = {
+                    id: "project" + project.uid, 
                     name: this.name, 
-                    type: 'herd'
+                    type: 'project'
                 };
-                self.nodemap.addNode(herdnode);
+                self.nodemap.addNode(projectnode);
                 $.each(this.peers, function(i){
-                   var peer = self.core.getPeerByUid(herd.peers[i]);
+                   var peer = self.core.getPeerByUid(project.peers[i]);
                    if (peer){
                        var node = {
                             id: "peer" + peer.uid, 
                             name: peer.owner().name,
-                            herd: "herd"  + herd.uid, 
+                            project: "project"  + project.uid, 
                             type: 'peer'
                        };
                        self.nodemap.addNode(node);

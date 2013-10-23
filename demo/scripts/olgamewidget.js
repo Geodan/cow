@@ -1,6 +1,6 @@
 //Game widget is an extent on OlMapWidget
 
-$.widget("cow.GameWidget", $.cow.LeaflMapWidget, {
+$.widget("cow.OlGameWidget", $.cow.LeaflMapWidget, {
     _create: function() {
         this._super( "_create" );
         var self = this;
@@ -93,13 +93,13 @@ $.widget("cow.GameWidget", $.cow.LeaflMapWidget, {
         feature.attributes.desc = desc;
         feature.attributes.owner = self.core.username();
         
-        //var jsonfeature = JSON.parse(geojson_format.write(feature));//TODO is this needed?
+        var jsonfeature = JSON.parse(geojson_format.write(feature));//TODO is this needed?
         if (core.activeproject() == feature.properties.store){
             //core.featurestore().updateLocalFeat(jsonfeature);
             var item = core.featurestore().getFeatureItemById(feature.properties.key);
             var d = new Date();
             var timestamp = d.getTime();
-            item.feature = feature;
+            item.feature = jsonfeature;
             item.updated = timestamp;
             core.featurestore().featureItems({data:item, source: 'user'});
         }

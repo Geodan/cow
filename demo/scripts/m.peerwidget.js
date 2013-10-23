@@ -24,7 +24,7 @@ $.widget("cow.PeersWidget", {
         this.ls;
         
         element.append('<div id="list"></div>');
-        element.append('<span><input type="text" id="newHerd" data-i18n="txt_addnewherd" value="' + (translator.translate('txt_addnewherd') || 'Add a new herd') + '" data-mini="true" size="25"><span data-i18n="txt_add" class="addHerd licht">' + (translator.translate('txt_add') || 'Add')+'</span></span>');
+        element.append('<span><input type="text" id="newProject" data-i18n="txt_addnewproject" value="' + (translator.translate('txt_addnewproject') || 'Add a new project') + '" data-mini="true" size="25"><span data-i18n="txt_add" class="addProject licht">' + (translator.translate('txt_add') || 'Add')+'</span></span>');
         element.append('<div id="peerjs"></div>');
         this.listdiv = element.find('#list');
         this.peerjsdiv = element.find('#peerjs');
@@ -37,13 +37,13 @@ $.widget("cow.PeersWidget", {
         */
         core = $(this.options.core).data('cow');
         this.core=core;
-        this.oldherds = [];
+        this.oldprojects = [];
         
         core.bind("ws-disconnected", {widget: self}, self._onPeerStoreChanged);
         core.bind("ws-peerInfo", {widget: self}, self._onPeerStoreChanged);
         core.bind("ws-peerGone", {widget: self}, self._onPeerStoreChanged);
         core.bind("peerStoreChanged" ,{widget: self}, self._onPeerStoreChanged);
-        core.bind("herdListChanged" ,{widget: self}, self._onPeerStoreChanged);
+        core.bind("projectListChanged" ,{widget: self}, self._onPeerStoreChanged);
         
         element.delegate('.location','click', function(){
             var owner = $(this).attr('owner');
@@ -60,35 +60,35 @@ $.widget("cow.PeersWidget", {
             self.core.center({view:bbox});
             toggleLeft();
         });
-        element.delegate('.removeherd','click', function(){
-            $(this).siblings('.removeherdconfirm').removeClass('verborgen');
+        element.delegate('.removeproject','click', function(){
+            $(this).siblings('.removeprojectconfirm').removeClass('verborgen');
         });
         element.delegate('.notremove','click', function(){
             $(this).parent().addClass('verborgen');
         });
-        element.delegate('#newHerd','click', function(){
-            $(this).addClass('newHerdActive');
+        element.delegate('#newProject','click', function(){
+            $(this).addClass('newProjectActive');
             var value = $(this).val();
-            if(value == "Add a new herd") $(this).val('');
-            $(this).siblings('.addHerd').removeClass('licht');
+            if(value == "Add a new project") $(this).val('');
+            $(this).siblings('.addProject').removeClass('licht');
         });
-        element.delegate('#newHerd','blur', function(){
-            $(this).removeClass('newHerdActive');
+        element.delegate('#newProject','blur', function(){
+            $(this).removeClass('newProjectActive');
             var value = $(this).val();
-            if(value == "") $(this).val('Add a new herd');
-            $(this).siblings('.addHerd').addClass('licht');
+            if(value == "") $(this).val('Add a new project');
+            $(this).siblings('.addProject').addClass('licht');
         });
         element.delegate('.yesremove','click', function(){
-            var herdID= $(this).parent().siblings('.herd').attr('herd');
-            self.core.removeHerd(herdID);
+            var projectID= $(this).parent().siblings('.project').attr('project');
+            self.core.removeProject(projectID);
             //$(this).parent().addClass('verborgen');
             
         });
-         element.delegate('.addHerd','click', function(){
+         element.delegate('.addProject','click', function(){
             var time = new Date().getTime();
-            var name = $('#newHerd').val();
-            self.core.herds({uid: time,name:name, peeruid: self.core.UID});
-            $('#newHerd').val('Add a new herd');
+            var name = $('#newProject').val();
+            self.core.projects({uid: time,name:name, peeruid: self.core.UID});
+            $('#newProject').val('Add a new project');
             //$(this).parent().addClass('verborgen');
             
         });
@@ -120,9 +120,9 @@ $.widget("cow.PeersWidget", {
             
          });*/
         
-        element.delegate('.herd','click', function(){
-            var herduid = $(this).attr('herd');
-            self.core.activeherd({activeHerdId:herduid});
+        element.delegate('.project','click', function(){
+            var projectuid = $(this).attr('project');
+            self.core.activeproject({activeProjectId:projectuid});
         });
         
     /*    this.peerjsdiv.delegate("#cameraOnOff",'click',function(){
@@ -185,34 +185,34 @@ $.widget("cow.PeersWidget", {
     
     _updateList: function(self) {        
         var peers = self.core.peers();
-        var herds = [];
-        $.each(self.core.herds(),function(i) {
-            herds[i] = {};
-            herds[i].uid = this.uid;
-            herds[i].name = this.options.name;
-            herds[i].active = this.options.active;
-            herds[i].peers = this.members();
+        var projects = [];
+        $.each(self.core.projects(),function(i) {
+            projects[i] = {};
+            projects[i].uid = this.uid;
+            projects[i].name = this.options.name;
+            projects[i].active = this.options.active;
+            projects[i].peers = this.members();
         });
 
         var element = self.element;
        
         if (true) {
         var names = '';
-        $.each(herds,function() {
-            var herd = this;
-            if (herd.active){
+        $.each(projects,function() {
+            var project = this;
+            if (project.active){
                 var remove = '';
                 if(this.uid != 0) {
-                    remove = ' <span class="removeherd" data-i18n="txt_remove" title="'+ (translator.translate('txt_removeherdfeats') || 'remove this herd and delete all features') + '">' + (translator.translate('txt_remove') || 'remove' ) + '</span><div data-18n="txt_yousure" class="removeherdconfirm verborgen">'+ (translator.translate('txt_yousure') || 'are you sure?') + '<span class="yesremove" data-i18n="txt_yes" title"' + (translator.translate('txt_herdwillberemoved') || 'this will remove the herd and all its features, not easily undone') + '">' + (translator.translate('txt_yes') || 'yes') + '</span><span class="notremove" data-i18n="txt_no" title="alrighty">' + (translator.translate('txt_no') || 'no') +'</span></div>';
+                    remove = ' <span class="removeproject" data-i18n="txt_remove" title="'+ (translator.translate('txt_removeprojectfeats') || 'remove this project and delete all features') + '">' + (translator.translate('txt_remove') || 'remove' ) + '</span><div data-18n="txt_yousure" class="removeprojectconfirm verborgen">'+ (translator.translate('txt_yousure') || 'are you sure?') + '<span class="yesremove" data-i18n="txt_yes" title"' + (translator.translate('txt_projectwillberemoved') || 'this will remove the project and all its features, not easily undone') + '">' + (translator.translate('txt_yes') || 'yes') + '</span><span class="notremove" data-i18n="txt_no" title="alrighty">' + (translator.translate('txt_no') || 'no') +'</span></div>';
                 }
-                if(this.uid==self.core.activeherd()) {
-                    names = names + '<div><span class="peerlist herd me" title="' + (translator.translate('txt_yourherd') ||  'this is your herd') + '" herd="'+this.uid+'">'+this.name+'</span></div>';
+                if(this.uid==self.core.activeproject()) {
+                    names = names + '<div><span class="peerlist project me" title="' + (translator.translate('txt_yourproject') ||  'this is your project') + '" project="'+this.uid+'">'+this.name+'</span></div>';
                 }
                 else {
-                    names = names + '<div><span class="peerlist herd" title="' + (translator.translate('txt_activateherd') || 'click to activate this herd' ) + '" herd="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
+                    names = names + '<div><span class="peerlist project" title="' + (translator.translate('txt_activateproject') || 'click to activate this project' ) + '" project="'+this.uid+'">'+this.name+'</span>'+remove+'</div>';
                 }
                 $.each(this.peers, function(i){
-                    var peer = self.core.getPeerByUid(herd.peers[i]);
+                    var peer = self.core.getPeerByUid(project.peers[i]);
                     if (peer){
                         if (peer.video().state === "on")
                             var videostring = '<img class="videoconnection" owner="'+peer.uid+'" src="./css/img/camera.png">';

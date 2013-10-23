@@ -83,7 +83,7 @@ function nodeMap(el) {
     
     var addLink = function(data){
         nodes.forEach(function(node){
-            if (node.id == data.herd){
+            if (node.id == data.project){
                 links.push({source: node, target: data});
             }
         });
@@ -94,9 +94,9 @@ function nodeMap(el) {
         nodes.forEach(function(node){
             if (node.id == data.id){
                 isnew = false;
-                //Check if herd has changed
-                if (node.herd != data.herd){
-                    node.herd = data.herd;
+                //Check if project has changed
+                if (node.project != data.project){
+                    node.project = data.project;
                     links.forEach(function(link,i){
                         if (link.target.id == data.id) links.splice(i,1);
                     });
@@ -105,7 +105,7 @@ function nodeMap(el) {
                 node.name = data.name;
             }
         });
-        if (isnew && data.type == 'herd'){
+        if (isnew && data.type == 'project'){
             nodes.push(data);
         }
         if (isnew && data.type == 'peer'){
