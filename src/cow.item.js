@@ -104,6 +104,20 @@ $.Cow.Item.prototype = {
             }
         }
     },
+    hasPermission: function(type) {
+        var user = this.core.UID;
+        //TODO: use the new function
+        var project = this.core.getProjectById(core.activeproject());
+        var groups  = project.groups();
+        var hasperm = false;
+        var permittedgroups = this.permissions(type);
+        $.each(permittedgroups[0].groups, function(key,value) {            
+            if((project.getGroupById(value) !== undefined) &&(project.getGroupById(value).hasMember(user))) {
+                hasperm = true;
+            }
+        });
+        return hasperm;
+    },
     /**
         function to remove a group from an permission type, or the entire type
         removePermission('type') removes the entire permission type from the item
