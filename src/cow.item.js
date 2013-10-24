@@ -53,6 +53,7 @@ $.Cow.Item.prototype = {
         return result;
     },
     _setPermission: function(type,groups) {
+        //SMO: trigger some update in the database?
         var self = this;
         var permission = this._permissionsByType(type);
         if(permission.length==0) {
@@ -162,23 +163,55 @@ $.Cow.Item.prototype = {
             throw('wrong argument number');
         }
     },
+    /**
+        function to get or set the data of an item
+        data is just a dumb datastore that can contain anything
+    */
     data: function(options) {
-    
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return self._data;
+        case 1:
+            return self._data = options;
+            break;
+        default:
+            throw('wrong argument number');
+        }
     },
-    status: function(options) {
-    
+    /**
+        function to get or set the status of an item
+        it takes just a string as value
+    */
+    status: function(value) {
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return self._status;
+        case 1:            
+            if(typeof value === "string") {
+                //SMO: trigger something?
+                return self._status = value;
+            }
+            else throw('value should be a string');
+            break;
+        default:
+            throw('wrong argument number');
+        }
     },
+    /** return the item id
+    */
     id: function() {
-    
+        return this._id;
     },
     revision: function() {
-    
+        return this._rev;
     },
     creator: function() {
-    
+        return this._creator;
     },
     timestamp: function() {
-    
+        return this._timestamp;
     },
     changeOwner: function() {
     
