@@ -30,7 +30,7 @@ $.widget("cow.FeaturesWidget", {
 		 
 		element.delegate('.owner','click', function(){
 			var key = $(this).attr('owner');
-			self.core.featurestore().removeFeatureItem(key);
+			self.core.itemstore().removeItem(key);
 			self.core.trigger('storeChanged');
 			//controls.select.activate();
 			//TODO TT: auw, we moeten een fid proberen toe te kennen
@@ -49,18 +49,19 @@ $.widget("cow.FeaturesWidget", {
 		var self = evt.data.widget;
 		self._updateList(evt);
 	},
-	_onNewFeature: function(evt) {
+	_onNewItem: function(evt) {
 		//console.log('_onNewFeature');
 		var self = evt.data.widget;
 		self._updateList(evt);
 	},
 	_updateList: function(evt) {		
 		var self = evt.data.widget;
-		var features = core.featurestore().featureItems();		//TT: we only use 1 store anyway... 
+        //TODO: items()
+		var items = core.itemstore().items();		//TT: we only use 1 store anyway... 
         var element = self.element;
 		var names = '';
 		
-		$.each(features,function(){
+		$.each(items,function(){
 				var item = this.options;
 				names = names+ '<span owner="'+item.key+'" class="peerlist owner '+ item.status +'" title="'
 					+ ' key:  '+item.key

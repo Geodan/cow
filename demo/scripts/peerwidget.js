@@ -386,7 +386,6 @@ $.widget("cow.PeersWidget", {
                 else {
                     names = names + '<div><span class="peerlist project" title="' + translator.translate('txt_activateproject') + '" project="'+this._id+'">'+this.name+'</span>'+remove+'</div>';
                 }
-                
                 $.each(this.peers, function(i){
                     var peer = self.core.getPeerByUid(project.peers[i]);
                     if (peer){

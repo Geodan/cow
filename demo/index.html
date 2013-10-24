@@ -10,10 +10,11 @@
 <!--  <link href='http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css' rel='stylesheet' type='text/css'>
 -->  <link href='http://fonts.googleapis.com/css?family=Dosis:300,500' rel='stylesheet' type='text/css'>
 
-  <script src="../lib/jquery-1.9.1/jquery.min.js" type="text/javascript"></script>	
+  <script src="../lib/jquery-2.0.3/jquery-2.0.3.js" type="text/javascript"></script>	
   <script src="../lib/jquery-ui-1.10.2/jquery-ui.js" type="text/javascript"></script>  
   <script src="../lib/jquery.indexeddb/jquery.indexeddb.min.js" type="text/javascript"></script>
   
+  <!-- PouchDB -->
   <script src="http://download.pouchdb.com/pouchdb-nightly.js"></script>
 <!--  
   <script src="http://openlayers.org/api/OpenLayers.js" type="text/javascript"></script>    
@@ -25,7 +26,7 @@
   <link rel="stylesheet" href="../lib/leaflet_draw/leaflet.draw.css" />
   <link rel="stylesheet" href="../lib/leaflet_label/leaflet.label.css" />
 
-  <script src="http://square.github.io/crossfilter/crossfilter.v1.min.js"></script>
+
   <script src="../lib/d3/d3.v3.min.js" charset="utf-8"></script>
   <script src="../lib/d3/topojson.v1.min.js"></script>
 
@@ -52,7 +53,8 @@
   <script src="../src/cow.peer.js" type="text/javascript"></script>
   <script src="../src/cow.group.js" type="text/javascript"></script>
   <script src="../src/cow.project.js" type="text/javascript"></script>
-  <script src="../src/cow.featurestore.js" type="text/javascript"></script>
+  <script src="../src/cow.item.js" type="text/javascript"></script>
+  <script src="../src/cow.items.js" type="text/javascript"></script>
   <script src="../src/cow.localdbase.js" type="text/javascript"></script>
   <script src="../src/cow.geolocator.js" type="text/javascript"></script>
   <script src="../src/cow.store.js" type="text/javascript"></script>
@@ -124,7 +126,7 @@ translator.loadBundles({
 $(document).ready(function(){
   
   $('#cow').cow({
-    websocket: {url: 'wss://websocket.geodan.nl:443/'}
+    websocket: {url: 'wss://websocket.geodan.nl:443/item'}
     //websocket: {url: 'wss://websocket.geodan.nl:443/geofort'}
   });
   

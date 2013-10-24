@@ -26,12 +26,13 @@ $.Cow.Group.prototype = {
     _addMember: function(peerid){
         var existing = false;
         for (var i=0;i<this.memberList.length;i++){
-            if (this.memberList[i] == peerid) {
+            if (this.memberList[i].id == peerid) {
                 existing = true; //Already a member
                 return peerid;
             }
         }
         if (!existing){
+
             this.memberList.push(peerid); //Adding to the list
             //self.core.trigger('projectListChanged', this.core.UID);
         }
@@ -39,6 +40,7 @@ $.Cow.Group.prototype = {
     },
     removeMember: function(peerid){
         for (var i=0;i<this.memberList.length;i++){
+
             if (this.memberList[i] == peerid) {
                 this.memberList.splice(i,1); //Remove from list
                 //self.core.trigger('projectListChanged', this.core.UID);
@@ -78,7 +80,7 @@ $.Cow.Group.prototype = {
     _addGroup: function(groupid){
         var existing = false;
         for (var i=0;i<this.groupList.length;i++){
-            if (this.groupList[i] == groupid) {
+            if (this.groupList[i].id == groupid) {
                 existing = true; //Already a member
                 return groupid;
             }
@@ -107,14 +109,15 @@ $.Cow.Group.prototype = {
         //See if member is in this group
         var hasmember = false;
         for (var i=0;i<this.memberList.length;i++){
-            if (this.memberList[i] == peerid) {
+            //if (this.memberList[i].id == peerid && this.memberList[i].status != 'deleted') {
+            if (this.memberList[i] == peerid)
                 hasmember = true;
-            }
+            
         }
         //See if member is in other group that inherits this group
         var groupsChecked = [this.uid];
         for (var i=0;i<this.groupList.length;i++){
-            var groupId = groupList[i].uid;
+            var groupId = groupList[i].id;
             if (groupsChecked.indexOf(groupId) < 0){// avoid looping
                 groupsChecked.push(groupId);
                 var group = this.core.getProjectById(this.core.activeproject()).getGroupById(groupId);

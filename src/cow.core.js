@@ -29,26 +29,26 @@ $.Cow.Core = function(element, options) {
     this.project; //This will become the active project object
     this.activeProject = 666; //Carefull, order matters! Make sure the activeProject is set before localdbase is initialized
     this.localDbase;
-    this.projectStore;
-    this.groupStore;
-    this.itemStore;
+    this.projectsDb;
+    this.groupsDb;
+    this.itemsDb;
     this.geoLocator;
-    this.featureStore;
+    this.items;
     this.events = $({});
     if(this.options.websocket!==undefined) {
         this.websocket(this.options.websocket);
     }
-    if(this.options.featurestore!==undefined) {
-        this.featurestore(this.options.featurestore);
-    }
-    if(this.options.projectstore!==undefined) {
-        this.projectstore(this.options.projectstore);
-    }
-    if(this.options.groupstore!==undefined) {
-        this.groupstore(this.options.groupstore);
-    }
     if(this.options.itemstore!==undefined) {
         this.itemstore(this.options.itemstore);
+    }
+    if(this.options.projectsdb!==undefined) {
+        this.projectsdb(this.options.projectsdb);
+    }
+    if(this.options.groupsdb!==undefined) {
+        this.groupsdb(this.options.groupsdb);
+    }
+    if(this.options.itemsdb!==undefined) {
+        this.itemsdb(this.options.itemsdb);
     }
     if(this.options.localdbase!==undefined) {
         this.localdbase(this.options.localdbase);
@@ -56,34 +56,28 @@ $.Cow.Core = function(element, options) {
     if(this.options.geolocator!==undefined) {
         this.geolocator(this.options.geolocator);
     }
+    
     element.data('cow', this);
     //Standard project, always available
     var startproject = this.projects({_id:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
     //Standard public group, always available
     var startgroup = startproject.groups({_id:1, name: 'public', peeruid:this.UID});
     
-    
     //Loading existing projects from dbase
-    if (this.projectstore){
-        this.projectstore().getRecords().done(function(d){
+    if (this.projectsdb){
+        this.projectsdb().getRecords().done(function(d){
            self.loadProjectsFromDb(d);
         });
     }
-    
     
     self.bind("disconnected", {widget: self}, self.removeAllPeers);
     
     //TODO: put this in a proper function
     self.bind('changeProjectRequest', {widget:self}, function(e,uid){
-        self.featurestore().removeAllFeatureItems(); //Clear featurestore
+        self.itemstore().removeAllItems(); //Clear itemstore
         self.activeproject(uid);
         self.options.storename = "store_"+uid; //TODO: the link between activeProject and storename can be better
-        var features = self.localdbase().featuresdb();//Fill featurestore with what we have
-        
-        //POUCHDB
-        //var itemstore = self.itemstore();
-        //itemstore.init();
-        
+        var items = self.localdbase().itemsdb();//Fill itemstore with what we have
     });    
 };
 /**
@@ -158,6 +152,7 @@ $.Cow.Peer = function(core, options) {
         simple: function(data) {
             this.trigger(data.type);
         },
+        //TT: What does this do?
         includeFeature: function(data) {
             var feature = data.feature;
             this.trigger(data.type, [feature]);
@@ -184,10 +179,31 @@ $.Cow.Group = function(core, options) {
     this.groupList = [];
 }
 
+/**
+    $.Cow.Item object
+    This is used to share data around, it contains metadata; eg owner, _id, _rev and permissions
+    and data: eg. a geojson for a feature
+    to initialise an Item object, give it at least an id, rev and type
+*/
+$.Cow.Item = function(core, options) {
+    var self=this;
+    this.core = core;    
+    this._creator = core.UID;
+    this._timestamp = new Date().getTime();
+    this._changer = core.UID;
+    this.options = options;
+    this._id = options.id;
+    this._rev = options.rev;
+    this._type = options.type;
+    this._permissions = [];
+    this._data = {};
+    this._status;
+}
+
 /***
 $.Cow.LocalDbase object
 Accessed from the core the localbase.
-On creation it also populates the featurestore.
+On creation it also populates the itemstore.
 ***/
 $.Cow.LocalDbase = function(core, options) {
     var self = this;
@@ -195,11 +211,11 @@ $.Cow.LocalDbase = function(core, options) {
     this.core = core;
     this.options = options;
     this.options.dbname = "cow";
-    // Features in sketch are not loaded anymore after x secs
+    // items in sketch are not loaded anymore after x secs
     this.options.expirytime = 1 * 12 * 60 * 60; //1/2 day
     //this.options.expirytime = 7 * 24 * 60 * 60; //1 week
-    //obs by COUCHDB self.projectsdb();//Projects are initialized from localdb
-    self.featuresdb(); //features are initialized from localdb
+    //var projects = self.projectsdb();//Projects are initialized from localdb
+    var items = self.itemsdb(); //features are initialized from localdb
 }
 
 /*** 
@@ -213,10 +229,11 @@ $.Cow.Store = function(core, options){
     this.dbname = options.dbname;
 };
 
+
 /***
-$.Cow.FeatureStore
+$.Cow.ItemStore
 ***/
-$.Cow.FeatureStore = function(core, options) {
+$.Cow.ItemStore = function(core, options) {
     var self = this;
     this.loaded = false;
     this.core = core;
@@ -225,10 +242,11 @@ $.Cow.FeatureStore = function(core, options) {
     this.uid = this.core.UID;
     this.itemList = [];
     //this.name = this.options.name || "store1";
-    
     //Obs: this.core.bind('sketchcomplete', {widget: self}, self._onSketchComplete);
     //Obs: this.core.bind('afterfeaturemodified', {widget: self}, self._onFeatureModified);
 }
+
+
 
 /***
 $.Cow.GeoLocator
@@ -282,13 +300,13 @@ $.Cow.Core.prototype = {
         case 0:
             return this.activeProject;
         case 1:
-            //The activeproject will change. Set all the datastores accordingly
+             //The activeproject will change. Set all the datastores accordingly
             if (!$.isArray(options)) {
                this.activeProject = options.activeProjectId;
                
                //POUCHDB: set groupdbase and itemdbase
-               this.groupstore({projectid: this.activeProject});
-               this.itemstore({projectid: this.activeProject});
+               this.groupsdb({projectid: this.activeProject});
+               this.itemsdb({projectid: this.activeProject});
                
                var prevproject = this.getProjectByPeerUid(this.UID);
                if (prevproject) //no prevproject on first logon
@@ -298,22 +316,20 @@ $.Cow.Core.prototype = {
                
                var publicgroup =  this.project.groups({_id:1,name: 'public'});//Add public group to project
                publicgroup.members(this.UID);//Make me member of public
-               if (this.groupstore){ //add defaults to DB
-                   this.groupstore().bulkLoad_UI(this.project.getGroupsData());//Add public to be sure
+               if (this.groupsdb){ //add defaults to DB
+                   this.groupsdb().bulkLoad_UI(this.project.getGroupsData());//Add public to be sure
                }
                
                //Add groups from POUCHDB (including default we just added)
-               this.groupstore().getRecords().done(function(d){
+               this.groupsdb().getRecords().done(function(d){
                        self.project.loadGroupsFromDb(d);
                });
                
-               this.featurestore().removeAllFeatureItems(); //Clear featurestore
+               this.itemstore().removeAllItems(); //Clear featurestore
                //TODO: change to POUCHDB
-               this.localdbase().featuresdb();//Fill featurestore with what we have
-               var message = this.project.options;
-               message.groups = this.project.getGroupsData();
-               this.ws.sendData(message, 'projectInfo');
-               //this.trigger("projectListChanged", this.UID);
+               this.localdbase().itemsdb();//Fill featurestore with what we have
+               this.ws.sendData(this.project.options, 'projectInfo');
+               this.trigger("projectListChanged", this.UID);
                return this.activeProject;
             }
             else {
@@ -452,32 +468,31 @@ When adding projects, those are returned.
                     existing = true;
                 }
         });
-        if (existing){ //Project exists, only change params
+        if (existing){//Project exists, only change params
             if (options.peeruid){
              this.projectList[i].members(options.peeruid); //Update membership of project
             }
-            //this.projectstore().updateRecord_UI(options); //Not needed, we don't want to remember members
             project =this.projectList[i]; 
         }
-        else { //Project is new, create it
+        else {  //Project is new, create it
             if (options.active == null) //could be inactive from localdb
                 options.active = true;
             project = new $.Cow.Project(this, options);
-
             if (options.peeruid){
-                project.members(options.peeruid); //Add me to project
+                project.members(options.peeruid);
             }
             this.projectList.push(project); //Add project to list
             if (options.peeruid && options.peeruid == this.UID){
                 this.activeproject({activeProjectId:project._id}); //Immediately set this my active project as well
             }
-            if (this.projectstore) //Add project to DB
-                this.projectstore().addRecord_UI(project.options);
+            if (this.projectsdb){ //Add project to DB
+                this.projectsdb().addRecord_UI(project.options);
+            }
         }
         this.trigger("projectListChanged", self.UID);
         return project;
     },
-    loadProjectsFromDb: function(d){
+     loadProjectsFromDb: function(d){
         var self = this;
         $.each(d.rows, function(i,d){
             self.projects(d.doc);
@@ -517,8 +532,7 @@ When adding projects, those are returned.
                 this.active = false;
                 this.options.active = false; //needed for dbase
                 //Overwrite project in dbase with new status
-                //self.core.localdbase().projectsdb(this);
-                self.core.projectstore().updateRecord_UI(this);
+                self.core.projectsdb().updateRecord_UI(this);
                 
                 self.core.trigger("projectListChanged", self.UID);
             }            
@@ -725,49 +739,17 @@ A Peer is on object containing:
     /***
     POUCH DB stores
     ****/
-    projectstore: function(options){
+    
+    groupsdb: function(options){
         var self = this;
         switch(arguments.length) {
         case 0:
-            return this.projectStore;
+            return this.groupsDb;
         case 1:
-            this.projectStore = new $.Cow.Store(this, {dbname: 'project'});
-            this.projectStore.init();
-
-            var changes = this.projectStore._db.changes({
-              continuous: true,
-              include_docs: true,
-              onChange: function(change) {
-                  /* This would create a loop */
-                  //self.projects(change.doc);
-                  console.log('DB: Projects changed',change);
-              }
-            });
-            if (options.data){//initial data (sketch project)
-                $.each(options.data, function(i,d){
-                    self.projectStore.getRecord(d._id)
-                        .fail(function(d1){//Not found so adding
-                            self.projectStore.addRecord_UI(d);
-                        })
-                        .then(function(d){
-                            //Project already in dbase, skipping
-                        });
-                });
-            }
-            return this.projectStore;
-            break;
-        }
-    },
-    groupstore: function(options){
-        var self = this;
-        switch(arguments.length) {
-        case 0:
-            return this.groupStore;
-        case 1:
-            this.groupStore = new $.Cow.Store(this, {dbname: 'group_' + options.projectid});
-            this.groupStore.init();
+            this.groupsDb = new $.Cow.Store(this, {dbname: 'group_' + options.projectid});
+            this.groupsDb.init();
             
-            var changes = this.groupStore._db.changes({
+            var changes = this.groupsDb._db.changes({
               continuous: true,
               include_docs: true,
               onChange: function(change) {
@@ -778,9 +760,9 @@ A Peer is on object containing:
             });
             if (options.data){//initial data (sketch project)
                 $.each(options.data, function(i,d){
-                    self.groupStore.getRecord(d._id)
+                    self.groupsDb.getRecord(d._id)
                         .fail(function(d1){//Not found so adding
-                            self.groupStore.addRecord_UI(d);
+                            self.groupsDb.addRecord_UI(d);
                         })
                         .then(function(d){
                             //Group already in dbase, skipping
@@ -788,22 +770,56 @@ A Peer is on object containing:
                     
                 });
             }
-            return this.groupStore;
+            return this.groupsDb;
             break;
         }
     },
-    itemstore: function(options){
+    projectsdb: function(options){
         var self = this;
         switch(arguments.length) {
         case 0:
-            return this.itemStore;
+            return this.projectsDb;
         case 1:
-            this.itemStore = new $.Cow.Store(this, {dbname: 'item_' + options.projectid});
-            this.itemStore.init();
-            return this.itemStore;
+            this.projectsDb = new $.Cow.Store(this, {dbname: 'project'});
+            this.projectsDb.init();
+
+            var changes = this.projectsDb._db.changes({
+              continuous: true,
+              include_docs: true,
+              onChange: function(change) {
+                  /* This would create a loop */
+                  //self.projects(change.doc);
+                  console.log('DB: Projects changed',change);
+              }
+            });
+            if (options.data){//initial data (sketch project)
+                $.each(options.data, function(i,d){
+                    self.projectsDb.getRecord(d._id)
+                        .fail(function(d1){//Not found so adding
+                            self.projectsDb.addRecord_UI(d);
+                        })
+                        .then(function(d){
+                            //Project already in dbase, skipping
+                        });
+                });
+            }
+            return this.projectsDb;
             break;
         }
     },
+    itemsdb: function(options){
+        var self = this;
+        switch(arguments.length) {
+        case 0:
+            return this.itemsDb;
+        case 1:
+            this.itemsDb = new $.Cow.Store(this, {dbname: 'item_' + options.projectid});
+            this.itemsDb.init();
+            return this.itemsDb;
+            break;
+        }
+    },
+    
     
      /***
     GEO LOCATOR
@@ -833,32 +849,32 @@ A Peer is on object containing:
         this.geoLocator = locator;
     },
     /***
-    FEATURE STORES
+    ITEM STORES
     ***/
-    featurestore: function(options){
+    itemstore: function(options){
         var self = this;
         switch(arguments.length) {
         case 0:
-            return this._getFeaturestore();
+            return this._getItemstore();
         case 1:
             if (!$.isArray(options)) {
-                return this._addFeaturestore(options);
+                return this._addItemstore(options);
             }
             else {
-                throw('only one featstore allowed');
+                throw('only one itemstore allowed');
             }
             break;
         default:
             throw('wrong argument number');
         }
     },
-    _getFeaturestore: function(){
-        return this.featureStore;
+    _getItemstore: function(){
+        return this.itemStore;
     },
-    _addFeaturestore: function(options){
-        var featureStore = new $.Cow.FeatureStore(this, options);        
-        this.featureStore = featureStore;
-        return featureStore;
+    _addItemstore: function(options){
+        var itemStore = new $.Cow.ItemStore(this, options);        
+        this.itemStore = itemStore;
+        return itemStore;
     },
     
     
@@ -933,12 +949,12 @@ $.fn.cow.defaults = {
     core: function() {
         return {
             websocket: {url: 'wss://localhost:443'},
-            featurestore: {},
+            itemstore: {},
             localdbase: {},
             geolocator: {},
-            projectstore: {},
-            groupstore: {},
-            itemstore: {}
+            groupsdb: {},
+            projectsdb: {},
+            itemsdb: {}
         };
     }
 };

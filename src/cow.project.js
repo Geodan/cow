@@ -56,7 +56,6 @@ $.Cow.Project.prototype = {
         return this.groupList;
     },
     _addGroup: function(options){
-        var self = this;
         if (!options._id || !options.name){
             throw('Missing group parameters '+JSON.stringify(options));
         }
@@ -68,17 +67,17 @@ $.Cow.Project.prototype = {
                     existing = true;
                 }
         });
-        
         if (existing == true){
             if (options.name){
              this.groupList[i].name = options.name; //Update name of group
              group = this.groupList[i];
             }
         }
-        if (existing ==false){
+        if (existing == false){
             group = new $.Cow.Group(this, options);
-            if (options.peeruid)
+            if (options.peeruid){
                 group.members(options.peeruid);
+            }
             this.groupList.push(group); //Adding to the list
         }
         //TODO: probably need trigger here
@@ -119,10 +118,12 @@ $.Cow.Project.prototype = {
         }
         return;
     },
+    
     //Get the plain groupsdata without the functions (needed to transfer data)
     getGroupsData: function(){
         var groups = [];
         $.each(this.groupList,function(i,d){
+            
             var group = {
                 _id: d._id.toString(),
                 name: d.name,
@@ -133,7 +134,6 @@ $.Cow.Project.prototype = {
         });
         return groups;
     },
-    
     bind: function(types, data, fn) {
         var self = this;
 

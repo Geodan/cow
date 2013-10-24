@@ -79,8 +79,14 @@ $.Cow.Herd.prototype = {
                 group.members(options.peeruid);
             this.groupList.push(group); //Adding to the list
         }
-        //TODO: probably need trigger here
+        
         this.core.localdbase().groupsdb(group);
+        
+        //WORK IN PROGRESS: POUCHDB
+        //group.project = this.uid;
+        //var record = {data:group};
+        //var result = this.core.groupstore().addRecord_UI(record);
+        
         return group;
     },
     removeGroup: function(uid){
