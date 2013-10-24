@@ -346,6 +346,7 @@ $.widget("cow.PeersWidget", {
             projects[i].name = this.options.name;
             projects[i].active = this.options.active;
             projects[i].peers = this.members();
+            projects[i].groups = this.groups();
         });
 
         var element = self.element;
@@ -355,6 +356,11 @@ $.widget("cow.PeersWidget", {
         $.each(projects,function() {
             var project = this;
             if (project.active){
+                var groups = "" ;
+                $.each(project.groups, function(i,d){
+                    groups = groups + d.name+ ", ";
+                })
+                
                 var remove = '';
                 if(this._id != 0) {
                     remove = ' <span class="removeproject" title="' + translator.translate('txt_projectwillberemoved') + '">' + translator.translate('txt_remove') + '</span><div class="removeprojectconfirm verborgen">' + translator.translate('txt_yousure') + '<span class="yesremove" title"' + translator.translate('txt_projectwillberemoved') + '">"' + translator.translate('txt_yes')+'</span><span class="notremove" title="alrighty">"' + translator.translate('txt_no') + '</span></div>';
@@ -365,6 +371,7 @@ $.widget("cow.PeersWidget", {
                 else {
                     names = names + '<div><span class="peerlist project" title="' + translator.translate('txt_activateproject') + '" project="'+this._id+'">'+this.name+'</span>'+remove+'</div>';
                 }
+                names = names + '<div><small>'+groups+'</small></div>';
                 $.each(this.peers, function(i){
                     var peer = self.core.getPeerByUid(project.peers[i]);
                     if (peer){

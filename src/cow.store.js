@@ -111,5 +111,18 @@ $.Cow.Store.prototype = {
             }
         });
         return deferred.promise();
+    },
+    bulkLoad_UI: function(d){
+        var deferred = jQuery.Deferred();
+        this._db.bulkDocs({docs:d},function(err,doc){
+            if (err) {
+                console.warn('Dbase error: ' , err);
+                deferred.reject(err);
+            }
+            else {
+                deferred.resolve(doc);
+            }
+        });
+        return deferred.promise();
     }
 };

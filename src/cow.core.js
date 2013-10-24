@@ -62,12 +62,14 @@ $.Cow.Core = function(element, options) {
     //Standard public group, always available
     var startgroup = startproject.groups({_id:1, name: 'public', peeruid:this.UID});
     
+    
     //Loading existing projects from dbase
     if (this.projectstore){
         this.projectstore().getRecords().done(function(d){
            self.loadProjectsFromDb(d);
         });
     }
+    
     
     self.bind("disconnected", {widget: self}, self.removeAllPeers);
     
@@ -284,19 +286,25 @@ $.Cow.Core.prototype = {
             if (!$.isArray(options)) {
                this.activeProject = options.activeProjectId;
                
-               //POUCHDB: update groupdbase and itemdbase
+               //POUCHDB: set groupdbase and itemdbase
                this.groupstore({projectid: this.activeProject});
                this.itemstore({projectid: this.activeProject});
                
-               
                var prevproject = this.getProjectByPeerUid(this.UID);
-               prevproject.removeMember(this.UID);
+               if (prevproject) //no prevproject on first logon
+                   prevproject.removeMember(this.UID);
                this.project = this.getProjectById(options.activeProjectId);
                this.project.members(this.UID);
-               //Add groups from POUCHDB
+               
+               var publicgroup =  this.project.groups({_id:1,name: 'public'});//Add public group to project
+               publicgroup.members(this.UID);//Make me member of public
+               if (this.groupstore){ //add defaults to DB
+                   this.groupstore().bulkLoad_UI(this.project.getGroupsData());//Add public to be sure
+               }
+               
+               //Add groups from POUCHDB (including default we just added)
                this.groupstore().getRecords().done(function(d){
                        self.project.loadGroupsFromDb(d);
-                       console.log("Adding group: ",d);//DEBUG
                });
                
                this.featurestore().removeAllFeatureItems(); //Clear featurestore
@@ -442,26 +450,27 @@ When adding projects, those are returned.
                     existing = true;
                 }
         });
-        if (existing){
+        if (existing){ //Project exists, only change params
             if (options.peeruid){
              this.projectList[i].members(options.peeruid); //Update membership of project
             }
-            //this.localdbase().projectsdb(this.projectList[i]); //Write to db
-            this.projectstore().updateRecord_UI(options);
+            //this.projectstore().updateRecord_UI(options); //Not needed, we don't want to remember members
             project =this.projectList[i]; 
         }
-        else { //Project is new
+        else { //Project is new, create it
             if (options.active == null) //could be inactive from localdb
                 options.active = true;
             project = new $.Cow.Project(this, options);
-            if (options.peeruid)
-                project.members(options.peeruid);
+
+            if (options.peeruid){
+                project.members(options.peeruid); //Add me to project
+            }
             this.projectList.push(project); //Add project to list
-            
-            //WORK IN PROGRESS POUCHDB
-            //this.localdbase().projectsdb(project); //Write to db
-            
-            this.projectstore().addRecord_UI(project.options);
+            if (options.peeruid && options.peeruid == this.UID){
+                this.activeproject({activeProjectId:project._id}); //Immediately set this my active project as well
+            }
+            if (this.projectstore) //Add project to DB
+                this.projectstore().addRecord_UI(project.options);
         }
         this.trigger("projectListChanged", self.UID);
         return project;
@@ -741,7 +750,6 @@ A Peer is on object containing:
                         .then(function(d){
                             //Project already in dbase, skipping
                         });
-                    
                 });
             }
             return this.projectStore;

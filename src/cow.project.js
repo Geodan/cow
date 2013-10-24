@@ -115,7 +115,7 @@ $.Cow.Project.prototype = {
         var groups = [];
         $.each(this.groupList,function(i,d){
             var group = {
-                _id: d._id,
+                _id: d._id.toString(),
                 name: d.name,
                 members: d.members(),
                 groups: d.groups()
