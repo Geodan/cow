@@ -6,7 +6,15 @@ $.Cow.Group.prototype = {
                 return this._getMembers();
                 break;
             case 1:
-                return this._addMember(peerid);
+                if (!$.isArray(peerid)) {
+                    return this._addMember(peerid);
+                }
+                else {
+                   $.each(peerid, function(i,d){
+                           self._addMember(d);
+                   });
+                   return this._getMembers();
+                }
                 break;
             default:
                 throw('wrong argument number');
@@ -23,14 +31,17 @@ $.Cow.Group.prototype = {
                 return peerid;
             }
         }
-        if (!existing)
+        if (!existing){
             this.memberList.push(peerid); //Adding to the list
+            //self.core.trigger('projectListChanged', this.core.UID);
+        }
         return peerid;
     },
     removeMember: function(peerid){
         for (var i=0;i<this.memberList.length;i++){
             if (this.memberList[i] == peerid) {
                 this.memberList.splice(i,1); //Remove from list
+                //self.core.trigger('projectListChanged', this.core.UID);
                 return;
             }
         }
@@ -47,7 +58,15 @@ $.Cow.Group.prototype = {
                 return this._getGroups();
                 break;
             case 1:
-                return this._addGroup(groupid);
+                if (!$.isArray(groupid)) {
+                    return this._addGroup(groupid);
+                }
+                else {
+                   $.each(groupid, function(i,d){
+                     self._addGroup(d);
+                   });
+                   return this._getGroups();
+                }
                 break;
             default:
                 throw('wrong argument number');
@@ -64,20 +83,24 @@ $.Cow.Group.prototype = {
                 return groupid;
             }
         }
-        if (!existing)
+        if (!existing){
             this.groupList.push(groupid); //Adding to the list
+            //self.core.trigger('projectListChanged', this.core.UID);
+        }
         return groupid;
     },
     removeGroup: function(groupid){
         for (var i=0;i<this.groupList.length;i++){
             if (this.groupList[i] == groupid) {
                 this.groupList.splice(i,1); //Remove from list
+                //self.core.trigger('projectListChanged', this.core.UID);
                 return;
             }
         }
     },
     removeAllGroups: function(){
         this.groupList = [];
+        //self.core.trigger('projectListChanged', this.core.UID);
     },
     //Find out if a peer is in a group
     hasMember: function(peerid){

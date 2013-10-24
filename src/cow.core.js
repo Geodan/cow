@@ -310,8 +310,10 @@ $.Cow.Core.prototype = {
                this.featurestore().removeAllFeatureItems(); //Clear featurestore
                //TODO: change to POUCHDB
                this.localdbase().featuresdb();//Fill featurestore with what we have
-               this.ws.sendData(this.project.options, 'projectInfo');
-               this.trigger("projectListChanged", this.UID);
+               var message = this.project.options;
+               message.groups = this.project.getGroupsData();
+               this.ws.sendData(message, 'projectInfo');
+               //this.trigger("projectListChanged", this.UID);
                return this.activeProject;
             }
             else {

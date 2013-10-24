@@ -154,6 +154,17 @@ $.widget("cow.PeersWidget", {
             self.core.activeproject({activeProjectId:projectuid});
         });
         
+        element.delegate('.group','click', function(){
+            var group_id = $(this).attr('group');
+            var group = self.core.project.getGroupById(group_id);
+            if ($(this).hasClass('me')){
+                group.removeMember(self.core.UID);
+            }
+            else{
+                group.members(self.core.UID);
+            }
+        });
+        
         this.peerjsdiv.delegate("#cameraOnOff",'click',function(){
             if (this.checked){
                 var bigvid = $('body').append('<div id="bigvideo"></div>');

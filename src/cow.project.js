@@ -95,6 +95,15 @@ $.Cow.Project.prototype = {
     removeAllGroups: function(){
         this.groupList = [];
     },
+    myGroups: function(){
+        var mygroups = [];
+        $.each(this.groups(),function(i,d){
+            if (d.hasMember(self.core.UID) == true){
+                mygroups.push(d._id);
+            }
+        });
+        return mygroups;
+    },
     loadGroupsFromDb: function(d){
         var self = this;
         $.each(d.rows, function(i,d){

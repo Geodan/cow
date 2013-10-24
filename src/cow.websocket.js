@@ -6,7 +6,7 @@ $.Cow.Websocket.prototype = {
     },
     _onMessage: function(message) {
         var core = this.obj.core;
-        //console.debug('message: '+message.data);
+        console.debug('message: '+message.data);
         var data = JSON.parse(message.data);
         var uid = data.uid;
         var UID = core.UID; 
@@ -347,11 +347,18 @@ $.Cow.Websocket.prototype = {
     },
     _onProjectInfo: function(payload,uid){
         var options = {};
-        if (payload.uid) options._id = payload.uid //COUCHDB temporary solution
-        else options._id = payload._id;
+        options._id = payload._id;
         options.name = payload.name;
         options.peeruid = uid;
-        this.core.projects(options);
+        var project = this.core.projects(options);
+        if (payload.groups){
+            $.each(payload.groups, function(i,d){
+                    var group = project.groups({_id:d._id, name: d.name});
+                    group.members(d.members);
+                    group.groups(d.groups);
+            });
+        }
+        this.core.trigger('projectListChanged');
     },
     //My stuff has changed, send over the changed data to the other peers
     _onMeChanged: function(evt, payload) {
