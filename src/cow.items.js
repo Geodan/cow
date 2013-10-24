@@ -53,11 +53,7 @@ $.Cow.ItemStore.prototype = {
 		    self.core.localdbase().itemsdb(newitem);
 		    self.core.trigger('storeChanged');
 		    var message = JSON.stringify(newitem);//TODO, bit weird heh...?
-<<<<<<< HEAD:src/cow.featurestore.js
-		    self.core.websocket().sendData(message, "newFeature");
-=======
-		    core.websocket().sendData(message, "newItem");
->>>>>>> origin/item:src/cow.itemstore.js
+		    self.core.websocket().sendData(message, "newItem");
 		}
 		else if (source == 'ws'){
 		    self.core.localdbase().itemsdb(newitem);
