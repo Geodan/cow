@@ -19,20 +19,33 @@ $.Cow.Store.prototype = {
         });
         return deferred.promise();
     },
-    //Update record from U
+    //Update record from UI
     updateRecord_UI: function(data){
+        /*
+        var self = this;
         var deferred = jQuery.Deferred();
-        this._db.put(data,function(err, out){
+        this._db.get(data._id, function(err,doc){
             if (err) {
                 console.warn('Dbase error: ' , err);
                 deferred.reject(err);
             }
             else {
-                deferred.resolve(out);
+                data._rev = doc._rev;
+                self._db.put(data, function(err, response) {
+                    if (err) {
+                        console.warn('Dbase error: ' , err);
+                        deferred.reject(err);
+                    }
+                    else {
+                        deferred.resolve(response);
+                    }
+                });
             }
         });
         return deferred.promise();
+        */
     },
+    //ADD RECORD FROM ws, TODO: include _rev
     addRecord_WS: function(data){
         var deferred = jQuery.Deferred();
         this._db.post(data,function(err, out){
@@ -46,6 +59,7 @@ $.Cow.Store.prototype = {
         });
         return deferred.promise();
     },
+    //UPDATE RECORD FROM WS, TODO: include _rev
     updateRecord_WS: function(data){
         var deferred = jQuery.Deferred();
         this._db.put(data,function(err, out){

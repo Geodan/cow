@@ -424,8 +424,8 @@ When adding projects, those are returned.
             if (options.peeruid){
              this.projectList[i].members(options.peeruid); //Update membership of project
             }
-            this.localdbase().projectsdb(this.projectList[i]); //Write to db
-            
+            //this.localdbase().projectsdb(this.projectList[i]); //Write to db
+            this.projectstore().updateRecord_UI(options);
             project =this.projectList[i]; 
         }
         else { //Project is new
