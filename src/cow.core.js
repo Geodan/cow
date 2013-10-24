@@ -32,13 +32,13 @@ $.Cow.Core = function(element, options) {
     this.groupStore;
     this.itemStore;
     this.geoLocator;
-    this.featureStore;
+    this.itemStore;
     this.events = $({});
     if(this.options.websocket!==undefined) {
         this.websocket(this.options.websocket);
     }
-    if(this.options.featurestore!==undefined) {
-        this.featurestore(this.options.featurestore);
+    if(this.options.itemstore!==undefined) {
+        this.itemstore(this.options.itemstore);
     }
     if(this.options.projectstore!==undefined) {
         this.projectstore(this.options.projectstore);
@@ -66,10 +66,10 @@ $.Cow.Core = function(element, options) {
     
     //TODO: put this in a proper function
     self.bind('changeProjectRequest', {widget:self}, function(e,uid){
-        self.featurestore().removeAllFeatureItems(); //Clear featurestore
+        self.itemstore().removeAllItems(); //Clear itemstore
         self.activeproject(uid);
         self.options.storename = "store_"+uid; //TODO: the link between activeProject and storename can be better
-        var features = self.localdbase().featuresdb();//Fill featurestore with what we have
+        var items = self.localdbase().itemsdb();//Fill itemstore with what we have
     });    
 };
 /**
@@ -143,10 +143,6 @@ $.Cow.Peer = function(core, options) {
         // happened without any further processing
         simple: function(data) {
             this.trigger(data.type);
-        },
-        includeFeature: function(data) {
-            var feature = data.feature;
-            this.trigger(data.type, [feature]);
         }
     };
 };
@@ -170,10 +166,31 @@ $.Cow.Group = function(core, options) {
     this.groupList = [];
 }
 
+/**
+    $.Cow.Item object
+    This is used to share data around, it contains metadata; eg owner, _id, _rev and permissions
+    and data: eg. a geojson for a feature
+    to initialise an Item object, give it at least an id, rev and type
+*/
+$.Cow.Item = function(core, options) {
+    var self=this;
+    this.core = core;    
+    this._creator = core.UID;
+    this._timestamp = new Date().getTime();
+    this._changer = core.UID;
+    this.options = options;
+    this._id = options.id;
+    this._rev = options.rev;
+    this._type = options.type;
+    this._permissions = [];
+    this._data = {};
+    this._status;
+}
+
 /***
 $.Cow.LocalDbase object
 Accessed from the core the localbase.
-On creation it also populates the featurestore.
+On creation it also populates the itemstore.
 ***/
 $.Cow.LocalDbase = function(core, options) {
     var self = this;
@@ -181,11 +198,11 @@ $.Cow.LocalDbase = function(core, options) {
     this.core = core;
     this.options = options;
     this.options.dbname = "cow";
-    // Features in sketch are not loaded anymore after x secs
+    // items in sketch are not loaded anymore after x secs
     this.options.expirytime = 1 * 12 * 60 * 60; //1/2 day
     //this.options.expirytime = 7 * 24 * 60 * 60; //1 week
     var projects = self.projectsdb();//Projects are initialized from localdb
-    var features = self.featuresdb(); //features are initialized from localdb
+    var items = self.itemsdb(); //features are initialized from localdb
 }
 
 /*** 
@@ -201,9 +218,9 @@ $.Cow.Store = function(core, options){
 
 
 /***
-$.Cow.FeatureStore
+$.Cow.ItemStore
 ***/
-$.Cow.FeatureStore = function(core, options) {
+$.Cow.ItemStore = function(core, options) {
     var self = this;
     this.loaded = false;
     this.core = core;
@@ -276,8 +293,8 @@ $.Cow.Core.prototype = {
                prevproject.removeMember(this.UID);
                var project = this.getProjectById(options.activeProjectId);
                project.members(this.UID);
-               this.featurestore().removeAllFeatureItems(); //Clear featurestore
-               var features = this.localdbase().featuresdb();//Fill featurestore with what we have
+               this.itemstore().removeAllItems(); //Clear itemstore
+               var items = this.localdbase().itemsdb();//Fill itemstore with what we have
                this.ws.sendData(project.options, 'projectInfo');
                this.trigger("projectListChanged", this.UID);
                return this.activeProject;
@@ -745,32 +762,32 @@ A Peer is on object containing:
         this.geoLocator = locator;
     },
     /***
-    FEATURE STORES
+    ITEM STORES
     ***/
-    featurestore: function(options){
+    itemstore: function(options){
         var self = this;
         switch(arguments.length) {
         case 0:
-            return this._getFeaturestore();
+            return this._getItemstore();
         case 1:
             if (!$.isArray(options)) {
-                return this._addFeaturestore(options);
+                return this._addItemstore(options);
             }
             else {
-                throw('only one featstore allowed');
+                throw('only one itemstore allowed');
             }
             break;
         default:
             throw('wrong argument number');
         }
     },
-    _getFeaturestore: function(){
-        return this.featureStore;
+    _getItemstore: function(){
+        return this.itemStore;
     },
-    _addFeaturestore: function(options){
-        var featureStore = new $.Cow.FeatureStore(this, options);        
-        this.featureStore = featureStore;
-        return featureStore;
+    _addItemstore: function(options){
+        var itemStore = new $.Cow.ItemStore(this, options);        
+        this.itemStore = itemStore;
+        return itemStore;
     },
     
     
@@ -845,7 +862,7 @@ $.fn.cow.defaults = {
     core: function() {
         return {
             websocket: {url: 'wss://localhost:443'},
-            featurestore: {},
+            itemstore: {},
             localdbase: {},
             geolocator: {},
             groupstore: {},
