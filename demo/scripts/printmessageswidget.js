@@ -10,7 +10,6 @@ $.widget("cow.PrintMessagesWidget", {
         var self = this;
         var element = this.element;
 		this.messageNumber = 0;
-		var num = this.messageNumber;
 
         //get the mapquery object
         core = $(this.options.core).data('cow');
@@ -38,11 +37,11 @@ $.widget("cow.PrintMessagesWidget", {
 		self.messageNumber = self.messageNumber + 1;
 		var num = self.messageNumber;
 		var txt = txtMessage;
-        var string;
+        var string = "";
         string = '<div id="message' + num + '" class="messageItem">' +
-				'<div class="messageTitle"> Message #' + num + '</div>' +
-				'<div class="messageContent" data-i18n="' + txt + '">' + translator.translate(txt) + '</div>' +
-			'</div>'
+				 '<div class="messageTitle"> Message #' + num + '</div>' +
+				 '<div class="messageContent" data-i18n="' + txt + '">' + 
+				 translator.translate(txt) + '</div>' + '</div>';
         return string;
     },
 	_onConnect: function(evt) {
@@ -98,20 +97,3 @@ $.widget("cow.PrintMessagesWidget", {
 
 	});
 })(jQuery);
-
-
-	
-	
-	
-	//How to receive all event messages without having to bind them all one by one?
-	//Is there any event list or alike?
-	
-	//Receive 1to1 messages: print the sender of the message as title and the message as content
-	//Other messages only print title
-	
-	//how do you get the content of the messages? (do they really have content? Or only a name/title?)
-	
-	
-	
-
-

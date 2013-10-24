@@ -47,7 +47,7 @@ $.widget("cow.ConnectWidget", {
 	_onConnect: function(evt) {
 		var self = evt.data.widget;
         var element = self.element;
-		element.addClass('connected').removeClass('disconnected');;
+		element.addClass('connected').removeClass('disconnected');
 		element.html(
 			'<span class="disconnect">' + translator.translate('txt_connected') + '</span>'
 		);
