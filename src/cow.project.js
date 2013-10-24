@@ -57,17 +57,18 @@ $.Cow.Project.prototype = {
     },
     _addGroup: function(options){
         var self = this;
-        if (!options.uid || !options.name){
+        if (!options._id || !options.name){
             throw('Missing group parameters '+JSON.stringify(options));
         }
         var group,i;
         var existing = false;
         $.each(this.groupList, function(id, group) {
-                if (options.uid == group.uid) {
+                if (options._id == group._id) {
                     i = id;
                     existing = true;
                 }
         });
+        
         if (existing == true){
             if (options.name){
              this.groupList[i].name = options.name; //Update name of group
@@ -81,12 +82,11 @@ $.Cow.Project.prototype = {
             this.groupList.push(group); //Adding to the list
         }
         //TODO: probably need trigger here
-        //self.core.localdbase().groupsdb(group);
         return group;
     },
-    removeGroup: function(uid){
+    removeGroup: function(_id){
         for (var i=0;i<this.groupList.length;i++){
-            if (this.groupList[i].uid == uid) {
+            if (this.groupList[i]._id == _id) {
                 this.groupList.splice(i,1); //Remove from list
                 return;
             }
@@ -95,9 +95,16 @@ $.Cow.Project.prototype = {
     removeAllGroups: function(){
         this.groupList = [];
     },
-    getGroupById: function(uid){
+    loadGroupsFromDb: function(d){
+        var self = this;
+        $.each(d.rows, function(i,d){
+            self.groups(d.doc);
+        });
+    },
+    
+    getGroupById: function(_id){
         for (var i=0;i<this.groupList.length;i++){
-            if (this.groupList[i].uid == uid) {
+            if (this.groupList[i]._id == _id) {
                 return this.groupList[i];
             }
         }
@@ -108,11 +115,14 @@ $.Cow.Project.prototype = {
         var groups = [];
         $.each(this.groupList,function(i,d){
             var group = {
+                _id: d._id,
+                name: d.name,
                 members: d.members(),
                 groups: d.groups()
             };
             groups.push(group);
         });
+        return groups;
     },
     
     bind: function(types, data, fn) {

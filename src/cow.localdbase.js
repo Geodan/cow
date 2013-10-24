@@ -18,6 +18,7 @@ $.Cow.LocalDbase.prototype = {
 		$.indexedDB(this.options.dbname)
 		    .objectStore("projects",storeOptions);
     },
+    /* Obsolete by pouchdb
     //PROJECTS
     projectsdb: function(options) {
         
@@ -66,7 +67,7 @@ $.Cow.LocalDbase.prototype = {
         $.indexedDB(this.options.dbname)
 		    .objectStore("projects",false)["delete"](uid);
     },
-    
+    */
     //ITEMS
     featuresdb: function(options) {
         var self = this;

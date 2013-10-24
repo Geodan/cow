@@ -26,6 +26,7 @@ $.Cow.Core = function(element, options) {
     this.projectList = [];
     this.groupList = [];
     this._username = 'Anonymous';
+    this.project; //This will become the active project object
     this.activeProject = 666; //Carefull, order matters! Make sure the activeProject is set before localdbase is initialized
     this.localDbase;
     this.projectStore;
@@ -59,7 +60,14 @@ $.Cow.Core = function(element, options) {
     //Standard project, always available
     var startproject = this.projects({_id:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
     //Standard public group, always available
-    var startgroup = startproject.groups({uid:1, name: 'public', peeruid:this.UID});
+    var startgroup = startproject.groups({_id:1, name: 'public', peeruid:this.UID});
+    
+    //Loading existing projects from dbase
+    if (this.projectstore){
+        this.projectstore().getRecords().done(function(d){
+           self.loadProjectsFromDb(d);
+        });
+    }
     
     self.bind("disconnected", {widget: self}, self.removeAllPeers);
     
@@ -168,7 +176,7 @@ $.Cow.Group = function(core, options) {
     var self=this;
     this.core = core;
     this.options = options;
-    this.uid = options.uid;
+    this._id = options._id;
     this.name = options.name || "noname";
     this.memberList = options.memberList || [];
     this.groupList = [];
@@ -272,15 +280,29 @@ $.Cow.Core.prototype = {
         case 0:
             return this.activeProject;
         case 1:
+            //The activeproject will change. Set all the datastores accordingly
             if (!$.isArray(options)) {
                this.activeProject = options.activeProjectId;
+               
+               //POUCHDB: update groupdbase and itemdbase
+               this.groupstore({projectid: this.activeProject});
+               this.itemstore({projectid: this.activeProject});
+               
+               
                var prevproject = this.getProjectByPeerUid(this.UID);
                prevproject.removeMember(this.UID);
-               var project = this.getProjectById(options.activeProjectId);
-               project.members(this.UID);
+               this.project = this.getProjectById(options.activeProjectId);
+               this.project.members(this.UID);
+               //Add groups from POUCHDB
+               this.groupstore().getRecords().done(function(d){
+                       self.project.loadGroupsFromDb(d);
+                       console.log("Adding group: ",d);//DEBUG
+               });
+               
                this.featurestore().removeAllFeatureItems(); //Clear featurestore
-               var features = this.localdbase().featuresdb();//Fill featurestore with what we have
-               this.ws.sendData(project.options, 'projectInfo');
+               //TODO: change to POUCHDB
+               this.localdbase().featuresdb();//Fill featurestore with what we have
+               this.ws.sendData(this.project.options, 'projectInfo');
                this.trigger("projectListChanged", this.UID);
                return this.activeProject;
             }
@@ -444,7 +466,12 @@ When adding projects, those are returned.
         this.trigger("projectListChanged", self.UID);
         return project;
     },
-    
+    loadProjectsFromDb: function(d){
+        var self = this;
+        $.each(d.rows, function(i,d){
+            self.projects(d.doc);
+        });
+    },
     getProjectById: function(id) {
         var projects = this.projects();
         var project;
@@ -479,7 +506,8 @@ When adding projects, those are returned.
                 this.active = false;
                 this.options.active = false; //needed for dbase
                 //Overwrite project in dbase with new status
-                self.core.localdbase().projectsdb(this);
+                //self.core.localdbase().projectsdb(this);
+                self.core.projectstore().updateRecord_UI(this);
                 
                 self.core.trigger("projectListChanged", self.UID);
             }            
@@ -694,12 +722,14 @@ A Peer is on object containing:
         case 1:
             this.projectStore = new $.Cow.Store(this, {dbname: 'project'});
             this.projectStore.init();
+
             var changes = this.projectStore._db.changes({
               continuous: true,
               include_docs: true,
               onChange: function(change) {
-                  self.projects(change.doc);
-                  console.log('Projects changed',change);
+                  /* This would create a loop */
+                  //self.projects(change.doc);
+                  console.log('DB: Projects changed',change);
               }
             });
             if (options.data){//initial data (sketch project)
@@ -724,8 +754,30 @@ A Peer is on object containing:
         case 0:
             return this.groupStore;
         case 1:
-            this.groupStore = new $.Cow.Store(this, {dbname: 'group_' + this.activeproject()});
+            this.groupStore = new $.Cow.Store(this, {dbname: 'group_' + options.projectid});
             this.groupStore.init();
+            
+            var changes = this.groupStore._db.changes({
+              continuous: true,
+              include_docs: true,
+              onChange: function(change) {
+                  /* This would create a loop */
+                  //self.groups(change.doc);
+                  console.log('DB: Groups changed',change);
+              }
+            });
+            if (options.data){//initial data (sketch project)
+                $.each(options.data, function(i,d){
+                    self.groupStore.getRecord(d._id)
+                        .fail(function(d1){//Not found so adding
+                            self.groupStore.addRecord_UI(d);
+                        })
+                        .then(function(d){
+                            //Group already in dbase, skipping
+                        });
+                    
+                });
+            }
             return this.groupStore;
             break;
         }
@@ -736,7 +788,7 @@ A Peer is on object containing:
         case 0:
             return this.itemStore;
         case 1:
-            this.itemStore = new $.Cow.Store(this, {dbname: 'item_' + this.activeproject()});
+            this.itemStore = new $.Cow.Store(this, {dbname: 'item_' + options.projectid});
             this.itemStore.init();
             return this.itemStore;
             break;
@@ -874,8 +926,8 @@ $.fn.cow.defaults = {
             featurestore: {},
             localdbase: {},
             geolocator: {},
-            projectstore: {data:[{name:'sketch',_id:'666'}]},
-            groupstore: {data:[{name:'public',_id:'1'},{name:'admin',_id:'2'}]},
+            projectstore: {},
+            groupstore: {},
             itemstore: {}
         };
     }

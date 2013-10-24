@@ -21,7 +21,6 @@ $.Cow.Store.prototype = {
     },
     //Update record from UI
     updateRecord_UI: function(data){
-        /*
         var self = this;
         var deferred = jQuery.Deferred();
         this._db.get(data._id, function(err,doc){
@@ -43,7 +42,6 @@ $.Cow.Store.prototype = {
             }
         });
         return deferred.promise();
-        */
     },
     //ADD RECORD FROM ws, TODO: include _rev
     addRecord_WS: function(data){
