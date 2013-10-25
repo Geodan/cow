@@ -313,6 +313,7 @@ $.Cow.Core.prototype = {
                    prevproject.removeMember(this.UID);
                this.project = this.getProjectById(options.activeProjectId);
                this.project.members(this.UID);
+              
                
                var publicgroup =  this.project.groups({_id:1,name: 'public'});//Add public group to project
                publicgroup.members(this.UID);//Make me member of public
@@ -328,6 +329,8 @@ $.Cow.Core.prototype = {
                this.itemstore().removeAllItems(); //Clear featurestore
                //TODO: change to POUCHDB
                this.localdbase().itemsdb();//Fill featurestore with what we have
+               var message = this.project.options;
+               message.groups = this.project.getGroupsData();
                this.ws.sendData(this.project.options, 'projectInfo');
                this.trigger("projectListChanged", this.UID);
                return this.activeProject;

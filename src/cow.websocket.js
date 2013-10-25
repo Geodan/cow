@@ -89,13 +89,14 @@ $.Cow.Websocket.prototype = {
                         }
                 }
             break;
-            
+            /*Not in use, maybe later
             //A peer request information about a project
             case 'getProjectInfo':
                 if(uid != UID) {
                     this.obj._onGetProjectInfo(payload);
                 }
             break;
+            */
             //Info about a project comes in...
             case 'projectInfo':
                 if(uid != UID) {
@@ -211,6 +212,7 @@ $.Cow.Websocket.prototype = {
         }
         else console.log('badpeer '+uid);
     },
+    
     //A new peer has joined, send it your info, compare its items and add it to your
     //peerList
     _onNewPeer: function(payload,uid) {
@@ -326,6 +328,7 @@ $.Cow.Websocket.prototype = {
         }
         else console.warn('badpeer '+uid);
     },
+    /*Not in use. Maybe in future
     //A peer wants to have more info about a project. send it
     _onGetProjectInfo: function(payload){
         //Everybody sends data back, if available
@@ -342,14 +345,15 @@ $.Cow.Websocket.prototype = {
              }
         })
     },
+    */
     _onProjectInfo: function(payload,uid){
         var options = {};
         if (payload.uid) options._id = payload.uid //COUCHDB temporary solution
         else options._id = payload._id;
         options.name = payload.name;
-        options.peeruid = uid;
+        options.peeruid = uid; //Add this peer to the project members
         var project = this.core.projects(options);
-        if (payload.groups){
+        if (payload.groups){//Add group info to project
             $.each(payload.groups, function(i,d){
                     var group = project.groups({_id:d._id, name: d.name});
                     group.members(d.members);
