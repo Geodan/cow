@@ -163,7 +163,7 @@ $.Cow.ItemStore.prototype = {
 								found = 1;
 								//local is newer
 								if (rem_val.timestamp < local_item.timestamp())
-									syncMessage.pushlist.push(local_item);
+									syncMessage.pushlist.push(local_item.flatten());
 								//remote is newer
 								else if (rem_val.timestamp > local_item.timestamp())
 									syncMessage.requestlist.push(rem_val._id);
@@ -174,8 +174,8 @@ $.Cow.ItemStore.prototype = {
 							}
 					});
 					//local but not remote and not deleted
-					if (found == -1 && local_item.status != 'deleted'){
-						syncMessage.pushlist.push(local_item);
+					if (found == -1 && local_item.status() != 'deleted'){
+						syncMessage.pushlist.push(local_item.flatten());
 					}
 			});
 		}
