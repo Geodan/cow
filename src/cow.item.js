@@ -48,7 +48,7 @@ $.Cow.Item.prototype = {
     },
     _permissionsByType: function(type) {
         var result = $.grep(this._permissions, function(e){ 
-        return e.type === type; 
+                return e.type === type; 
         });
         return result;
     },
@@ -118,7 +118,7 @@ $.Cow.Item.prototype = {
             if(typeof type === "string") {
                 var index;
                 $.each(self._permissions,function(i){
-                    if(this.type == type) {
+                    if(this._type == type) {
                         index = i;
                     }
                 });
@@ -171,9 +171,9 @@ $.Cow.Item.prototype = {
         var self = this;
         switch(arguments.length) {
         case 0:
-            return self.data;
+            return self._data;
         case 1:
-            return self.data = options;
+            return self._data = options;
             break;
         default:
             throw('wrong argument number');
@@ -187,11 +187,11 @@ $.Cow.Item.prototype = {
         var self = this;
         switch(arguments.length) {
         case 0:
-            return self.status;
+            return self._status;
         case 1:            
             if(typeof value === "string") {
                 //SMO: trigger something?
-                return self.status = value;
+                return self._status = value;
             }
             else throw('value should be a string');
             break;
@@ -201,22 +201,34 @@ $.Cow.Item.prototype = {
     },
     /** return the item id
     */
-    id: function() {
-        return this._id;
+    id: function(val) {
+        return this._id = val || this._id  ;
     },
-    revision: function() {
-        return this._rev;
+    revision: function(val) {
+        return this._rev = val || this._rev;
     },
-    creator: function() {
-        return this.creator;
+    creator: function(val) {
+        return this._creator = val || this._creator;
     },
-    timestamp: function() {
-        return this.timestamp;
+    timestamp: function(val) {
+        return this._timestamp = val || this._timestamp;
     },
-    changeOwner: function() {
-    
+    owner: function(val) {
+        return this._owner = val || this._owner;
     },
-    type: function() {
-    
+    type: function(val) {
+        return this._type = val || this._type;
+    },
+    flatten: function(){
+        return {
+            _id:    this.id(),
+            _rev:   this.revision(),
+            creator: this.creator(),
+            timestamp: this.timestamp(),
+            owner:  this.owner(),
+            type:   this.type(),
+            data:   this.data(),
+            permissions: this.permissions()
+        }
     }
 };

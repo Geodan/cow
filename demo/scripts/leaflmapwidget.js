@@ -198,7 +198,7 @@ $.widget("cow.LeaflMapWidget", {
 		var items = self.core.itemstore().items();
 		var collection = {"type":"FeatureCollection","features":[]};
 		$.each(items, function(i, object){
-			var feature = object.data;
+			var feature = object.data();
             if(feature === undefined) {
                 console.warn('old item type');
                 return false;
@@ -360,17 +360,10 @@ $.widget("cow.LeaflMapWidget", {
                     var item = core.itemstore().getItemById(feature.properties.key);
                     var d = new Date();
                     var timestamp = d.getTime();
-                    var updateditem = {
-                        _id: item._id,
-                        creator: item.creator,
-                        data: feature,
-                        timestamp: timestamp,
-                        changer: self.core.UID,
-                        _rev: item._rev,
-                        type: 'feature',
-                        permissions: item.permissions
-                    };
-                    core.itemstore().items('feature',{data:updateditem},'user');
+                    item.data(feature);
+                    //item.changer(self.core.UID);
+                    item.timestamp(timestamp);
+                    core.itemstore().items('feature',{data:item.flatten()},'user');
 					//core.trigger('afterfeaturemodified',layer.toGeoJSON());
 				});
 				
@@ -394,7 +387,7 @@ $.widget("cow.LeaflMapWidget", {
             var item = {
                 _id: self.core.UID + "#" + timestamp,
                 creator: self.core.UID,
-                changer: self.core.UID,
+                //changer: self.core.UID,
                 type: 'feature',
                 data: feature
             };
@@ -603,9 +596,9 @@ $.widget("cow.LeaflMapWidget", {
             var item = core.itemstore().getItemById(feature.properties.key);
             var d = new Date();
             var timestamp = d.getTime();
-            item.data = feature;
-            item.timestamp = timestamp;
-            self.core.itemstore().items('feature',{data:item}, 'user');
+            item.data(feature);
+            item.timestamp(timestamp);
+            //self.core.itemstore().items('feature',{data:item}, 'user');
         }
         //self.editLayer.clearLayers();
 	},

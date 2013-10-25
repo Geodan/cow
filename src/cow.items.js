@@ -32,6 +32,7 @@ $.Cow.ItemStore.prototype = {
         var options = {};
         options.type = name;
         options.data = value.data;
+        
 		var newitem =new $.Cow.Item(this.core, options.data );
 		
 		//Check if existing
@@ -53,15 +54,14 @@ $.Cow.ItemStore.prototype = {
 		    
 		}
 		else if (source == 'user'){
-		    var testdata = {_id: '1',values:[1,2], obj: {test:1}};
-		    self.core.itemsdb().updateRecord_UI(options.data);
+		    self.core.itemsdb().updateRecord_UI(newitem.flatten());
 		    //self.core.localdbase().itemsdb(newitem);
 		    self.core.trigger('storeChanged');
-		    var message = JSON.stringify(newitem);//TODO, bit weird heh...?
+		    var message = JSON.stringify(newitem.flatten());//TODO, bit weird heh...?
 		    core.websocket().sendData(message, "newItem");
 		}
 		else if (source == 'ws'){
-		    self.core.itemsdb().updateRecord_UI(options.data);
+		    self.core.itemsdb().updateRecord_UI(newitem.flatten());
 		    //self.core.localdbase().itemsdb(newitem);
 		    self.core.trigger('storeChanged');
 		}
@@ -98,12 +98,12 @@ $.Cow.ItemStore.prototype = {
 			if (item._id == iid){
 				var d = new Date();
 				var timestamp = d.getTime();
-				if (item.status != 'deleted')
-					item.status = 'deleted';
+				if (item.status() != 'deleted')
+					item.status() = 'deleted';
 				else
-					item.status = '';
-				item.timestamp = timestamp;
-				self.core.itemsdb().updateRecord_UI(item);
+					item.status('active');//undelete
+				item.timestamp(timestamp);
+				self.core.itemsdb().updateRecord_UI(item.flatten());
 				//self.core.localdbase().update(item.options);
 				//self.core.localdbase().itemsdb(item);
 				//send to world
@@ -131,8 +131,8 @@ $.Cow.ItemStore.prototype = {
 		$.each(this.items(), function(i, item){
 				var local_item = item;
 				$.each(fidlist, function(j,rem_val){
-						if (rem_val == local_item._id)
-							pushlist.push(local_item);
+						if (rem_val == local_item.id())
+							pushlist.push(local_item.flatten());
 				});
 		});
 		return pushlist;
@@ -162,10 +162,10 @@ $.Cow.ItemStore.prototype = {
 							if (rem_val._id == local_item._id){
 								found = 1;
 								//local is newer
-								if (rem_val.timestamp < local_item.timestamp)
+								if (rem_val.timestamp < local_item.timestamp())
 									syncMessage.pushlist.push(local_item);
 								//remote is newer
-								else if (rem_val.timestamp > local_item.timestamp)
+								else if (rem_val.timestamp > local_item.timestamp())
 									syncMessage.requestlist.push(rem_val._id);
 								//remove from copyremotelist
 								var tmppos = $.inArray(local_item._id,copyof_rem_list);

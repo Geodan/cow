@@ -187,17 +187,19 @@ $.Cow.Group = function(core, options) {
 */
 $.Cow.Item = function(core, options) {
     var self=this;
+    
     //this.core = core; //We don't need the core in an item, do we?!   
-    this.creator = options.creator;
-    this.timestamp = this.timestamp || new Date().getTime();
-    this.changer = options.changer;
+    this._creator   = options.creator;
+    this._timestamp = options.timestamp || new Date().getTime();
+    this._changer   = options.changer;
     //this.options = options.data; //removed in favour of _data
-    this._id = options._id;
-    this._rev = options._rev;
-    this.type = options.type;
-    this.permissions = options.permissions || [];
-    this.status = options.status || 'active';
-    this.data = options.data;
+    this._id        = options._id;
+    this._rev       = options._rev;
+    this._type      = options.type;
+    this._permissions = options.permissions || [];
+    this._status    = options.status || 'active';
+    this._data      = options.data;
+    
 }
 
 /***

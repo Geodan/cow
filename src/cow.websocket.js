@@ -179,8 +179,8 @@ $.Cow.Websocket.prototype = {
             $.each(items, function(i,item){
                 var iditem = {};
                 iditem._id = item._id;
-                iditem.timestamp = item.timestamp;
-                iditem.status = item.status;
+                iditem.timestamp = item.timestamp();
+                iditem.status = item.status();
                 fids.push(iditem);    
             });
             //var store = core.itemstore();
