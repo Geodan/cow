@@ -23,22 +23,32 @@ $.Cow.Store.prototype = {
     updateRecord_UI: function(data){
         var self = this;
         var deferred = jQuery.Deferred();
+        
+        var put = function(data){
+            self._db.put(data, function(err, response) {
+                if (err) {
+                    console.warn('Dbase error: ' , err);
+                    deferred.reject(err);
+                }
+                else {
+                    deferred.resolve(response);
+                }
+            });
+        }
+        
         this._db.get(data._id, function(err,doc){
             if (err) {
-                console.warn('Dbase error: ' , err);
-                deferred.reject(err);
+                if (err.reason = 'missing'){
+                    put(data);
+                }
+                else{
+                    console.warn('Dbase error: ' , err);
+                    deferred.reject(err);
+                }
             }
             else {
                 data._rev = doc._rev;
-                self._db.put(data, function(err, response) {
-                    if (err) {
-                        console.warn('Dbase error: ' , err);
-                        deferred.reject(err);
-                    }
-                    else {
-                        deferred.resolve(response);
-                    }
-                });
+                put(data);
             }
         });
         return deferred.promise();

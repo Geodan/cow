@@ -198,7 +198,7 @@ $.widget("cow.LeaflMapWidget", {
 		var items = self.core.itemstore().items();
 		var collection = {"type":"FeatureCollection","features":[]};
 		$.each(items, function(i, object){
-			var feature = object._data;
+			var feature = object.data;
             if(feature === undefined) {
                 console.warn('old item type');
                 return false;
@@ -212,7 +212,7 @@ $.widget("cow.LeaflMapWidget", {
 				"fill-opacity": 0.5
 			} 
 			
-			if (object._status != 'deleted'){
+			if (object.status != 'deleted'){
 			    collection.features.push(feature);
 				//self.editLayer.addData(feature)
 				//	.setStyle(self.layerstyle);
@@ -362,13 +362,13 @@ $.widget("cow.LeaflMapWidget", {
                     var timestamp = d.getTime();
                     var updateditem = {
                         _id: item._id,
-                        _creator: item._creator,
-                        _data: feature,
-                        _timestamp: timestamp,
-                        _changer: self.core.UID,
+                        creator: item.creator,
+                        data: feature,
+                        timestamp: timestamp,
+                        changer: self.core.UID,
                         _rev: item._rev,
-                        _type: 'feature',
-                        _permissions: item._permissions
+                        type: 'feature',
+                        permissions: item.permissions
                     };
                     core.itemstore().items('feature',{data:updateditem},'user');
 					//core.trigger('afterfeaturemodified',layer.toGeoJSON());
@@ -393,10 +393,10 @@ $.widget("cow.LeaflMapWidget", {
             feature.properties.owner = self.core.username();
             var item = {
                 _id: self.core.UID + "#" + timestamp,
-                _creator: self.core.UID,
-                _changer: self.core.UID,
-                _type: 'feature',
-                _data: feature
+                creator: self.core.UID,
+                changer: self.core.UID,
+                type: 'feature',
+                data: feature
             };
             core.itemstore().items('feature',{data: item}, 'user');
 		});
@@ -603,8 +603,8 @@ $.widget("cow.LeaflMapWidget", {
             var item = core.itemstore().getItemById(feature.properties.key);
             var d = new Date();
             var timestamp = d.getTime();
-            item._data = feature;
-            item._timestamp = timestamp;
+            item.data = feature;
+            item.timestamp = timestamp;
             self.core.itemstore().items('feature',{data:item}, 'user');
         }
         //self.editLayer.clearLayers();

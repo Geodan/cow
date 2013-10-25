@@ -188,16 +188,16 @@ $.Cow.Group = function(core, options) {
 $.Cow.Item = function(core, options) {
     var self=this;
     //this.core = core; //We don't need the core in an item, do we?!   
-    this._creator = options._creator;
-    this._timestamp = this._timestamp || new Date().getTime();
-    this._changer = options._changer;
+    this.creator = options.creator;
+    this.timestamp = this.timestamp || new Date().getTime();
+    this.changer = options.changer;
     //this.options = options.data; //removed in favour of _data
     this._id = options._id;
     this._rev = options._rev;
-    this._type = options._type;
-    this._permissions = options._permissions || [];
-    this._data = options._data;
-    this._status = options._status;
+    this.type = options.type;
+    this.permissions = options.permissions || [];
+    this.status = options.status || 'active';
+    this.data = options.data;
 }
 
 /***
@@ -328,7 +328,10 @@ $.Cow.Core.prototype = {
                
                this.itemstore().removeAllItems(); //Clear featurestore
                //TODO: change to POUCHDB
-               this.localdbase().itemsdb();//Fill featurestore with what we have
+               //this.localdbase().itemsdb();//Fill featurestore with what we have
+               this.itemsdb().getRecords().done(function(d){
+                       self.itemstore().loadItemsFromDb(d);
+               });
                var message = this.project.options;
                message.groups = this.project.getGroupsData();
                this.ws.sendData(message, 'projectInfo');

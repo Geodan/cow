@@ -171,9 +171,9 @@ $.Cow.Item.prototype = {
         var self = this;
         switch(arguments.length) {
         case 0:
-            return self._data;
+            return self.data;
         case 1:
-            return self._data = options;
+            return self.data = options;
             break;
         default:
             throw('wrong argument number');
@@ -187,11 +187,11 @@ $.Cow.Item.prototype = {
         var self = this;
         switch(arguments.length) {
         case 0:
-            return self._status;
+            return self.status;
         case 1:            
             if(typeof value === "string") {
                 //SMO: trigger something?
-                return self._status = value;
+                return self.status = value;
             }
             else throw('value should be a string');
             break;
@@ -208,10 +208,10 @@ $.Cow.Item.prototype = {
         return this._rev;
     },
     creator: function() {
-        return this._creator;
+        return this.creator;
     },
     timestamp: function() {
-        return this._timestamp;
+        return this.timestamp;
     },
     changeOwner: function() {
     

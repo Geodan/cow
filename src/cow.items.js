@@ -53,13 +53,16 @@ $.Cow.ItemStore.prototype = {
 		    
 		}
 		else if (source == 'user'){
-		    self.core.localdbase().itemsdb(newitem);
+		    var testdata = {_id: '1',values:[1,2], obj: {test:1}};
+		    self.core.itemsdb().updateRecord_UI(options.data);
+		    //self.core.localdbase().itemsdb(newitem);
 		    self.core.trigger('storeChanged');
 		    var message = JSON.stringify(newitem);//TODO, bit weird heh...?
 		    core.websocket().sendData(message, "newItem");
 		}
 		else if (source == 'ws'){
-		    self.core.localdbase().itemsdb(newitem);
+		    self.core.itemsdb().updateRecord_UI(options.data);
+		    //self.core.localdbase().itemsdb(newitem);
 		    self.core.trigger('storeChanged');
 		}
 		else {
@@ -95,13 +98,14 @@ $.Cow.ItemStore.prototype = {
 			if (item._id == iid){
 				var d = new Date();
 				var timestamp = d.getTime();
-				if (item._status != 'deleted')
-					item._status = 'deleted';
+				if (item.status != 'deleted')
+					item.status = 'deleted';
 				else
-					item._status = '';
-				item._timestamp = timestamp;
+					item.status = '';
+				item.timestamp = timestamp;
+				self.core.itemsdb().updateRecord_UI(item);
 				//self.core.localdbase().update(item.options);
-				self.core.localdbase().itemsdb(item);
+				//self.core.localdbase().itemsdb(item);
 				//send to world
 				var message = JSON.stringify(item);
 				self.core.websocket().sendData(message, "updateItem");
@@ -113,6 +117,13 @@ $.Cow.ItemStore.prototype = {
 	removeAllItems: function(){
 	    this.itemList = [];
 	},
+	loadItemsFromDb: function(d){
+        var self = this;
+        $.each(d.rows, function(i,d){
+            self.items('feature',{data:d.doc},'db');
+        });
+        self.core.trigger('storeChanged');
+    },
 	//request - incoming request from world
 	//find items corresponding to request and send
 	requestItems: function(fidlist){
@@ -140,7 +151,7 @@ $.Cow.ItemStore.prototype = {
 		//Prepare copy of remote fids as un-ticklist, but only for non-deleted items
 		if (fidlist){
 			$.each(fidlist, function(i,val){
-				if (val._status != 'deleted')
+				if (val.status != 'deleted')
 					copyof_rem_list.push(val._id);	
 			});
 			$.each(this.items(), function(i,loc_val){
@@ -151,10 +162,10 @@ $.Cow.ItemStore.prototype = {
 							if (rem_val._id == local_item._id){
 								found = 1;
 								//local is newer
-								if (rem_val._timestamp < local_item._timestamp)
+								if (rem_val.timestamp < local_item.timestamp)
 									syncMessage.pushlist.push(local_item);
 								//remote is newer
-								else if (rem_val._timestamp > local_item._timestamp)
+								else if (rem_val.timestamp > local_item.timestamp)
 									syncMessage.requestlist.push(rem_val._id);
 								//remove from copyremotelist
 								var tmppos = $.inArray(local_item._id,copyof_rem_list);
@@ -163,7 +174,7 @@ $.Cow.ItemStore.prototype = {
 							}
 					});
 					//local but not remote and not deleted
-					if (found == -1 && local_item._status != 'deleted'){
+					if (found == -1 && local_item.status != 'deleted'){
 						syncMessage.pushlist.push(local_item);
 					}
 			});

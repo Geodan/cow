@@ -73,7 +73,7 @@ $.Cow.Websocket.prototype = {
             case 'newItem':
                 if(uid != UID) {
                     var item = JSON.parse(payload);
-                    if (self.core.activeproject() == item._data.properties.store){
+                    if (self.core.activeproject() == item.data.properties.store){
                         core.itemstore().items('feature',{data:item}, 'ws');
                         //core.featurestore().updateItem(item);
                     }
@@ -83,7 +83,7 @@ $.Cow.Websocket.prototype = {
             case 'updateItem':
                 if(uid != UID) {
                     var item = JSON.parse(payload);
-                    if (self.core.activeproject() == item._data.properties.store){
+                    if (self.core.activeproject() == item.data.properties.store){
                         core.itemstore().items('feature',{data:item},'ws');
                         //core.featurestore().updateItem(item);
                         }
@@ -179,8 +179,8 @@ $.Cow.Websocket.prototype = {
             $.each(items, function(i,item){
                 var iditem = {};
                 iditem._id = item._id;
-                iditem._timestamp = item._timestamp;
-                iditem._status = item._status;
+                iditem.timestamp = item.timestamp;
+                iditem.status = item.status;
                 fids.push(iditem);    
             });
             //var store = core.itemstore();

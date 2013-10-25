@@ -63,11 +63,11 @@ $.widget("cow.FeaturesWidget", {
 		
 		$.each(items,function(){
 				var item = this._data;
-				names = names+ '<span owner="'+this._id+'" class="peerlist owner '+ this._status +'" title="'
+				names = names+ '<span owner="'+this._id+'" class="peerlist owner '+ this.status +'" title="'
 					+ ' key:  '+this._id
-					+ '\n status: '+ this._status
-					+ '\n updated: '+ this._timestamp 
-					+ '\n Click to change status">'+this._status+this._id+'</span></br>';
+					+ '\n status: '+ this.status
+					+ '\n updated: '+ this.timestamp 
+					+ '\n Click to change status">'+this.status+this._id+'</span></br>';
 		});
 		name = names + '<br><hr>Purge local storage <button onclick="purgeLocaldb">Purge</button>';
 		element.html(
