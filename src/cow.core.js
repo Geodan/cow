@@ -187,17 +187,17 @@ $.Cow.Group = function(core, options) {
 */
 $.Cow.Item = function(core, options) {
     var self=this;
-    this.core = core;    
-    this._creator = core.UID;
-    this._timestamp = new Date().getTime();
-    this._changer = core.UID;
-    this.options = options;
-    this._id = options.id;
-    this._rev = options.rev;
-    this._type = options.type;
-    this._permissions = [];
-    this._data = {};
-    this._status;
+    //this.core = core; //We don't need the core in an item, do we?!   
+    this._creator = options._creator;
+    this._timestamp = this._timestamp || new Date().getTime();
+    this._changer = options._changer;
+    //this.options = options.data; //removed in favour of _data
+    this._id = options._id;
+    this._rev = options._rev;
+    this._type = options._type;
+    this._permissions = options._permissions || [];
+    this._data = options._data;
+    this._status = options._status;
 }
 
 /***
@@ -331,7 +331,7 @@ $.Cow.Core.prototype = {
                this.localdbase().itemsdb();//Fill featurestore with what we have
                var message = this.project.options;
                message.groups = this.project.getGroupsData();
-               this.ws.sendData(this.project.options, 'projectInfo');
+               this.ws.sendData(message, 'projectInfo');
                this.trigger("projectListChanged", this.UID);
                return this.activeProject;
             }

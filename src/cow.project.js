@@ -60,6 +60,7 @@ $.Cow.Project.prototype = {
             throw('Missing group parameters '+JSON.stringify(options));
         }
         var group,i;
+        var source = options.source;
         var existing = false;
         $.each(this.groupList, function(id, group) {
                 if (options._id == group._id) {
@@ -80,6 +81,16 @@ $.Cow.Project.prototype = {
             }
             this.groupList.push(group); //Adding to the list
         }
+        var toDB = function(){
+            if (this.groupsdb){ 
+                   this.core.groupsdb().bulkLoad_UI(this.project.getGroupsData());//Add public to be sure
+            }
+        }
+        if (source != 'db'){
+            toDB(); //Add to db when incoming data is not from db
+        }
+            
+        
         //TODO: probably need trigger here
         return group;
     },

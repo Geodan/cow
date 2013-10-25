@@ -72,9 +72,9 @@ $.Cow.Websocket.prototype = {
             //a new object was drawn or updated by a peer
             case 'newItem':
                 if(uid != UID) {
-                    var item = JSON.parse(payload).options;
-                    if (self.core.activeproject() == item.data.properties.store){
-                        core.itemstore().items({data:item, source: 'ws'});
+                    var item = JSON.parse(payload);
+                    if (self.core.activeproject() == item._data.properties.store){
+                        core.itemstore().items('feature',{data:item}, 'ws');
                         //core.featurestore().updateItem(item);
                     }
                 }
@@ -83,8 +83,8 @@ $.Cow.Websocket.prototype = {
             case 'updateItem':
                 if(uid != UID) {
                     var item = JSON.parse(payload);
-                    if (self.core.activeproject() == item.data.properties.store){
-                        core.itemstore().items({data:item, source: 'ws'});
+                    if (self.core.activeproject() == item._data.properties.store){
+                        core.itemstore().items('feature',{data:item},'ws');
                         //core.featurestore().updateItem(item);
                         }
                 }
@@ -178,9 +178,9 @@ $.Cow.Websocket.prototype = {
             var items = core.itemstore().items();
             $.each(items, function(i,item){
                 var iditem = {};
-                iditem.key = item.options.key;
-                iditem.updated = item.options.updated;
-                iditem.status = item.options.status;
+                iditem._id = item._id;
+                iditem._timestamp = item._timestamp;
+                iditem._status = item._status;
                 fids.push(iditem);    
             });
             //var store = core.itemstore();
@@ -191,8 +191,8 @@ $.Cow.Websocket.prototype = {
             self.core.websocket().sendData(message, "newPeerFidList");
             
         }
-            //SMO TODO: turn this into a proper callback
-            setTimeout(sendFidList, 2000);
+        //SMO TODO: turn this into a proper callback
+        setTimeout(sendFidList, 2000);
             
         
     },
@@ -278,7 +278,7 @@ $.Cow.Websocket.prototype = {
             //Now add the items that have been sent to the itemstore
             if (pushed_feats.length > 0){
                 $.each(pushed_feats, function(i,feat){
-                        store.items({data: feat, source: 'ws'});
+                        store.items('feature',{data: feat},'ws');
                 });
                 //store.putFeatures(pushed_feats);
             }
@@ -286,12 +286,12 @@ $.Cow.Websocket.prototype = {
     },
     //Peer sends back requested items, now store them
     _onRequestedFeats: function(payload,uid) {
-        var requested_feats = payload;
+        var requested_feats = payload.items;
         if (self.core.activeproject() == payload.storename){
             var store = this.core.itemstore();
             if (requested_feats.length > 0){
                 $.each(requested_feats, function(i,feat){
-                        store.items({data: feat, source: 'ws'});
+                        store.items('feature',{data: feat},'ws');
                 });
                 //store.putFeatures(requested_feats);
             }

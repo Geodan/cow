@@ -198,7 +198,7 @@ $.widget("cow.LeaflMapWidget", {
 		var items = self.core.itemstore().items();
 		var collection = {"type":"FeatureCollection","features":[]};
 		$.each(items, function(i, object){
-			var feature = object.options.data;
+			var feature = object._data;
             if(feature === undefined) {
                 console.warn('old item type');
                 return false;
@@ -212,7 +212,7 @@ $.widget("cow.LeaflMapWidget", {
 				"fill-opacity": 0.5
 			} 
 			
-			if (object.options.status != 'deleted'){
+			if (object._status != 'deleted'){
 			    collection.features.push(feature);
 				//self.editLayer.addData(feature)
 				//	.setStyle(self.layerstyle);
@@ -342,14 +342,15 @@ $.widget("cow.LeaflMapWidget", {
 		});
 
 		this.map.addControl(this.drawControl);
+		/*Obsolete by new draw:created listener
 		this.map.on('draw:created', function (e) {
 			var type = e.layerType,
 				layer = e.layer;
 
 			//TODO: sent feature
-
 			self.editLayer.addLayer(layer);
 		});
+		*/
 		this.map.on("draw:edited", function(e,x){
 				var layers = e.layers;
 				
@@ -359,14 +360,47 @@ $.widget("cow.LeaflMapWidget", {
                     var item = core.itemstore().getItemById(feature.properties.key);
                     var d = new Date();
                     var timestamp = d.getTime();
-                    item.data = feature;
-                    item.updated = timestamp;
-                    //TODO: set type
-                    core.itemstore().items({data:item, source: 'user'});
+                    var updateditem = {
+                        _id: item._id,
+                        _creator: item._creator,
+                        _data: feature,
+                        _timestamp: timestamp,
+                        _changer: self.core.UID,
+                        _rev: item._rev,
+                        _type: 'feature',
+                        _permissions: item._permissions
+                    };
+                    core.itemstore().items('feature',{data:updateditem},'user');
 					//core.trigger('afterfeaturemodified',layer.toGeoJSON());
 				});
 				
 		});
+		this.map.on('draw:created', function (e) {
+			var type = e.layerType,
+				layer = e.layer;
+			var feature = layer.toGeoJSON();
+            //TODO: $.cow.item
+			
+            var d = new Date();
+            var timestamp = d.getTime();
+            feature.properties.icon = self.core.current_icon; //TODO TT: not nice
+            feature.properties.linecolor = self.core.current_linecolor;
+            feature.properties.fillcolor = self.core.current_fillcolor;
+            feature.properties.polycolor = self.core.current_polycolor;
+            feature.properties.key = self.core.UID + "#" + timestamp;
+            feature.properties.store = self.core.activeproject();
+            feature.properties.creator = self.core.username();
+            feature.properties.owner = self.core.username();
+            var item = {
+                _id: self.core.UID + "#" + timestamp,
+                _creator: self.core.UID,
+                _changer: self.core.UID,
+                _type: 'feature',
+                _data: feature
+            };
+            core.itemstore().items('feature',{data: item}, 'user');
+		});
+		
 		//See following URL for custom draw controls in leaflet
 		//http://stackoverflow.com/questions/15775103/leaflet-draw-mapping-how-to-initiate-the-draw-function-without-toolbar
 		
@@ -420,31 +454,7 @@ $.widget("cow.LeaflMapWidget", {
 			sketchcomplete: this.handlers.includeFeature//this.handlers.simple		
 		})*/;		
 
-		this.map.on('draw:created', function (e) {
-			var type = e.layerType,
-				layer = e.layer;
-			var feature = layer.toGeoJSON();
-            //TODO: $.cow.item
-			var item = {};
-            var d = new Date();
-            var timestamp = d.getTime();
-            feature.properties.icon = self.core.current_icon; //TODO TT: not nice
-            feature.properties.linecolor = self.core.current_linecolor;
-            feature.properties.fillcolor = self.core.current_fillcolor;
-            feature.properties.polycolor = self.core.current_polycolor;
-            item.key = self.core.UID + "#" + timestamp;
-            feature.properties.key = item.key;
-            feature.properties.store = self.core.activeproject();
-            feature.properties.creator = self.core.username();
-            feature.properties.owner = self.core.username();
-            item.uid = self.core.UID;
-            item.created = timestamp;
-            item.updated = timestamp;
-            item.status = '';
-            item.data = feature;
-            //TODO: items()
-			core.itemstore().items({data: item, source: 'user'});
-		});
+		
 		
 		
 
@@ -593,10 +603,9 @@ $.widget("cow.LeaflMapWidget", {
             var item = core.itemstore().getItemById(feature.properties.key);
             var d = new Date();
             var timestamp = d.getTime();
-            item.data = feature;
-            item.updated = timestamp;
-            //TODO: items()
-            self.core.itemstore().items({data:item, source: 'user'});
+            item._data = feature;
+            item._timestamp = timestamp;
+            self.core.itemstore().items('feature',{data:item}, 'user');
         }
         //self.editLayer.clearLayers();
 	},
