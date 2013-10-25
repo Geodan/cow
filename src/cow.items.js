@@ -99,7 +99,7 @@ $.Cow.ItemStore.prototype = {
 				var d = new Date();
 				var timestamp = d.getTime();
 				if (item.status() != 'deleted')
-					item.status() = 'deleted';
+					item.status('deleted');
 				else
 					item.status('active');//undelete
 				item.timestamp(timestamp);
@@ -107,7 +107,7 @@ $.Cow.ItemStore.prototype = {
 				//self.core.localdbase().update(item.options);
 				//self.core.localdbase().itemsdb(item);
 				//send to world
-				var message = JSON.stringify(item);
+				var message = JSON.stringify(item.flatten());
 				self.core.websocket().sendData(message, "updateItem");
 			}
 		});

@@ -223,6 +223,7 @@ $.Cow.Item.prototype = {
         return {
             _id:    this.id(),
             _rev:   this.revision(),
+            status: this.status(),
             creator: this.creator(),
             timestamp: this.timestamp(),
             owner:  this.owner(),

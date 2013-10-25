@@ -1,3 +1,11 @@
+/* 
+
+    This file became obsolete with the use of cow.pouchdb.js
+
+    
+*/
+
+
 /**Thanks to jquery-indexeddb.js:
 https://github.com/axemclion/jquery-indexeddb/blob/gh-pages/docs/README.md
 **/

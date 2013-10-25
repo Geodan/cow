@@ -197,27 +197,28 @@ $.widget("cow.LeaflMapWidget", {
         //TODO: make sure it only requests items with type 'feature'
 		var items = self.core.itemstore().items();
 		var collection = {"type":"FeatureCollection","features":[]};
-		$.each(items, function(i, object){
-			var feature = object.data();
+		$.each(items, function(i, item){
+			var feature = item.data();
             if(feature === undefined) {
                 console.warn('old item type');
-                return false;
+                //return false;
             }
-			feature.id = feature.properties.key;
-			
-			feature.style = {
-				icon: feature.properties.icon,
-				stroke: feature.properties.linecolor,
-				fill:  feature.properties.polycolor,
-				"fill-opacity": 0.5
-			} 
-			
-			if (object.status != 'deleted'){
-			    collection.features.push(feature);
-				//self.editLayer.addData(feature)
-				//	.setStyle(self.layerstyle);
+            else{
+                feature.id = feature.properties.key;
+                
+                feature.style = {
+                    icon: feature.properties.icon,
+                    stroke: feature.properties.linecolor,
+                    fill:  feature.properties.polycolor,
+                    "fill-opacity": 0.5
+                } 
+                
+                if (item.status() != 'deleted'){
+                    collection.features.push(feature);
+                    //self.editLayer.addData(feature)
+                    //	.setStyle(self.layerstyle);
+                }
 			}
-			
 		});
 		self.getD3LayerByName('editlayer').data(collection);
 	},

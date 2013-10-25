@@ -49,10 +49,10 @@ $.Cow.Core = function(element, options) {
     }
     if(this.options.itemsdb!==undefined) {
         this.itemsdb(this.options.itemsdb);
-    }
+    }/*
     if(this.options.localdbase!==undefined) {
         this.localdbase(this.options.localdbase);
-    }
+    }*/
     if(this.options.geolocator!==undefined) {
         this.geolocator(this.options.geolocator);
     }
@@ -77,7 +77,7 @@ $.Cow.Core = function(element, options) {
         self.itemstore().removeAllItems(); //Clear itemstore
         self.activeproject(uid);
         self.options.storename = "store_"+uid; //TODO: the link between activeProject and storename can be better
-        var items = self.localdbase().itemsdb();//Fill itemstore with what we have
+        //var items = self.localdbase().itemsdb();//Fill itemstore with what we have
     });    
 };
 /**
@@ -483,7 +483,7 @@ When adding projects, those are returned.
             project =this.projectList[i]; 
         }
         else {  //Project is new, create it
-            if (options.active == null) //could be inactive from localdb
+            if (options.active == null) //could be inactive from db
                 options.active = true;
             project = new $.Cow.Project(this, options);
             if (options.peeruid){
@@ -719,6 +719,7 @@ A Peer is on object containing:
     /***
     LOCAL DATABASE
     ***/
+    /*Obsolete
     localdbase: function(options){
         var self = this;
         switch(arguments.length) {
@@ -743,7 +744,7 @@ A Peer is on object containing:
         var dbase = new $.Cow.LocalDbase(this, options);
         this.localDbase = dbase;
     },
-    
+    */
     /***
     POUCH DB stores
     ****/
@@ -958,7 +959,7 @@ $.fn.cow.defaults = {
         return {
             websocket: {url: 'wss://localhost:443'},
             itemstore: {},
-            localdbase: {},
+            //localdbase: {},
             geolocator: {},
             groupsdb: {},
             projectsdb: {},
