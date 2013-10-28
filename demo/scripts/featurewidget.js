@@ -62,12 +62,12 @@ $.widget("cow.FeaturesWidget", {
 		var names = '';
 		
 		$.each(items,function(){
-				var item = this.options;
-				names = names+ '<span owner="'+item.key+'" class="peerlist owner '+ item.status +'" title="'
-					+ ' key:  '+item.key
-					+ '\n status: '+ item.status
-					+ '\n updated: '+ item.updated 
-					+ '\n Click to change status">'+this.options.status+this.options.key+'</span></br>';
+				var item = this._data;
+				names = names+ '<span owner="'+this._id+'" class="peerlist owner '+ this.status() +'" title="'
+					+ ' key:  '+this._id
+					+ '\n status: '+ this.status()
+					+ '\n updated: '+ this.timestamp() 
+					+ '\n Click to change status">'+this.status()+this._id+'</span></br>';
 		});
 		name = names + '<br><hr>Purge local storage <button onclick="purgeLocaldb">Purge</button>';
 		element.html(

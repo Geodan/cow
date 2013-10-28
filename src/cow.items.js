@@ -8,7 +8,7 @@ $.Cow.ItemStore.prototype = {
         items('string',{data}) creates a new item with type 'string' and payload data
         
     */
-    items: function(name, value) {
+    items: function(name, value, source) {
         var self = this;
 		switch(arguments.length) {
         case 0:
@@ -19,24 +19,28 @@ $.Cow.ItemStore.prototype = {
             }
             break;
         case 2:
-            return this._addItem(name,value);
+            throw("Not enough arguments for new item. Given: " + name + " " + value);
+            break;
+        case 3:
+            return this._addItem(name,value,source);
             break;
         default:
             throw('wrong argument number');
         }
     },
-    _addItem: function(name,value){
+    _addItem: function(name,value,source){
         var options = {};
         options.type = name;
-        options.data = value;
-		var newitem =new $.Cow.Item(this.core, options );
+        options.data = value.data;
+        
+		var newitem =new $.Cow.Item(this.core, options.data );
 		
 		//Check if existing
 		var existing = false;
 		var ix;
-		var source = options.source;
+		
 		$.each(this.itemList, function(i, obj){
-		    if (obj.options.key == options.data.key){
+		    if (obj._id == newitem._id){//TODO: change key to _id
 		        ix = i;
 		        existing = true;
 		    }
@@ -50,13 +54,15 @@ $.Cow.ItemStore.prototype = {
 		    
 		}
 		else if (source == 'user'){
-		    self.core.localdbase().itemsdb(newitem);
+		    self.core.itemsdb().updateRecord_UI(newitem.flatten());
+		    //self.core.localdbase().itemsdb(newitem);
 		    self.core.trigger('storeChanged');
 		    var message = JSON.stringify(newitem);//TODO, bit weird heh...?
 		    self.core.websocket().sendData(message, "newItem");
 		}
 		else if (source == 'ws'){
-		    self.core.localdbase().itemsdb(newitem);
+		    self.core.itemsdb().updateRecord_UI(newitem.flatten());
+		    //self.core.localdbase().itemsdb(newitem);
 		    self.core.trigger('storeChanged');
 		}
 		else {
@@ -75,8 +81,8 @@ $.Cow.ItemStore.prototype = {
     getItemById: function(uid){
         var item;
         $.each(this.itemList, function(i, obj){
-            if (obj.options.key == uid){
-                item = obj.options;
+            if (obj._id == uid){
+                item = obj;
             }
         });
         return item;
@@ -89,18 +95,19 @@ $.Cow.ItemStore.prototype = {
 	removeItem: function(iid) {
 		var delItem;
 		$.each(this.items(), function(i, item){
-			if (item.options.key == iid){
+			if (item._id == iid){
 				var d = new Date();
 				var timestamp = d.getTime();
-				if (item.options.status != 'deleted')
-					item.options.status = 'deleted';
+				if (item.status() != 'deleted')
+					item.status('deleted');
 				else
-					item.options.status = '';
-				item.options.updated = timestamp;
+					item.status('active');//undelete
+				item.timestamp(timestamp);
+				self.core.itemsdb().updateRecord_UI(item.flatten());
 				//self.core.localdbase().update(item.options);
-				self.core.localdbase().itemsdb(item.options);
+				//self.core.localdbase().itemsdb(item);
 				//send to world
-				var message = JSON.stringify(item.options);
+				var message = JSON.stringify(item.flatten());
 				self.core.websocket().sendData(message, "updateItem");
 			}
 		});
@@ -110,15 +117,22 @@ $.Cow.ItemStore.prototype = {
 	removeAllItems: function(){
 	    this.itemList = [];
 	},
+	loadItemsFromDb: function(d){
+        var self = this;
+        $.each(d.rows, function(i,d){
+            self.items('feature',{data:d.doc},'db');
+        });
+        self.core.trigger('storeChanged');
+    },
 	//request - incoming request from world
 	//find items corresponding to request and send
 	requestItems: function(fidlist){
 		var pushlist = [];
 		$.each(this.items(), function(i, item){
-				var local_item = item.options;
+				var local_item = item;
 				$.each(fidlist, function(j,rem_val){
-						if (rem_val == local_item.key)
-							pushlist.push(local_item);
+						if (rem_val == local_item.id())
+							pushlist.push(local_item.flatten());
 				});
 		});
 		return pushlist;
@@ -138,30 +152,30 @@ $.Cow.ItemStore.prototype = {
 		if (fidlist){
 			$.each(fidlist, function(i,val){
 				if (val.status != 'deleted')
-					copyof_rem_list.push(val.key);	
+					copyof_rem_list.push(val._id);	
 			});
 			$.each(this.items(), function(i,loc_val){
-					var local_item = loc_val.options;
+					var local_item = loc_val;
 					var found = -1;
 					$.each(fidlist, function(j,rem_val){
 							//in both lists
-							if (rem_val.key == local_item.key){
+							if (rem_val._id == local_item._id){
 								found = 1;
 								//local is newer
-								if (rem_val.updated < local_item.updated)
-									syncMessage.pushlist.push(local_item);
+								if (rem_val.timestamp < local_item.timestamp())
+									syncMessage.pushlist.push(local_item.flatten());
 								//remote is newer
-								else if (rem_val.updated > local_item.updated)
-									syncMessage.requestlist.push(rem_val.key);
+								else if (rem_val.timestamp > local_item.timestamp())
+									syncMessage.requestlist.push(rem_val._id);
 								//remove from copyremotelist
-								var tmppos = $.inArray(local_item.key,copyof_rem_list);
+								var tmppos = $.inArray(local_item._id,copyof_rem_list);
 								if (tmppos >= 0)
 									copyof_rem_list.splice(tmppos,1);
 							}
 					});
 					//local but not remote and not deleted
-					if (found == -1 && local_item.status != 'deleted'){
-						syncMessage.pushlist.push(local_item);
+					if (found == -1 && local_item.status() != 'deleted'){
+						syncMessage.pushlist.push(local_item.flatten());
 					}
 			});
 		}

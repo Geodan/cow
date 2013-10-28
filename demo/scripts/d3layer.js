@@ -98,7 +98,6 @@ function d3layer(layername, config){
 		      entity.append("image")
 		            .on("click", click)
                     .attr("xlink:href", function(d){
-                            console.log('########### adding ' + d.style.icon);
                             if (d.style.icon) return d.style.icon;
                             else return "./mapicons/stratego/stratego-flag.svg";
                     })

@@ -370,9 +370,9 @@ $.widget("cow.PeersWidget", {
                 var groups = "" ;
                 $.each(project.groups, function(i,d){
                     if (d.hasMember(self.core.UID))
-                        groups = groups + "<span class='me group' group="+d._id+">"+d.name+ "</span>, ";
+                        groups = groups + "<span class='group me' group="+d._id+">"+d.name+ "</span>, ";
                     else
-                        groups = groups + "<span class='group' group="+d._id+">"+d.name+ "</span>, ";
+                        groups = groups + "<span class = 'group' group="+d._id+">" + d.name+ "</span>, ";
                 })
                 
                 var remove = '';

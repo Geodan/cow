@@ -48,7 +48,7 @@ $.Cow.Item.prototype = {
     },
     _permissionsByType: function(type) {
         var result = $.grep(this._permissions, function(e){ 
-        return e.type === type; 
+                return e.type === type; 
         });
         return result;
     },
@@ -132,7 +132,7 @@ $.Cow.Item.prototype = {
             if(typeof type === "string") {
                 var index;
                 $.each(self._permissions,function(i){
-                    if(this.type == type) {
+                    if(this._type == type) {
                         index = i;
                     }
                 });
@@ -215,22 +215,35 @@ $.Cow.Item.prototype = {
     },
     /** return the item id
     */
-    id: function() {
-        return this._id;
+    id: function(val) {
+        return this._id = val || this._id  ;
     },
-    revision: function() {
-        return this._rev;
+    revision: function(val) {
+        return this._rev = val || this._rev;
     },
-    creator: function() {
-        return this._creator;
+    creator: function(val) {
+        return this._creator = val || this._creator;
     },
-    timestamp: function() {
-        return this._timestamp;
+    timestamp: function(val) {
+        return this._timestamp = val || this._timestamp;
     },
-    changeOwner: function() {
-    
+    owner: function(val) {
+        return this._owner = val || this._owner;
     },
-    type: function() {
-    
+    type: function(val) {
+        return this._type = val || this._type;
+    },
+    flatten: function(){
+        return {
+            _id:    this.id(),
+            _rev:   this.revision(),
+            status: this.status(),
+            creator: this.creator(),
+            timestamp: this.timestamp(),
+            owner:  this.owner(),
+            type:   this.type(),
+            data:   this.data(),
+            permissions: this.permissions()
+        }
     }
 };

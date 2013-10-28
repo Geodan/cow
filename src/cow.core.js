@@ -49,10 +49,10 @@ $.Cow.Core = function(element, options) {
     }
     if(this.options.itemsdb!==undefined) {
         this.itemsdb(this.options.itemsdb);
-    }
+    }/*
     if(this.options.localdbase!==undefined) {
         this.localdbase(this.options.localdbase);
-    }
+    }*/
     if(this.options.geolocator!==undefined) {
         this.geolocator(this.options.geolocator);
     }
@@ -77,7 +77,7 @@ $.Cow.Core = function(element, options) {
         self.itemstore().removeAllItems(); //Clear itemstore
         self.activeproject(uid);
         self.options.storename = "store_"+uid; //TODO: the link between activeProject and storename can be better
-        var items = self.localdbase().itemsdb();//Fill itemstore with what we have
+        //var items = self.localdbase().itemsdb();//Fill itemstore with what we have
     });    
 };
 /**
@@ -187,17 +187,19 @@ $.Cow.Group = function(core, options) {
 */
 $.Cow.Item = function(core, options) {
     var self=this;
-    this.core = core;    
-    this._creator = core.UID;
-    this._timestamp = new Date().getTime();
-    this._changer = core.UID;
-    this.options = options;
-    this._id = options.id;
-    this._rev = options.rev;
-    this._type = options.type;
-    this._permissions = [];
-    this._data = {};
-    this._status;
+    
+    //this.core = core; //We don't need the core in an item, do we?!   
+    this._creator   = options.creator;
+    this._timestamp = options.timestamp || new Date().getTime();
+    this._changer   = options.changer;
+    //this.options = options.data; //removed in favour of _data
+    this._id        = options._id;
+    this._rev       = options._rev;
+    this._type      = options.type;
+    this._permissions = options.permissions || [];
+    this._status    = options.status || 'active';
+    this._data      = options.data;
+    
 }
 
 /***
@@ -313,6 +315,7 @@ $.Cow.Core.prototype = {
                    prevproject.removeMember(this.UID);
                this.project = this.getProjectById(options.activeProjectId);
                this.project.members(this.UID);
+              
                
                var publicgroup =  this.project.groups({_id:1,name: 'public'});//Add public group to project
                publicgroup.members(this.UID);//Make me member of public
@@ -327,8 +330,13 @@ $.Cow.Core.prototype = {
                
                this.itemstore().removeAllItems(); //Clear featurestore
                //TODO: change to POUCHDB
-               this.localdbase().itemsdb();//Fill featurestore with what we have
-               this.ws.sendData(this.project.options, 'projectInfo');
+               //this.localdbase().itemsdb();//Fill featurestore with what we have
+               this.itemsdb().getRecords().done(function(d){
+                       self.itemstore().loadItemsFromDb(d);
+               });
+               var message = this.project.options;
+               message.groups = this.project.getGroupsData();
+               this.ws.sendData(message, 'projectInfo');
                this.trigger("projectListChanged", this.UID);
                return this.activeProject;
             }
@@ -475,7 +483,7 @@ When adding projects, those are returned.
             project =this.projectList[i]; 
         }
         else {  //Project is new, create it
-            if (options.active == null) //could be inactive from localdb
+            if (options.active == null) //could be inactive from db
                 options.active = true;
             project = new $.Cow.Project(this, options);
             if (options.peeruid){
@@ -711,6 +719,7 @@ A Peer is on object containing:
     /***
     LOCAL DATABASE
     ***/
+    /*Obsolete
     localdbase: function(options){
         var self = this;
         switch(arguments.length) {
@@ -735,7 +744,7 @@ A Peer is on object containing:
         var dbase = new $.Cow.LocalDbase(this, options);
         this.localDbase = dbase;
     },
-    
+    */
     /***
     POUCH DB stores
     ****/
@@ -950,7 +959,7 @@ $.fn.cow.defaults = {
         return {
             websocket: {url: 'wss://localhost:443'},
             itemstore: {},
-            localdbase: {},
+            //localdbase: {},
             geolocator: {},
             groupsdb: {},
             projectsdb: {},
