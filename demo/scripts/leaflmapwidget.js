@@ -85,7 +85,7 @@ $.widget("cow.LeaflMapWidget", {
 				};
 				self.core.me() && self.core.me().view({"extent":extent}); //Set my own extent
 				//Reset/redraw layers         
-				self._d3layers.forEach(function(l){
+				$.each(self._d3layers, function(i,l){
                     l.reset(e);
                 });
 		};
@@ -117,9 +117,10 @@ $.widget("cow.LeaflMapWidget", {
     },
     //Getter for d3 layer by name
     getD3LayerByName: function(name){
+        var self = this;
         //TODO: what a weird method the get the layer. Can't be done easier?
         var returnlayer;
-        this._d3layers.forEach(function(layer){
+        $.each(self._d3layers,function(i,layer){
            if (layer.layername === name) {
                returnlayer = layer;
            }
@@ -194,8 +195,7 @@ $.widget("cow.LeaflMapWidget", {
 	_reloadLayer: function(e){
 	    var self = this;
 		self.editLayer.clearLayers();
-        //TODO: make sure it only requests items with type 'feature'
-		var items = self.core.itemstore().items();
+		var items = self.core.itemstore().items('feature');
 		var collection = {"type":"FeatureCollection","features":[]};
 		$.each(items, function(i, item){
 			var feature = item.data();
@@ -212,8 +212,11 @@ $.widget("cow.LeaflMapWidget", {
                     fill:  feature.properties.polycolor,
                     "fill-opacity": 0.5
                 } 
-                
-                if (item.status() != 'deleted'){
+                var viewpermission = false;
+                var mygroups = self.core.project.myGroups();
+                if (item.status() != 'deleted'
+                    && item.permissionHasGroup('edit',mygroups)
+                ){
                     collection.features.push(feature);
                     //self.editLayer.addData(feature)
                     //	.setStyle(self.layerstyle);
@@ -264,46 +267,7 @@ $.widget("cow.LeaflMapWidget", {
 			self.map.fitBounds(e.target.getBounds());
 		}
 		
-		/* Obsolete 
-		function openPopup(e) {
-			var feature = e.target.feature;
-			var layer = e.layer;
-			var name = feature.properties.name || "";
-			var desc = feature.properties.desc || "";
-			var innerHtml = ''
-					+ 'Label: <input id="titlefld" name="name" value ="'+name+'""><br/>'
-					+ 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
-					+ '<button class="popupbutton" id="editButton">edit</button><br />'
-					+ '<button class="popupbutton" id="deleteButton"">delete</button><br />'
-					+ '<button class="popupbutton" id="closeButton"">Done</button>';
-			
-			var popup = L.popup()
-				.setLatLng(e.latlng)
-				.setContent(innerHtml)
-				.openOn(self.map);
-			
-			var editbtn = document.getElementById('editButton');
-			//editbtn.addEventListener("touchstart", function(){
-			//		self.editfeature(self,feature);
-			//}, false);
-			editbtn.addEventListener("click", function(){
-					self.editfeature(self,feature);
-			}, false);
-			
-			var deletebtn = document.getElementById('deleteButton');
-			//deletebtn.addEventListener("touchstart", function() {
-			//	self.deletefeature(self,feature);
-			//}, false);
-			deletebtn.addEventListener("click", function() {
-				self.deletefeature(self,feature);
-			}, false);
-			
-			var closebtn = document.getElementById('closeButton');
-			//closebtn.addEventListener("touchstart", function(){self.closepopup(self);}, false);
-			closebtn.addEventListener("click", function(){
-			    self.changeFeature(self, feature);
-			}, false);
-		}*/
+		
 		function onEachFeature(feature, layer) {
 		    /*
 			layer.bindLabel(feature.properties.name,{ noHide: true });
@@ -343,15 +307,7 @@ $.widget("cow.LeaflMapWidget", {
 		});
 
 		this.map.addControl(this.drawControl);
-		/*Obsolete by new draw:created listener
-		this.map.on('draw:created', function (e) {
-			var type = e.layerType,
-				layer = e.layer;
-
-			//TODO: sent feature
-			self.editLayer.addLayer(layer);
-		});
-		*/
+		
 		this.map.on("draw:edited", function(e,x){
 				var layers = e.layers;
 				
@@ -364,8 +320,8 @@ $.widget("cow.LeaflMapWidget", {
                     item.data(feature);
                     //item.changer(self.core.UID);
                     item.timestamp(timestamp);
-                    core.itemstore().items('feature',{data:item.flatten()},'user');
-					//core.trigger('afterfeaturemodified',layer.toGeoJSON());
+                    var newitem = core.itemstore().items('feature',{data:item.flatten()},'user');
+                    //core.trigger('afterfeaturemodified',layer.toGeoJSON());
 				});
 				
 		});
@@ -391,8 +347,10 @@ $.widget("cow.LeaflMapWidget", {
                 //changer: self.core.UID,
                 type: 'feature',
                 data: feature
+                
             };
-            core.itemstore().items('feature',{data: item}, 'user');
+            var item = self.core.itemstore().items('feature',{data: item}, 'user');
+            item.permissions('edit',self.core.project.myGroups());
 		});
 		
 		//See following URL for custom draw controls in leaflet
@@ -442,21 +400,7 @@ $.widget("cow.LeaflMapWidget", {
 		
 		
 		this.editLayer = editlayer;
-		core.editLayer = editlayer; //DEBUG
-		/*this.editLayer.events.on({
-			scope: this,
-			sketchcomplete: this.handlers.includeFeature//this.handlers.simple		
-		})*/;		
-
 		
-		
-		
-
-//		this.editLayer.events.register('afterfeaturemodified',{'self':this,layer:editlayer},function(evt){core.trigger('afterfeaturemodified',evt.feature)});
-		//this.editLayer.events.on({'featureselected': function(){
-		//		alert('Feat selected');
-		//}});
-//		this.controls.select.activate();
 		/** End of the big bad editlayer **/
 		
 		var editPopup = function(d){
@@ -466,6 +410,13 @@ $.widget("cow.LeaflMapWidget", {
             var desc = feature.properties.desc || "";
             var creator = feature.properties.creator || "unknown";
             var owner = feature.properties.owner || "unknown";
+            var groups = self.core.project.groups();
+            var groupsChooser = '';
+            $.each(groups,function(i,d){
+                    //TODO: functionality to add permissions to this feature
+                    //Remark: a user can always edit his own feature
+                    groupsChooser = groupsChooser + '<span class="group" group="'+d._id+'">'+d.name+'</span>';
+            });
 		    var innerHtml = ''
                     //+'<input onBlur="">Title<br>'
                     //+'<textarea></textarea><br>'
@@ -473,13 +424,14 @@ $.widget("cow.LeaflMapWidget", {
                     + '<input id="popupid" type="hidden" name="popupid" value ="'+key+'"">'
                     + translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
                     + translator.translate('Description') + ': <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+                    + groupsChooser + '<br>'
                     + '<small>' + translator.translate('Created_by') + ': <i>'+ creator + '</i></small><br>'
                     + '<small>' + translator.translate('Last_edit_by') + ': <i>'+ owner + '</i></small><br>'
                     + '<button class="popupbutton" id="editButton">' + translator.translate('edit')+'</button><br>'
                     + '<button class="popupbutton" id="deleteButton"">' + translator.translate('delete')+'</button>'
                     + '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
                     + '<button class="popupbutton" id="routeButton"">' + translator.translate('Route')+'</button>';
-            $('#debugpopup').html(innerHtml);
+            $('#featurepopup').html(innerHtml);
             self.editLayer.addData(feature);
             var editbtn = document.getElementById('editButton');
             editbtn.addEventListener("click", function(){
@@ -604,7 +556,7 @@ $.widget("cow.LeaflMapWidget", {
         //self.editLayer.clearLayers();
 	},
 	closepopup: function(self){
-	    $('#debugpopup').html('');//TODO
+	    $('#featurepopup').html('');//TODO
 		self.map.closePopup();
 	},
 	findRoute: function(self, feature){    

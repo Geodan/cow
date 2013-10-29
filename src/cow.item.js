@@ -53,7 +53,6 @@ $.Cow.Item.prototype = {
         return result;
     },
     _setPermission: function(type,groups) {
-        //SMO: trigger some update in the database?
         var self = this;
         var permission = this._permissionsByType(type);
         if(permission.length==0) {
@@ -79,6 +78,7 @@ $.Cow.Item.prototype = {
                 });
             }
         }
+        self.core.trigger('storeChanged');
         return this.permissions();
     },
     /**
@@ -87,6 +87,13 @@ $.Cow.Item.prototype = {
     */
     permissionHasGroup: function(type,group) {
         var permission  = this.permissions(type);
+        var ingroups = [];
+        if (group && $.isArray(group)){
+                ingroups = group;
+        }
+        else if (group){
+            ingroups.push(group);
+        }
         if(permission.length==0) {
             return false;
         }
@@ -98,7 +105,9 @@ $.Cow.Item.prototype = {
             else {
                 var doeshave = false;
                 $.each(groups,function(i){
-                    if(groups[i] == group) doeshave = true
+                    $.each(ingroups, function(j){
+                       if(groups[i] == group[j]) doeshave = true
+                    });
                 });
                 return doeshave;
             }
