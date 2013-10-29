@@ -81,21 +81,23 @@
 
 .featurepopup {
     display: block;
+    background-color: white;
     position: absolute;
     z-index: 1000;
-    left: 20px;
+    left: 10px;
     bottom: 20px;
-    width: 190px;
+    width: 240px;
+}
+.featurepopup td, th{
+    font-size: small;
+}
+td.true {
+    color: green;
+}
+td.false {
+    color: red;
 }
 
-#featuregrid {
-    display: block;
-    position: absolute;
-    left: 0px;
-    bottom: 0px;
-    height: 100px;
-    width: 100%;
-}
 
 /* masking thanks to: http://mrbool.com/working-with-scalable-vector-graphics-svg-in-html5-video-element/27811 */
 /*
@@ -226,7 +228,7 @@ $(document).ready(function(){
   </div>
   <div id="cow"></div>	
   <div id="help" ></div>
-  <div id="featuregrid">Test</div>
+ 
   </body>
 </html>
 

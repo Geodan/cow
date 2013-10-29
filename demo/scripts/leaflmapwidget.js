@@ -212,7 +212,6 @@ $.widget("cow.LeaflMapWidget", {
                     fill:  feature.properties.polycolor,
                     "fill-opacity": 0.5
                 } 
-                var viewpermission = false;
                 var mygroups = self.core.project.myGroups();
                 if (item.status() != 'deleted'
                     && item.permissionHasGroup('edit',mygroups)
@@ -410,13 +409,19 @@ $.widget("cow.LeaflMapWidget", {
             var desc = feature.properties.desc || "";
             var creator = feature.properties.creator || "unknown";
             var owner = feature.properties.owner || "unknown";
+            var item = self.core.itemstore().getItemById(key);
+            
             var groups = self.core.project.groups();
-            var groupsChooser = '';
+            var groupsChooser = '<table><tr><th>group</th><th>vw</th><th>ed</th><th>sh</th></tr>';
             $.each(groups,function(i,d){
                     //TODO: functionality to add permissions to this feature
                     //Remark: a user can always edit his own feature
-                    groupsChooser = groupsChooser + '<span class="group" group="'+d._id+'">'+d.name+'</span>';
+                    var canedit = item.permissionHasGroup('edit',d._id.toString());
+                    var canview = item.permissionHasGroup('view',d._id.toString());
+                    var canshare = item.permissionHasGroup('share',d._id.toString());
+                    groupsChooser = groupsChooser + '<tr><td class="group" group="'+d._id+'">'+d.name+'</td><td class='+canview+' >'+canview+'</td><td class='+canedit+' >'+canedit+'</td><td class='+canshare+' >'+canshare+'</td></tr>';
             });
+            groupsChooser = groupsChooser + '</table>';
 		    var innerHtml = ''
                     //+'<input onBlur="">Title<br>'
                     //+'<textarea></textarea><br>'
