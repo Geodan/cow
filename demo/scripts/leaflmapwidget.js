@@ -462,142 +462,137 @@ $.widget("cow.LeaflMapWidget", {
 		var menu = function(feature,obj){
 		    var _this = this;
 		    var loc = d3.mouse(obj); //Wrong on firefox
+		    var divloc = [d3.event.screenX ,d3.event.screenY ];
 		    var item = self.core.itemstore().getItemById(feature.properties.key);
 		    var groups = self.core.project.groups();
-		    //var loc = [d3.event.screenX ,d3.event.screenY ];	    
-            var radius = 40,//outwards radius of ring
-            padding = 25; //inwards (thickness of ring
-            _this.color = d3.scale.category10();
-            
-            _this.arc = d3.svg.arc()
-                .outerRadius(radius )
-                .innerRadius(radius - padding);
-            _this.arcl2 = d3.svg.arc()
-                .startAngle(.5 * Math.PI)
-                .endAngle(1 * Math.PI)
-                .outerRadius(radius + 28)
-                .innerRadius(radius + 28 - padding);    
-            _this.pie = d3.layout.pie()
+		    $.each(groups, function(i,d){
+		        d.children = [{name: 'Vw'},{name: 'Ed'},{name: 'Sh'}]
+		    });
+		    var data = {
+             "name": "root",
+             "children": [
+              /*{
+               "name": "P",
+               size: 50,
+               "children": groups
+              },*/{
+                  "name": "E",
+                  size: 100
+             },{
+                  "name": "D",
+                  size: 100
+             },{
+                  "name": "T",
+                  size: 100
+             }]
+            };
+            var width = 150;
+            var height = 150;
+            var radius = Math.min(width, height) / 2;
+            var partition = d3.layout.partition()
                 .sort(null)
-                .value(function(d) { 
-                    var value = d.value || 100;
-                    return value; 
-            });
+                .size([2 * Math.PI, radius * radius])
+                .value(function(d) { return 1; });
+            var arc = d3.svg.arc()
+                .startAngle(function(d) { return d.x; })
+                .endAngle(function(d) { return d.x + d.dx; })
+                .innerRadius(function(d) { return Math.sqrt(d.y); })
+                .outerRadius(function(d) { return Math.sqrt(d.y + d.dy); });
+		    
+		    	    
+            var radius = 40,//outwards radius of ring
+                padding = 25; //inwards (thickness of ring
+            var color = d3.scale.category10();
             var entity = _this.g.append('g');
-            
-            var values = [
-                {key: 'E', value: 100},
-                {key: 'P', value: 100},
-                {key: 'T', value: 100},
-                {key: 'D', value: 100}
-            ];
-            
+
            if (entity.attr('selected') == 'true'){
             entity.select('.pie').remove();
             entity.attr('selected','false');
            }
            else {
             entity.attr('selected','true');
+            
             var chart = entity.append('g')
                 .classed('pie',true)
-                .attr('width',150)
-                .attr('height',150)
+                .attr('width',width)
+                .attr('height',height)
                 .append('g')
                 .attr('class','zoomable')
                 .attr("transform", function(z){
-                    //var x = _this.geoPath.centroid(d)[0];
-                    //var y = _this.geoPath.centroid(d)[1];
                     var x = loc[0];
                     var y = loc[1];
                     return "translate(" + x + "," + y + ")"
                 });
              
-             var g = chart.selectAll('.arc1')
-                .data(function(d){
-                    return _this.pie(values);
-                })
+             //var g = chart.selectAll('.arc1')
+             var g = chart.datum(data).selectAll("arc1")
+                .data(partition.nodes)
                 .enter().append("g")
                 .attr("class", "arc1");
                 
             g.append("path")
-                .attr("d", _this.arc)
-                .style("fill", function(x) { 
-                        return _this.color(x.data.key); 
+                .attr("d", function(d){
+                    return arc(d);
                 })
-                .on('mouseover', function(z){
-                        var key = z.data.key;
-                        console.log(key);
-                        
-                        if (key == 'E'){ //edit geometry
-                            entity.remove();
-                            self.editLayer.addData(feature);
-                            self.editfeature(self,feature);
-                            
-                        }
-                        else if (key == 'T'){ //edit tekst
-                            entity.remove();
-                            var name = feature.properties.name || "";
-                            var desc = feature.properties.desc || "";
-                            var innerHtml = ''
-                            + translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
-                            + translator.translate('Description') + ': <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
-                            //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
-                            + '';
-                            var div = d3.select('body').append('div')
-                                .attr("height", 500)
-                                .style('left',loc[0]  -100 +  'px')
-                                .style('top',loc[1] + 100 + 'px')
-                                .style('position','absolute');
-                                div.append('div').attr("width", 480)
-                                .html(innerHtml);
-                                div.append('div')
-                                    .html(translator.translate('Done'))
-                                    .classed('popupbutton', true)
-                                    .on('click',function(z){
-                                            self.changeFeature(self, feature);
-                                            div.remove();
-                                    });
-                                    
-                        }
-                        else if (key == 'P'){//Set permissions
-                            console.log('todo: set perms');
-                            var perms = [
-                                {key: 'P1', value: 100},
-                                {key: 'P2', value: 100},
-                                {key: 'P3', value: 100},
-                                {key: 'P4', value: 100}
-                            ];
-                            var g2 = g.selectAll('.arc2')
-                                .data(function(z){
-                                    return _this.pie(groups);
-                                })
-                                .enter().append("g")
-                                .attr("class", "arc2");
-                            g2.append("path")
-                                .attr("d", _this.arcl2)
-                                .style("fill", function(x) { 
-                                     return _this.color(x.data._id); 
-                                });
-                            g2.append("text")
-                              .attr("transform", function(d) { return "translate(" + _this.arcl2.centroid(d) + ")"; })
-                              .attr("dy", ".35em")
-                              .style("text-anchor", "middle")
-                              .text(function(d) { 
-                                      return d.data.name; 
-                              });
-                        }
-                        else if (key = 'D'){//Delete feature
-                            entity.remove();
-                            self.deletefeature(self,feature);
-                        }
-                });
                 
+                .style("fill", function(d) {
+                    if (d.name == 'root') 
+                        return 'none';
+                    else if (d.parent && d.parent.name == 'root')
+                        return color(d.name);
+                    else 
+                        return color(d.name);
+                })
+                .on('mouseover', function(d){
+                     var name = d.name;
+                     if (name == 'E'){ //edit geometry
+                        entity.remove();
+                        self.editLayer.addData(feature);
+                        self.editfeature(self,feature);
+                    }
+                    else if (name == 'T'){ //edit tekst
+                        entity.remove();
+                        var name = feature.properties.name || "";
+                        var desc = feature.properties.desc || "";
+                        var innerHtml = ''
+                        + translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
+                        + translator.translate('Description') + ': <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+                        //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
+                        + '';
+                        var div = d3.select('body').append('div')
+                            .attr("height", 500)
+                            .style('left',divloc[0]  -100 +  'px')
+                            .style('top',divloc[1] + 0 + 'px')
+                            .style('background-color','white')
+                            .style('opacity',0.7)
+                            .style('position','absolute');
+                            div.append('div').attr("width", 480)
+                            
+                            .html(innerHtml);
+                            div.append('div')
+                                .html(translator.translate('Done'))
+                                .classed('popupbutton', true)
+                                .on('click',function(z){
+                                        self.changeFeature(self, feature);
+                                        div.remove();
+                                });
+                    }
+                    else if (name == 'P'){//Set permissions
+                        console.log(d, this);
+                        
+                    }
+                    else if (name == 'D'){//Delete feature
+                        entity.remove();
+                        self.deletefeature(self,feature);
+                    }   
+            });
+               
             g.append("text")
-              .attr("transform", function(d) { return "translate(" + _this.arc.centroid(d) + ")"; })
+              .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
               .attr("dy", ".35em")
               .style("text-anchor", "middle")
               .text(function(d) { 
-                      return d.data.key; 
+                      return d.name; 
               });
            }
            

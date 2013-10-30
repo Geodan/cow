@@ -165,6 +165,13 @@ $(document).ready(function(){
         setCookie("username",username,1);
     }
   }
+  //Settings for ProGideon workshop
+  var progideon = core.projects({_id:999,name:"Overstroming", peeruid: core.UID}); //Add after localdb has been initialized
+  progideon.groups({_id:1,name:'Public'});
+  progideon.groups({_id:2,name:'Populatie'});
+  progideon.groups({_id:3,name:'Evacuatie'});
+  progideon.groups({_id:4,name:'Opvang'});
+  
   //What to do when a user changes name
   $('#myname').on('blur', function(e, ui) {
     var username = $(this).val();
