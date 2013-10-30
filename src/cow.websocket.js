@@ -356,8 +356,8 @@ $.Cow.Websocket.prototype = {
         if (payload.groups){//Add group info to project
             $.each(payload.groups, function(i,d){
                     var group = project.groups({_id:d._id, name: d.name});
-                    group.members(d.members);
-                    group.groups(d.groups);
+                    //group.members(d.members); //TODO: Disabled until we make use of personal IDs instead of client ID's
+                    //group.groups(d.groups);
             });
         }
         this.core.trigger('projectListChanged');
