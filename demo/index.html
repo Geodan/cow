@@ -79,14 +79,25 @@
     left: 0px;
 }
 
-.debugpopup {
+.featurepopup {
     display: block;
+    background-color: white;
     position: absolute;
     z-index: 1000;
-    right: 20px;
+    left: 10px;
     bottom: 20px;
-    width: 190px;
+    width: 240px;
 }
+.featurepopup td, th{
+    font-size: small;
+}
+td.true {
+    color: green;
+}
+td.false {
+    color: red;
+}
+
 
 /* masking thanks to: http://mrbool.com/working-with-scalable-vector-graphics-svg-in-html5-video-element/27811 */
 /*
@@ -147,8 +158,8 @@ $(document).ready(function(){
   }
   else 
   {
-  username=prompt("Please enter your name:","");
-  if (username!=null && username!="")
+    username=prompt("Please enter your name:","");
+    if (username!=null && username!="")
     {
         core.username(username);
         setCookie("username",username,1);
@@ -157,7 +168,8 @@ $(document).ready(function(){
   //What to do when a user changes name
   $('#myname').on('blur', function(e, ui) {
     var username = $(this).val();
-    core.me().owner({name:username});
+    //core.me().owner({name:username});
+    core.username(username);
     setCookie("username",username,1);
   });
   
@@ -170,7 +182,7 @@ $(document).ready(function(){
   </head>
   <body>
   <div id="videolayer" class='videolayer'></div>
-  <div id= "debugpopup" class="debugpopup"></div>
+  <div id= "featurepopup" class="featurepopup"></div>
   <div id="top">
     <span id="connect" title="click to change connection status"></span>
     <span class="copyright">design/code <a href='http://creativecommons.org/licenses/by/3.0/'>CC-BY</a>/<a href="http://opensource.org/licenses/BSD-2-Clause">BSD</a> by <a href="http://research.geodan.nl">Geodan Research</a></span>
@@ -216,6 +228,7 @@ $(document).ready(function(){
   </div>
   <div id="cow"></div>	
   <div id="help" ></div>
+ 
   </body>
 </html>
 
