@@ -26,6 +26,7 @@ $.Cow.Core = function(element, options) {
     this.projectList = [];
     this.groupList = [];
     this._username = 'Anonymous';
+    this._pid; //Personal ID. Used to identify people.
     this.project; //This will become the active project object
     this.activeProject = 666; //Carefull, order matters! Make sure the activeProject is set before localdbase is initialized
     this.localDbase;
@@ -188,7 +189,7 @@ $.Cow.Group = function(core, options) {
 $.Cow.Item = function(core, options) {
     var self=this;
     
-    //this.core = core; //We don't need the core in an item, do we?!   
+    this.core = core;
     this._creator   = options.creator;
     this._timestamp = options.timestamp || new Date().getTime();
     this._changer   = options.changer;
@@ -272,6 +273,15 @@ $.Cow.Core.prototype = {
         var peer = this.getPeerByUid(this.UID);    
         return peer;
     },
+    pid: function(pid){
+        switch(arguments.length) {
+        case 0:
+            return this._pid;
+        case 1:
+            this._pid = pid;
+            return this._pid;
+        }
+    },
     username: function(name){
         switch(arguments.length) {
         case 0:
@@ -281,6 +291,8 @@ $.Cow.Core.prototype = {
             //Set username in page
             //TODO: make this more flexible
             $('#myname').val(name);
+            //set PID as username TODO: incorporate in real ID system
+            this.pid(name);
             //Change username in my peerobject
             if (this.me()){
                 this.me().owner({name:name});

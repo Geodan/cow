@@ -8,12 +8,12 @@ function d3layer(layername, config){
 		this.data;
 		this.type = config.type || "path";
 		this.freq = 100;
-		this.g = config.g;
 		this.map = config.map;
 		this.style = config.style;
 		this.onClick = config.onClick;
 		this.classfield = config.classfield;
 		this.satellites = config.satellites || false;
+		this.eachFunctions = config.eachFunctions || false;	
 		this.coolcircles = config.coolcircles || false;
 		this.videobox = config.videobox || false;
 		this.labels = config.labels || false;
@@ -23,14 +23,14 @@ function d3layer(layername, config){
 		this.pointradius = config.pointradius || 5;
 		this.bounds = [[0,0],[1,1]];
 		var width, height,bottomLeft,topRight;
-        
+        var g;
         
 		if (config.maptype == 'OpenLayers'){//Getting the correct OpenLayers SVG. 
 			var div = d3.selectAll("#" + config.divid);
 			div.attr("z-index",10001);
 			div.selectAll("svg").remove();
 			var svg = div.append("svg");
-			var g = svg.append("g");
+			g = svg.append("g");
 		}
 		else { //Leaflet does it easier
 			/* Initialize the SVG layer */
@@ -39,6 +39,7 @@ function d3layer(layername, config){
 			var svg = d3.select("#map").select("svg");
 			g = svg.append("g").attr("class", "leaflet-zoom-hide");
 		}
+		this.g = g;
 		//In Chrome the transform element is not propagated to the foreignObject
         //Therefore we have to calculate our own offset
         this.offset = function(x){
@@ -83,10 +84,10 @@ function d3layer(layername, config){
 		}
 		
 		var geoPath = d3.geo.path().projection(this.project);
-		
+		this.geoPath = geoPath;
 		var click = function(d){
 		    if (_this.onClick)
-		        _this.onClick(d);
+		        _this.onClick(d,this);
 		}
 		
 		//A per feature styling method
@@ -326,7 +327,16 @@ function d3layer(layername, config){
                   .attr("r", 6)
                   .remove();
             }
-
+            
+            //Add custum functions to each feature
+            if (_this.eachFunctions){
+                _this.eachFunctions.forEach(function(f){
+                    newentity.each(function(d,i){
+                        f(d,i,this,_this);//TODO: ugly
+                    });
+                });
+            }
+            
 			//On update
 			entities.each(function(d,i){
 			    var entity = d3.select(this);

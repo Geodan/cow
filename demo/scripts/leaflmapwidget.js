@@ -85,7 +85,7 @@ $.widget("cow.LeaflMapWidget", {
 				};
 				self.core.me() && self.core.me().view({"extent":extent}); //Set my own extent
 				//Reset/redraw layers         
-				self._d3layers.forEach(function(l){
+				$.each(self._d3layers, function(i,l){
                     l.reset(e);
                 });
 		};
@@ -94,6 +94,7 @@ $.widget("cow.LeaflMapWidget", {
 				
 		this.map.on('moveend',function(e){
 				handleNewExtent(e);
+				d3.selectAll('.pie').remove();
 		});
 		this.map.on("viewreset", function(e){
 		        //handleNewExtent(e);
@@ -101,6 +102,7 @@ $.widget("cow.LeaflMapWidget", {
 		this.map.on('click',function(e){
 				self.controls.editcontrol.save();
 				self.controls.editcontrol.disable();
+				
 		});
 //		this.controls.select.activate();
     },
@@ -117,9 +119,10 @@ $.widget("cow.LeaflMapWidget", {
     },
     //Getter for d3 layer by name
     getD3LayerByName: function(name){
+        var self = this;
         //TODO: what a weird method the get the layer. Can't be done easier?
         var returnlayer;
-        this._d3layers.forEach(function(layer){
+        $.each(self._d3layers,function(i,layer){
            if (layer.layername === name) {
                returnlayer = layer;
            }
@@ -194,8 +197,7 @@ $.widget("cow.LeaflMapWidget", {
 	_reloadLayer: function(e){
 	    var self = this;
 		self.editLayer.clearLayers();
-        //TODO: make sure it only requests items with type 'feature'
-		var items = self.core.itemstore().items();
+		var items = self.core.itemstore().items('feature');
 		var collection = {"type":"FeatureCollection","features":[]};
 		$.each(items, function(i, item){
 			var feature = item.data();
@@ -212,8 +214,10 @@ $.widget("cow.LeaflMapWidget", {
                     fill:  feature.properties.polycolor,
                     "fill-opacity": 0.5
                 } 
-                
-                if (item.status() != 'deleted'){
+                var mygroups = self.core.project.myGroups();
+                if (item.status() != 'deleted'
+                    && item.permissionHasGroup('edit',mygroups)
+                ){
                     collection.features.push(feature);
                     //self.editLayer.addData(feature)
                     //	.setStyle(self.layerstyle);
@@ -264,46 +268,7 @@ $.widget("cow.LeaflMapWidget", {
 			self.map.fitBounds(e.target.getBounds());
 		}
 		
-		/* Obsolete 
-		function openPopup(e) {
-			var feature = e.target.feature;
-			var layer = e.layer;
-			var name = feature.properties.name || "";
-			var desc = feature.properties.desc || "";
-			var innerHtml = ''
-					+ 'Label: <input id="titlefld" name="name" value ="'+name+'""><br/>'
-					+ 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
-					+ '<button class="popupbutton" id="editButton">edit</button><br />'
-					+ '<button class="popupbutton" id="deleteButton"">delete</button><br />'
-					+ '<button class="popupbutton" id="closeButton"">Done</button>';
-			
-			var popup = L.popup()
-				.setLatLng(e.latlng)
-				.setContent(innerHtml)
-				.openOn(self.map);
-			
-			var editbtn = document.getElementById('editButton');
-			//editbtn.addEventListener("touchstart", function(){
-			//		self.editfeature(self,feature);
-			//}, false);
-			editbtn.addEventListener("click", function(){
-					self.editfeature(self,feature);
-			}, false);
-			
-			var deletebtn = document.getElementById('deleteButton');
-			//deletebtn.addEventListener("touchstart", function() {
-			//	self.deletefeature(self,feature);
-			//}, false);
-			deletebtn.addEventListener("click", function() {
-				self.deletefeature(self,feature);
-			}, false);
-			
-			var closebtn = document.getElementById('closeButton');
-			//closebtn.addEventListener("touchstart", function(){self.closepopup(self);}, false);
-			closebtn.addEventListener("click", function(){
-			    self.changeFeature(self, feature);
-			}, false);
-		}*/
+		
 		function onEachFeature(feature, layer) {
 		    /*
 			layer.bindLabel(feature.properties.name,{ noHide: true });
@@ -343,15 +308,7 @@ $.widget("cow.LeaflMapWidget", {
 		});
 
 		this.map.addControl(this.drawControl);
-		/*Obsolete by new draw:created listener
-		this.map.on('draw:created', function (e) {
-			var type = e.layerType,
-				layer = e.layer;
-
-			//TODO: sent feature
-			self.editLayer.addLayer(layer);
-		});
-		*/
+		
 		this.map.on("draw:edited", function(e,x){
 				var layers = e.layers;
 				
@@ -364,8 +321,8 @@ $.widget("cow.LeaflMapWidget", {
                     item.data(feature);
                     //item.changer(self.core.UID);
                     item.timestamp(timestamp);
-                    core.itemstore().items('feature',{data:item.flatten()},'user');
-					//core.trigger('afterfeaturemodified',layer.toGeoJSON());
+                    var newitem = core.itemstore().items('feature',{data:item.flatten()},'user');
+                    //core.trigger('afterfeaturemodified',layer.toGeoJSON());
 				});
 				
 		});
@@ -391,8 +348,10 @@ $.widget("cow.LeaflMapWidget", {
                 //changer: self.core.UID,
                 type: 'feature',
                 data: feature
+                
             };
-            core.itemstore().items('feature',{data: item}, 'user');
+            var item = self.core.itemstore().items('feature',{data: item}, 'user');
+            item.permissions('edit',self.core.project.myGroups());
 		});
 		
 		//See following URL for custom draw controls in leaflet
@@ -442,21 +401,7 @@ $.widget("cow.LeaflMapWidget", {
 		
 		
 		this.editLayer = editlayer;
-		core.editLayer = editlayer; //DEBUG
-		/*this.editLayer.events.on({
-			scope: this,
-			sketchcomplete: this.handlers.includeFeature//this.handlers.simple		
-		})*/;		
-
 		
-		
-		
-
-//		this.editLayer.events.register('afterfeaturemodified',{'self':this,layer:editlayer},function(evt){core.trigger('afterfeaturemodified',evt.feature)});
-		//this.editLayer.events.on({'featureselected': function(){
-		//		alert('Feat selected');
-		//}});
-//		this.controls.select.activate();
 		/** End of the big bad editlayer **/
 		
 		var editPopup = function(d){
@@ -466,6 +411,19 @@ $.widget("cow.LeaflMapWidget", {
             var desc = feature.properties.desc || "";
             var creator = feature.properties.creator || "unknown";
             var owner = feature.properties.owner || "unknown";
+            var item = self.core.itemstore().getItemById(key);
+            
+            var groups = self.core.project.groups();
+            var groupsChooser = '<table id="groupsChooser"><tr><th>group</th><th>vw</th><th>ed</th><th>sh</th></tr>';
+            $.each(groups,function(i,d){
+                    //TODO: functionality to add permissions to this feature
+                    //Remark: a user can always edit his own feature
+                    var canedit = item.permissionHasGroup('edit',d._id.toString());
+                    var canview = item.permissionHasGroup('view',d._id.toString());
+                    var canshare = item.permissionHasGroup('share',d._id.toString());
+                    groupsChooser = groupsChooser + '<tr><td class="group" group="'+d._id+'">'+d.name+'</td><td class='+canview+' >'+canview+'</td><td class='+canedit+' >'+canedit+'</td><td class='+canshare+' >'+canshare+'</td></tr>';
+            });
+            groupsChooser = groupsChooser + '</table>';
 		    var innerHtml = ''
                     //+'<input onBlur="">Title<br>'
                     //+'<textarea></textarea><br>'
@@ -473,13 +431,15 @@ $.widget("cow.LeaflMapWidget", {
                     + '<input id="popupid" type="hidden" name="popupid" value ="'+key+'"">'
                     + translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
                     + translator.translate('Description') + ': <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+                    + groupsChooser + '<br>'
                     + '<small>' + translator.translate('Created_by') + ': <i>'+ creator + '</i></small><br>'
                     + '<small>' + translator.translate('Last_edit_by') + ': <i>'+ owner + '</i></small><br>'
                     + '<button class="popupbutton" id="editButton">' + translator.translate('edit')+'</button><br>'
                     + '<button class="popupbutton" id="deleteButton"">' + translator.translate('delete')+'</button>'
                     + '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
                     + '<button class="popupbutton" id="routeButton"">' + translator.translate('Route')+'</button>';
-            $('#debugpopup').html(innerHtml);
+            $('#featurepopup').html(innerHtml);
+            
             self.editLayer.addData(feature);
             var editbtn = document.getElementById('editButton');
             editbtn.addEventListener("click", function(){
@@ -499,11 +459,158 @@ $.widget("cow.LeaflMapWidget", {
 			}, false);
 		};
 		
+		var menu = function(feature,obj){
+		    var _this = this;
+		    var loc = d3.mouse(obj); //Wrong on firefox
+		    var item = self.core.itemstore().getItemById(feature.properties.key);
+		    var groups = self.core.project.groups();
+		    //var loc = [d3.event.screenX ,d3.event.screenY ];	    
+            var radius = 40,//outwards radius of ring
+            padding = 25; //inwards (thickness of ring
+            _this.color = d3.scale.category10();
+            
+            _this.arc = d3.svg.arc()
+                .outerRadius(radius )
+                .innerRadius(radius - padding);
+            _this.arcl2 = d3.svg.arc()
+                .startAngle(.5 * Math.PI)
+                .endAngle(1 * Math.PI)
+                .outerRadius(radius + 28)
+                .innerRadius(radius + 28 - padding);    
+            _this.pie = d3.layout.pie()
+                .sort(null)
+                .value(function(d) { 
+                    var value = d.value || 100;
+                    return value; 
+            });
+            var entity = _this.g.append('g');
+            
+            var values = [
+                {key: 'E', value: 100},
+                {key: 'P', value: 100},
+                {key: 'T', value: 100},
+                {key: 'D', value: 100}
+            ];
+            
+           if (entity.attr('selected') == 'true'){
+            entity.select('.pie').remove();
+            entity.attr('selected','false');
+           }
+           else {
+            entity.attr('selected','true');
+            var chart = entity.append('g')
+                .classed('pie',true)
+                .attr('width',150)
+                .attr('height',150)
+                .append('g')
+                .attr('class','zoomable')
+                .attr("transform", function(z){
+                    //var x = _this.geoPath.centroid(d)[0];
+                    //var y = _this.geoPath.centroid(d)[1];
+                    var x = loc[0];
+                    var y = loc[1];
+                    return "translate(" + x + "," + y + ")"
+                });
+             
+             var g = chart.selectAll('.arc1')
+                .data(function(d){
+                    return _this.pie(values);
+                })
+                .enter().append("g")
+                .attr("class", "arc1");
+                
+            g.append("path")
+                .attr("d", _this.arc)
+                .style("fill", function(x) { 
+                        return _this.color(x.data.key); 
+                })
+                .on('mouseover', function(z){
+                        var key = z.data.key;
+                        console.log(key);
+                        
+                        if (key == 'E'){ //edit geometry
+                            entity.remove();
+                            self.editLayer.addData(feature);
+                            self.editfeature(self,feature);
+                            
+                        }
+                        else if (key == 'T'){ //edit tekst
+                            entity.remove();
+                            var name = feature.properties.name || "";
+                            var desc = feature.properties.desc || "";
+                            var innerHtml = ''
+                            + translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
+                            + translator.translate('Description') + ': <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+                            //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
+                            + '';
+                            var div = d3.select('body').append('div')
+                                .attr("height", 500)
+                                .style('left',loc[0]  -100 +  'px')
+                                .style('top',loc[1] + 100 + 'px')
+                                .style('position','absolute');
+                                div.append('div').attr("width", 480)
+                                .html(innerHtml);
+                                div.append('div')
+                                    .html(translator.translate('Done'))
+                                    .classed('popupbutton', true)
+                                    .on('click',function(z){
+                                            self.changeFeature(self, feature);
+                                            div.remove();
+                                    });
+                                    
+                        }
+                        else if (key == 'P'){//Set permissions
+                            console.log('todo: set perms');
+                            var perms = [
+                                {key: 'P1', value: 100},
+                                {key: 'P2', value: 100},
+                                {key: 'P3', value: 100},
+                                {key: 'P4', value: 100}
+                            ];
+                            var g2 = g.selectAll('.arc2')
+                                .data(function(z){
+                                    return _this.pie(groups);
+                                })
+                                .enter().append("g")
+                                .attr("class", "arc2");
+                            g2.append("path")
+                                .attr("d", _this.arcl2)
+                                .style("fill", function(x) { 
+                                     return _this.color(x.data._id); 
+                                });
+                            g2.append("text")
+                              .attr("transform", function(d) { return "translate(" + _this.arcl2.centroid(d) + ")"; })
+                              .attr("dy", ".35em")
+                              .style("text-anchor", "middle")
+                              .text(function(d) { 
+                                      return d.data.name; 
+                              });
+                        }
+                        else if (key = 'D'){//Delete feature
+                            entity.remove();
+                            self.deletefeature(self,feature);
+                        }
+                });
+                
+            g.append("text")
+              .attr("transform", function(d) { return "translate(" + _this.arc.centroid(d) + ")"; })
+              .attr("dy", ".35em")
+              .style("text-anchor", "middle")
+              .text(function(d) { 
+                      return d.data.key; 
+              });
+           }
+           
+              
+              
+          }
+		
 		var d3editlyr = new d3layer("editlayer",{
 		    maptype: "Leaflet",
 			map: self,
-			onClick: editPopup,
+			//onClick: editPopup,
 			type: "path",
+			onClick:menu,
 			labels: true,
 			labelconfig: {
                 field: "name",
@@ -514,8 +621,8 @@ $.widget("cow.LeaflMapWidget", {
 			style: {
 					fill: "none",
 					stroke: "steelBlue",
-					'stroke-width': 2,
-					textlocation: "ul"
+					'stroke-width': 2
+					
 				}
 		});
         self.d3Layers(d3editlyr);
@@ -599,12 +706,12 @@ $.widget("cow.LeaflMapWidget", {
             var timestamp = d.getTime();
             item.data(feature);
             item.timestamp(timestamp);
-            //self.core.itemstore().items('feature',{data:item}, 'user');
+            self.core.itemstore().items('feature',{data:item.flatten()}, 'user');
         }
         //self.editLayer.clearLayers();
 	},
 	closepopup: function(self){
-	    $('#debugpopup').html('');//TODO
+	    $('#featurepopup').html('');//TODO
 		self.map.closePopup();
 	},
 	findRoute: function(self, feature){    

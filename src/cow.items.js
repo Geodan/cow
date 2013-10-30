@@ -71,10 +71,13 @@ $.Cow.ItemStore.prototype = {
 		
 		return newitem;
     },
-    _getItems: function(){
+    _getItems: function(name){
         var items = [];
         $.each(this.itemList, function(id, item) {
-            items.push(item);
+            if (name && item.type() == name){
+                items.push(item);
+            }
+            else if (!name) {items.push(item);}
         });        
         return items;
     },
@@ -120,7 +123,7 @@ $.Cow.ItemStore.prototype = {
 	loadItemsFromDb: function(d){
         var self = this;
         $.each(d.rows, function(i,d){
-            self.items('feature',{data:d.doc},'db');
+            self.items(d.doc.type,{data:d.doc},'db');
         });
         self.core.trigger('storeChanged');
     },
