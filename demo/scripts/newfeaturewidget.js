@@ -58,7 +58,7 @@ $.widget("cow.NewFeatureWidget", {
         names = names + '<span newpoly="#f57900" class="peerlist newpoly" title="f57900 polygon"><div style="background:#f57900">&nbsp;</div></span></p>';
         element.html(names);
         
-        $.getJSON('./mapicons/imoov/list.js', function(data) {
+        $.getJSON('./mapicons/progideon_list.js', function(data) {
             var html = '';
 			$.each(data.icons, function(key,val) {
 				html = html+ '<span class="peerlist newpoint" newpoint="./mapicons/' + val + '"><img width=30 height=30 src="./mapicons/'+val+'"></span>';
