@@ -242,6 +242,7 @@ $.widget("cow.LeaflMapWidget", {
 				icon: icon,
 				color: feature.properties.linecolor,
 				fillColor:  feature.properties.polycolor
+				
 			} 
 			return style;
 		};
@@ -259,6 +260,12 @@ $.widget("cow.LeaflMapWidget", {
 				if (!L.Browser.ie && !L.Browser.opera) {
 					layer.bringToFront();
 				}
+			}
+			else{
+			    layer.setStyle({
+					opacity: 0.5,
+					fillOpacity: 0.5
+				})
 			}
 		}
 		function resetHighlight(e) {
@@ -287,7 +294,9 @@ $.widget("cow.LeaflMapWidget", {
 					return L.marker(latlng, {
 							icon: L.icon({
 									iconUrl: feature.properties.icon,
-									iconSize: [40, 40]
+									iconSize: [20, 22],
+									opacity: 0.5,
+									fillOpacity: 0.5
 							})
 					})//.bindLabel(feature.properties.name,{noHide: true})
 					;
@@ -403,7 +412,7 @@ $.widget("cow.LeaflMapWidget", {
 		this.editLayer = editlayer;
 		
 		/** End of the big bad editlayer **/
-		
+		/* Obsolete by D3 methods
 		var editPopup = function(d){
 		    var feature = d;
 		    var key = feature.properties.key || "";
@@ -458,7 +467,8 @@ $.widget("cow.LeaflMapWidget", {
 			    self.findRoute(self, feature);
 			}, false);
 		};
-		
+		*/
+		//Replacing editpopup:
 		var menu = function(feature,obj){
 		    var _this = this;
 		    var loc = d3.mouse(obj); //Wrong on firefox
