@@ -103,8 +103,8 @@ function d3layer(layername, config){
                             else return "./mapicons/stratego/stratego-flag.svg";
                     })
                     .classed("nodeimg",true)
-                    .attr("width", 50)
-                    .attr("height", 50)
+                    .attr("width", 32)
+                    .attr("height", 37)
                     .attr("x",x-25)
                     .attr("y",y-25)
 		  }
