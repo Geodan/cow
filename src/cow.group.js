@@ -34,7 +34,7 @@ $.Cow.Group.prototype = {
         if (!existing){
 
             this.memberList.push(peerid); //Adding to the list
-            //self.core.trigger('projectListChanged', this.core.UID);
+            this.core.trigger('projectListChanged', this.core.UID);
         }
         return peerid;
     },
@@ -43,7 +43,7 @@ $.Cow.Group.prototype = {
 
             if (this.memberList[i] == peerid) {
                 this.memberList.splice(i,1); //Remove from list
-                //self.core.trigger('projectListChanged', this.core.UID);
+                this.core.trigger('projectListChanged', this.core.UID);
                 return;
             }
         }

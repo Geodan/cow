@@ -57,7 +57,7 @@ $.Cow.ItemStore.prototype = {
 		    self.core.itemsdb().updateRecord_UI(newitem.flatten());
 		    //self.core.localdbase().itemsdb(newitem);
 		    self.core.trigger('storeChanged');
-		    var message = JSON.stringify(newitem);//TODO, bit weird heh...?
+		    var message = JSON.stringify(newitem.flatten());//TODO, bit weird heh...?
 		    self.core.websocket().sendData(message, "newItem");
 		}
 		else if (source == 'ws'){

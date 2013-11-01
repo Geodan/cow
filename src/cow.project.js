@@ -75,7 +75,7 @@ $.Cow.Project.prototype = {
             }
         }
         if (existing == false){
-            group = new $.Cow.Group(this, options);
+            group = new $.Cow.Group(this.core, options);
             if (options.peeruid){
                 group.members(options.peeruid);
             }

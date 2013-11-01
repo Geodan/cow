@@ -144,6 +144,9 @@ margin: 10px;
 float: left;
 padding: 2px;
 }
+path {
+    cursor: pointer;
+}
 
 .map {
 	border: solid 1px #555753;
