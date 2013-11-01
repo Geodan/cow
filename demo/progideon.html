@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ProGideon</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" href="../lib/leaflet-0.6/leaflet.css" />
+  <link rel="stylesheet" href="../lib/leaflet_draw/leaflet.draw.css" />
+  <link rel="stylesheet" href="../lib/leaflet_label/leaflet.label.css" />
+
+  <script src="../lib/jquery-2.0.3/jquery-2.0.3.js" type="text/javascript"></script>	
+  <script src="../lib/jquery-ui-1.10.2/jquery-ui.js" type="text/javascript"></script>  
+ <script src="http://download.pouchdb.com/pouchdb-nightly.js"></script>
+
+
+  <script src="../lib/leaflet-0.6/leaflet.js"></script>
+  <script src="../lib/leaflet_draw/leaflet.draw.js"></script>
+  <script src="../lib/leaflet_label/leaflet.label.js"></script>
+  <script src="../lib/d3/d3.v3.min.js" charset="utf-8"></script>
+  <script src="../lib/d3/topojson.v1.min.js"></script>
+  <script src="./scripts/nodeoverlay.js" type="text/javascript"></script>
+  <script src="./scripts/d3layer.js" type="text/javascript"></script>
+
+  <script src="../src/cow.core.js" type="text/javascript"></script>
+  <script src="../src/cow.websocket.js" type="text/javascript"></script>
+  <script src="../src/cow.peer.js" type="text/javascript"></script>
+  <script src="../src/cow.group.js" type="text/javascript"></script>
+  <script src="../src/cow.project.js" type="text/javascript"></script>
+  <script src="../src/cow.item.js" type="text/javascript"></script>
+  <script src="../src/cow.items.js" type="text/javascript"></script>
+  <script src="../src/cow.geolocator.js" type="text/javascript"></script>
+  <script src="../src/cow.pouchdb.js" type="text/javascript"></script>
+
+  <script src="scripts/i18next-1.7.1/i18next-1.7.1.min.js" type="text/javascript"></script>
+  <script src="scripts/translator.js" type="text/javascript"></script>
+  <script src="scripts/leaflmapwidget.js" type="text/javascript"></script>
+  <script src="scripts/peerwidget.js" type="text/javascript"></script>
+  <script src="scripts/featurewidget.js" type="text/javascript"></script>
+  <script src="scripts/newfeaturewidget.js" type="text/javascript"></script>
+  <script src="scripts/connectwidget.js" type="text/javascript"></script>
+  <script src="scripts/helpwidget.js" type="text/javascript"></script>
+  <script src="scripts/layout.js" type="text/javascript"></script>
+  <script src="scripts/cookies.js" type="text/javascript"></script>
+  <script type="text/javascript">
+var core;
+
+translator.loadBundles({
+    path: 'lang/',
+    lang: 'en'
+});
+
+$(document).ready(function(){
+  
+  $('#cow').cow({
+    websocket: {url: 'wss://websocket.geodan.nl:443/item'}
+    //websocket: {url: 'wss://websocket.geodan.nl:443/geofort'}
+  });
+  
+  core =$('#cow').data('cow');
+    $('#map').LeaflMapWidget({core: '#cow'});
+  $('#bericht').click(function(){
+    $('#sidebar').toggle('blind');
+  });
+});
+</script>  
+<style>
+*{
+    font-family: Arial;
+}
+#map {
+    left: 0px;
+    right: 0px;
+    top: 36px;
+    bottom: 0px;
+    position: absolute;
+}
+#header {
+    left: 0px;
+    right: 0px;
+    top: 0px; 
+    height: 36px;
+     position: absolute;
+     border-bottom: solid 1px black;
+     z-index: 1000;
+     box-shadow:         0px 0px 0px 3px  rgba(90, 90, 90, 0.4);
+     line-height: 36px;
+     padding-left: 5px;
+     font-size: 20px;
+}
+.head-left {
+padding-top: 4px;
+}
+.button {
+    cursor: pointer;
+        border: solid 1px rgba(238, 238, 236, 0.2);
+        border-radius: 2px;
+        padding: 2px 10px 2px 10px;
+        background-image: -webkit-linear-gradient(top, rgba(238, 238, 236, 0) 0%, rgba(238, 238, 236, 0.2) 100%);
+}
+.button:hover {
+    border: solid 1px #d3d7cf;
+    background-image: -webkit-linear-gradient(top, rgba(238, 238, 236, 0) 0%, rgba(238, 238, 236, 0.5) 100%);
+}
+.button:active {
+    background-image: -webkit-linear-gradient(top, rgba(238, 238, 236, 0.5) 0%, rgba(238, 238, 236, 0) 100%);
+}
+.nieuw {
+    font-weight: bold;
+    color: red;
+     -webkit-animation: button_pulse infinite ease 1s;
+
+  
+}
+
+#knoppen {
+    position: absolute;
+    top: 50px;
+    left: 10px;
+}
+.knop {
+ font: bold 24px/36px Arial, Helvetica, sans-serif;
+text-align: center;
+-webkit-border-radius: 1px;
+border-radius: 1px;
+
+  cursor: pointer;
+  background-color: #96be0a;
+color: white;
+width: 35px;
+height: 35px;
+border: none;
+line-height: 34px;
+}
+.subknop {
+    background-image: url('css/img/driehoek.png');
+    background-repeat: no-repeat;
+    background-position: right;
+    border-bottom: solid 1px #2e3436;
+    height: 7px;
+    
+}
+
+#plus {
+margin-bottom: 7px;
+}
+#edit {
+margin-top: 20px;
+}
+.knop:hover {
+  background-color: #abcb3b;
+}
+.knop:active {
+ background-color: #96be0a;
+}
+.sideknop {
+    float: right;
+    margin-left: 35px;
+    margin-top: -7px;
+    background: white;
+    border-top: solid 1px black;
+    border-bottom: solid 1px black;
+    border-right: solid 1px black;
+    border-left: solid 1px #96be0a;
+    
+    padding: 5px;
+    
+    max-width: 268px;
+}
+.sknop {
+-webkit-border-radius: 1px;
+border-radius: 1px;
+display: inline-block;
+  cursor: pointer;
+width: 35px;
+height: 35px;
+border: none;
+background:#96be0a;
+line-height: 34px;
+margin: 2px;
+
+}
+.sknop:hover {
+opacity: 0.7;
+}
+.sknop:active {
+    opacity:1;
+}
+.floatright {
+    float: right;
+    width: 330px;
+}
+#lastmsg {
+    float: right;
+    margin-right: 10px;
+}
+#sidebar {
+    float: right;
+    position: absolute;
+    top: 36px;
+    right: 0px;
+    bottom: 0px;
+    width: 330px;
+    background: white;
+    z-index: 1001;
+    box-shadow:         -2px 0px 0px 0px  rgba(90, 90, 90, 0.4);
+    border-top: solid 1px #d3d7cf;
+}
+.msg {
+border-bottom: solid 2px #d3d7cf;
+display: flex;
+cursor:pointer;
+background: rgba(238,238,236,0.8);
+padding: 4px;
+}
+.msg:hover {
+background: rgba(238,238,236,0.2);
+}
+.msg:active {
+    background: rgba(238,238,236,0.8);
+}
+.m-left {
+ width: 55px;
+border-right: solid 1px #eeeeec;
+
+}
+.m-right {
+   width: 270px;
+}
+
+.msg.unread {
+    background: #96be0a;
+}
+.msg.unread:hover {
+    background: #abcb3b;
+}
+.msg.unread:active {
+    background: #96be0a;
+}
+.mshare {
+ margin:4px;
+}
+.mtext {
+    background: white;
+    border: solid 2px  #eeeeec;
+    border-radius: 2px;
+    margin:4px;
+}
+.group {
+    width: 10px;
+    height: 10px;
+    border: solid 2px black;
+    display: inline-block;
+    margin: 2px;
+    border-radius: 2px;
+}
+.cop {
+    background: black;
+}
+.populatie {
+    background: green;
+}
+.evacuatie {
+    background: purple;
+}
+.opvang {
+    background: orange;
+}
+@-webkit-keyframes button_pulse {
+  0% {
+    color: orange;
+  }
+  50% {
+    color: red;
+    
+  }
+  100% {
+   color: orange;
+  }
+}
+
+</style>
+  </head>
+<body>
+<div id="cow"></div>
+<div id="header">
+    <span id="connect" class="head-left">ja</span>
+    <span id="name" class="head-left">naam</span>
+    <span id="group" class="head-left">groep</span>
+    <span id="gedeeld" class="showalles button">gedeeld</span>
+    <span id="deeldropdown" class="button">v</span>
+    <div class="floatright">
+        <span id="bericht" class="button nieuw">berichten</span>
+        <span id="lastmsg">10s</span>
+    </div>
+</div>
+<div id="map"></div>
+<div id="knoppen">
+<div id="plus" class="knop">+</div>
+<div id="min" class="knop">-</div>
+<div id="edit">
+<div class="knop"></div>
+<div class="knop subknop"></div>
+<div class="sideknop">
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+
+</div>
+<div class="knop"></div>
+</div>
+</div>
+
+<div id="sidebar">
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg unread" title="click to see this message on the map and mark it as read">
+<div class="m-left">
+<span class="mtijd">10s</span>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">jan zegt:</span>
+<div class="mtext">
+Statistics Done Wrong, the Woefully Complete Guide refsmmat.com/statistics/ h/t @jplehmann
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
