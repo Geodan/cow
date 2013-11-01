@@ -50,7 +50,14 @@ $.widget("cow.LeaflMapWidget", {
 		// add an OpenStreetMap tile layer
 		var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-		}).addTo(this.map);
+		});
+		
+		var osmDarkLayer = L.tileLayer('http://a{s}.acetate.geoiq.com/tiles/acetate-hillshading/{z}/{x}/{y}.png', {
+            attribution: 'Background map design by <a href="http://www.stamen.com/">Stamen</a>. Tiles hosted by <a href="http://www.geoiq.com/">GeoIQ</a>. Map data: <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors and <a href="http://www.naturalearthdata.org/">Natural Earth Data</a>.',
+            subdomains: '0123',
+            minZoom: 2,
+            maxZoom: 18
+        }).addTo(this.map);
 		
 		//Layer controls
 		//var baseLayers = {"OSM": osmLayer};
@@ -481,19 +488,23 @@ $.widget("cow.LeaflMapWidget", {
 		    var data = {
              "name": "root",
              "children": [
-              /*{
-               "name": "P",
-               size: 50,
-               "children": groups
-              },*/{
+              //{
+              // "name": "P",
+              // value: 5,
+              // "children": groups
+              //},
+              {
                   "name": "E",
-                  size: 100
+                  value: 1
              },{
                   "name": "D",
-                  size: 100
+                  value: 1
              },{
                   "name": "T",
-                  size: 100
+                  size: 1,
+             },{
+                  "name": "Pop",
+                  size: 1,
              }]
             };
             var width = 150;
@@ -502,16 +513,19 @@ $.widget("cow.LeaflMapWidget", {
             var partition = d3.layout.partition()
                 .sort(null)
                 .size([2 * Math.PI, radius * radius])
-                .value(function(d) { return 1; });
+                .value(function(d) { return d.value || 1; });
             var arc = d3.svg.arc()
                 .startAngle(function(d) { return d.x; })
                 .endAngle(function(d) { return d.x + d.dx; })
                 .innerRadius(function(d) { return Math.sqrt(d.y); })
-                .outerRadius(function(d) { return Math.sqrt(d.y + d.dy); });
+                .outerRadius(function(d) {
+                    var fact = 1;
+                    if (d.depth == 2){
+                        fact = 2;
+                    }
+                    return Math.sqrt((d.y + d.dy)*fact);
+            });
 		    
-		    	    
-            var radius = 40,//outwards radius of ring
-                padding = 25; //inwards (thickness of ring
             var color = d3.scale.category10();
             var entity = _this.g.append('g');
 
@@ -544,9 +558,11 @@ $.widget("cow.LeaflMapWidget", {
                 .attr("d", function(d){
                     return arc(d);
                 })
-                
+                .style("stroke", "#fff")
                 .style("fill", function(d) {
                     if (d.name == 'root') 
+                        return 'none';
+                    else if (d.parent && d.parent.name == 'P')
                         return 'none';
                     else if (d.parent && d.parent.name == 'root')
                         return color(d.name);
@@ -555,6 +571,12 @@ $.widget("cow.LeaflMapWidget", {
                 })
                 .on('mouseover', function(d){
                      var name = d.name;
+                     if (name == 'Pop'){
+                         window.callback = function(d){
+                             console.log(d);
+                         }
+                         d3.jsonp('http://model.geodan.nl/cgi-bin/populator/populator.py',function(){console.log(arguments)});
+                     }
                      if (name == 'E'){ //edit geometry
                         entity.remove();
                         self.editLayer.addData(feature);
