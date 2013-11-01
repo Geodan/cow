@@ -107,9 +107,8 @@ $.widget("cow.LeaflMapWidget", {
 		        //handleNewExtent(e);
 		});
 		this.map.on('click',function(e){
-				self.controls.editcontrol.save();
-				self.controls.editcontrol.disable();
-				
+            self.controls.editcontrol.save();
+            self.controls.editcontrol.disable();
 		});
 //		this.controls.select.activate();
     },
@@ -310,7 +309,7 @@ $.widget("cow.LeaflMapWidget", {
 				}
 		}
 		).addTo(this.map);
-		
+		tmp = editlayer;
 		// Initialize the draw control and pass it the FeatureGroup of editable layers
 		this.drawControl = new L.Control.Draw({
 			draw: false,
@@ -478,6 +477,7 @@ $.widget("cow.LeaflMapWidget", {
 		//Replacing editpopup:
 		var menu = function(feature,obj){
 		    var _this = this;
+		    d3.selectAll('.pie').remove(); //Remove any old menu's
 		    var loc = d3.mouse(obj); //Wrong on firefox
 		    var divloc = [d3.event.screenX ,d3.event.screenY ];
 		    var item = self.core.itemstore().getItemById(feature.properties.key);
@@ -495,18 +495,35 @@ $.widget("cow.LeaflMapWidget", {
               //},
               {
                   "name": "E",
+                  icon: './css/img/pencil_icon.png',
+                  label: 'Bewerken',
                   value: 1
              },{
                   "name": "D",
+                  icon: './css/img/clipboard_cut_icon.png',
+                  label: 'Verwijderen',
                   value: 1
              },{
                   "name": "T",
-                  size: 1,
+                  icon: './css/img/text_letter_t_icon.png',
+                  label: "Tekst",
+                  size: 1
              },{
-                  "name": "Pop",
-                  size: 1,
+                  "name": "S",
+                  icon: './css/img/share_2_icon.png',
+                  label: "Delen",
+                  size: 1
              }]
             };
+            if (feature.geometry.type == 'Polygon'){
+                data.children.push({
+                  "name": "Pop",
+                  icon: './css/img/users_icon.png',
+                  label: "Populatie",
+                  size: 1
+                })
+            }
+                
             var width = 150;
             var height = 150;
             var radius = Math.min(width, height) / 2;
@@ -519,7 +536,7 @@ $.widget("cow.LeaflMapWidget", {
                 .endAngle(function(d) { return d.x + d.dx; })
                 .innerRadius(function(d) { return Math.sqrt(d.y); })
                 .outerRadius(function(d) {
-                    var fact = 1;
+                    var fact = 1.5;
                     if (d.depth == 2){
                         fact = 2;
                     }
@@ -552,24 +569,8 @@ $.widget("cow.LeaflMapWidget", {
              var g = chart.datum(data).selectAll("arc1")
                 .data(partition.nodes)
                 .enter().append("g")
-                .attr("class", "arc1");
-                
-            g.append("path")
-                .attr("d", function(d){
-                    return arc(d);
-                })
-                .style("stroke", "#fff")
-                .style("fill", function(d) {
-                    if (d.name == 'root') 
-                        return 'none';
-                    else if (d.parent && d.parent.name == 'P')
-                        return 'none';
-                    else if (d.parent && d.parent.name == 'root')
-                        return color(d.name);
-                    else 
-                        return color(d.name);
-                })
-                .on('mouseover', function(d){
+                .attr("class", "arc1")
+                .on('click', function(d){
                      var name = d.name;
                      if (name == 'Pop'){
                          window.callback = function(d){
@@ -617,15 +618,56 @@ $.widget("cow.LeaflMapWidget", {
                         entity.remove();
                         self.deletefeature(self,feature);
                     }   
-            });
-               
-            g.append("text")
-              .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
-              .attr("dy", ".35em")
-              .style("text-anchor", "middle")
-              .text(function(d) { 
-                      return d.name; 
-              });
+                })
+                .on('mouseover', function(d){ //Mouseover menulabel
+                    d3.select(this)
+                     .append("text")
+                      .classed('menu',true)
+                      //.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+                      .attr("dy", 0)
+                      .attr("dx", 0)
+                      .style("text-anchor", "middle")
+                      .text(function(d) { 
+                              return d.label; 
+                      });
+                })
+                .on('mouseout', function(d){
+                    d3.select(this).selectAll('text').remove();
+                });
+                
+            g.append("path")
+                .attr("d", function(d){
+                    return arc(d);
+                })
+                .style("stroke", "#fff")
+                .style("fill", function(d) {
+                    if (d.name == 'root') 
+                        return 'none';
+                    else if (d.parent && d.parent.name == 'P')
+                        return 'none';
+                    else if (d.parent && d.parent.name == 'root')
+                        return color(d.name);
+                    else 
+                        return color(d.name);
+                })
+                
+                
+            g.append("svg:image")
+                .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+               .attr('x',-9)
+               .attr('y',-12)
+               .attr('width', 20)
+               .attr('height', 24)
+               .attr("xlink:href",function(d){
+                       return d.icon;
+               })
+            //g.append("text")
+            //  .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+            //  .attr("dy", ".35em")
+            //  .style("text-anchor", "middle")
+            //  .text(function(d) { 
+            //          return d.name; 
+            //  });
            }
            
               
@@ -711,6 +753,7 @@ $.widget("cow.LeaflMapWidget", {
 	
 	editfeature: function(self, feature){
 		self.map.closePopup();
+		debugger;
 		self.controls.editcontrol.enable();
 	},
 	deletefeature: function(self,feature, layer){
