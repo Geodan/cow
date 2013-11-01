@@ -570,7 +570,9 @@ $.widget("cow.LeaflMapWidget", {
                 .data(partition.nodes)
                 .enter().append("g")
                 .attr("class", "arc1")
+                //.on('mousedown')
                 .on('click', function(d){
+                     d3.event.stopPropagation();//Prevent the map from firing click event as well
                      var name = d.name;
                      if (name == 'Pop'){
                          window.callback = function(d){
@@ -582,6 +584,7 @@ $.widget("cow.LeaflMapWidget", {
                         entity.remove();
                         self.editLayer.addData(feature);
                         self.editfeature(self,feature);
+                        
                     }
                     else if (name == 'T'){ //edit tekst
                         entity.remove();
@@ -753,7 +756,6 @@ $.widget("cow.LeaflMapWidget", {
 	
 	editfeature: function(self, feature){
 		self.map.closePopup();
-		debugger;
 		self.controls.editcontrol.enable();
 	},
 	deletefeature: function(self,feature, layer){
