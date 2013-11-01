@@ -71,14 +71,14 @@ $.Cow.LocalDbase.prototype = {
 		        options.name = elem.value.name;
 		        options.active = elem.value.active;
 
-		        self.core.herds(options);
+		        self.core.projects(options);
 	        });
 	    return promise;
     },
     removeherd: function(uid){
         //This will never happen....
         $.indexedDB(this.options.dbname)
-		    .objectStore("herds",false)["delete"](uid);
+		    .objectStore("projects",false)["delete"](uid);
     },
     //GROUPS
     groupsdb: function(group) {
