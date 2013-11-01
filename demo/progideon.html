@@ -141,6 +141,7 @@ line-height: 34px;
     height: 7px;
     
 }
+
 #plus {
 margin-bottom: 7px;
 }
@@ -152,6 +153,39 @@ margin-top: 20px;
 }
 .knop:active {
  background-color: #96be0a;
+}
+.sideknop {
+    float: right;
+    margin-left: 35px;
+    margin-top: -7px;
+    background: white;
+    border-top: solid 1px black;
+    border-bottom: solid 1px black;
+    border-right: solid 1px black;
+    border-left: solid 1px #96be0a;
+    
+    padding: 5px;
+    
+    max-width: 268px;
+}
+.sknop {
+-webkit-border-radius: 1px;
+border-radius: 1px;
+display: inline-block;
+  cursor: pointer;
+width: 35px;
+height: 35px;
+border: none;
+background:#96be0a;
+line-height: 34px;
+margin: 2px;
+
+}
+.sknop:hover {
+opacity: 0.7;
+}
+.sknop:active {
+    opacity:1;
 }
 .floatright {
     float: right;
@@ -268,9 +302,25 @@ border-right: solid 1px #eeeeec;
 <div id="edit">
 <div class="knop"></div>
 <div class="knop subknop"></div>
+<div class="sideknop">
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+<span class="sknop"></span>
+
+</div>
 <div class="knop"></div>
 </div>
 </div>
+
 <div id="sidebar">
 <div class="msg read" title="click to see this message on the map">
 <div class="m-left">
