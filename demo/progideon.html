@@ -44,7 +44,7 @@
   <script src="scripts/layout.js" type="text/javascript"></script>
   <script src="scripts/cookies.js" type="text/javascript"></script>
   <script type="text/javascript">
-var core;
+/*var core;
 
 translator.loadBundles({
     path: 'lang/',
@@ -60,8 +60,10 @@ $(document).ready(function(){
   
   core =$('#cow').data('cow');
     $('#map').LeaflMapWidget({core: '#cow'});
-
-});
+  $('#bericht').click(function(){
+    $('#sidebar').toggle('blind');
+  });
+});*/
 </script>  
 <style>
 *{
@@ -104,6 +106,14 @@ padding-top: 4px;
 .button:active {
     background-image: -webkit-linear-gradient(top, rgba(238, 238, 236, 0.5) 0%, rgba(238, 238, 236, 0) 100%);
 }
+.nieuw {
+    font-weight: bold;
+    color: red;
+     -webkit-animation: button_pulse infinite ease 1s;
+
+  
+}
+
 #knoppen {
     position: absolute;
     top: 50px;
@@ -161,7 +171,81 @@ margin-top: 20px;
     background: white;
     z-index: 1001;
     box-shadow:         -2px 0px 0px 0px  rgba(90, 90, 90, 0.4);
+    border-top: solid 1px #d3d7cf;
 }
+.msg {
+border-bottom: solid 2px #d3d7cf;
+display: flex;
+cursor:pointer;
+background: rgba(238,238,236,0.8);
+padding: 4px;
+}
+.msg:hover {
+background: rgba(238,238,236,0.2);
+}
+.msg:active {
+    background: rgba(238,238,236,0.8);
+}
+.m-left {
+ width: 55px;
+border-right: solid 1px #eeeeec;
+
+}
+.m-right {
+   width: 270px;
+}
+
+.msg.unread {
+    background: #96be0a;
+}
+.msg.unread:hover {
+    background: #abcb3b;
+}
+.msg.unread:active {
+    background: #96be0a;
+}
+.mshare {
+ margin:4px;
+}
+.mtext {
+    background: white;
+    border: solid 2px  #eeeeec;
+    border-radius: 2px;
+    margin:4px;
+}
+.group {
+    width: 10px;
+    height: 10px;
+    border: solid 2px black;
+    display: inline-block;
+    margin: 2px;
+    border-radius: 2px;
+}
+.cop {
+    background: black;
+}
+.populatie {
+    background: green;
+}
+.evacuatie {
+    background: purple;
+}
+.opvang {
+    background: orange;
+}
+@-webkit-keyframes button_pulse {
+  0% {
+    color: orange;
+  }
+  50% {
+    color: red;
+    
+  }
+  100% {
+   color: orange;
+  }
+}
+
 </style>
   </head>
 <body>
@@ -173,7 +257,7 @@ margin-top: 20px;
     <span id="gedeeld" class="showalles button">gedeeld</span>
     <span id="deeldropdown" class="button">v</span>
     <div class="floatright">
-        <span id="bericht" class="button">berichten</span>
+        <span id="bericht" class="button nieuw">berichten</span>
         <span id="lastmsg">10s</span>
     </div>
 </div>
@@ -187,6 +271,34 @@ margin-top: 20px;
 <div class="knop"></div>
 </div>
 </div>
-<div id="sidebar"></div>
+<div id="sidebar">
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg unread" title="click to see this message on the map and mark it as read">
+<div class="m-left">
+<span class="mtijd">10s</span>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">jan zegt:</span>
+<div class="mtext">
+Statistics Done Wrong, the Woefully Complete Guide refsmmat.com/statistics/ h/t @jplehmann
+</div>
+</div>
+</div>
+</div>
 </body>
 </html>
