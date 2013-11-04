@@ -58,6 +58,10 @@ $(document).ready(function(){
   });
   $('.share').draggable();
   
+  $('#deeldropdown').click(function(){
+    $('#delen').toggle('blind');
+  });
+  
   
   //Settings for ProGideon workshop
   var progideon = core.projects({_id:1001,name:"Overstroming 1", peeruid: core.UID}); //Add after localdb has been initialized
@@ -122,7 +126,7 @@ padding-top: 4px;
 .nieuw {
     font-weight: bold;
     color: red;
-     -webkit-animation: button_pulse infinite ease 1s;
+     
 
   
 }
@@ -176,7 +180,7 @@ margin-top: 20px;
     border-bottom: solid 1px black;
     border-right: solid 1px black;
     border-left: solid 1px #96be0a;
-    overflow: auto;
+
     padding: 5px;
     
     max-width: 268px;
@@ -219,6 +223,7 @@ opacity: 0.7;
     z-index: 1001;
     box-shadow:         -2px 0px 0px 0px  rgba(90, 90, 90, 0.4);
     border-top: solid 1px #d3d7cf;
+        overflow: auto;
 }
 .msg {
 border-bottom: solid 2px #d3d7cf;
@@ -312,30 +317,85 @@ padding: 2px;
     margin: 4px;
 }
 .scontent {
-   width: 200px; 
-     box-shadow:        1px 1px 1px 1px rgba(90, 90, 90, 0.4);
+    width: 200px; 
+    box-shadow: 1px 1px 1px 1px rgba(90, 90, 90, 0.4);
 }
 .iedereen {
-padding: 10px;
+    padding: 10px;
     border-bottom: solid 1px #eeeeec;
 }
 .individueel {
 padding: 10px;
+}
+
+#connect {
+    width: 50px;
+    border-right: 1px solid #eeeeec;
+    padding: 20px 15px 0px 12px;
+    height: 40px;
+    top: 5px;
+}
+
+#status {
+
+display: inline-block;
+     border-radius: 50%;
+    min-width: 20px;
+    height: 20px;
+    margin: 0px;
+    
+}
+
+.connected {
+background: #96be0a;
+}
+.disconnected {
+background: #ff0000;
+}
+input#username {
+    border: solid 1px #eeeeec;
+    font-size: 20px;
+    
+}
+input#username.default {
+    color: gray;
+}
+#delen {
+    width: 200px;
+    
+      background: white;
+    border: solid 1px black;
+    position: absolute;
+    top: 36px;
+    left: 400px;
+    z-index: 1005;
+    border-top: solid 1px #d3d7cf;
+     box-shadow:  1px 3px 2px 2px  rgba(90, 90, 90, 0.4);
 }
 </style>
   </head>
 <body>
 <div id="cow"></div>
 <div id="header">
-    <span id="connect" class="head-left">ja</span>
-    <span id="name" class="head-left">naam</span>
-    <span id="group" class="head-left">groep</span>
-    <span id="gedeeld" class="showalles button">gedeeld</span>
+    <span id="connect" class="head-left"><div id="status" class="connected" title="Verbonden"></div></span>
+    <span id="group" class="head-left" title="Teamnaam"><span class="group populatie"></span>Populatie</span>
+    <span id="name" title="Gebruikersnaam" class="head-left"><input id="username" class="default" type="text" value="Vul hier je naam in"/></span>
+    
+    <span id="gedeeld" class="showalles button" title="Klik hier om alleen het gedeelde beeld te zien"><input id="chk-gedeeld" type="checkbox"/>gedeeld</span>
     <span id="deeldropdown" class="button">v</span>
     <div class="floatright">
         <!--<span id="bericht" class="button nieuw">berichten</span>-->
         <span id="lastmsg">10s</span>
     </div>
+</div>
+<div id="delen">
+<div class="iedereen">
+<input type="checkbox" checked="true" class="share-cop"/><span class="group cop" title="COP"></span>Iedereen
+</div>
+<div class="individueel">
+<input type="checkbox" class="share-evacuatie"/><span class="group evacuatie" title="evacuatie"></span>Evacuatie<br/>
+<input type="checkbox" class="share-opvang"/><span class="group opvang" title="opvang"></span>Opvang
+</div>
 </div>
 <div id="map"></div>
 <div id="knoppen">
