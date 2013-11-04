@@ -101,12 +101,13 @@ $.widget("cow.LeaflMapWidget", {
 				
 		this.map.on('moveend',function(e){
 				handleNewExtent(e);
-				d3.selectAll('.pie').remove();
+				d3.selectAll('.popup').remove();//Remove all popups on map
 		});
 		this.map.on("viewreset", function(e){
 		        //handleNewExtent(e);
 		});
 		this.map.on('click',function(e){
+		    d3.selectAll('.popup').remove();//Remove all popups on map
             self.controls.editcontrol.save();
             self.controls.editcontrol.disable();
 		});

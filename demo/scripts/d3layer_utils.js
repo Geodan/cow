@@ -5,7 +5,7 @@ var cow = {};
 cow.menu = function(feature,obj){
     var _this = this;
     var self = this.map;
-    d3.selectAll('.pie').remove(); //Remove any old menu's
+    d3.selectAll('.popup').remove(); //Remove any old menu's
     var loc = d3.mouse(obj); //Wrong on firefox
     var divloc = [d3.event.screenX ,d3.event.screenY ];
     var item = self.core.itemstore().getItemById(feature.properties.key);
@@ -71,14 +71,14 @@ cow.menu = function(feature,obj){
     var entity = _this.g.append('g');
 
    if (entity.attr('selected') == 'true'){
-    entity.select('.pie').remove();
+    entity.select('.popup').remove();
     entity.attr('selected','false');
    }
    else {
     entity.attr('selected','true');
     
     var chart = entity.append('g')
-        .classed('pie',true)
+        .classed('pie popup',true)
         .attr('width',width)
         .attr('height',height)
         .append('g')
@@ -102,6 +102,7 @@ cow.menu = function(feature,obj){
                      console.log(d);
                  }
                  d3.jsonp('http://model.geodan.nl/cgi-bin/populator/populator.py',function(){console.log(arguments)});
+                 //TODO: put populator results in nice window
              }
              if (name == 'E'){ //edit geometry
                 entity.remove();
@@ -115,7 +116,7 @@ cow.menu = function(feature,obj){
                 var desc = feature.properties.desc || "";
                 var innerHtml = ''
                 //+ translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
-                + translator.translate('Description') + ': <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+                + 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
                 //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
                 + '';
                 var div = d3.select('body').append('div')
@@ -129,7 +130,7 @@ cow.menu = function(feature,obj){
                     
                     .html(innerHtml);
                     div.append('div')
-                        .html(translator.translate('Done'))
+                        .html('Done')
                         .classed('popupbutton', true)
                         .on('click',function(z){
                                 self.changeFeature(self, feature);
@@ -137,6 +138,8 @@ cow.menu = function(feature,obj){
                         });
             }
             else if (name == 'S'){//Share permissions
+                entity.remove();
+                
                 var mygroups = self.core.project.myGroups();
                 var groupnames = "";
                 $.each(mygroups,function(i,d){
@@ -144,16 +147,11 @@ cow.menu = function(feature,obj){
                 });
                 
                 var allgroups = self.core.project.groups();
-                var form = '';
-                $.each(allgroups, function(i,d){
-                        var checked = '' ;
-                        if (item.permissionHasGroup('edit',[d._id])) checked = 'CHECKED';
-                        form = form + '<input type="checkbox" '+checked+' class="share-'+d.name+'"><span class="group '+d.name+'" title="'+d.name+'"></span>'+d.name+'<br>';
-                });
+                
                 var div = d3.select('body').append('div')
                     .style('left',divloc[0]  -100 +  'px')
                     .style('top',divloc[1] + 0 + 'px')
-                    .classed("share ui-draggable", true);
+                    .classed("popup share ui-draggable", true);
                 var sheader = div.append('div')
                     .classed('sheader', true)
                     .attr('title','Dit object is gemaakt door');
@@ -163,9 +161,37 @@ cow.menu = function(feature,obj){
                 var scontent = div.append('div')
                     .classed('scontent', true);
                 scontent.append('div').classed('ssubheader', true).html('deel dit object met:');
-                scontent.append('div').classed('idereen',true).html('<input type="checkbox" class="share-cop"><span class="group cop" title="COP"></span>Iedereen');
-                var formbox = scontent.append('div').classed('individueel',true);
-                formbox.html(form);
+                scontent.append('div').classed('iedereen',true).html('<div class="permission share-cop"><span class="group cop" title="COP"></span>Iedereen</div>');
+                
+                var formbox = scontent.append('div').classed('individueel',true).attr('id','permlist');
+                var permissions = d3.select('#permlist').selectAll('.permission').data(allgroups);
+                var pdiv = permissions.enter().append('div').classed('permission',true);
+                    pdiv.append('span').attr('class',function(d){
+                                return 'group ' + d.name;
+                        });
+                    pdiv.append('span')
+                        .attr('class',function(d){
+                            if (item.permissionHasGroup('edit',[d._id])) return 'selected';
+                            else return 'unselected';
+                        })
+                        .html(function(d){return d.name})
+                        .on('click',function(d){
+                            if (d3.select(this).attr('class') == 'unselected'){
+                                d3.select(this).attr('class','selected');
+                                item.permissions('edit',d._id);
+                                console.log('Permission added');
+                            }
+                            else {
+                                d3.select(this).attr('class','unselected');
+                                item.removePermission('edit',[d._id]);
+                                console.log('Permission removed');
+                            }
+                            
+                        });
+                
+                
+                
+                //formbox.html(form);
                 
             }
             else if (name == 'D'){//Delete feature

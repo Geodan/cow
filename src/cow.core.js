@@ -62,7 +62,7 @@ $.Cow.Core = function(element, options) {
     //Standard project, always available
     var startproject = this.projects({_id:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
     //Standard public group, always available
-    var startgroup = startproject.groups({_id:1, name: 'public', peeruid:this.UID});
+    //var startgroup = startproject.groups({_id:1, name: 'public', peeruid:this.UID});
     
     //Loading existing projects from dbase
     if (this.projectsdb){
@@ -329,8 +329,8 @@ $.Cow.Core.prototype = {
                this.project.members(this.UID);
               
                
-               var publicgroup =  this.project.groups({_id:1,name: 'public'});//Add public group to project
-               publicgroup.members(this.UID);//Make me member of public
+               //var publicgroup =  this.project.groups({_id:1,name: 'public'});//Add public group to project
+               //publicgroup.members(this.UID);//Make me member of public
                if (this.groupsdb){ //add defaults to DB
                    this.groupsdb().bulkLoad_UI(this.project.getGroupsData());//Add public to be sure
                }
