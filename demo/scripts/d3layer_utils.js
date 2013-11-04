@@ -2,6 +2,7 @@
 var cow = {};
 		cow.menu = function(feature,obj){
 		    var _this = this;
+		    var self = this.map;
 		    d3.selectAll('.pie').remove(); //Remove any old menu's
 		    var loc = d3.mouse(obj); //Wrong on firefox
 		    var divloc = [d3.event.screenX ,d3.event.screenY ];

@@ -209,7 +209,7 @@ $.widget("cow.LeaflMapWidget", {
 			var feature = item.data();
             if(feature === undefined) {
                 console.warn('old item type');
-                //return false;
+                return false;
             }
             else{
                 feature.id = feature.properties.key;
@@ -481,7 +481,7 @@ $.widget("cow.LeaflMapWidget", {
 			map: self,
 			//onClick: editPopup,
 			type: "path",
-			onClick:cow.menu,
+			onClick: cow.menu,
 			labels: true,
 			labelconfig: {
                 field: "name",
@@ -497,6 +497,7 @@ $.widget("cow.LeaflMapWidget", {
 				}
 		});
         self.d3Layers(d3editlyr);
+        tmp = d3editlyr;
 		var viewlyr = new d3layer("viewlayer",{
 			maptype: "Leaflet",
 			map: self,
