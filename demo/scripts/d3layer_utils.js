@@ -102,6 +102,7 @@ cow.menu = function(feature,obj){
                      console.log(d);
                  }
                  d3.jsonp('http://model.geodan.nl/cgi-bin/populator/populator.py',function(){console.log(arguments)});
+                 //TODO: put populator results in nice window
              }
              if (name == 'E'){ //edit geometry
                 entity.remove();
@@ -151,8 +152,9 @@ cow.menu = function(feature,obj){
                         var checked = '' ;
                         if (item.permissionHasGroup('edit',[d._id])) checked = 'CHECKED';
                         
-                            form = form + '<input type="checkbox" '+checked+' class="share-'+d.name+'"><span class="group '+d.name+'" title="'+d.name+'"></span>'+d.name+'<br>';
+                            form = form + '<input type="checkbox" '+checked+' class="share-'+d.name+'" value='+d.name+'><span class="group '+d.name+'" title="'+d.name+'"></span>'+d.name+'<br>';
                 });
+                
                 var div = d3.select('body').append('div')
                     .style('left',divloc[0]  -100 +  'px')
                     .style('top',divloc[1] + 0 + 'px')
