@@ -55,6 +55,7 @@ $(document).ready(function(){
   $('.sknop').click(function(){
     $(this).parent().toggle('fold');
   });
+  $('.share').draggable();
 });
 </script>  
 <style>
@@ -246,6 +247,7 @@ border-right: solid 1px #eeeeec;
     display: inline-block;
     margin: 2px;
     border-radius: 2px;
+    margin-bottom: 0px;
 }
 .cop {
     background: black;
@@ -271,7 +273,35 @@ border-right: solid 1px #eeeeec;
    color: orange;
   }
 }
-
+.share {
+    cursor: -webkit-grab;
+    position: absolute;
+    z-index: 1002;    
+    top: 400px;
+    left: 400px;
+}
+.sheader, .scontent {
+    background: white;
+    border: solid 1px black;
+}
+.sheader {
+padding: 2px;
+    display: inline;
+}
+.ssubheader {
+    margin: 4px;
+}
+.scontent {
+   width: 200px; 
+     box-shadow:        1px 1px 1px 1px rgba(90, 90, 90, 0.4);
+}
+.iedereen {
+padding: 10px;
+    border-bottom: solid 1px #eeeeec;
+}
+.individueel {
+padding: 10px;
+}
 </style>
   </head>
 <body>
@@ -310,6 +340,36 @@ border-right: solid 1px #eeeeec;
 
 </div>
 <div class="knop"></div>
+</div>
+</div>
+
+<div class="share">
+<div class="sheader" title="Dit object is gemaakt door"><span class="group populatie"></span>Populatie</div>
+<div class="scontent">
+<div class="ssubheader">deel dit object met:</div>
+<div class="iedereen">
+<input type="checkbox" class="share-cop"/><span class="group cop" title="COP"></span>Iedereen
+</div>
+<div class="individueel">
+<input type="checkbox" class="share-evacuatie"/><span class="group evacuatie" title="evacuatie"></span>Evacuatie<br/>
+<input type="checkbox" class="share-opvang"/><span class="group opvang" title="opvang"></span>Opvang
+</div>
+</div>
+</div>
+</div>
+
+<div class="share ro">
+<div class="sheader" title="Dit object is gemaakt door"><span class="group populatie"></span>Populatie</div>
+<div class="scontent">
+<div class="ssubheader">Dit object is gedeeld met:</div>
+<div class="iedereen">
+<span class="group cop" title="COP"></span>Iedereen
+</div>
+<div class="individueel">
+<span class="group evacuatie" title="evacuatie"></span>Evacuatie<br/>
+<span class="group opvang" title="opvang"></span>Opvang
+</div>
+</div>
 </div>
 </div>
 
