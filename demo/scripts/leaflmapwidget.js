@@ -107,6 +107,7 @@ $.widget("cow.LeaflMapWidget", {
 		        //handleNewExtent(e);
 		});
 		this.map.on('click',function(e){
+		    d3.selectAll('.popup').remove();//Remove all popups on map
             self.controls.editcontrol.save();
             self.controls.editcontrol.disable();
 		});

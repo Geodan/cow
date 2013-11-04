@@ -92,6 +92,7 @@ function d3layer(layername, config){
 		var geoPath = d3.geo.path().projection(this.project);
 		this.geoPath = geoPath;
 		var click = function(d){
+		    d3.event.stopPropagation();//Prevent the map from firing click event as well
 		    if (_this.onClick)
 		        _this.onClick(d,this);
 		}
