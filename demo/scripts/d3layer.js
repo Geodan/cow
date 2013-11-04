@@ -55,7 +55,7 @@ function d3layer(layername, config){
         // Projecting latlon to screen coordinates
 		this.project = function(x) {
 		  if (config.maptype == 'Leaflet'){
-		  	  var point = _this.map.map.latLngToLayerPoint(new L.LatLng(x[1], x[0])); //Leaflet version
+	  	      var point = _this.map.map.latLngToLayerPoint(new L.LatLng(x[1], x[0])); //Leaflet version
 		  	  //var point = _this.map.map.latLngToContainerPoint(new L.LatLng(x[1], x[0])); //Leaflet version
 		  }
 		  else if (config.maptype == 'OpenLayers'){
@@ -89,7 +89,8 @@ function d3layer(layername, config){
 		//A per feature styling method
 		this.styling = function(d){
 		  var entity = d3.select(this);
-		  if (d.style && d.style.icon){
+		  //Point/icon feature
+		  if (d.style && d.style.icon && d.geometry.type == 'Point'){ 
 		      var x = _this.project(d.geometry.coordinates)[0];
               var y = _this.project(d.geometry.coordinates)[1];
 		      entity.append("image")
@@ -104,6 +105,7 @@ function d3layer(layername, config){
                     .attr("x",x-25)
                     .attr("y",y-25)
 		  }
+		  //Path feature
 		  else{
 		    var path = entity.append("path")
 		        .on("click", click);
