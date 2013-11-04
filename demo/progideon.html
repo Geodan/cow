@@ -65,21 +65,20 @@ $(document).ready(function(){
   
   //Settings for ProGideon workshop
   var progideon = core.projects({_id:1001,name:"Overstroming 1", peeruid: core.UID}); //Add after localdb has been initialized
-  progideon.groups({_id:1,name:'Public'});
   progideon.groups({_id:2,name:'Populatie'});
   progideon.groups({_id:3,name:'Evacuatie'});
   progideon.groups({_id:4,name:'Opvang'});
-  
   var progideon = core.projects({_id:1002,name:"Overstroming 2", peeruid: core.UID}); //Add after localdb has been initialized
-  progideon.groups({_id:1,name:'Public'});
   progideon.groups({_id:2,name:'Populatie'});
   progideon.groups({_id:3,name:'Evacuatie'});
   progideon.groups({_id:4,name:'Opvang'});
   core.activeproject({activeProjectId:666});
-  core.project.groups({_id:1,name:'Public'});
-  core.project.groups({_id:2,name:'Populatie'});
+  
+  var group = core.project.groups({_id:2,name:'Populatie'});
+  group.members(core.UID); //Add yourself to Populatie group  
   core.project.groups({_id:3,name:'Evacuatie'});
   core.project.groups({_id:4,name:'Opvang'});
+  
 });
 </script>  
 <style>

@@ -116,7 +116,7 @@ cow.menu = function(feature,obj){
                 var desc = feature.properties.desc || "";
                 var innerHtml = ''
                 //+ translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
-                + translator.translate('Description') + ': <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+                + 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
                 //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
                 + '';
                 var div = d3.select('body').append('div')
@@ -130,7 +130,7 @@ cow.menu = function(feature,obj){
                     
                     .html(innerHtml);
                     div.append('div')
-                        .html(translator.translate('Done'))
+                        .html('Done')
                         .classed('popupbutton', true)
                         .on('click',function(z){
                                 self.changeFeature(self, feature);
