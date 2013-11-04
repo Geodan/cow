@@ -168,7 +168,7 @@ cow.menu = function(feature,obj){
                 var scontent = div.append('div')
                     .classed('scontent', true);
                 scontent.append('div').classed('ssubheader', true).html('deel dit object met:');
-                scontent.append('div').classed('idereen',true).html('<input type="checkbox" class="share-cop"><span class="group cop" title="COP"></span>Iedereen');
+                scontent.append('div').classed('iedereen',true).html('<input type="checkbox" class="share-cop"><span class="group cop" title="COP"></span>Iedereen');
                 var formbox = scontent.append('div').classed('individueel',true);
                 formbox.html(form);
                 
