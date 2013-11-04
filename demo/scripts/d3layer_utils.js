@@ -1,5 +1,7 @@
 //Replacing editpopup:
 var cow = {};
+
+
 cow.menu = function(feature,obj){
     var _this = this;
     var self = this.map;
@@ -134,8 +136,34 @@ cow.menu = function(feature,obj){
                                 div.remove();
                         });
             }
-            else if (name == 'P'){//Set permissions
-                console.log(d, this);
+            else if (name == 'S'){//Share permissions
+                var mygroups = self.core.project.myGroups();
+                var groupnames = "";
+                $.each(mygroups,function(i,d){
+                    groupnames = groupnames + self.core.project.getGroupById(d).name;
+                });
+                
+                var allgroups = self.core.project.groups();
+                var form = '';
+                $.each(allgroups, function(i,d){
+                        form = form + '<input type="checkbox" class="share-'+d.name+'"><span class="group '+d.name+'" title="'+d.name+'"></span>'+d.name+'<br>';
+                });
+                var div = d3.select('body').append('div')
+                    .style('left',divloc[0]  -100 +  'px')
+                    .style('top',divloc[1] + 0 + 'px')
+                    .classed("share ui-draggable", true);
+                var sheader = div.append('div')
+                    .classed('sheader', true)
+                    .attr('title','Dit object is gemaakt door');
+                sheader.append('span')
+                    .classed('group populatie',true); //TODO add own groups here
+                sheader.append('span').html(groupnames);
+                var scontent = div.append('div')
+                    .classed('scontent', true);
+                scontent.append('div').classed('ssubheader', true).html('deel dit object met:');
+                scontent.append('div').classed('idereen',true).html('<input type="checkbox" class="share-cop"><span class="group cop" title="COP"></span>Iedereen');
+                var formbox = scontent.append('div').classed('individueel',true);
+                formbox.html(form);
                 
             }
             else if (name == 'D'){//Delete feature
