@@ -217,10 +217,7 @@ function d3layer(layername, config){
 			}
 			if (_this.labels){
 			    var label = newentity.append('g')
-			        .classed('place-label',true)
-			        .each(function(d){
-			            console.log(d);
-			        });
+			        .classed('place-label',true);
 			    //On new:	
 				label
 					.append('text')
@@ -233,7 +230,6 @@ function d3layer(layername, config){
 					.style('stroke-opacity',.8)
 					.text(function(d) {
 							if (_this.labelconfig.field){
-							    console.log('Label: ' + d.properties[_this.labelconfig.field]);
 								return d.properties[_this.labelconfig.field];
 							}
 							else
@@ -314,7 +310,6 @@ function d3layer(layername, config){
                         .attr("y", _this.textLocation(d)[1] )
                         .text(function(foo) {
                             if (_this.labelconfig.field){
-                                console.log('Label: ' + d.properties[_this.labelconfig.field]);
                                 return d.properties[_this.labelconfig.field];
                             }
                             else
@@ -403,7 +398,6 @@ function d3layer(layername, config){
                             .attr("y", _this.textLocation(d)[1] )
                             .text(function(foo) {
                                 if (_this.labelconfig.field){
-                                    console.log('Label: ' + d.properties[_this.labelconfig.field]);
                                     return d.properties[_this.labelconfig.field];
                                 }
                                 else
