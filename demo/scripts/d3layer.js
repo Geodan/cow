@@ -78,6 +78,16 @@ function d3layer(layername, config){
 			return [point.x,point.y];
 		}
 		
+		var labelgenerator = function(d){
+		    if (_this.labelconfig.field){
+		        var str = d.properties[_this.labelconfig.field];
+		        if (str && str.length > 10) 
+		              return str.substr(0,10) + "..."; //Only first 10 chars
+		        else return str;
+            }
+            else
+                return d.id;
+		}
 		
 		var geoPath = d3.geo.path().projection(this.project);
 		this.geoPath = geoPath;
@@ -217,10 +227,7 @@ function d3layer(layername, config){
 			}
 			if (_this.labels){
 			    var label = newentity.append('g')
-			        .classed('place-label',true)
-			        .each(function(d){
-			            console.log(d);
-			        });
+			        .classed('place-label',true);
 			    //On new:	
 				label
 					.append('text')
@@ -231,14 +238,7 @@ function d3layer(layername, config){
 					.style('stroke','white')
 					.style('stroke-width','3px')
 					.style('stroke-opacity',.8)
-					.text(function(d) {
-							if (_this.labelconfig.field){
-							    console.log('Label: ' + d.properties[_this.labelconfig.field]);
-								return d.properties[_this.labelconfig.field];
-							}
-							else
-								return d.id; 
-					});
+					.text(function(d){return labelgenerator(d)});
 				label
 					.append('text')
 					.attr("x",function(d) {return _this.textLocation(d)[0] ;})
@@ -246,12 +246,7 @@ function d3layer(layername, config){
 					//.classed("zoomable",true)
 					.attr('text-anchor', 'left')
 					.each(_this.textstyling)
-					.text(function(d) {
-							if (_this.labelconfig.field)
-								return d.properties[_this.labelconfig.field];
-							else
-								return d.id; 
-					})
+					.text(function(d){return labelgenerator(d)});
 			} //End of new label
 			//Some cool looking effect upon new feature
 			if (_this.coolcircles){
@@ -312,14 +307,7 @@ function d3layer(layername, config){
                         .transition().duration(500)
                         .attr("x", _this.textLocation(d)[0] )
                         .attr("y", _this.textLocation(d)[1] )
-                        .text(function(foo) {
-                            if (_this.labelconfig.field){
-                                console.log('Label: ' + d.properties[_this.labelconfig.field]);
-                                return d.properties[_this.labelconfig.field];
-                            }
-                            else
-                                return d.id; 
-                        })
+                        .text(labelgenerator(d));
 			    }
 			    if (_this.videobox){
 			        //Step 1: find videobox 
@@ -401,14 +389,7 @@ function d3layer(layername, config){
                             .selectAll('text')
                             .attr("x", _this.textLocation(d)[0] )
                             .attr("y", _this.textLocation(d)[1] )
-                            .text(function(foo) {
-                                if (_this.labelconfig.field){
-                                    console.log('Label: ' + d.properties[_this.labelconfig.field]);
-                                    return d.properties[_this.labelconfig.field];
-                                }
-                                else
-                                    return d.id; 
-                            })
+                            .text(labelgenerator(d));
                     }
                     if (_this.videobox){
                         //Step 1: find videobox 
