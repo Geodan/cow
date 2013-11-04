@@ -146,7 +146,9 @@ cow.menu = function(feature,obj){
                 var allgroups = self.core.project.groups();
                 var form = '';
                 $.each(allgroups, function(i,d){
-                        form = form + '<input type="checkbox" class="share-'+d.name+'"><span class="group '+d.name+'" title="'+d.name+'"></span>'+d.name+'<br>';
+                        var checked = '' ;
+                        if (item.permissionHasGroup('edit',[d._id])) checked = 'CHECKED';
+                        form = form + '<input type="checkbox" '+checked+' class="share-'+d.name+'"><span class="group '+d.name+'" title="'+d.name+'"></span>'+d.name+'<br>';
                 });
                 var div = d3.select('body').append('div')
                     .style('left',divloc[0]  -100 +  'px')

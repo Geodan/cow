@@ -57,6 +57,25 @@ $(document).ready(function(){
     $(this).parent().toggle('fold');
   });
   $('.share').draggable();
+  
+  
+  //Settings for ProGideon workshop
+  var progideon = core.projects({_id:1001,name:"Overstroming 1", peeruid: core.UID}); //Add after localdb has been initialized
+  progideon.groups({_id:1,name:'Public'});
+  progideon.groups({_id:2,name:'Populatie'});
+  progideon.groups({_id:3,name:'Evacuatie'});
+  progideon.groups({_id:4,name:'Opvang'});
+  
+  var progideon = core.projects({_id:1002,name:"Overstroming 2", peeruid: core.UID}); //Add after localdb has been initialized
+  progideon.groups({_id:1,name:'Public'});
+  progideon.groups({_id:2,name:'Populatie'});
+  progideon.groups({_id:3,name:'Evacuatie'});
+  progideon.groups({_id:4,name:'Opvang'});
+  core.activeproject({activeProjectId:666});
+  core.project.groups({_id:1,name:'Public'});
+  core.project.groups({_id:2,name:'Populatie'});
+  core.project.groups({_id:3,name:'Evacuatie'});
+  core.project.groups({_id:4,name:'Opvang'});
 });
 </script>  
 <style>
@@ -253,13 +272,13 @@ border-right: solid 1px #eeeeec;
 .cop {
     background: black;
 }
-.populatie {
+.populatie, .Populatie{
     background: green;
 }
-.evacuatie {
+.evacuatie, .Evacuatie {
     background: purple;
 }
-.opvang {
+.opvang, .Opvang {
     background: orange;
 }
 @-webkit-keyframes button_pulse {
@@ -314,7 +333,7 @@ padding: 10px;
     <span id="gedeeld" class="showalles button">gedeeld</span>
     <span id="deeldropdown" class="button">v</span>
     <div class="floatright">
-        <span id="bericht" class="button nieuw">berichten</span>
+        <!--<span id="bericht" class="button nieuw">berichten</span>-->
         <span id="lastmsg">10s</span>
     </div>
 </div>
