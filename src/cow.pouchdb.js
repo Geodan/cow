@@ -22,6 +22,10 @@ $.Cow.Store.prototype = {
     //Update record from UI
     updateRecord_UI: function(data){
         var self = this;
+        if (!data._id){
+            console.warn('No _id given. Old version client connected?');
+            return(null);
+        }
         var deferred = jQuery.Deferred();
         
         var put = function(data){
