@@ -484,7 +484,7 @@ $.widget("cow.LeaflMapWidget", {
 			onClick: cow.menu,
 			labels: true,
 			labelconfig: {
-                field: "name",
+                field: "desc",
                 style: {
                     stroke: "steelBlue"
                 }
@@ -567,7 +567,7 @@ $.widget("cow.LeaflMapWidget", {
 		core.trigger('storeChanged');
 	},                
 	changeFeature: function(self, feature){
-        feature.properties.name = document.getElementById('titlefld').value; //TODO. Yuck, yuck yuck....
+        //feature.properties.name = document.getElementById('titlefld').value; //TODO. Yuck, yuck yuck....
         feature.properties.desc = document.getElementById('descfld').value;
         feature.properties.owner = self.core.username();
         self.map.closePopup(); //we have to destroy since the next line triggers a reload of all features
