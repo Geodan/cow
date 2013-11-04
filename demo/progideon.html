@@ -20,7 +20,7 @@
   <script src="../lib/leaflet_label/leaflet.label.js"></script>
   <script src="../lib/d3/d3.v3.min.js" charset="utf-8"></script>
   <script src="../lib/d3/topojson.v1.min.js"></script>
-  <script src="./scripts/nodeoverlay.js" type="text/javascript"></script>
+  
   <script src="./scripts/d3layer.js" type="text/javascript"></script>
 
   <script src="../src/cow.core.js" type="text/javascript"></script>
@@ -33,23 +33,9 @@
   <script src="../src/cow.geolocator.js" type="text/javascript"></script>
   <script src="../src/cow.pouchdb.js" type="text/javascript"></script>
 
-  <script src="scripts/i18next-1.7.1/i18next-1.7.1.min.js" type="text/javascript"></script>
-  <script src="scripts/translator.js" type="text/javascript"></script>
   <script src="scripts/leaflmapwidget.js" type="text/javascript"></script>
-  <script src="scripts/peerwidget.js" type="text/javascript"></script>
-  <script src="scripts/featurewidget.js" type="text/javascript"></script>
-  <script src="scripts/newfeaturewidget.js" type="text/javascript"></script>
-  <script src="scripts/connectwidget.js" type="text/javascript"></script>
-  <script src="scripts/helpwidget.js" type="text/javascript"></script>
-  <script src="scripts/layout.js" type="text/javascript"></script>
-  <script src="scripts/cookies.js" type="text/javascript"></script>
-  <script type="text/javascript">
+   <script type="text/javascript">
 var core;
-
-translator.loadBundles({
-    path: 'lang/',
-    lang: 'en'
-});
 
 $(document).ready(function(){
   
@@ -62,6 +48,12 @@ $(document).ready(function(){
     $('#map').LeaflMapWidget({core: '#cow'});
   $('#bericht').click(function(){
     $('#sidebar').toggle('blind');
+  });
+  $('.subknop').click(function() {
+    $('.subknop ~ .sideknop').toggle('fold');
+  });
+  $('.sknop').click(function(){
+    $(this).parent().toggle('fold');
   });
 });
 </script>  
@@ -138,7 +130,7 @@ line-height: 34px;
     background-repeat: no-repeat;
     background-position: right;
     border-bottom: solid 1px #2e3436;
-    height: 7px;
+    height: 10px;
     
 }
 
@@ -163,7 +155,7 @@ margin-top: 20px;
     border-bottom: solid 1px black;
     border-right: solid 1px black;
     border-left: solid 1px #96be0a;
-    
+    overflow: auto;
     padding: 5px;
     
     max-width: 268px;
@@ -302,7 +294,7 @@ border-right: solid 1px #eeeeec;
 <div id="edit">
 <div class="knop"></div>
 <div class="knop subknop"></div>
-<div class="sideknop">
+<div class="sideknop" style="display:none">
 <span class="sknop"></span>
 <span class="sknop"></span>
 <span class="sknop"></span>
@@ -322,6 +314,310 @@ border-right: solid 1px #eeeeec;
 </div>
 
 <div id="sidebar">
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
+<div class="msg read" title="click to see this message on the map">
+<div class="m-left">
+<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
+<div class="mshare" title="Dit bericht is gedeeld met">
+<span class="group cop" title="COP"></span>
+<span class="group populatie" title="populatie"></span>
+<span class="group evacuatie" title="evacuatie"></span>
+<span class="group opvang" title="opvang"></span>
+</div>
+</div>
+<div class="m-right">
+<span class="group populatie" title="populatie"></span><span class="msender">piet zegt:</span>
+<div class="mtext">Friday afternoon music: Al Bano and Romina Power (can I even admit that I'm listening to this now ;-) ? ) #italy
+</div>
+</div>
+</div>
 <div class="msg read" title="click to see this message on the map">
 <div class="m-left">
 <div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">10s</div>
