@@ -534,13 +534,9 @@ $.widget("cow.LeaflMapWidget", {
             var arc = d3.svg.arc()
                 .startAngle(function(d) { return d.x; })
                 .endAngle(function(d) { return d.x + d.dx; })
-                .innerRadius(function(d) { return Math.sqrt(d.y); })
+                .innerRadius(function(d) { return Math.sqrt(d.y * 0.7); })
                 .outerRadius(function(d) {
-                    var fact = 1.5;
-                    if (d.depth == 2){
-                        fact = 2;
-                    }
-                    return Math.sqrt((d.y + d.dy)*fact);
+                    return Math.sqrt((d.y + d.dy)*1.5);
             });
 		    
             var color = d3.scale.category10();
@@ -570,7 +566,6 @@ $.widget("cow.LeaflMapWidget", {
                 .data(partition.nodes)
                 .enter().append("g")
                 .attr("class", "arc1")
-                //.on('mousedown')
                 .on('click', function(d){
                      d3.event.stopPropagation();//Prevent the map from firing click event as well
                      var name = d.name;
@@ -624,6 +619,7 @@ $.widget("cow.LeaflMapWidget", {
                 })
                 .on('mouseover', function(d){ //Mouseover menulabel
                     d3.select(this)
+                     .style('opacity',0.5)
                      .append("text")
                       .classed('menu',true)
                       //.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
@@ -635,7 +631,9 @@ $.widget("cow.LeaflMapWidget", {
                       });
                 })
                 .on('mouseout', function(d){
-                    d3.select(this).selectAll('text').remove();
+                    d3.select(this)
+                        .style('opacity',1)
+                        .selectAll('text').remove();
                 });
                 
             g.append("path")
