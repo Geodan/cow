@@ -52,22 +52,21 @@ $.widget("cow.LeaflMapWidget", {
 		var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 		});
-		
-		//var tileUrl = 'http://t{s}.edugis.nl/tiles/1.0.0/hoogtes/{z}/{x}/{y}.png';
+		// add Dutch AHN layer
 		var ahnUrl = "http://t3.edugis.nl/tiles/tilecache.py?map=maps/edugis/cache/hoogte.map";
-		//&amp;&LAYERS=hoogtes&TRANSPARENT=true&FORMAT=image%2Fgif&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A900913&BBOX=313086.064211,7044436.521911,469629.098111,7200979.555811&WIDTH=256&HEIGHT=256
 		var ahnLayer = L.tileLayer.wms(ahnUrl, {
             layers: 'hoogtes',
             format: 'image/png',
             transparent: true
-        }).addTo(this.map);
+        });
+        // Add a darker themd OSM layer
 		var tileUrl = 'http://a{s}.acetate.geoiq.com/tiles/acetate-hillshading/{z}/{x}/{y}.png';
 		var osmDarkLayer = L.tileLayer(tileUrl, {
             attribution: 'Background map design by <a href="http://www.stamen.com/">Stamen</a>. Tiles hosted by <a href="http://www.geoiq.com/">GeoIQ</a>. Map data: <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors and <a href="http://www.naturalearthdata.org/">Natural Earth Data</a>.',
             subdomains: '0123',
             minZoom: 2,
             maxZoom: 18
-        });
+        }).addTo(this.map);
 		
 		//Layer controls
 		var baseLayers = {"OSM": osmDarkLayer, "AHN": ahnLayer};
@@ -385,6 +384,8 @@ $.widget("cow.LeaflMapWidget", {
             item.permissions('view',self.core.project.myGroups());//Set default permissions to my groups
             item.permissions('edit',self.core.project.myGroups());//Set default permissions to my groups
             item.permissions('share',self.core.project.myGroups());//Set default permissions to my groups
+            //TODO: 2x submitting an item is not the proper way to do permissions
+            var item = self.core.itemstore().items('feature',{data: item.flatten()}, 'user'); 
 		});
 		
 		//See following URL for custom draw controls in leaflet
