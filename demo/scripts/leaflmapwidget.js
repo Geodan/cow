@@ -169,12 +169,12 @@ $.widget("cow.LeaflMapWidget", {
 	    var extentCollection = self.core.getPeerExtents();
 	    var locationCollection = self.core.getPeerPositions();
 	    //Update layer with extents
-	    if (self.viewlyr){
-			self.viewlyr.data(extentCollection);
+	    if (self.extentlyr){
+			self.extentlyr.data(extentCollection);
 		}
 		//Update layer with locations
-		if (self.getD3LayerByName('viewlayer')){
-			self.getD3LayerByName('viewlayer').data(extentCollection);
+		if (self.getD3LayerByName('extentlayer')){
+			self.getD3LayerByName('extentlayer').data(extentCollection);
 		}
 		//Update layer with locations
 		if (self.getD3LayerByName('locationlayer')){
@@ -203,9 +203,11 @@ $.widget("cow.LeaflMapWidget", {
 
 	_reloadLayer: function(e){
 	    var self = this;
-		self.editLayer.clearLayers();
+		self.editLayer.clearLayers(); //TODO: possble problem because while editing a feature we do not want to clear it
+		
 		var items = self.core.itemstore().items('feature');
 		var collection = {"type":"FeatureCollection","features":[]};
+		var viewcollection = {"type":"FeatureCollection","features":[]};
 		$.each(items, function(i, item){
 			var feature = item.data();
             if(feature === undefined) {
@@ -229,9 +231,15 @@ $.widget("cow.LeaflMapWidget", {
                     //self.editLayer.addData(feature)
                     //	.setStyle(self.layerstyle);
                 }
+                else if (item.status() != 'deleted'
+                    && item.permissionHasGroup('view',mygroups)
+                ){
+                    viewcollection.features.push(feature);
+                } 
 			}
 		});
 		self.getD3LayerByName('editlayer').data(collection);
+		self.getD3LayerByName('viewlayer').data(viewcollection);
 	},
 	
 	
@@ -332,11 +340,8 @@ $.widget("cow.LeaflMapWidget", {
 				    var feature = layer.toGeoJSON()
 				    //First transform into featurestore item
                     var item = core.itemstore().getItemById(feature.properties.key);
-                    var d = new Date();
-                    var timestamp = d.getTime();
                     item.data(feature);
                     //item.changer(self.core.UID);
-                    item.timestamp(timestamp);
                     var newitem = core.itemstore().items('feature',{data:item.flatten()},'user');
                     //core.trigger('afterfeaturemodified',layer.toGeoJSON());
 				});
@@ -367,7 +372,9 @@ $.widget("cow.LeaflMapWidget", {
                 
             };
             var item = self.core.itemstore().items('feature',{data: item}, 'user');
-            item.permissions('edit',self.core.project.myGroups());
+            item.permissions('view',self.core.project.myGroups());//Set default permissions to my groups
+            item.permissions('edit',self.core.project.myGroups());//Set default permissions to my groups
+            item.permissions('share',self.core.project.myGroups());//Set default permissions to my groups
 		});
 		
 		//See following URL for custom draw controls in leaflet
@@ -498,8 +505,32 @@ $.widget("cow.LeaflMapWidget", {
 				}
 		});
         self.d3Layers(d3editlyr);
+        
+        var d3viewlyr = new d3layer("viewlayer",{
+		    maptype: "Leaflet",
+			map: self,
+			//onClick: editPopup,
+			type: "path",
+			//onClick: cow.menu,
+			labels: true,
+			labelconfig: {
+                field: "desc",
+                style: {
+                    stroke: "steelBlue",
+                    opacity: 0.5
+                }
+            },
+			style: {
+					fill: "none",
+					stroke: "steelBlue",
+					'stroke-width': 2,
+					opacity: 0.5
+				}
+		});
+        self.d3Layers(d3viewlyr);
+        
         tmp = d3editlyr;
-		var viewlyr = new d3layer("viewlayer",{
+		var extentlyr = new d3layer("extentlayer",{
 			maptype: "Leaflet",
 			map: self,
 			type: "path",
@@ -517,7 +548,7 @@ $.widget("cow.LeaflMapWidget", {
 					textlocation: "ul"
 				}
 		});
-        self.d3Layers(viewlyr);
+        self.d3Layers(extentlyr);
         
 		var locationlyr = new d3layer("locationlayer",{
 			maptype: "Leaflet",
@@ -575,10 +606,7 @@ $.widget("cow.LeaflMapWidget", {
 		if (self.core.activeproject() == feature.properties.store){
 		    //core.featurestore().updateLocalFeat(feature);
             var item = core.itemstore().getItemById(feature.properties.key);
-            var d = new Date();
-            var timestamp = d.getTime();
             item.data(feature);
-            item.timestamp(timestamp);
             self.core.itemstore().items('feature',{data:item.flatten()}, 'user');
         }
         //self.editLayer.clearLayers();

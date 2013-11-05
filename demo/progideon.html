@@ -35,8 +35,24 @@
   <script src="../src/cow.pouchdb.js" type="text/javascript"></script>
 
   <script src="scripts/leaflmapwidget.js" type="text/javascript"></script>
+  <script src="scripts/messagewidget.js" type="text/javascript"></script>
    <script type="text/javascript">
 var core;
+
+//internal function
+getUrlVars = function()
+{
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++)
+    {
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+};
+
 
 $(document).ready(function(){
   
@@ -47,6 +63,7 @@ $(document).ready(function(){
   
   core =$('#cow').data('cow');
     $('#map').LeaflMapWidget({core: '#cow'});
+    $('#sidebar').MessageWidget({core: '#cow'});
   $('#bericht').click(function(){
     $('#sidebar').toggle('blind');
   });
@@ -73,11 +90,25 @@ $(document).ready(function(){
   progideon.groups({_id:3,name:'Evacuatie'});
   progideon.groups({_id:4,name:'Opvang'});
   core.activeproject({activeProjectId:666});
+  var publicgroup = core.project.groups({_id:1,name:'Public'});
+  var populatie = core.project.groups({_id:2,name:'Populatie'});
+  var evacuatie = core.project.groups({_id:3,name:'Evacuatie'});
+  var opvang = core.project.groups({_id:4,name:'Opvang'});
   
-  var group = core.project.groups({_id:2,name:'Populatie'});
-  group.members(core.UID); //Add yourself to Populatie group  
-  core.project.groups({_id:3,name:'Evacuatie'});
-  core.project.groups({_id:4,name:'Opvang'});
+  var group = getUrlVars()["group"] || (config && config.lang) || 'Populatie';
+  //Add yourself to the group
+  if (group == 'evacuatie'){
+    evacuatie.members(core.UID);
+  }
+  else if (group == 'populatie'){
+    populatie.members(core.UID);
+  }
+  else if (group == 'opvang'){
+    opvang.members(core.UID);
+  }
+  else {
+    publicgroup.members(core.UID);
+  }
   
 });
 </script>  
@@ -329,12 +360,14 @@ padding: 10px;
 
 .selected{
     background-color: steelBlue;
+    width: 100%;
 }
 
-.unselected:hover{
-    background-color: steelBlue;
+.unselected:hover, .selected:hover{
+    width: 100%;
+    background-color: #0099cc;
 }
-
+       
 #connect {
     width: 50px;
     border-right: 1px solid #eeeeec;
