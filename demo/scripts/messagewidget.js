@@ -17,7 +17,11 @@ $.widget("cow.MessageWidget", {
         self.messages= messages;
         core.bind("storeChanged" ,{widget: self}, self._onStoreChanged);
         setInterval(function(){ self._onStoreChanged({'data':{'widget':self}})},1000);
-
+        $(element).delegate($('.msg'),'click',function(e){
+            var item = $(e.target).parents('.msg').data('data');
+            var bbox = L.geoJson(item.data()).getBounds();
+            self.core.trigger('zoomToExtent',{bottom:bbox.getSouth(), top:bbox.getNorth(), left:bbox.getWest(), right:bbox.getEast()});
+        });
     },
   
     
@@ -25,13 +29,20 @@ $.widget("cow.MessageWidget", {
         var self = evt.data.widget;
         var items = self.core.itemstore().items('feature');
         items.sort(function(a,b) {return a._timestamp - b._timestamp});
-        var html = $('<div/>');
+  
+          $(self.element).empty();
         $.each(items, function(key, value) {
-            html.append(self.message(value));
+            if(value._status != "deleted") {
+            var msg = self.message(value);
+            if(msg != false) {
+            $(self.element).append(self.message(value));
+             $(self.element).children(':last-child').data('data',value);
+            }
+            }
             
         });
-        $(self.element).empty();
-        $(self.element).append($(html));
+      
+
        
     },
     message: function(data) {
@@ -67,7 +78,7 @@ $.widget("cow.MessageWidget", {
         }
         else {return false}
         
-        
+
        return $(message).append($(mleft).append(mtijd).append(mshare)).append($(mright).append(mgroup).append(msender).append(mtext));
        
         
