@@ -45,23 +45,33 @@ $.widget("cow.LeaflMapWidget", {
 			zoomControl:false
 		})
 		//.setView([52.083726,5.111282], 9);//Utrecht
-		.setView([52.341921,4.912838], 17);//Geodan Adam
+		//.setView([52.341921,4.912838], 17);//Geodan Adam
+		.setView([51.890054,5.094695],12);//Leerdam
 		
 		// add an OpenStreetMap tile layer
 		var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 		});
 		
-		var osmDarkLayer = L.tileLayer('http://a{s}.acetate.geoiq.com/tiles/acetate-hillshading/{z}/{x}/{y}.png', {
+		//var tileUrl = 'http://t{s}.edugis.nl/tiles/1.0.0/hoogtes/{z}/{x}/{y}.png';
+		var ahnUrl = "http://t3.edugis.nl/tiles/tilecache.py?map=maps/edugis/cache/hoogte.map";
+		//&amp;&LAYERS=hoogtes&TRANSPARENT=true&FORMAT=image%2Fgif&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A900913&BBOX=313086.064211,7044436.521911,469629.098111,7200979.555811&WIDTH=256&HEIGHT=256
+		var ahnLayer = L.tileLayer.wms(ahnUrl, {
+            layers: 'hoogtes',
+            format: 'image/png',
+            transparent: true
+        }).addTo(this.map);
+		var tileUrl = 'http://a{s}.acetate.geoiq.com/tiles/acetate-hillshading/{z}/{x}/{y}.png';
+		var osmDarkLayer = L.tileLayer(tileUrl, {
             attribution: 'Background map design by <a href="http://www.stamen.com/">Stamen</a>. Tiles hosted by <a href="http://www.geoiq.com/">GeoIQ</a>. Map data: <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors and <a href="http://www.naturalearthdata.org/">Natural Earth Data</a>.',
             subdomains: '0123',
             minZoom: 2,
             maxZoom: 18
-        }).addTo(this.map);
+        });
 		
 		//Layer controls
-		//var baseLayers = {"OSM": osmLayer};
-		//L.control.layers(baseLayers).addTo(this.map);
+		var baseLayers = {"OSM": osmDarkLayer, "AHN": ahnLayer};
+		L.control.layers(baseLayers).setPosition("bottomleft").addTo(this.map);
 		
 		$('#peers').bind("zoomToPeersview", function(evt, bbox){
 			self.map.fitBounds([[bbox.bottom,bbox.left],[bbox.top,bbox.right]]);
