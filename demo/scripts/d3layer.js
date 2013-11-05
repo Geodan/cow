@@ -11,6 +11,7 @@ function d3layer(layername, config){
 		this.map = config.map;
 		this.style = config.style;
 		this.onClick = config.onClick;
+		this.onMouseover = config.onMouseover;
 		this.classfield = config.classfield;
 		this.satellites = config.satellites || false;
 		this.eachFunctions = config.eachFunctions || false;	
@@ -97,6 +98,11 @@ function d3layer(layername, config){
 		        _this.onClick(d,this);
 		}
 		
+		var mouseover = function(d){
+		    if (_this.onMouseover)
+		        _this.onMouseover(d,this);
+		}
+		
 		//A per feature styling method
 		this.styling = function(d){
 		  var entity = d3.select(this);
@@ -104,8 +110,9 @@ function d3layer(layername, config){
 		  if (d.style && d.style.icon && d.geometry.type == 'Point'){ 
 		      var x = _this.project(d.geometry.coordinates)[0];
               var y = _this.project(d.geometry.coordinates)[1];
-		      entity.append("image")
+		      var img = entity.append("image")
 		            .on("click", click)
+		            .on('mouseover',mouseover)
                     .attr("xlink:href", function(d){
                             if (d.style.icon) return d.style.icon;
                             else return "./mapicons/stratego/stratego-flag.svg";
@@ -115,11 +122,16 @@ function d3layer(layername, config){
                     .attr("height", 37)
                     .attr("x",x-25)
                     .attr("y",y-25)
+                    .style('opacity',function(d){ //special case: opacity for icon
+                            return _this.style.opacity || 1;
+                    });
+             
 		  }
 		  //Path feature
 		  else{
 		    var path = entity.append("path")
-		        .on("click", click);
+		        .on("click", click)
+		        .on('mouseover',mouseover);
 			for (var key in _this.style) { //First check for generic layer style
 				entity.style(key,function(d){
 					if (d.style && d.style[key])

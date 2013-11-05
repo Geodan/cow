@@ -522,7 +522,7 @@ $.widget("cow.LeaflMapWidget", {
 			map: self,
 			//onClick: editPopup,
 			type: "path",
-			//onClick: cow.menu,
+			onMousover: cow.textbox,
 			labels: true,
 			labelconfig: {
                 field: "desc",

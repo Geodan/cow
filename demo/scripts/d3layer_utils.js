@@ -1,6 +1,8 @@
 //Replacing editpopup:
 var cow = {};
-
+cow.textbox = function(feature,obj){
+    
+}
 
 cow.menu = function(feature,obj){
     var _this = this;
@@ -99,10 +101,41 @@ cow.menu = function(feature,obj){
              var name = d.name;
              if (name == 'Pop'){
                  window.callback = function(d){
-                     console.log(d);
-                 }
-                 d3.jsonp('http://model.geodan.nl/cgi-bin/populator/populator.py',function(){console.log(arguments)});
-                 //TODO: put populator results in nice window
+                    entity.remove();
+                    var population = "" ;
+                    $.each(d.results,function(i,d){
+                            population= population + d.doel + ": " + Math.round(d.count * 2.3) + ' pers. \n';
+                    });
+                    
+                    //Doing the same as for text edit
+                    var name = feature.properties.name || "";
+                    var desc = (feature.properties.desc || "") + population; 
+                    var innerHtml = ''
+                    //+ translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
+                    + 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+                    //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
+                    + '';
+                    var div = d3.select('body').append('div')
+                        .attr("height", 500)
+                        .style('left',divloc[0]  -100 +  'px')
+                        .style('top',divloc[1] + 0 + 'px')
+                        .style('background-color','white')
+                        .style('opacity',0.7)
+                        .style('position','absolute');
+    
+                    div.append('div').attr("width", 480)
+                    .html(innerHtml);
+    
+                    div.append('div')
+                        .html('Done')
+                        .classed('popupbutton', true)
+                        .on('click',function(z){
+                                self.changeFeature(self, feature);
+                                div.remove();
+                     });
+                    }
+                    //Will generate a callback to 'callback'
+                    d3.jsonp('http://model.geodan.nl/cgi-bin/populator/populator.py',function(){console.log(arguments)});
              }
              if (name == 'E'){ //edit geometry
                 entity.remove();
@@ -126,9 +159,10 @@ cow.menu = function(feature,obj){
                     .style('background-color','white')
                     .style('opacity',0.7)
                     .style('position','absolute');
+
                     div.append('div').attr("width", 480)
-                    
                     .html(innerHtml);
+
                     div.append('div')
                         .html('Done')
                         .classed('popupbutton', true)
