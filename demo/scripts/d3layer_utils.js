@@ -147,7 +147,11 @@ cow.menu = function(feature,obj){
                 });
                 
                 var allgroups = self.core.project.groups();
-                
+                var grouparr = [];
+                $.each(allgroups, function(i,d){
+                        
+                        grouparr.push(d._id);
+                });
                 var div = d3.select('body').append('div')
                     .style('left',divloc[0]  -100 +  'px')
                     .style('top',divloc[1] + 0 + 'px')
@@ -161,35 +165,44 @@ cow.menu = function(feature,obj){
                 var scontent = div.append('div')
                     .classed('scontent', true);
                 scontent.append('div').classed('ssubheader', true).html('deel dit object met:');
-                scontent.append('div').classed('iedereen',true).html('<div class="permission share-cop"><span class="group cop" title="COP"></span>Iedereen</div>');
+                scontent.append('div').classed('iedereen',true).append('div')
+                    .attr('class','permission share-cop unselected')
+                    .on('click',function(d){
+                        //Only adding permissions here, removing goes 1 by 1
+                        item.permissions('view',grouparr);
+                        core.itemstore().items('feature',{data:item.flatten()},'user');
+                        d3.selectAll('.permission').attr('class','selected');
+                        console.log('Permissions for all groups added');
+                    })
+                    .html('<span class="group cop" title="COP"></span>Iedereen');
                 
                 var formbox = scontent.append('div').classed('individueel',true).attr('id','permlist');
                 var permissions = d3.select('#permlist').selectAll('.permission').data(allgroups);
-                var pdiv = permissions.enter().append('div').classed('permission',true);
+                //Add on/off button for every group
+                var pdiv = permissions.enter().append('div')
+                        .attr('class',function(d){
+                            if (item.permissionHasGroup('view',[d._id])) return 'permission selected';
+                            else return 'permission unselected';
+                        })
+                        .on('click',function(d){
+                            if (d3.select(this).classed('unselected')){
+                                d3.select(this).classed('selected',true).classed('unselected',false);
+                                item.permissions('view',d._id);
+                                core.itemstore().items('feature',{data:item.flatten()},'user');
+                                console.log('Permission added');
+                            }
+                            else {
+                                d3.select(this).classed('unselected',true).classed('selected',false);
+                                item.removePermission('view',[d._id]);
+                                core.itemstore().items('feature',{data:item.flatten()},'user');
+                                console.log('Permission removed');
+                            }
+                        });
                     pdiv.append('span').attr('class',function(d){
                                 return 'group ' + d.name;
                         });
                     pdiv.append('span')
-                        .attr('class',function(d){
-                            if (item.permissionHasGroup('edit',[d._id])) return 'selected';
-                            else return 'unselected';
-                        })
-                        .html(function(d){return d.name})
-                        .on('click',function(d){
-                            if (d3.select(this).attr('class') == 'unselected'){
-                                d3.select(this).attr('class','selected');
-                                item.permissions('edit',d._id);
-                                console.log('Permission added');
-                            }
-                            else {
-                                d3.select(this).attr('class','unselected');
-                                item.removePermission('edit',[d._id]);
-                                console.log('Permission removed');
-                            }
-                            
-                        });
-                
-                
+                        .html(function(d){return d.name});
                 
                 //formbox.html(form);
                 

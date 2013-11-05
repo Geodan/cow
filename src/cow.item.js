@@ -78,7 +78,7 @@ $.Cow.Item.prototype = {
                 });
             }
         }
-        self.core.trigger('storeChanged');
+        this._timestamp = new Date().getTime();
         return this.permissions();
     },
     /**
@@ -146,6 +146,7 @@ $.Cow.Item.prototype = {
                     }
                 });
                 if(index >= 0) self._permissions.splice(index,1);
+                self._timestamp = new Date().getTime();
                 return self.permissions();
             }
             else throw('type should be a string');
@@ -178,6 +179,7 @@ $.Cow.Item.prototype = {
                         }
                     }
                 }
+                self._timestamp = new Date().getTime();
                 return self.permissions();
             }
             else throw('type should be a string');
@@ -196,6 +198,7 @@ $.Cow.Item.prototype = {
         case 0:
             return self._data;
         case 1:
+            self._timestamp = new Date().getTime();
             return self._data = options;
             break;
         default:
@@ -222,8 +225,8 @@ $.Cow.Item.prototype = {
             throw('wrong argument number');
         }
     },
-    /** return the item id
-    */
+    
+    //TODO: would be nice if timestamp is automatically set upon change of any param
     id: function(val) {
         return this._id = val || this._id  ;
     },
