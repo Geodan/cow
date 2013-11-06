@@ -124,6 +124,71 @@ $(document).ready(function(){
   groupspan.select('.text').html(mygroupstring);
   groupspan.select('.group').classed(mygroupstring, true);
   
+  $('#delen').on('change','.cb',function(){
+    if($(this).hasClass('cop')) {
+        //het is de iedereen checkbox
+        if($(this).prop('checked')){
+            //en hij staan aan
+            
+            $('.other').prop('checked', true);
+            $('.eigen').prop('checked', false);
+        }
+        else {
+            //en hij staat uit
+            
+            $('.other').prop('checked', false);
+            $('.eigen').prop('checked', true);
+        }
+    }
+    else if($(this).hasClass('other')) {
+        //het is een andere groep
+        //opties: beide aan
+        //          beide uit
+        //       deze aan, andere uit
+        //       deze uit, andere aan        
+        
+        if($($('.other')[0]).prop('checked')&&$($('.other')[1]).prop('checked')){
+            //alles aan
+            $('.cb.cop').prop('checked',true);
+             $('.eigen').prop('checked', false);
+        }
+        else if(!$($('.other')[0]).prop('checked')&&!$($('.other')[1]).prop('checked')){
+            //alles uit
+            $('.cb.cop').prop('checked',false);
+             $('.eigen').prop('checked', true);
+        }
+        else {
+            $('.cb.cop').prop('checked',false);
+             $('.eigen').prop('checked', false);
+           }        
+        
+    
+    }
+    else if($(this).hasClass('eigen')) {
+        //het is de eigen checkbox
+         if($(this).prop('checked')){
+            //en hij staan aan
+            $('.other').prop('checked', false);
+            $('.cop').prop('checked', false);
+        }
+        else {
+            //en hij staat uit
+            $('.other').prop('checked', true);
+            $('.cop').prop('checked', true);
+        }
+    }
+    
+  });
+  $('#gedeeld').click(function(){  
+    $('#gedeeld').toggleClass('aan');
+    if($('#gedeeld').hasClass('aan')) {
+        $('#chk-gedeeld').prop('checked', true);
+    }
+    else {
+    $('#chk-gedeeld').prop('checked', false);
+    }
+    
+  });
 });
 </script>  
 <style>
@@ -364,11 +429,11 @@ padding: 2px;
     width: 200px; 
     box-shadow: 1px 1px 1px 1px rgba(90, 90, 90, 0.4);
 }
-.iedereen {
+.iedereen, .individueel {
     padding: 10px;
     border-bottom: solid 1px #eeeeec;
 }
-.individueel {
+.eigen {
 padding: 10px;
 }
 
@@ -435,7 +500,7 @@ input#username.default {
     <span id="group" class="head-left" title="Teamnaam"><span class="group populatie"></span><span class='text'>Populatie</span></span>
     <span id="name" title="Gebruikersnaam" class="head-left"><input id="username" class="default" type="text" value="Vul hier je naam in"/></span>
     
-    <span id="gedeeld" class="showalles button" title="Klik hier om alleen het gedeelde beeld te zien"><input id="chk-gedeeld" type="checkbox"/>gedeeld</span>
+    <span id="gedeeld" class="showalles button" title="Klik hier om alleen het gedeelde beeld te zien"><input id="chk-gedeeld" type="checkbox"/>Gedeeld beeld </span>
     <span id="deeldropdown" class="button">v</span>
     <div class="floatright">
         <span id="bericht" class="button nieuw">berichten</span>
@@ -444,11 +509,14 @@ input#username.default {
 </div>
 <div id="delen">
 <div class="iedereen">
-<input type="checkbox" checked="true" class="share-cop"/><span class="group cop" title="COP"></span>Iedereen
+<div><label><input type="checkbox" checked="true" class="cb cop"/><span class="group cop " title="COP"></span><span class="delencb aan">Iedereen</span></label></div>
 </div>
 <div class="individueel">
-<input type="checkbox" class="share-evacuatie"/><span class="group evacuatie" title="evacuatie"></span>Evacuatie<br/>
-<input type="checkbox" class="share-opvang"/><span class="group opvang" title="opvang"></span>Opvang
+<div><label><input type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span  class="delencb">Evacuatie</span></label></div>
+<div><label><input type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div>
+</div>
+<div class="eigen">
+<div><label><input type="checkbox" class="cb populatie eigen"/><span class="group populatie" title="opvang"></span><span class="delencb">Eigen objecten</span></label></div>
 </div>
 </div>
 <div id="map"></div>
