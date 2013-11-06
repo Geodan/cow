@@ -19,6 +19,7 @@ $.widget("cow.MessageWidget", {
         setInterval(function(){ self._onStoreChanged({'data':{'widget':self}})},1000);
         $(element).delegate($('.msg'),'click',function(e){
             var item = $(e.target).parents('.msg').data('data');
+            if(!item) return false;
             var i = self.core.itemstore().getItemById(item.id());
             i.read = new Date().getTime();
             self._onStoreChanged({'data':{'widget':self}})
@@ -69,6 +70,9 @@ $.widget("cow.MessageWidget", {
         var owner = data.permissions('edit');  
             var read = 'unread';
             if(data.read && data.read > data.timestamp()) read = 'read';
+            else {
+                $('#bericht').addClass('nieuw');
+            }
         var message = '<div class="msg '+ read+'" title="click to see this message on the map"></div>';
         var mleft = '<div class="m-left"></div>';
         var mtijd = '<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">'+seconds+'</div>';
@@ -101,7 +105,7 @@ $.widget("cow.MessageWidget", {
         var msender = '<span class="msender">'+data.data().properties.creator+'</span>';
         var mtext;
         if(data.data().properties.desc !== undefined) {
-             mtext = '<div class="mtext">'+data.data().properties.desc+'</div>' 
+             mtext = '<div class="mtext">'+data.data().properties.desc.replace("\n","<br/>")+'</div>' 
              
             $('#lastmsg').empty().html(seconds);
         }
