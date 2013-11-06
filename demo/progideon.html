@@ -214,7 +214,7 @@ delenhtml += '<div class="eigen"><div><label><input value="2" type="checkbox" cl
             $('.cop').prop('checked', true);
         }
     }
-    
+    core.trigger('storeChanged');
   });
   $('#gedeeld').click(function(){  
     $('#gedeeld').toggleClass('aan');

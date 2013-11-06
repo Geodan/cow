@@ -270,8 +270,8 @@ $.widget("cow.LeaflMapWidget", {
                     icon: feature.properties.icon,
                     stroke: feature.properties.linecolor,
                     fill:  feature.properties.polycolor,
-                    //"fill-opacity": 0.5,
-                    "fill-opacity": opacity,
+                    "fill-opacity": 0.5,
+                    //"fill-opacity": opacity,
                     opacity: opacity
                 } 
                 
@@ -548,7 +548,8 @@ $.widget("cow.LeaflMapWidget", {
 			labelconfig: {
                 field: "desc",
                 style: {
-                    stroke: "steelBlue"
+                    stroke: "#000033"
+                    //stroke: "steelBlue"
                 }
             },
 			style: {
