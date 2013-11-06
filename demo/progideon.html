@@ -39,6 +39,21 @@
    <script type="text/javascript">
 var core;
 
+//internal function
+getUrlVars = function()
+{
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++)
+    {
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+};
+
+
 $(document).ready(function(){
   
   $('#cow').cow({
@@ -67,21 +82,34 @@ $(document).ready(function(){
   
   //Settings for ProGideon workshop
   var progideon = core.projects({_id:1001,name:"Overstroming 1", peeruid: core.UID}); //Add after localdb has been initialized
-  progideon.groups({_id:1,name:'Public'});
   progideon.groups({_id:2,name:'Populatie'});
   progideon.groups({_id:3,name:'Evacuatie'});
   progideon.groups({_id:4,name:'Opvang'});
-  
   var progideon = core.projects({_id:1002,name:"Overstroming 2", peeruid: core.UID}); //Add after localdb has been initialized
-  progideon.groups({_id:1,name:'Public'});
   progideon.groups({_id:2,name:'Populatie'});
   progideon.groups({_id:3,name:'Evacuatie'});
   progideon.groups({_id:4,name:'Opvang'});
-  core.activeproject({activeProjectId:666});
-  core.project.groups({_id:1,name:'Public'});
-  core.project.groups({_id:2,name:'Populatie'});
-  core.project.groups({_id:3,name:'Evacuatie'});
-  core.project.groups({_id:4,name:'Opvang'});
+  core.activeproject({activeProjectId:666}); //Default starting in sketch project
+  var publicgroup = core.project.groups({_id:1,name:'Public'});
+  var populatie = core.project.groups({_id:2,name:'Populatie'});
+  var evacuatie = core.project.groups({_id:3,name:'Evacuatie'});
+  var opvang = core.project.groups({_id:4,name:'Opvang'});
+  
+  var group = getUrlVars()["group"] || (config && config.lang) || 'Populatie';
+  //Add yourself to the group
+  if (group == 'evacuatie'){
+    evacuatie.members(core.UID);
+  }
+  else if (group == 'populatie'){
+    populatie.members(core.UID);
+  }
+  else if (group == 'opvang'){
+    opvang.members(core.UID);
+  }
+  else {
+    publicgroup.members(core.UID);
+  }
+  
 });
 </script>  
 <style>
@@ -330,6 +358,16 @@ padding: 2px;
 padding: 10px;
 }
 
+.selected{
+    background-color: steelBlue;
+    width: 100%;
+}
+
+.unselected:hover, .selected:hover{
+    width: 100%;
+    background-color: #0099cc;
+}
+       
 #connect {
     width: 50px;
     border-right: 1px solid #eeeeec;
@@ -386,7 +424,7 @@ input#username.default {
     <span id="gedeeld" class="showalles button" title="Klik hier om alleen het gedeelde beeld te zien"><input id="chk-gedeeld" type="checkbox"/>gedeeld</span>
     <span id="deeldropdown" class="button">v</span>
     <div class="floatright">
-        <span id="bericht" class="button nieuw">berichten</span>
+        <!--<span id="bericht" class="button nieuw">berichten</span>-->
         <span id="lastmsg">10s</span>
     </div>
 </div>

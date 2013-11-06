@@ -192,7 +192,7 @@ $.Cow.Websocket.prototype = {
             
         }
         //SMO TODO: turn this into a proper callback
-        setTimeout(sendFidList, 2000);
+        setTimeout(sendFidList, 15000);
             
         
     },
