@@ -12,6 +12,7 @@ cow.textbox = function(feature,obj){
     var item = self.core.itemstore().getItemById(feature.properties.key);
     var name = feature.properties.name || "";
     var desc = feature.properties.desc || "";
+    var ownername = feature.properties.owner || "Anoniem";
     //var mygroups = self.core.project.myGroups();
     var editgroups = item.permissions('edit')[0].groups;
     var groupnames = "";
@@ -36,7 +37,7 @@ cow.textbox = function(feature,obj){
         .attr('title','Dit object is gemaakt door');
     sheader.append('span')
         .classed('group populatie',true); //TODO add own groups here
-    sheader.append('span').html(groupnames);
+    sheader.append('span').html(groupnames  + " <small>(" + ownername + ")</small>");
     var scontent = div.append('div')
         .classed('scontent', true);
     desc = desc.replace(/\r\n?|\n/g, '<br />');
