@@ -71,6 +71,7 @@ $.widget("cow.LeaflMapWidget", {
 		//Layer controls
 		var baseLayers = {"OSM": osmDarkLayer, "AHN": ahnLayer};
 		L.control.layers(baseLayers).setPosition("bottomleft").addTo(this.map);
+		L.Control.measureControl({position: "bottomleft"}).addTo(this.map);
 		
 		$('#peers').bind("zoomToPeersview", function(evt, bbox){
 			self.map.fitBounds([[bbox.bottom,bbox.left],[bbox.top,bbox.right]]);
@@ -119,6 +120,7 @@ $.widget("cow.LeaflMapWidget", {
 		    d3.selectAll('.popup').remove();//Remove all popups on map
             self.controls.editcontrol.save();
             self.controls.editcontrol.disable();
+            self.editLayer.clearLayers();
 		});
 //		this.controls.select.activate();
     },

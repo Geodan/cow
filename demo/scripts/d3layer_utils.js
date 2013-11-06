@@ -4,6 +4,9 @@ cow.textbox = function(feature,obj){
     var _this = this;
     var self = this.map;
     d3.selectAll('.popup').remove(); //Remove any old menu's
+    d3.select(obj).on('mouseout', function(d){
+          d3.selectAll('.share').remove();
+    });
     var loc = d3.mouse(obj); //Wrong on firefox
     var divloc = [d3.event.screenX ,d3.event.screenY ];
     var item = self.core.itemstore().getItemById(feature.properties.key);
@@ -45,8 +48,8 @@ cow.textbox = function(feature,obj){
     blokje.enter()
         .append('span')
         .attr('class',function(d){
-                var groupname = self.core.project.getGroupById(d).name
-                return 'group ' + groupname;
+            var groupname = self.core.project.getGroupById(d).name
+            return 'group ' + groupname;
         });
         
 }
@@ -217,6 +220,40 @@ cow.menu = function(feature,obj){
                 + 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
                 //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
                 + '';
+                
+                var div = d3.select('body').append('div')
+                    .style('left',divloc[0] + 0 +  'px')
+                    .style('top',divloc[1] + 0 + 'px')
+                    .classed("popup share ui-draggable", true);
+                var sheader = div.append('div')
+                    .classed('sheader', true)
+                    .attr('title','Dit object is gemaakt door');
+                sheader.append('span')
+                    .classed('group populatie',true); //TODO add own groups here
+                sheader.append('span').html(groupnames);
+                var scontent = div.append('div')
+                    .classed('scontent', true);
+                desc = desc.replace(/\r\n?|\n/g, '<br />');
+                scontent.append('div').classed('ssubheader', true).html(innerHtml);
+                scontent.append('div')
+                        .html('Done')
+                        .classed('popupbutton', true)
+                        .on('click',function(z){
+                                self.changeFeature(self, feature);
+                                div.remove();
+                        });
+                sfooter = div.append('div')
+                    .classed('sfooter',true)
+                    .attr('id','permissionlist');//TODO dont use ids;
+                var itemgroups = item.permissions('view')[0].groups;
+                var blokje = d3.select('#permissionlist').selectAll('.permission').data(itemgroups);
+                blokje.enter()
+                    .append('span')
+                    .attr('class',function(d){
+                        var groupname = self.core.project.getGroupById(d).name
+                        return 'group ' + groupname;
+                    });
+                /*
                 var div = d3.select('body').append('div')
                     .attr("height", 500)
                     .style('left',divloc[0]  -100 +  'px')
@@ -235,6 +272,7 @@ cow.menu = function(feature,obj){
                                 self.changeFeature(self, feature);
                                 div.remove();
                         });
+                 */
             }
             else if (name == 'S'){//Share permissions
                 entity.remove();
