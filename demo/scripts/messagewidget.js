@@ -36,19 +36,23 @@ $.widget("cow.MessageWidget", {
         items.sort(function(a,b) {return a._timestamp - b._timestamp});
   
           $(self.element).empty();
+          var nieuw = false;
         $.each(items, function(key, value) {
             if(value._status != "deleted"
                 && (value.permissionHasGroup('edit',mygroups) || value.permissionHasGroup('view',mygroups))
                 ) {
             var msg = self.message(value);
             if(msg != false) {
+            if(!value.read || value.read < value.timestamp()) {
+            nieuw = true;
+            }
             $(self.element).append(self.message(value));
              $(self.element).children(':last-child').data('data',value);
             }
             }
             
         });
-      
+        nieuw?$('#bericht').addClass('nieuw'):$('#bericht').removeClass('nieuw');
 
        
     },
