@@ -38,6 +38,7 @@
 
   <script src="scripts/leaflmapwidget.js" type="text/javascript"></script>
   <script src="scripts/messagewidget.js" type="text/javascript"></script>
+  <script src="scripts/knopwidget.js" type="text/javascript"></script>
     <script src="scripts/cookies.js" type="text/javascript"></script>
    <script type="text/javascript">
 var core;
@@ -67,6 +68,7 @@ $(document).ready(function(){
   core =$('#cow').data('cow');
     $('#map').LeaflMapWidget({core: '#cow'});
     $('#sidebar').MessageWidget({core: '#cow'});
+     $('#newfeatpanel').KnopWidget({core: '#cow'});
     
     var username=getCookie("username");
   if (username!=null && username!="")
@@ -92,13 +94,8 @@ $(document).ready(function(){
     $('#sidebar').toggle('blind').animate({scrollTop:$("#sidebar").prop("scrollHeight") - $('#sidebar').height() },200);   
 
   });
-  $('.subknop').click(function() {
-    $('.subknop ~ .sideknop').toggle('fold');
-  });
-  $('.sknop').click(function(){
-    $(this).parent().toggle('fold');
-  });
-  $('.share').draggable();
+
+
   
   $('#deeldropdown').click(function(){
     $('#delen').toggle('blind');
@@ -234,6 +231,57 @@ delenhtml += '<div class="eigen"><div><label><input value="2" type="checkbox" cl
 });
 </script>  
 <style>
+
+.leaflet-container .leaflet-control-zoom {
+margin-left: 10px;
+margin-top: 15px;
+}
+.leaflet-bar {
+  box-shadow: none;
+  border: none;
+  -webkit-border-radius: 1px;
+border-radius: 1px;
+}
+.leaflet-control-zoom a {
+  color: white;
+  width: 35px;
+  height: 35px;
+  border: none;
+}
+.leaflet-control-zoom a:hover {
+background-color: #abcb3b;
+}
+a.leaflet-disabled:hover {
+ color:  #b4cf6a;
+ background: #96be0a;
+}
+.leaflet-bar a {
+  background: #96be0a;
+  line-height:34px;
+}
+.leaflet-bar a:first-child {
+-webkit-border-radius: 1px ;
+border-radius: 1px;
+margin-bottom: 7px;
+}
+.leaflet-control-zoom-in {
+font: bold 24px/36px Arial, Helvetica, sans-serif;
+}
+.leaflet-bar a.leaflet-disabled {
+cursor: default;
+
+ color:  #b4cf6a;
+ background: #96be0a;
+}
+.leaflet-control-zoom-out {
+font: bold 24px/30px Tahoma, Verdana, sans-serif;
+}
+.leaflet-bar a:last-child {
+-webkit-border-radius: 1px;
+border-radius: 1px;
+border-bottom: none;
+}
+
 *{
     font-family: Arial;
 }
@@ -284,7 +332,7 @@ padding-top: 4px;
 
 #knoppen {
     position: absolute;
-    top: 50px;
+    top: 150px;
     left: 10px;
 }
 .knop {
@@ -437,18 +485,7 @@ border-right: solid 1px #eeeeec;
 .opvang, .Opvang {
     background: orange;
 }
-@-webkit-keyframes button_pulse {
-  0% {
-    color: orange;
-  }
-  50% {
-    color: red;
-    
-  }
-  100% {
-   color: orange;
-  }
-}
+
 .share {
     cursor: -webkit-grab;
     position: absolute;
@@ -564,27 +601,12 @@ color: black;
 </div>
 <div id="map"></div>
 <div id="knoppen">
-<div id="plus" class="knop">+</div>
-<div id="min" class="knop">-</div>
-<div id="edit">
-<div class="knop"></div>
-<div class="knop subknop"></div>
-<div class="sideknop" style="display:none">
-<span class="sknop"></span>
-<span class="sknop"></span>
-<span class="sknop"></span>
-<span class="sknop"></span>
-<span class="sknop"></span>
-<span class="sknop"></span>
-<span class="sknop"></span>
-<span class="sknop"></span>
-<span class="sknop"></span>
-<span class="sknop"></span>
-<span class="sknop"></span>
-<span class="sknop"></span>
+
+<div id="newfeatpanel">
+
 
 </div>
-<div class="knop"></div>
+
 </div>
 </div>
 <div id="sidebar">
