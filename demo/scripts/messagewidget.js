@@ -32,11 +32,14 @@ $.widget("cow.MessageWidget", {
     _onStoreChanged: function(evt) {
         var self = evt.data.widget;
         var items = self.core.itemstore().items('feature');
+        var mygroups = self.core.project.myGroups();
         items.sort(function(a,b) {return a._timestamp - b._timestamp});
   
           $(self.element).empty();
         $.each(items, function(key, value) {
-            if(value._status != "deleted") {
+            if(value._status != "deleted"
+                && (value.permissionHasGroup('edit',mygroups) || value.permissionHasGroup('view',mygroups))
+                ) {
             var msg = self.message(value);
             if(msg != false) {
             $(self.element).append(self.message(value));
