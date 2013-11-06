@@ -220,21 +220,59 @@ $.widget("cow.LeaflMapWidget", {
 		var collection = {"type":"FeatureCollection","features":[]};
 		var viewcollection = {"type":"FeatureCollection","features":[]};
 		$.each(items, function(i, item){
+		    var mygroups = self.core.project.myGroups();
 			var feature = item.data();
             if(feature === undefined) {
                 console.warn('old item type');
                 return false;
             }
             else{
+                var opacity = 1;
                 feature.id = feature.properties.key;
+                //Filter on 'gedeeld beeld'
+                //if gedeeld beeld:
+                if ($('#chk-gedeeld').prop('checked')){
+                    //if item is editable by me
+                    if (item.status() != 'deleted'
+                        && item.permissionHasGroup('edit',mygroups) //Filter on editable feats
+                        ){
+                        //if item is viewable by *all* selected groups and me
+                        //check for all selected groups
+                        var bright = true;
+                        $('.other').each(function(i,d){
+                            if (!item.permissionHasGroup('view',$(this).attr('value')))
+                                bright = false;
+                        });
+                        //check for my group(s)
+                        if (!item.permissionHasGroup('view',self.core.project.myGroups()))
+                                bright = false;
+                        if (bright){
+                            //Show bright
+                            opacity = 1;
+                        }
+                        //if item is not viewable *all* selected groups
+                        else{
+                            //Show dimmed
+                            opacity = 0.3;
+                        }
+                 }
+                 //else do not show
+                 else{
+                     opacity = 0;
+                 }
+              }
+              //else do normal flow
+                
                 
                 feature.style = {
                     icon: feature.properties.icon,
                     stroke: feature.properties.linecolor,
                     fill:  feature.properties.polycolor,
-                    "fill-opacity": 0.5
+                    //"fill-opacity": 0.5,
+                    "fill-opacity": opacity,
+                    opacity: opacity
                 } 
-                var mygroups = self.core.project.myGroups();
+                
                 if (item.status() != 'deleted'
                     && item.permissionHasGroup('edit',mygroups) //Filter on editable feats
                 ){

@@ -103,6 +103,25 @@ function d3layer(layername, config){
 		        _this.onMouseover(d,this);
 		}
 		
+		//Build up the element
+		this.build = function(d){
+		  var entity = d3.select(this);
+  	      //Point/icon feature
+		  if (d.style && d.style.icon && d.geometry.type == 'Point'){ 
+		      var x = _this.project(d.geometry.coordinates)[0];
+              var y = _this.project(d.geometry.coordinates)[1];
+		      var img = entity.append("image")
+		            .on("click", click)
+		            .on('mouseover',mouseover);
+		  }
+		  //Path feature
+		  else{
+		    var path = entity.append("path")
+		        .on("click", click)
+		        .on('mouseover',mouseover);
+		  }
+		}
+		
 		//A per feature styling method
 		this.styling = function(d){
 		  var entity = d3.select(this);
@@ -110,9 +129,7 @@ function d3layer(layername, config){
 		  if (d.style && d.style.icon && d.geometry.type == 'Point'){ 
 		      var x = _this.project(d.geometry.coordinates)[0];
               var y = _this.project(d.geometry.coordinates)[1];
-		      var img = entity.append("image")
-		            .on("click", click)
-		            .on('mouseover',mouseover)
+		      var img = entity.select("image")
                     .attr("xlink:href", function(d){
                             if (d.style.icon) return d.style.icon;
                             else return "./mapicons/stratego/stratego-flag.svg";
@@ -123,15 +140,13 @@ function d3layer(layername, config){
                     .attr("x",x-25)
                     .attr("y",y-25)
                     .style('opacity',function(d){ //special case: opacity for icon
-                            return _this.style.opacity || 1;
+                            return d.style.opacity || _this.style.opacity || 1;
                     });
              
 		  }
 		  //Path feature
 		  else{
-		    var path = entity.append("path")
-		        .on("click", click)
-		        .on('mouseover',mouseover);
+		    var path = entity.select("path");
 			for (var key in _this.style) { //First check for generic layer style
 				entity.style(key,function(d){
 					if (d.style && d.style[key])
@@ -222,7 +237,7 @@ function d3layer(layername, config){
                 })			    
 			    ;
 
-            newentity.each(_this.styling);
+            newentity.each(_this.build);
             
 			
 			if (_this.videobox){
@@ -296,10 +311,12 @@ function d3layer(layername, config){
             }
             
 			//On update
+			entities.each(_this.styling);
 			entities.each(function(d,i){
 			    var entity = d3.select(this);
 			    var x = geoPath.centroid(d)[0];
                 var y = geoPath.centroid(d)[1];
+                
                 if (d.style && d.style.icon){
                     var x = x;
                     var y = y;
