@@ -71,6 +71,7 @@ $.widget("cow.LeaflMapWidget", {
 		//Layer controls
 		var baseLayers = {"OSM": osmDarkLayer, "AHN": ahnLayer};
 		L.control.layers(baseLayers).setPosition("bottomleft").addTo(this.map);
+		L.Control.measureControl({position: "bottomleft"}).addTo(this.map);
 		
 		$('#peers').bind("zoomToPeersview", function(evt, bbox){
 			self.map.fitBounds([[bbox.bottom,bbox.left],[bbox.top,bbox.right]]);

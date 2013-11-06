@@ -106,7 +106,7 @@ $.Cow.Item.prototype = {
                 var doeshave = false;
                 $.each(groups,function(i){
                     $.each(ingroups, function(j){
-                       if(groups[i] == group[j]) doeshave = true
+                       if(groups[i] == ingroups[j]) doeshave = true
                     });
                 });
                 return doeshave;

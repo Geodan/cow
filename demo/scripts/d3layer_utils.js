@@ -45,8 +45,8 @@ cow.textbox = function(feature,obj){
     blokje.enter()
         .append('span')
         .attr('class',function(d){
-                var groupname = self.core.project.getGroupById(d).name
-                return 'group ' + groupname;
+            var groupname = self.core.project.getGroupById(d).name
+            return 'group ' + groupname;
         });
         
 }
