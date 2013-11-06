@@ -72,6 +72,7 @@ $.widget("cow.LeaflMapWidget", {
 		var baseLayers = {"OSM": osmDarkLayer, "AHN": ahnLayer};
 		L.control.layers(baseLayers).setPosition("bottomleft").addTo(this.map);
 		L.Control.measureControl({position: "bottomleft"}).addTo(this.map);
+		//L.Control.Zoom({position: "bottomleft"}).addTo(this.map);
 		
 		$('#peers').bind("zoomToPeersview", function(evt, bbox){
 			self.map.fitBounds([[bbox.bottom,bbox.left],[bbox.top,bbox.right]]);
@@ -273,7 +274,12 @@ $.widget("cow.LeaflMapWidget", {
                     "fill-opacity": 0.5,
                     //"fill-opacity": opacity,
                     opacity: opacity
-                } 
+                }
+                //Workaround for lines with a fill
+                if (feature.geometry.type == 'LineString')
+                    feature.style.fill = 'none';
+                    
+                
                 
                 if (item.status() != 'deleted' && opacity > 0
                     && item.permissionHasGroup('edit',mygroups) //Filter on editable feats
@@ -465,6 +471,7 @@ $.widget("cow.LeaflMapWidget", {
 			self.controls.linecontrol.enable();
 			var layer = self.editLayer;
 			core.current_linecolor = key;
+			core.current_polycolor = 'none';
 		});
 		$('#newfeatpanel').bind("newpoly", function(evt, key){
 			self.controls.linecontrol.disable();

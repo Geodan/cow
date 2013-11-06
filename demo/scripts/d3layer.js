@@ -148,7 +148,7 @@ function d3layer(layername, config){
 		  else{
 		    var path = entity.select("path");
 			for (var key in _this.style) { //First check for generic layer style
-				entity.style(key,function(d){
+				path.style(key,function(d){
 					if (d.style && d.style[key])
 						return d.style[key]; //Override with features style if present
  					else	
