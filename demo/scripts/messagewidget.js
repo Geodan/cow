@@ -19,6 +19,9 @@ $.widget("cow.MessageWidget", {
         setInterval(function(){ self._onStoreChanged({'data':{'widget':self}})},1000);
         $(element).delegate($('.msg'),'click',function(e){
             var item = $(e.target).parents('.msg').data('data');
+            var i = self.core.itemstore().getItemById(item.id());
+            i.read = new Date().getTime();
+            self._onStoreChanged({'data':{'widget':self}})
             var bbox = L.geoJson(item.data()).getBounds();
             self.core.trigger('zoomToExtent',{bottom:bbox.getSouth(), top:bbox.getNorth(), left:bbox.getWest(), right:bbox.getEast()});
         });
@@ -61,14 +64,40 @@ $.widget("cow.MessageWidget", {
         else {
             seconds = Math.round(seconds/86400) + 'dagen';
         }
-        var group = data.permissions('view');        
-        var message = '<div class="msg unread" title="click to see this message on the map"></div>';
+        
+        var group = data.permissions('view');  
+        var owner = data.permissions('edit');  
+            var read = 'unread';
+            if(data.read && data.read > data.timestamp()) read = 'read';
+        var message = '<div class="msg '+ read+'" title="click to see this message on the map"></div>';
         var mleft = '<div class="m-left"></div>';
         var mtijd = '<div class="mtijd" title="Dit bericht is zolang geleden binnengekomen">'+seconds+'</div>';
-        var mshare = '<div class="mshare" title="Dit bericht is gedeeld met"></div>';
-        //TODO: add <span class="group cop" title="COP"></span> per group
+        var mshare = '<div class="mshare" title="Dit bericht is gedeeld met">';
+        var mgroups ='';
+        if(group.length > 0) {
+        if($.inArray(1,group[0].groups) > -1) {
+            mgroups += '<span class="group public" title="cop"></span><span class="group populatie" title="Populatie"></span><span class="group evacuatie" title="Evacuatie"></span><span class="group opvang" title="Opvang"></span>';
+        }
+        else {
+        if($.inArray(2,group[0].groups) > -1) {
+            mgroups += '<span class="group populatie" title="Populatie"></span>';
+        }
+        if($.inArray(3,group[0].groups) > -1) {
+            mgroups += '<span class="group evacuatie" title="Evacuatie"></span>';
+        }
+        if($.inArray(4,group[0].groups) > -1) {
+            mgroups += '<span class="group opvang" title="Opvang"></span>';
+        }
+        }
+        }
+        //TODO: add <span class="group public" title="cop"></span> per group
+        mshare += mgroups + '</div>';
         var mright = '<div class="m-right"></div>';
-        var mgroup = '<span class="group populatie" title="populatie"></span>';
+        var ownername = '';
+        if (owner.length > 0) {
+            ownername = self.core.project.getGroupById(owner[0].groups[0]).name;
+        }
+        var mgroup = '<span class="group '+ownername+'" title="'+ownername+'"></span>';
         var msender = '<span class="msender">'+data.data().properties.creator+'</span>';
         var mtext;
         if(data.data().properties.desc !== undefined) {
