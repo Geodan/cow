@@ -36,7 +36,7 @@ cow.textbox = function(feature,obj){
         .classed('sheader', true)
         .attr('title','Dit object is gemaakt door');
     sheader.append('span')
-        .classed('group populatie',true); //TODO add own groups here
+        .classed('group ' + groupnames,true); //TODO add own groups here
     sheader.append('span').html(groupnames  + " <small>(" + ownername + ")</small>");
     var scontent = div.append('div')
         .classed('scontent', true);

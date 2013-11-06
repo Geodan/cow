@@ -98,6 +98,7 @@ $(document).ready(function(){
   var opvang = core.project.groups({_id:4,name:'Opvang'});
   
   var group = getUrlVars()["group"] || 'populatie';
+  
   //Add yourself to the group
   if (group == 'evacuatie'){
     evacuatie.members(core.UID);
@@ -109,8 +110,18 @@ $(document).ready(function(){
     opvang.members(core.UID);
   }
   else {
-    publicgroup.members(core.UID);
+    //publicgroup.members(core.UID);
   }
+  var mygroups = core.project.myGroups();
+  var mygroupstring = ""; 
+  $.each(mygroups, function(i,d){
+    var name = self.core.project.getGroupById(d).name;
+    if (name != 'Public')
+        mygroupstring = mygroupstring + " " + name; 
+  });
+  var groupspan = d3.select('#group');
+  groupspan.select('.text').html(mygroupstring);
+  groupspan.select('.group').classed(mygroupstring, true);
   
 });
 </script>  
@@ -420,7 +431,7 @@ input#username.default {
 <div id="cow"></div>
 <div id="header">
     <span id="connect" class="head-left"><div id="status" class="connected" title="Verbonden"></div></span>
-    <span id="group" class="head-left" title="Teamnaam"><span class="group populatie"></span>Populatie</span>
+    <span id="group" class="head-left" title="Teamnaam"><span class="group populatie"></span><span class='text'>Populatie</span></span>
     <span id="name" title="Gebruikersnaam" class="head-left"><input id="username" class="default" type="text" value="Vul hier je naam in"/></span>
     
     <span id="gedeeld" class="showalles button" title="Klik hier om alleen het gedeelde beeld te zien"><input id="chk-gedeeld" type="checkbox"/>gedeeld</span>
