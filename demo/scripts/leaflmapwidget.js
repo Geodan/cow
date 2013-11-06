@@ -42,7 +42,7 @@ $.widget("cow.LeaflMapWidget", {
 		
 		//Creating the leaflet map
 		this.map = L.map('map',{ 
-			zoomControl:false
+			
 		})
 		//.setView([52.083726,5.111282], 9);//Utrecht
 		//.setView([52.341921,4.912838], 17);//Geodan Adam
