@@ -236,14 +236,14 @@ $.widget("cow.LeaflMapWidget", {
                 } 
                 var mygroups = self.core.project.myGroups();
                 if (item.status() != 'deleted'
-                    && item.permissionHasGroup('edit',mygroups)
+                    && item.permissionHasGroup('edit',mygroups) //Filter on editable feats
                 ){
                     collection.features.push(feature);
                     //self.editLayer.addData(feature)
                     //	.setStyle(self.layerstyle);
                 }
                 else if (item.status() != 'deleted'
-                    && item.permissionHasGroup('view',mygroups)
+                    && item.permissionHasGroup('view',mygroups) //Filter remaining feats on viewable feats
                 ){
                     viewcollection.features.push(feature);
                 } 
