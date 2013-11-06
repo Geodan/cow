@@ -44,11 +44,13 @@
     font-family: Arial;
 }
 #map {
-    left: 0px;
+    left: 40px;
     right: 0px;
-    top: 36px;
+    top: 60px;
     bottom: 0px;
     position: absolute;
+    font-size: 20px;
+    
 }
 #header {
     left: 0px;
@@ -63,9 +65,7 @@
      padding-left: 5px;
      font-size: 20px;
 }
-.head-left {
-padding-top: 4px;
-}
+
 .button {
     cursor: pointer;
         border: solid 1px rgba(238, 238, 236, 0.2);
@@ -80,148 +80,7 @@ padding-top: 4px;
 .button:active {
     background-image: -webkit-linear-gradient(top, rgba(238, 238, 236, 0.5) 0%, rgba(238, 238, 236, 0) 100%);
 }
-.nieuw {
-    font-weight: bold;
-    color: red;
-     
 
-  
-}
-
-#knoppen {
-    position: absolute;
-    top: 50px;
-    left: 10px;
-}
-.knop {
- font: bold 24px/36px Arial, Helvetica, sans-serif;
-text-align: center;
--webkit-border-radius: 1px;
-border-radius: 1px;
-
-  cursor: pointer;
-  background-color: #96be0a;
-color: white;
-width: 35px;
-height: 35px;
-border: none;
-line-height: 34px;
-}
-.subknop {
-    background-image: url('css/img/driehoek.png');
-    background-repeat: no-repeat;
-    background-position: right;
-    border-bottom: solid 1px #2e3436;
-    height: 10px;
-    
-}
-
-#plus {
-margin-bottom: 7px;
-}
-#edit {
-margin-top: 20px;
-}
-.knop:hover {
-  background-color: #abcb3b;
-}
-.knop:active {
- background-color: #96be0a;
-}
-.sideknop {
-    float: right;
-    margin-left: 35px;
-    margin-top: -7px;
-    background: white;
-    border-top: solid 1px black;
-    border-bottom: solid 1px black;
-    border-right: solid 1px black;
-    border-left: solid 1px #96be0a;
-
-    padding: 5px;
-    
-    max-width: 268px;
-}
-.sknop {
--webkit-border-radius: 1px;
-border-radius: 1px;
-display: inline-block;
-  cursor: pointer;
-width: 35px;
-height: 35px;
-border: none;
-background:#96be0a;
-line-height: 34px;
-margin: 2px;
-
-}
-.sknop:hover {
-opacity: 0.7;
-}
-.sknop:active {
-    opacity:1;
-}
-.floatright {
-    float: right;
-    width: 436px;
-}
-#lastmsg {
-    float: right;
-    margin-right: 10px;
-}
-#sidebar {
-    float: right;
-    position: absolute;
-    top: 36px;
-    right: 0px;
-    bottom: 0px;
-    width: 330px;
-    background: white;
-    z-index: 1001;
-    box-shadow:         -2px 0px 0px 0px  rgba(90, 90, 90, 0.4);
-    border-top: solid 1px #d3d7cf;
-        overflow: auto;
-}
-.msg {
-border-bottom: solid 2px #d3d7cf;
-display: flex;
-cursor:pointer;
-background: rgba(238,238,236,0.8);
-padding: 4px;
-}
-.msg:hover {
-background: rgba(238,238,236,0.2);
-}
-.msg:active {
-    background: rgba(238,238,236,0.8);
-}
-.m-left {
- width: 55px;
-border-right: solid 1px #eeeeec;
-
-}
-.m-right {
-   width: 270px;
-}
-
-.msg.unread {
-    background: #96be0a;
-}
-.msg.unread:hover {
-    background: #abcb3b;
-}
-.msg.unread:active {
-    background: #96be0a;
-}
-.mshare {
- margin:4px;
-}
-.mtext {
-    background: white;
-    border: solid 2px  #eeeeec;
-    border-radius: 2px;
-    margin:4px;
-}
 .group {
     width: 10px;
     height: 10px;
@@ -243,118 +102,61 @@ border-right: solid 1px #eeeeec;
 .opvang, .Opvang {
     background: orange;
 }
-@-webkit-keyframes button_pulse {
-  0% {
-    color: orange;
-  }
-  50% {
-    color: red;
-    
-  }
-  100% {
-   color: orange;
-  }
+#rollen {
+    display: flex;
 }
-.share {
-    cursor: -webkit-grab;
-    position: absolute;
-    z-index: 1002;    
-    top: 400px;
-    left: 400px;
-}
-.sheader, .scontent {
-    background: white;
-    border: solid 1px black;
-}
-.sheader {
-padding: 2px;
-    display: inline;
-}
-.ssubheader {
-    margin: 4px;
-}
-.scontent {
-    width: 200px; 
-    box-shadow: 1px 1px 1px 1px rgba(90, 90, 90, 0.4);
-}
-.iedereen, .individueel {
-    padding: 10px;
-    border-bottom: solid 1px #eeeeec;
-}
-.eigen {
-padding: 10px;
-}
-
-.selected{
-    background-color: steelBlue;
-    width: 100%;
-}
-
-.unselected:hover, .selected:hover{
-    width: 100%;
-    background-color: #0099cc;
-}
-       
-#connect {
-    width: 50px;
-    border-right: 1px solid #eeeeec;
-    padding: 20px 15px 0px 12px;
-    height: 40px;
-    top: 5px;
-}
-
-#status {
-
-display: inline-block;
-     border-radius: 50%;
-    min-width: 20px;
-    height: 20px;
-    margin: 0px;
-    
-}
-
-.connected {
-background: #96be0a;
-}
-.disconnected {
-background: #ff0000;
-}
-input#username {
+.rol {
+    height: 420px;
+    width: 297px;
     border: solid 1px #eeeeec;
-    font-size: 20px;
-    
+    border-radius: 2px;
+    margin: 10px;
+    display: inline-block;
+    padding: 20px;
 }
-input#username.default {
-    color: gray;
+.rol img {
+margin-left: 30px;
+margin-top: 40px;
 }
-#delen {
-    width: 200px;
-    
-      background: white;
-    border: solid 1px black;
-    position: absolute;
-    top: 36px;
-    left: 400px;
-    z-index: 1005;
-    border-top: solid 1px #d3d7cf;
-     box-shadow:  1px 3px 2px 2px  rgba(90, 90, 90, 0.4);
+.content {
+    display: inline;
+    width: 100%;
+    height: 100%;
 }
-
-#uitloggen a {
-    text-decoration: none;
-    color: black;
-}
-#uitloggen a:visited {
-color: black;
-}
-
 </style>
+<script>
+$(document).ready(function(){
+   $('#populatie').on('click',function(){window.open('progideon.html?group=populatie','_self',false)});
+    });
+     $('#evacuatie').on('click',function(){window.open('progideon.html?group=evacuatie','_self',false)});
+    });
+     $('#opvang').on('click',function(){window.open('progideon.html?group=opvang','_self',false)});
+    });
+</script>
   </head>
 <body>
-<ul>
-<li><a href="progideon.html?group=populatie">populatie</a></li>
-<li><a href="progideon.html?group=evacuatie">evacuatie</a></li>
-<li><a href="progideon.html?group=opvang">opvang</a></li>
-</ul>
+<div id="header">
+Welkom bij de ProGideon workshop!
+</div>
+<div id="map">
+Kies hier onder welke rol u gaat vervullen tijdens de oefening:<br/>
+<div id="rollen">
+<div id="populatie" class="rol button"><div class="content">
+<p>U gaat zich bezig houden met het in kaart brengen van de hoeveelheid mensen in het ramp gebied. </p>
+<p>U hebt de rol <span class="group populatie"></span> 'Populatie'</p>
+<img src="css/img/populatie.jpg"/>
+</div></div>
+<div id="evacuatie" class="rol button" ><div class="content">
+<p>U gaat zich bezig houden met het in kaart brengen van vluchtroutes voor mensen uit het rampgebied naar de opvang locaties.</p>
+<p>U hebt de rol <span class="group evacuatie"></span> 'Evacuatie'</p>
+<img src="css/img/evacuatie.jpg"/>
+</div></div>
+<div id="opvang" class="rol button"><div class="content">
+<p>U gaat zich bezig houden met het in kaart brengen van genoeg opvang locaties voor de mensen uit het rampgebied. </p>
+<p>U hebt de rol <span class="group opvang"></span> 'Opvang'</p>
+<img src="css/img/opvang.jpg" height="180px"/>
+</div></div>
+</div>
+</div>
 </body>
 </html>
