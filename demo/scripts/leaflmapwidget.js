@@ -240,7 +240,9 @@ $.widget("cow.LeaflMapWidget", {
                         //check for all selected groups
                         var bright = true;
                         $('.other').each(function(i,d){
-                            if (!item.permissionHasGroup('view',$(this).attr('value')))
+                            var groupid = $(this).attr('value');
+                            var checked = $(this).prop('checked');
+                            if (checked && !item.permissionHasGroup('view',groupid))
                                 bright = false;
                         });
                         //check for my group(s)
@@ -258,7 +260,7 @@ $.widget("cow.LeaflMapWidget", {
                  }
                  //else do not show
                  else{
-                     opacity = 0;
+                     opacity = 0; //Trick the if statement in not null
                  }
               }
               //else do normal flow
@@ -273,14 +275,14 @@ $.widget("cow.LeaflMapWidget", {
                     opacity: opacity
                 } 
                 
-                if (item.status() != 'deleted'
+                if (item.status() != 'deleted' && opacity > 0
                     && item.permissionHasGroup('edit',mygroups) //Filter on editable feats
                 ){
                     collection.features.push(feature);
                     //self.editLayer.addData(feature)
                     //	.setStyle(self.layerstyle);
                 }
-                else if (item.status() != 'deleted'
+                else if (item.status() != 'deleted' && opacity > 0
                     && item.permissionHasGroup('view',mygroups) //Filter remaining feats on viewable feats
                 ){
                     viewcollection.features.push(feature);
