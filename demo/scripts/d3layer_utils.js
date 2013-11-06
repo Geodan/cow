@@ -12,9 +12,10 @@ cow.textbox = function(feature,obj){
     var item = self.core.itemstore().getItemById(feature.properties.key);
     var name = feature.properties.name || "";
     var desc = feature.properties.desc || "";
-    var mygroups = self.core.project.myGroups();
+    //var mygroups = self.core.project.myGroups();
+    var editgroups = item.permissions('edit')[0].groups;
     var groupnames = "";
-    $.each(mygroups,function(i,d){
+    $.each(editgroups,function(i,d){
         var name = self.core.project.getGroupById(d).name;
         if (name != 'public') //Keep public out of here
             groupnames = groupnames + name; 
@@ -23,9 +24,9 @@ cow.textbox = function(feature,obj){
     var allgroups = self.core.project.groups();
     var grouparr = [];
     $.each(allgroups, function(i,d){
-            
             grouparr.push(d._id);
     });
+    
     var div = d3.select('body').append('div')
         .style('left',divloc[0] + 0 +  'px')
         .style('top',divloc[1] + 0 + 'px')

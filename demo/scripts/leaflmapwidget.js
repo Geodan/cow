@@ -525,7 +525,7 @@ $.widget("cow.LeaflMapWidget", {
 			map: self,
 			//onClick: editPopup,
 			type: "path",
-			onMousover: cow.textbox,
+			onMouseover: cow.textbox,
 			coolCircles: true,
 			labels: true,
 			labelconfig: {
