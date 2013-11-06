@@ -38,6 +38,7 @@
 
   <script src="scripts/leaflmapwidget.js" type="text/javascript"></script>
   <script src="scripts/messagewidget.js" type="text/javascript"></script>
+    <script src="scripts/cookies.js" type="text/javascript"></script>
    <script type="text/javascript">
 var core;
 
@@ -66,6 +67,26 @@ $(document).ready(function(){
   core =$('#cow').data('cow');
     $('#map').LeaflMapWidget({core: '#cow'});
     $('#sidebar').MessageWidget({core: '#cow'});
+    
+    var username=getCookie("username");
+  if (username!=null && username!="")
+  {
+    core.username(username);
+    $('#username').val(username);
+  }
+  else 
+  {
+    username=prompt("Please enter your name:","");
+    if (username!=null && username!="")
+    {
+         $('#username').val(username);
+        core.username(username);
+        setCookie("username",username,1);
+    }
+  }
+  $('#username').keyup(function() {
+    core.username( $('#username').val());
+  });
   $('#bericht').click(function(){
     $('#sidebar').toggle('blind');
   });
@@ -98,21 +119,37 @@ $(document).ready(function(){
   var opvang = core.project.groups({_id:4,name:'Opvang'});
   
   var group = getUrlVars()["group"] || 'populatie';
-  
+  var delenhtml = '';
+  delenhtml += '<div class="iedereen"><div><label><input type="checkbox" checked="true" class="cb cop"/><span class="group cop " title="COP"></span><span class="delencb aan">Iedereen</span></label></div></div>';
   //Add yourself to the group
   if (group == 'evacuatie'){
     evacuatie.members(core.UID);
+     delenhtml += '<div class="individueel"><div><label><input value="2" type="checkbox" class="cb populatie other"/><span class="group populatie" title="populatie"></span><span  class="delencb">Populatie</span></label></div>';
+    delenhtml += '<div><label><input value="4" type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div></div>'
+delenhtml += '<div class="eigen"><div><label><input value="3" type="checkbox" class="cb evacuatie eigen"/><span class="group evacuatie" title="evacuatie"></span><span class="delencb">Eigen objecten</span></label></div></div>'
   }
   else if (group == 'populatie'){
     populatie.members(core.UID);
+       delenhtml += '<div class="individueel"><div><label><input value="3" type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span  class="delencb">Evacuatie</span></label></div>';
+    delenhtml += '<div><label><input value="4" type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div></div>'
+delenhtml += '<div class="eigen"><div><label><input value="2" type="checkbox" class="cb populatie eigen"/><span class="group populatie" title="populatie"></span><span class="delencb">Eigen objecten</span></label></div></div>'
   }
   else if (group == 'opvang'){
     opvang.members(core.UID);
+        delenhtml += '<div class="individueel"><div><label><input value="2" type="checkbox" class="cb populatie other"/><span class="group populatie" title="populatie"></span><span  class="delencb">Populatie</span></label></div>';
+    delenhtml += '<div><label><input value="3" type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span class="delencb">Evacuatie</span></label></div></div>'
+delenhtml += '<div class="eigen"><div><label><input value="4" type="checkbox" class="cb opvang eigen"/><span class="group opvang" title="opvang"></span><span class="delencb">Eigen objecten</span></label></div></div>'
   }
   else { //Default
     populatie.members(core.UID);
     //publicgroup.members(core.UID);
+         delenhtml += '<div class="individueel"><div><label><input value="3" type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span  class="delencb">Evacuatie</span></label></div>';
+    delenhtml += '<div><label><input value="4" type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div></div>'
+delenhtml += '<div class="eigen"><div><label><input value="2" type="checkbox" class="cb populatie eigen"/><span class="group populatie" title="populatie"></span><span class="delencb">Eigen objecten</span></label></div></div>'
   }
+
+  $('#delen').append(delenhtml);
+  
   var mygroups = core.project.myGroups();
   var mygroupstring = ""; 
   $.each(mygroups, function(i,d){
@@ -188,6 +225,9 @@ $(document).ready(function(){
     $('#chk-gedeeld').prop('checked', false);
     }
     core.trigger('storeChanged');
+  });
+  $('#uitloggen').click(function(){
+        window.location('index.html'); 
   });
 });
 </script>  
@@ -315,7 +355,7 @@ opacity: 0.7;
 }
 .floatright {
     float: right;
-    width: 330px;
+    width: 436px;
 }
 #lastmsg {
     float: right;
@@ -491,6 +531,15 @@ input#username.default {
     border-top: solid 1px #d3d7cf;
      box-shadow:  1px 3px 2px 2px  rgba(90, 90, 90, 0.4);
 }
+
+#uitloggen a {
+    text-decoration: none;
+    color: black;
+}
+#uitloggen a:visited {
+color: black;
+}
+
 </style>
   </head>
 <body>
@@ -503,21 +552,13 @@ input#username.default {
     <span id="gedeeld" class="showalles button" title="Klik hier om alleen het gedeelde beeld te zien"><input id="chk-gedeeld" type="checkbox"/>Gedeeld beeld </span>
     <span id="deeldropdown" class="button">v</span>
     <div class="floatright">
+        <span id="uitloggen" class="button"><a href="index.htm">uitloggen</a></span>
         <span id="bericht" class="button nieuw">berichten</span>
         <span id="lastmsg">10s</span>
     </div>
 </div>
-<div id="delen">
-<div class="iedereen">
-<div><label><input type="checkbox" checked="true" class="cb cop"/><span class="group cop " title="COP"></span><span class="delencb aan">Iedereen</span></label></div>
-</div>
-<div class="individueel">
-<div><label><input type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span  class="delencb">Evacuatie</span></label></div>
-<div><label><input type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div>
-</div>
-<div class="eigen">
-<div><label><input type="checkbox" class="cb populatie eigen"/><span class="group populatie" title="opvang"></span><span class="delencb">Eigen objecten</span></label></div>
-</div>
+<div id="delen" style="display:none;">
+
 </div>
 <div id="map"></div>
 <div id="knoppen">
@@ -544,37 +585,6 @@ input#username.default {
 <div class="knop"></div>
 </div>
 </div>
-<!--
-<div class="share">
-<div class="sheader" title="Dit object is gemaakt door"><span class="group populatie"></span>Populatie</div>
-<div class="scontent">
-<div class="ssubheader">deel dit object met:</div>
-<div class="iedereen">
-<input type="checkbox" class="share-cop"/><span class="group cop" title="COP"></span>Iedereen
-</div>
-<div class="individueel">
-<input type="checkbox" class="share-evacuatie"/><span class="group evacuatie" title="evacuatie"></span>Evacuatie<br/>
-<input type="checkbox" class="share-opvang"/><span class="group opvang" title="opvang"></span>Opvang
-</div>
-</div>
-</div>
-</div>
-
-<div class="share ro">
-<div class="sheader" title="Dit object is gemaakt door"><span class="group populatie"></span>Populatie</div>
-<div class="scontent">
-<div class="ssubheader">Dit object is gedeeld met:</div>
-<div class="iedereen">
-<span class="group cop" title="COP"></span>Iedereen
-</div>
-<div class="individueel">
-<span class="group evacuatie" title="evacuatie"></span>Evacuatie<br/>
-<span class="group opvang" title="opvang"></span>Opvang
-</div>
-</div>
-</div>
-</div>
--->
 <div id="sidebar">
 </div>
 </body>
