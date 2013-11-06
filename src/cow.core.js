@@ -777,7 +777,7 @@ A Peer is on object containing:
               onChange: function(change) {
                   /* This would create a loop */
                   //self.groups(change.doc);
-                  console.log('DB: Groups changed',change);
+                  //console.log('DB: Groups changed',change);
               }
             });
             if (options.data){//initial data (sketch project)
@@ -811,7 +811,7 @@ A Peer is on object containing:
               onChange: function(change) {
                   /* This would create a loop */
                   //self.projects(change.doc);
-                  console.log('DB: Projects changed',change);
+                  //console.log('DB: Projects changed',change);
               }
             });
             if (options.data){//initial data (sketch project)

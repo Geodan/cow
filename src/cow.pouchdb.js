@@ -10,7 +10,7 @@ $.Cow.Store.prototype = {
         var deferred = jQuery.Deferred();
         this._db.put(data,function(err, out){
             if (err) {
-                console.warn('Dbase error: ' , err);
+                //console.warn('Dbase error: ' , err);
                 deferred.reject(err);
             }
             else {
@@ -31,7 +31,7 @@ $.Cow.Store.prototype = {
         var put = function(data){
             self._db.put(data, function(err, response) {
                 if (err) {
-                    console.warn('Dbase error: ' , err);
+                    //console.warn('Dbase error: ' , err);
                     deferred.reject(err);
                 }
                 else {
@@ -46,7 +46,7 @@ $.Cow.Store.prototype = {
                     put(data);
                 }
                 else{
-                    console.warn('Dbase error: ' , err);
+                    //console.warn('Dbase error: ' , err);
                     deferred.reject(err);
                 }
             }
@@ -62,7 +62,7 @@ $.Cow.Store.prototype = {
         var deferred = jQuery.Deferred();
         this._db.post(data,function(err, out){
             if (err) {
-                console.warn('Dbase error: ' , err);
+                //console.warn('Dbase error: ' , err);
                 deferred.reject(err);
             }
             else {
@@ -76,7 +76,7 @@ $.Cow.Store.prototype = {
         var deferred = jQuery.Deferred();
         this._db.put(data,function(err, out){
             if (err) {
-                console.warn('Dbase error: ' , err);
+                //console.warn('Dbase error: ' , err);
                 deferred.reject(err);
             }
             else {
@@ -89,7 +89,7 @@ $.Cow.Store.prototype = {
         var deferred = jQuery.Deferred();
         this._db.allDocs({include_docs:true,descending: true}, function(err,doc){
             if (err) {
-                console.warn('Dbase error: ' , err);
+                //console.warn('Dbase error: ' , err);
                 deferred.reject(err);
             }
             else {
@@ -115,7 +115,7 @@ $.Cow.Store.prototype = {
         var deferred = jQuery.Deferred();
         this._db.get(id, function(err,doc){
             if (err) {
-                console.warn('Dbase error: ' , err);
+                //console.warn('Dbase error: ' , err);
                 deferred.reject(err);
             }
             else {
@@ -130,7 +130,7 @@ $.Cow.Store.prototype = {
         var deferred = jQuery.Deferred();
         this._db.bulkDocs({docs:d},function(err,doc){
             if (err) {
-                console.warn('Dbase error: ' , err);
+                //console.warn('Dbase error: ' , err);
                 deferred.reject(err);
             }
             else {

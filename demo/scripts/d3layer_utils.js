@@ -1,7 +1,54 @@
 //Replacing editpopup:
 var cow = {};
 cow.textbox = function(feature,obj){
+    var _this = this;
+    var self = this.map;
+    d3.selectAll('.popup').remove(); //Remove any old menu's
+    var loc = d3.mouse(obj); //Wrong on firefox
+    var divloc = [d3.event.screenX ,d3.event.screenY ];
+    var item = self.core.itemstore().getItemById(feature.properties.key);
+    var name = feature.properties.name || "";
+    var desc = feature.properties.desc || "";
+    var mygroups = self.core.project.myGroups();
+    var groupnames = "";
+    $.each(mygroups,function(i,d){
+        var name = self.core.project.getGroupById(d).name;
+        if (name != 'public') //Keep public out of here
+            groupnames = groupnames + name; 
+    });
     
+    var allgroups = self.core.project.groups();
+    var grouparr = [];
+    $.each(allgroups, function(i,d){
+            
+            grouparr.push(d._id);
+    });
+    var div = d3.select('body').append('div')
+        .style('left',divloc[0] + 0 +  'px')
+        .style('top',divloc[1] + 0 + 'px')
+        .classed("popup share ui-draggable", true);
+    var sheader = div.append('div')
+        .classed('sheader', true)
+        .attr('title','Dit object is gemaakt door');
+    sheader.append('span')
+        .classed('group populatie',true); //TODO add own groups here
+    sheader.append('span').html(groupnames);
+    var scontent = div.append('div')
+        .classed('scontent', true);
+    desc = desc.replace(/\r\n?|\n/g, '<br />');
+    scontent.append('div').classed('ssubheader', true).html(desc);
+    sfooter = div.append('div')
+        .classed('sfooter',true)
+        .attr('id','permissionlist');//TODO dont use ids;
+    var itemgroups = item.permissions('view')[0].groups;
+    var blokje = d3.select('#permissionlist').selectAll('.permission').data(itemgroups);
+    blokje.enter()
+        .append('span')
+        .attr('class',function(d){
+                var groupname = self.core.project.getGroupById(d).name
+                return 'group ' + groupname;
+        });
+        
 }
 
 cow.menu = function(feature,obj){
@@ -102,17 +149,34 @@ cow.menu = function(feature,obj){
              if (name == 'Pop'){
                  window.callback = function(d){
                     entity.remove();
-                    var population = "" ;
+                    var population = "Populatie: \n" ;
+                    var wonen= werken= onderwijs= zorg = 0;
                     $.each(d.results,function(i,d){
-                            population= population + d.doel + ": " + Math.round(d.count * 2.3) + ' pers. \n';
+                            if (d.doel == 'onderwijsfunctie'){
+                                onderwijs = onderwijs + (d.count * 200);
+                            }
+                            else if (d.doel == 'kantoorfunctie' || d.doel == 'industriefunctie' || d.doel == 'winkelfunctie'){
+                                werken = werken + (d.count * 10);
+                            }
+                            else if (d.doel == 'gezondheidszorgfunctie'){
+                                zorg = zorg + (d.count * 50);
+                            }
+                            else if (d.doel == 'woonfunctie'){
+                                wonen = wonen + Math.round(d.count * 2.3);
+                            }
                     });
+                    population = 'Populatie: \n WONEN: ' + wonen + ' pers.\n'
+                            + ' WERKEN: ' + werken + ' pers. \n'
+                            + ' ZORG: ' + zorg + ' pers. \n'
+                            + ' ONDERWIJS: ' + onderwijs + ' pers. \n';
+
                     
                     //Doing the same as for text edit
                     var name = feature.properties.name || "";
                     var desc = (feature.properties.desc || "") + population; 
                     var innerHtml = ''
                     //+ translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
-                    + 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
+                    + 'Description: <br> <textarea id="descfld" name="desc" rows="6" cols="40">'+desc+'</textarea><br/>'
                     //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
                     + '';
                     var div = d3.select('body').append('div')
@@ -135,7 +199,8 @@ cow.menu = function(feature,obj){
                      });
                     }
                     //Will generate a callback to 'callback'
-                    d3.jsonp('http://model.geodan.nl/cgi-bin/populator/populator.py',function(){console.log(arguments)});
+                    var geom = JSON.stringify(feature.geometry);
+                    d3.jsonp('http://model.geodan.nl/cgi-bin/populator/populator.py?geom=' + geom,function(){console.log(arguments)});
              }
              if (name == 'E'){ //edit geometry
                 entity.remove();

@@ -501,6 +501,7 @@ $.widget("cow.LeaflMapWidget", {
 			//onClick: editPopup,
 			type: "path",
 			onClick: cow.menu,
+			onMouseover: cow.textbox,
 			labels: true,
 			labelconfig: {
                 field: "desc",
@@ -523,19 +524,20 @@ $.widget("cow.LeaflMapWidget", {
 			//onClick: editPopup,
 			type: "path",
 			onMousover: cow.textbox,
+			coolCircles: true,
 			labels: true,
 			labelconfig: {
                 field: "desc",
                 style: {
                     stroke: "steelBlue",
-                    opacity: 0.5
+                    //opacity: 0.5
                 }
             },
 			style: {
 					fill: "none",
 					stroke: "steelBlue",
 					'stroke-width': 2,
-					opacity: 0.5
+					//opacity: 0.5
 				}
 		});
         self.d3Layers(d3viewlyr);
