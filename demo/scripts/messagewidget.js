@@ -82,17 +82,17 @@ $.widget("cow.MessageWidget", {
         var mshare = '<div class="mshare" title="Dit bericht is gedeeld met">';
         var mgroups ='';
         if(group.length > 0) {
-        if($.inArray(1,group[0].groups) > -1) {
+        if($.inArray(1,group[0].groups) > -1 || $.inArray('1',group[0].groups) > -1) {
             mgroups += '<span class="group public" title="cop"></span><span class="group populatie" title="Populatie"></span><span class="group evacuatie" title="Evacuatie"></span><span class="group opvang" title="Opvang"></span>';
         }
         else {
-        if($.inArray(2,group[0].groups) > -1) {
+        if($.inArray(2,group[0].groups) > -1 || $.inArray('2',group[0].groups) > -1 ) {
             mgroups += '<span class="group populatie" title="Populatie"></span>';
         }
-        if($.inArray(3,group[0].groups) > -1) {
+        if($.inArray(3,group[0].groups) > -1 || $.inArray('3',group[0].groups) > -1 ) {
             mgroups += '<span class="group evacuatie" title="Evacuatie"></span>';
         }
-        if($.inArray(4,group[0].groups) > -1) {
+        if($.inArray(4,group[0].groups) > -1 || $.inArray('4',group[0].groups) > -1 ) {
             mgroups += '<span class="group opvang" title="Opvang"></span>';
         }
         }
