@@ -88,7 +88,9 @@ $(document).ready(function(){
     core.username( $('#username').val());
   });
   $('#bericht').click(function(){
-    $('#sidebar').toggle('blind');
+
+    $('#sidebar').toggle('blind').animate({scrollTop:$("#sidebar").prop("scrollHeight") - $('#sidebar').height() },200);   
+
   });
   $('.subknop').click(function() {
     $('.subknop ~ .sideknop').toggle('fold');
