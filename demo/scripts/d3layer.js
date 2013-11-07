@@ -317,7 +317,7 @@ function d3layer(layername, config){
 			    var x = geoPath.centroid(d)[0];
                 var y = geoPath.centroid(d)[1];
                 
-                if (d.style && d.style.icon){
+                if (d.style && d.style.icon && d.geometry.type == 'Point'){
                     var x = x;
                     var y = y;
                     entity.select('image')
@@ -404,7 +404,7 @@ function d3layer(layername, config){
 			        var x = geoPath.centroid(d)[0];
                     var y = geoPath.centroid(d)[1];
 
-                    if (d.style && d.style.icon){
+                    if (d.style && d.style.icon && d.geometry.type == 'Point'){
                         entity.select('image')
                             .attr("x",x-25)
                             .attr("y",y-25);

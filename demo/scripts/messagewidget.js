@@ -16,7 +16,7 @@ $.widget("cow.MessageWidget", {
         var messages = [];
         self.messages= messages;
         core.bind("storeChanged" ,{widget: self}, self._onStoreChanged);
-        setInterval(function(){ self._onStoreChanged({'data':{'widget':self}})},1000);
+        setInterval(function(){ self._onStoreChanged({'data':{'widget':self}},true)},1000);
         $(element).delegate($('.msg'),'click',function(e){
             var item = $(e.target).parents('.msg').data('data');
             if(!item) return false;
@@ -29,7 +29,7 @@ $.widget("cow.MessageWidget", {
     },
   
     
-    _onStoreChanged: function(evt) {
+    _onStoreChanged: function(evt,reload) {
         var self = evt.data.widget;
         var items = self.core.itemstore().items('feature');
         var mygroups = self.core.project.myGroups();
@@ -53,7 +53,7 @@ $.widget("cow.MessageWidget", {
             
         });
         nieuw?$('#bericht').addClass('nieuw'):$('#bericht').removeClass('nieuw');
-
+		if(!reload)		$('#sidebar').animate({scrollTop:$("#sidebar").prop("scrollHeight") - $('#sidebar').height() },500);
        
     },
     message: function(data) {

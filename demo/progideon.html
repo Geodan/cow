@@ -97,10 +97,10 @@ $(document).ready(function(){
 
 
   
-  $('#deeldropdown').click(function(){
+  /*$('#deeldropdown').click(function(){
     $('#delen').toggle('blind');
   });
-  
+  */
   
   //Settings for ProGideon workshop
   var progideon = core.projects({_id:1001,name:"Overstroming 1", peeruid: core.UID}); //Add after localdb has been initialized
@@ -123,27 +123,27 @@ $(document).ready(function(){
   //Add yourself to the group
   if (group == 'evacuatie'){
     evacuatie.members(core.UID);
-     delenhtml += '<div class="individueel"><div><label><input value="2" type="checkbox" class="cb populatie other"/><span class="group populatie" title="populatie"></span><span  class="delencb">Populatie</span></label></div>';
-    delenhtml += '<div><label><input value="4" type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div></div>'
+     delenhtml += '<div class="individueel"><div><label><input value="2"  checked="true" type="checkbox" class="cb populatie other"/><span class="group populatie" title="populatie"></span><span  class="delencb">Populatie</span></label></div>';
+    delenhtml += '<div><label><input value="4" checked="true"  type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div></div>'
 delenhtml += '<div class="eigen"><div><label><input value="3" type="checkbox" class="cb evacuatie eigen"/><span class="group evacuatie" title="evacuatie"></span><span class="delencb">Eigen objecten</span></label></div></div>'
   }
   else if (group == 'populatie'){
     populatie.members(core.UID);
-       delenhtml += '<div class="individueel"><div><label><input value="3" type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span  class="delencb">Evacuatie</span></label></div>';
-    delenhtml += '<div><label><input value="4" type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div></div>'
+       delenhtml += '<div class="individueel"><div><label><input value="3" checked="true"  type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span  class="delencb">Evacuatie</span></label></div>';
+    delenhtml += '<div><label><input value="4" checked="true"  type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div></div>'
 delenhtml += '<div class="eigen"><div><label><input value="2" type="checkbox" class="cb populatie eigen"/><span class="group populatie" title="populatie"></span><span class="delencb">Eigen objecten</span></label></div></div>'
   }
   else if (group == 'opvang'){
     opvang.members(core.UID);
-        delenhtml += '<div class="individueel"><div><label><input value="2" type="checkbox" class="cb populatie other"/><span class="group populatie" title="populatie"></span><span  class="delencb">Populatie</span></label></div>';
-    delenhtml += '<div><label><input value="3" type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span class="delencb">Evacuatie</span></label></div></div>'
+        delenhtml += '<div class="individueel"><div><label><input checked="true"  value="2" type="checkbox" class="cb populatie other"/><span class="group populatie" title="populatie"></span><span  class="delencb">Populatie</span></label></div>';
+    delenhtml += '<div><label><input value="3"  checked="true" type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span class="delencb">Evacuatie</span></label></div></div>'
 delenhtml += '<div class="eigen"><div><label><input value="4" type="checkbox" class="cb opvang eigen"/><span class="group opvang" title="opvang"></span><span class="delencb">Eigen objecten</span></label></div></div>'
   }
   else { //Default
     populatie.members(core.UID);
     //publicgroup.members(core.UID);
-         delenhtml += '<div class="individueel"><div><label><input value="3" type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span  class="delencb">Evacuatie</span></label></div>';
-    delenhtml += '<div><label><input value="4" type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div></div>'
+         delenhtml += '<div class="individueel"><div><label><input  checked="true" value="3" type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span  class="delencb">Evacuatie</span></label></div>';
+    delenhtml += '<div><label><input value="4" checked="true"  type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div></div>'
 delenhtml += '<div class="eigen"><div><label><input value="2" type="checkbox" class="cb populatie eigen"/><span class="group populatie" title="populatie"></span><span class="delencb">Eigen objecten</span></label></div></div>'
   }
 
@@ -231,6 +231,11 @@ delenhtml += '<div class="eigen"><div><label><input value="2" type="checkbox" cl
 });
 </script>  
 <style>
+.menu {
+    font-size: 20px;
+    fill: white;    
+    stroke-width: 0.2px;
+}
 
 .leaflet-container .leaflet-control-zoom {
 margin-left: 10px;
@@ -578,9 +583,23 @@ input#username.default {
 #uitloggen a:visited {
 color: black;
 }
+.menu {
+}
 
-
-
+#polybutton .newpoly,#linebutton .newline,#pointbutton .newpoint {
+	position: absolute;
+	margin-left: 4px;
+	left: 0px;
+}
+.leaflet-control-draw-measure {
+	display: none !important;
+}
+#helpbutton {
+margin-bottom: 7px;
+}
+.leaflet-bottom.leaflet-left {
+  top: 300px !important;
+}
 </style>
   </head>
 <body>
@@ -590,8 +609,8 @@ color: black;
     <span id="group" class="head-left" title="Teamnaam"><span class="group populatie"></span><span class='text'>Populatie</span></span>
     <span id="name" title="Gebruikersnaam" class="head-left"><input id="username" class="default" type="text" value="Vul hier je naam in"/></span>
     
-    <span id="gedeeld" class="showalles button" title="Klik hier om alleen het gedeelde beeld te zien"><input id="chk-gedeeld" type="checkbox"/>Gedeeld beeld </span>
-    <span id="deeldropdown" class="button">v</span>
+    <span id="gedeeld" class="showalles button" title="Klik hier om alleen het gedeelde beeld te zien"><input id="chk-gedeeld" type="checkbox"/>Common Operational Picture</span>
+    <!--span id="deeldropdown" class="button">v</span-->
     <div class="floatright">
         <span id="uitloggen" class="button"><a href="index.htm">uitloggen</a></span>
         <span id="bericht" class="button nieuw">berichten</span>

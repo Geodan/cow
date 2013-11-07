@@ -69,7 +69,7 @@ $.widget("cow.LeaflMapWidget", {
         }).addTo(this.map);
 		
 		//Layer controls
-		var baseLayers = {"OSM": osmDarkLayer, "AHN": ahnLayer};
+		var baseLayers = {"Open Street Map": osmLayer, "Open Street Map (achtergrond)": osmDarkLayer, "Hoogtekaart": ahnLayer};
 		L.control.layers(baseLayers).setPosition("bottomleft").addTo(this.map);
 		L.Control.measureControl({position: "bottomleft"}).addTo(this.map);
 		//L.Control.Zoom({position: "bottomleft"}).addTo(this.map);
@@ -256,7 +256,7 @@ $.widget("cow.LeaflMapWidget", {
                         //if item is not viewable *all* selected groups
                         else{
                             //Show dimmed
-                            opacity = 0.3;
+                            opacity = 0.1;
                         }
                  }
                  //else do not show
@@ -542,7 +542,26 @@ $.widget("cow.LeaflMapWidget", {
 			}, false);
 		};
 		*/
-		
+		var floodlayer = new d3layer("floodlayer",{
+		    maptype: "Leaflet",
+			map: self,
+			//onClick: editPopup,
+			type: "path",
+			style: {
+                fill: "steelBlue",
+                stroke: "steelBlue",
+                'stroke-width': 2,
+                opacity: 0.5
+                
+            }
+		});
+        self.d3Layers(floodlayer);
+        d3.json('./data/flood_16h.geojson',function(data){
+               var collection = {"type":"FeatureCollection","features":[]};
+                collection.features = data.features;
+                floodlayer.data(collection);
+        });
+
 		
 		var d3editlyr = new d3layer("editlayer",{
 		    maptype: "Leaflet",

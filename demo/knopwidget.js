@@ -27,27 +27,27 @@ $.widget("cow.KnopWidget", {
 
         /* Listeners to be found in olmapwidget */         
         element.delegate('.newpoint','click', function(){
-           
+            $(self.icon).html($(this).children().clone()).removeClass('move');
             var key = $(this).attr('newpoint');
             self.element.trigger("newpoint", key);
-           
+            $('#infopanel').hide('slide', {direction: 'down'},300);
         });
         element.delegate('.newline','click', function(){
-		
+        $(self.icon).html($(this).children().clone()).removeClass('move');
             var key = $(this).attr('newline');
             self.element.trigger("newline", key);
-           
+             $('#infopanel').hide('slide', {direction: 'down'},300);
         });
         element.delegate('.newpoly','click', function(){
-       
+        $(self.icon).html($(this).children().clone()).removeClass('move');
             var key = $(this).attr('newpoly');
             self.element.trigger("newpoly", key);
-           
+             $('#infopanel').hide('slide', {direction: 'down'},300);
         });
         element.delegate('.stopdraw','click', function(){
         $(self.icon).html('').addClass('move');
             self.element.trigger("stopdraw"); 
-        
+            $('#infopanel').hide('slide', {direction: 'down'},300);
         });
         element.on('click','.polysknop',function() {
             $('.polys').toggle('fold');
@@ -65,7 +65,7 @@ $.widget("cow.KnopWidget", {
             $('.polys').hide('fold');
         });
 		
-		 element.on('click','.hoofdknop',function() {
+		 element.on('click','.knop',function() {
 		 $('.sideknop').hide('fold');
          });
 		 
@@ -84,9 +84,8 @@ $.widget("cow.KnopWidget", {
   $('.sknop').click(function(){
     $(this).parent().toggle('fold');
   });
- element.append('<div class="knop hoofdknop pointknop "  id="helpbutton" title="Gebruik dit om snel vragen aan anderen te stellen"><span class="   newpoint" newpoint="./mapicons/mapicons/comment-map-icon.png"><img width=30 height=30 src="./mapicons/mapicons/comment-map-icon.png"></span>');
-       
-element.append('<div class="knop hoofdknop pointknop "  id="pointbutton" ><span class="   newpoint" newpoint="./mapicons/mapicons/comment-map-icon.png"><img width=30 height=30 src="./mapicons/mapicons/comment-map-icon.png"></span>');
+        
+element.append('<div class="knop pointknop "  id="pointbutton" ><span class="   newpoint" newpoint="./mapicons/mapicons/comment-map-icon.png"><img width=30 height=30 src="./mapicons/mapicons/comment-map-icon.png"></span>');
          element.append('<div class="knop pointsknop subknop">');
         element.append('<div class="sideknop points" style="display:none">');
         $.getJSON('./mapicons/progideon_list.js', function(data) {
@@ -96,7 +95,7 @@ element.append('<div class="knop hoofdknop pointknop "  id="pointbutton" ><span 
                 element.find('.points').append('<span class=" sknop  newpoint" newpoint="./mapicons/' + val + '"><img width=30 height=30 src="./mapicons/'+val+'"></span>');
             });
         });
-        element.append('<div class="knop hoofdknop lineknop" id="linebutton" ><span newline="#000" class=" newline"><svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#"    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg"    xmlns="http://www.w3.org/2000/svg" version="1.1" width="29" height="29"><g  transform="translate(-27.086869,-417.52882)"><path   transform="translate(27.086869,429.63625)" d="M 7.3188002,12.071144 23.749999,2.4282866 10.267857,-1.9467135 20.401786,-5.8306419" style="stroke:#000;stroke-width:2;fill:none;" /></g></svg></span>');
+        element.append('<div class="knop lineknop" id="linebutton" ><span newline="#000" class=" newline"><svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#"    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg"    xmlns="http://www.w3.org/2000/svg" version="1.1" width="29" height="29"><g  transform="translate(-27.086869,-417.52882)"><path   transform="translate(27.086869,429.63625)" d="M 7.3188002,12.071144 23.749999,2.4282866 10.267857,-1.9467135 20.401786,-5.8306419" style="stroke:#000;stroke-width:2;fill:none;" /></g></svg></span>');
         element.append('<div class="knop linesknop subknop">');
         element.append('<div class="sideknop lines" style="display:none">');
         var lkleuren = ['#000','#204a87','#f57900','#204a87','#cc0000','#5c3566','#4e9a06'];
@@ -105,7 +104,7 @@ element.append('<div class="knop hoofdknop pointknop "  id="pointbutton" ><span 
              '<span newline="'+val+'"class="sknop newline"><svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#"    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg"    xmlns="http://www.w3.org/2000/svg" version="1.1" width="29" height="29"><g  transform="translate(-27.086869,-417.52882)"><path   transform="translate(27.086869,429.63625)" d="M 7.3188002,12.071144 23.749999,2.4282866 10.267857,-1.9467135 20.401786,-5.8306419" style="stroke:'+val+';stroke-width:2;fill:none;" /></g></svg></span>'
              );
         });
-        element.append('<div class="knop  hoofdknop polyknop"  id="polybutton" ><span newpoly="#5c35660" class=" newpoly"><svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#"    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg"    xmlns="http://www.w3.org/2000/svg" version="1.1" width="29" height="29"><g  transform="translate(-27.086869,-417.52882)"><path d="M 2.7731138,5.3788833 14.252526,11.064017 26.527918,3.1859009 20.874459,-6.2398619 7.3960719,-3.9366059 z" transform="translate(27.086869,429.63625)"      style="fill:#5c3566;fill-opacity:0.7;stroke:#5c3566;stroke-width:1;" /></g></svg></span>');
+        element.append('<div class="knop polyknop"  id="polybutton" ><span newpoly="#5c35660" class=" newpoly"><svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#"    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg"    xmlns="http://www.w3.org/2000/svg" version="1.1" width="29" height="29"><g  transform="translate(-27.086869,-417.52882)"><path d="M 2.7731138,5.3788833 14.252526,11.064017 26.527918,3.1859009 20.874459,-6.2398619 7.3960719,-3.9366059 z" transform="translate(27.086869,429.63625)"      style="fill:#5c3566;fill-opacity:0.7;stroke:#5c3566;stroke-width:1;" /></g></svg></span>');
         element.append('<div class="knop polysknop subknop">');
         element.append('<div class="sideknop polys" style="display:none">');
         var pkleuren = ['#000','#204a87','#f57900','#204a87','#cc0000','#5c3566','#4e9a06'];

@@ -3,9 +3,9 @@ var cow = {};
 cow.textbox = function(feature,obj){
     var _this = this;
     var self = this.map;
-    d3.selectAll('.popup').remove(); //Remove any old menu's
+    //d3.selectAll('.popup').remove(); //Remove any old menu's
     d3.select(obj).on('mouseout', function(d){
-          d3.selectAll('.share').remove();
+          d3.selectAll('.textbox').remove();
     });
     var loc = d3.mouse(obj); //Wrong on firefox
     var divloc = [d3.event.screenX ,d3.event.screenY ];
@@ -30,8 +30,8 @@ cow.textbox = function(feature,obj){
     
     var div = d3.select('body').append('div')
         .style('left',divloc[0] + 0 +  'px')
-        .style('top',divloc[1] + 0 + 'px')
-        .classed("popup share ui-draggable", true);
+        .style('top',divloc[1] + -300 + 'px')
+        .classed("textbox popup share ui-draggable", true);
     var sheader = div.append('div')
         .classed('sheader', true)
         .attr('title','Dit object is gemaakt door');
@@ -353,7 +353,7 @@ cow.menu = function(feature,obj){
         })
         .on('mouseover', function(d){ //Mouseover menulabel
             d3.select(this)
-             .style('opacity',0.5)
+             .style('opacity',0.8)
              .append("text")
               .classed('menu',true)
               //.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
