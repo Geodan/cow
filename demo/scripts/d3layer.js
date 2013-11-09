@@ -1,4 +1,11 @@
 var tmp;
+//Method for moving elements to the front (used to get points on top of polygons)
+//Idea from: http://stackoverflow.com/questions/14167863/how-can-i-bring-a-circle-to-the-front-with-d3
+d3.selection.prototype.moveToFront = function() {
+  return this.each(function(){
+  this.parentNode.appendChild(this);
+  });
+};
 function d3layer(layername, config){
 		var f = {}, bounds, feature, collection;
 		this.f = f;
@@ -25,6 +32,14 @@ function d3layer(layername, config){
 		this.bounds = [[0,0],[1,1]];
 		var width, height,bottomLeft,topRight;
         var g;
+        
+        f.onAdd = function(d){
+            //TODO: leaflet methods for turning layer on/off   
+        }
+        
+        f.onRemove = function(d){
+            
+        }
         
 		if (config.maptype == 'OpenLayers'){//Getting the correct OpenLayers SVG. 
 			var div = d3.selectAll("#" + config.divid);
@@ -215,10 +230,35 @@ function d3layer(layername, config){
 		}
 		
 		//The part where new data comes in
-		f.data = function(collection){
-		    if (!collection){
+		f.data = function(data){
+		    if (!data){
 		        return _this.data; 
 		    }
+		    var points = [];
+		    var lines = [];
+		    var polygons = [];
+		    var collection = {"type":"FeatureCollection","features":[]}; 
+		    //A method to order the objects based on types
+		    //Points on top, then lines, then polygons
+		    $.each(data.features, function(i,d){
+		         if (d.geometry.type == 'Point'){
+		             points.push(d);
+		         }
+		         else if (d.geometry.type == 'LineString'){
+		             lines.push(d);
+		         }
+		         else if (d.geometry.type == 'Polygon'){
+		             polygons.push(d);
+		         }
+		         else {
+		             console.warn(layername + ' has unknown geometry type: ',d.geometry.type);
+		         }
+		    });
+		    //little hack from http://stackoverflow.com/questions/1374126/how-to-append-an-array-to-an-existing-javascript-array
+		    collection.features.push.apply(collection.features,polygons);
+   		    collection.features.push.apply(collection.features,lines);
+		    collection.features.push.apply(collection.features,points);
+		    
 		    _this.data = collection;
 		    _this.bounds = d3.geo.bounds(collection);
             
@@ -398,16 +438,17 @@ function d3layer(layername, config){
                     //    .style("margin-top", topRight[1] - 100 + "px");
                     //g.attr("transform", "translate(" + -bottomLeft[0] + "," + -topRight[1] + ")");
             }
-			g.selectAll(".entity")
-			    .each(function(d,i){
-			        var entity = d3.select(this);
-			        var x = geoPath.centroid(d)[0];
+            g.selectAll(".entity")
+                .each(function(d,i){
+                    var entity = d3.select(this);
+                    var x = geoPath.centroid(d)[0];
                     var y = geoPath.centroid(d)[1];
 
                     if (d.style && d.style.icon && d.geometry.type == 'Point'){
                         entity.select('image')
                             .attr("x",x-25)
-                            .attr("y",y-25);
+                            .attr("y",y-25)
+                            .moveToFront();
                     }
                     else{
                         entity.select('path') //Only 1 path per entity
@@ -451,7 +492,7 @@ function d3layer(layername, config){
                              }
                         }
                     }
-			    });
+                });
 		}
 		f.reset();
 		

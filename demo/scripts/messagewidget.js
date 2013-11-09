@@ -112,7 +112,7 @@ $.widget("cow.MessageWidget", {
         var msender = '<span class="msender">'+data.data().properties.creator+'</span>';
         var mtext;
         if(data.data().properties.desc !== undefined) {
-             mtext = '<div class="mtext">'+data.data().properties.desc.replace("\n","<br/>")+'</div>' 
+             mtext = '<div class="mtext">'+data.data().properties.desc.replace(/\r\n?|\n/g, '<br />')+'</div>' 
              
             $('#lastmsg').empty().html(seconds);
         }

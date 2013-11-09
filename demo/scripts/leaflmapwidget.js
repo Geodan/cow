@@ -70,7 +70,7 @@ $.widget("cow.LeaflMapWidget", {
 		
 		//Layer controls
 		var baseLayers = {"Open Street Map": osmLayer, "Open Street Map (achtergrond)": osmDarkLayer, "Hoogtekaart": ahnLayer};
-		L.control.layers(baseLayers).setPosition("bottomleft").addTo(this.map);
+		this.layercontrol = new L.control.layers(baseLayers).setPosition("bottomleft").addTo(this.map);
 		L.Control.measureControl({position: "bottomleft"}).addTo(this.map);
 		//L.Control.Zoom({position: "bottomleft"}).addTo(this.map);
 		
@@ -375,7 +375,7 @@ $.widget("cow.LeaflMapWidget", {
 				}
 		}
 		).addTo(this.map);
-		tmp = editlayer;
+		
 		// Initialize the draw control and pass it the FeatureGroup of editable layers
 		this.drawControl = new L.Control.Draw({
 			draw: false,
@@ -542,51 +542,7 @@ $.widget("cow.LeaflMapWidget", {
 			}, false);
 		};
 		*/
-		var floodlayer = new d3layer("floodlayer",{
-		    maptype: "Leaflet",
-			map: self,
-			//onClick: editPopup,
-			type: "path",
-			style: {
-                fill: "steelBlue",
-                stroke: "steelBlue",
-                'stroke-width': 2,
-                opacity: 0.5
-                
-            }
-		});
-        self.d3Layers(floodlayer);
-        d3.json('./data/flood_16h.geojson',function(data){
-               var collection = {"type":"FeatureCollection","features":[]};
-                collection.features = data.features;
-                floodlayer.data(collection);
-        });
 
-		
-		var d3editlyr = new d3layer("editlayer",{
-		    maptype: "Leaflet",
-			map: self,
-			//onClick: editPopup,
-			type: "path",
-			onClick: cow.menu,
-			onMouseover: cow.textbox,
-			labels: true,
-			labelconfig: {
-                field: "desc",
-                style: {
-                    stroke: "#000033"
-                    //stroke: "steelBlue"
-                }
-            },
-			style: {
-					fill: "none",
-					stroke: "steelBlue",
-					'stroke-width': 2
-					
-				}
-		});
-        self.d3Layers(d3editlyr);
-        
         var d3viewlyr = new d3layer("viewlayer",{
 		    maptype: "Leaflet",
 			map: self,
@@ -611,7 +567,34 @@ $.widget("cow.LeaflMapWidget", {
 		});
         self.d3Layers(d3viewlyr);
         
-        tmp = d3editlyr;
+		
+        /* D3 Editlayer */
+		var d3editlyr = new d3layer("editlayer",{
+		    maptype: "Leaflet",
+			map: self,
+			//onClick: editPopup,
+			type: "path",
+			onClick: cow.menu,
+			onMouseover: cow.textbox,
+			labels: true,
+			labelconfig: {
+                field: "desc",
+                style: {
+                    stroke: "#000033"
+                    //stroke: "steelBlue"
+                }
+            },
+			style: {
+					fill: "none",
+					stroke: "steelBlue",
+					'stroke-width': 4
+					
+				}
+		});
+        self.d3Layers(d3editlyr);
+        
+        
+        
 		var extentlyr = new d3layer("extentlayer",{
 			maptype: "Leaflet",
 			map: self,
@@ -666,6 +649,95 @@ $.widget("cow.LeaflMapWidget", {
             }
         });
         self.d3Layers(routelayer);
+        
+        var data = [];
+        /* Floodlayer */
+        var floodlayer = new L.geoJson(data, {
+            style: function (feature) {
+                var style = {};
+                if (feature.properties.tijdstip == 'na 4 uur'){
+                    style.opacity  = 0.2;
+                }
+                else if (feature.properties.tijdstip == 'na 8 uur'){
+                    style.opacity  = 0.4;
+                }
+                else if (feature.properties.tijdstip == 'na 12 uur'){
+                    style.opacity  = 0.6;
+                }
+                else if (feature.properties.tijdstip == 'na 16 uur'){
+                    style.opacity  = 0.8;
+                }
+                //style.fillOpacity = 0;
+                style.fillColor = "None";
+                return style;
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(feature.properties.tijdstip);
+            }
+        }).addTo(map);
+        self.layercontrol.addOverlay(floodlayer,"Floodlayer");
+        d3.json('./data/flood_merged.geojson',function(data){
+               var collection = {"type":"FeatureCollection","features":[]};
+                collection.features = data.features;
+                floodlayer.addData(collection);
+        });
+        /*Kwetsbare objecten*/
+        var geojsonMarkerOptions = {
+            radius: 8,
+            fillColor: "#ff7800",
+            color: "#000",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        };
+        var kwetsbareobjectenlayer = new L.geoJson(data, {
+            pointToLayer: function(feature, latlng){
+                return L.circleMarker(latlng, geojsonMarkerOptions);
+            },
+            style: function (feature) {
+                if (feature.properties.PRIORITEIT == 1){
+                    return {fillColor: 'red'}
+                }
+                else if (feature.properties.PRIORITEIT == 2){
+                    return {fillColor: 'orange'}
+                }
+                else if (feature.properties.PRIORITEIT == 3){
+                    return {fillColor: 'yellow'}
+                }
+                else if (feature.properties.PRIORITEIT == 4){
+                    return {fillColor: 'blue'}
+                }
+                else{
+                    return {fillColor: 'blue'}
+                }
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(feature.properties.ROT_NAAM + "<br>" + feature.properties.OMSCHRI5);
+            }
+        });
+        self.layercontrol.addOverlay(kwetsbareobjectenlayer,"Kwetsbare objecten");
+        d3.json('./data/kwetsbareobjecten.geojson',function(data){
+               var collection = {"type":"FeatureCollection","features":[]};
+                collection.features = data.features;
+                kwetsbareobjectenlayer.addData(collection);
+        });
+        /* Opvanglocaties */
+        var opvanglocatieslayer = new L.geoJson(data, {
+            style: function (feature) {
+                return {color: 'green'}
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindLabel(feature.properties.omschrijvi,{ noHide: true });
+                layer.bindPopup(feature.properties.naam + "<br>" + feature.properties.omschrijvi);
+            }
+        });
+        self.layercontrol.addOverlay(opvanglocatieslayer,"Opvanglocaties");
+        d3.json('./data/opvanglocaties.geojson',function(data){
+               var collection = {"type":"FeatureCollection","features":[]};
+                collection.features = data.features;
+                opvanglocatieslayer.addData(collection);
+        });
+        
 	},
 	
 	editfeature: function(self, feature){
