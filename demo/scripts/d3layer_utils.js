@@ -149,6 +149,14 @@ cow.menu = function(feature,obj){
         .data(partition.nodes)
         .enter().append("g")
         .attr("class", "arc1")
+        .on('dblclick',function(d){
+            d3.event.stopPropagation();//Prevent the map from firing click event as well
+            var name = d.name;
+            if (name == 'D'){//Delete feature without asking
+                entity.remove();
+                self.deletefeature(self,feature);
+            }
+        })
         .on('click', function(d){
              d3.event.stopPropagation();//Prevent the map from firing click event as well
              var name = d.name;
@@ -369,28 +377,36 @@ cow.menu = function(feature,obj){
                 
             }
             else if (name == 'D'){//Delete feature
-                if (confirm('Verwijderen?')) {
+                //if (confirm('Verwijderen?')) {
                     entity.remove();
                     self.deletefeature(self,feature);
-                } else {
+                //} else {
                     // Do nothing!
-                }
+                //}
                 
 
             }   
         })
         .on('mouseover', function(d){ //Mouseover menulabel
             d3.select(this)
-             .style('opacity',0.8)
+                 .append("text")
+                  .classed('menu_shadow',true)
+                  //.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+                  .attr("dy", 0)
+                  .attr("dx", 0)
+                  .text(function(d) { 
+                          return d.label; 
+                  });
+            d3.select(this)
              .append("text")
               .classed('menu',true)
               //.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
               .attr("dy", 0)
               .attr("dx", 0)
-              .style("text-anchor", "middle")
               .text(function(d) { 
                       return d.label; 
               });
+              
         })
         .on('mouseout', function(d){
             d3.select(this)

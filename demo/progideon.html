@@ -231,12 +231,31 @@ delenhtml += '<div class="eigen"><div><label><input value="2" type="checkbox" cl
 });
 </script>  
 <style>
-.menu {
-    font-size: 20px;
-    fill: white;    
-    stroke-width: 0.2px;
+.arc1 {
+    cursor: pointer;
 }
-
+.menu {
+    font-size: 16px;
+    font-weight: bold;
+    fill: steelBlue;
+    stroke: None;
+    stroke-width: 1px;
+    text-anchor: middle;
+    opacity: 1;
+}
+.menu_shadow {
+    font-size: 16px;
+    font-weight: bold;
+    fill: white;
+    stroke: white;
+    stroke-width: 3px;
+    stroke-opacity: .8;
+    text-anchor: middle;
+    opacity: 1;
+}
+.entity{
+    cursor: pointer;
+}
 .leaflet-container .leaflet-control-zoom {
 margin-left: 10px;
 margin-top: 15px;

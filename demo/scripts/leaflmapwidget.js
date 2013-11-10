@@ -215,7 +215,6 @@ $.widget("cow.LeaflMapWidget", {
 
 	_reloadLayer: function(e){
 	    var self = this;
-		self.editLayer.clearLayers(); //TODO: possble problem because while editing a feature we do not want to clear it
 		
 		var items = self.core.itemstore().items('feature');
 		var collection = {"type":"FeatureCollection","features":[]};
@@ -360,19 +359,19 @@ $.widget("cow.LeaflMapWidget", {
 		}
 		
 		var editlayer = L.geoJson(null,{
-				style: this.layerstyle,
-				onEachFeature: onEachFeature,
-				pointToLayer: function (feature, latlng) {
-					return L.marker(latlng, {
-							icon: L.icon({
-									iconUrl: feature.properties.icon,
-									iconSize: [20, 22],
-									opacity: 0.5,
-									fillOpacity: 0.5
-							})
-					})//.bindLabel(feature.properties.name,{noHide: true})
-					;
-				}
+            style: this.layerstyle,
+            onEachFeature: onEachFeature,
+            pointToLayer: function (feature, latlng) {
+                return L.marker(latlng, {
+                    icon: L.icon({
+                            iconUrl: feature.properties.icon,
+                            iconSize: [40, 44],
+                            opacity: 0.5,
+                            fillOpacity: 0.5
+                    })
+                })//.bindLabel(feature.properties.name,{noHide: true})
+                ;
+            }
 		}
 		).addTo(this.map);
 		
@@ -675,7 +674,7 @@ $.widget("cow.LeaflMapWidget", {
                 layer.bindPopup(feature.properties.tijdstip);
             }
         }).addTo(map);
-        self.layercontrol.addOverlay(floodlayer,"Floodlayer");
+        self.layercontrol.addOverlay(floodlayer,"Inundatie");
         d3.json('./data/flood_merged.geojson',function(data){
                var collection = {"type":"FeatureCollection","features":[]};
                 collection.features = data.features;
