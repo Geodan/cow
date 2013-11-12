@@ -1,4 +1,11 @@
 var tmp;
+//Method for moving elements to the front (used to get points on top of polygons)
+//Idea from: http://stackoverflow.com/questions/14167863/how-can-i-bring-a-circle-to-the-front-with-d3
+d3.selection.prototype.moveToFront = function() {
+  return this.each(function(){
+  this.parentNode.appendChild(this);
+  });
+};
 function d3layer(layername, config){
 		var f = {}, bounds, feature, collection;
 		this.f = f;
@@ -11,6 +18,7 @@ function d3layer(layername, config){
 		this.map = config.map;
 		this.style = config.style;
 		this.onClick = config.onClick;
+		this.onMouseover = config.onMouseover;
 		this.classfield = config.classfield;
 		this.satellites = config.satellites || false;
 		this.eachFunctions = config.eachFunctions || false;	
@@ -24,6 +32,14 @@ function d3layer(layername, config){
 		this.bounds = [[0,0],[1,1]];
 		var width, height,bottomLeft,topRight;
         var g;
+        
+        f.onAdd = function(d){
+            //TODO: leaflet methods for turning layer on/off   
+        }
+        
+        f.onRemove = function(d){
+            
+        }
         
 		if (config.maptype == 'OpenLayers'){//Getting the correct OpenLayers SVG. 
 			var div = d3.selectAll("#" + config.divid);
@@ -97,6 +113,30 @@ function d3layer(layername, config){
 		        _this.onClick(d,this);
 		}
 		
+		var mouseover = function(d){
+		    if (_this.onMouseover)
+		        _this.onMouseover(d,this);
+		}
+		
+		//Build up the element
+		this.build = function(d){
+		  var entity = d3.select(this);
+  	      //Point/icon feature
+		  if (d.style && d.style.icon && d.geometry.type == 'Point'){ 
+		      var x = _this.project(d.geometry.coordinates)[0];
+              var y = _this.project(d.geometry.coordinates)[1];
+		      var img = entity.append("image")
+		            .on("click", click)
+		            .on('mouseover',mouseover);
+		  }
+		  //Path feature
+		  else{
+		    var path = entity.append("path")
+		        .on("click", click)
+		        .on('mouseover',mouseover);
+		  }
+		}
+		
 		//A per feature styling method
 		this.styling = function(d){
 		  var entity = d3.select(this);
@@ -104,8 +144,7 @@ function d3layer(layername, config){
 		  if (d.style && d.style.icon && d.geometry.type == 'Point'){ 
 		      var x = _this.project(d.geometry.coordinates)[0];
               var y = _this.project(d.geometry.coordinates)[1];
-		      entity.append("image")
-		            .on("click", click)
+		      var img = entity.select("image")
                     .attr("xlink:href", function(d){
                             if (d.style.icon) return d.style.icon;
                             else return "./mapicons/stratego/stratego-flag.svg";
@@ -115,13 +154,16 @@ function d3layer(layername, config){
                     .attr("height", 37)
                     .attr("x",x-25)
                     .attr("y",y-25)
+                    .style('opacity',function(d){ //special case: opacity for icon
+                            return d.style.opacity || _this.style.opacity || 1;
+                    });
+             
 		  }
 		  //Path feature
 		  else{
-		    var path = entity.append("path")
-		        .on("click", click);
+		    var path = entity.select("path");
 			for (var key in _this.style) { //First check for generic layer style
-				entity.style(key,function(d){
+				path.style(key,function(d){
 					if (d.style && d.style[key])
 						return d.style[key]; //Override with features style if present
  					else	
@@ -188,10 +230,35 @@ function d3layer(layername, config){
 		}
 		
 		//The part where new data comes in
-		f.data = function(collection){
-		    if (!collection){
+		f.data = function(data){
+		    if (!data){
 		        return _this.data; 
 		    }
+		    var points = [];
+		    var lines = [];
+		    var polygons = [];
+		    var collection = {"type":"FeatureCollection","features":[]}; 
+		    //A method to order the objects based on types
+		    //Points on top, then lines, then polygons
+		    $.each(data.features, function(i,d){
+		         if (d.geometry.type == 'Point'){
+		             points.push(d);
+		         }
+		         else if (d.geometry.type == 'LineString'){
+		             lines.push(d);
+		         }
+		         else if (d.geometry.type == 'Polygon'){
+		             polygons.push(d);
+		         }
+		         else {
+		             console.warn(layername + ' has unknown geometry type: ',d.geometry.type);
+		         }
+		    });
+		    //little hack from http://stackoverflow.com/questions/1374126/how-to-append-an-array-to-an-existing-javascript-array
+		    collection.features.push.apply(collection.features,polygons);
+   		    collection.features.push.apply(collection.features,lines);
+		    collection.features.push.apply(collection.features,points);
+		    
 		    _this.data = collection;
 		    _this.bounds = d3.geo.bounds(collection);
             
@@ -210,7 +277,7 @@ function d3layer(layername, config){
                 })			    
 			    ;
 
-            newentity.each(_this.styling);
+            newentity.each(_this.build);
             
 			
 			if (_this.videobox){
@@ -284,11 +351,13 @@ function d3layer(layername, config){
             }
             
 			//On update
+			entities.each(_this.styling);
 			entities.each(function(d,i){
 			    var entity = d3.select(this);
 			    var x = geoPath.centroid(d)[0];
                 var y = geoPath.centroid(d)[1];
-                if (d.style && d.style.icon){
+                
+                if (d.style && d.style.icon && d.geometry.type == 'Point'){
                     var x = x;
                     var y = y;
                     entity.select('image')
@@ -369,16 +438,17 @@ function d3layer(layername, config){
                     //    .style("margin-top", topRight[1] - 100 + "px");
                     //g.attr("transform", "translate(" + -bottomLeft[0] + "," + -topRight[1] + ")");
             }
-			g.selectAll(".entity")
-			    .each(function(d,i){
-			        var entity = d3.select(this);
-			        var x = geoPath.centroid(d)[0];
+            g.selectAll(".entity")
+                .each(function(d,i){
+                    var entity = d3.select(this);
+                    var x = geoPath.centroid(d)[0];
                     var y = geoPath.centroid(d)[1];
 
-                    if (d.style && d.style.icon){
+                    if (d.style && d.style.icon && d.geometry.type == 'Point'){
                         entity.select('image')
                             .attr("x",x-25)
-                            .attr("y",y-25);
+                            .attr("y",y-25)
+                            .moveToFront();
                     }
                     else{
                         entity.select('path') //Only 1 path per entity
@@ -422,7 +492,7 @@ function d3layer(layername, config){
                              }
                         }
                     }
-			    });
+                });
 		}
 		f.reset();
 		

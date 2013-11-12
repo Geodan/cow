@@ -42,17 +42,26 @@ $.widget("cow.LeaflMapWidget", {
 		
 		//Creating the leaflet map
 		this.map = L.map('map',{ 
-			zoomControl:false
+			
 		})
 		//.setView([52.083726,5.111282], 9);//Utrecht
-		.setView([52.341921,4.912838], 17);//Geodan Adam
+		//.setView([52.341921,4.912838], 17);//Geodan Adam
+		.setView([51.890054,5.094695],12);//Leerdam
 		
 		// add an OpenStreetMap tile layer
 		var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 		});
-		
-		var osmDarkLayer = L.tileLayer('http://a{s}.acetate.geoiq.com/tiles/acetate-hillshading/{z}/{x}/{y}.png', {
+		// add Dutch AHN layer
+		var ahnUrl = "http://t3.edugis.nl/tiles/tilecache.py?map=maps/edugis/cache/hoogte.map";
+		var ahnLayer = L.tileLayer.wms(ahnUrl, {
+            layers: 'hoogtes',
+            format: 'image/png',
+            transparent: true
+        });
+        // Add a darker themd OSM layer
+		var tileUrl = 'http://a{s}.acetate.geoiq.com/tiles/acetate-hillshading/{z}/{x}/{y}.png';
+		var osmDarkLayer = L.tileLayer(tileUrl, {
             attribution: 'Background map design by <a href="http://www.stamen.com/">Stamen</a>. Tiles hosted by <a href="http://www.geoiq.com/">GeoIQ</a>. Map data: <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors and <a href="http://www.naturalearthdata.org/">Natural Earth Data</a>.',
             subdomains: '0123',
             minZoom: 2,
@@ -60,8 +69,10 @@ $.widget("cow.LeaflMapWidget", {
         }).addTo(this.map);
 		
 		//Layer controls
-		//var baseLayers = {"OSM": osmLayer};
-		//L.control.layers(baseLayers).addTo(this.map);
+		var baseLayers = {"Open Street Map": osmLayer, "Open Street Map (achtergrond)": osmDarkLayer, "Hoogtekaart": ahnLayer};
+		this.layercontrol = new L.control.layers(baseLayers).setPosition("bottomleft").addTo(this.map);
+		L.Control.measureControl({position: "bottomleft"}).addTo(this.map);
+		//L.Control.Zoom({position: "bottomleft"}).addTo(this.map);
 		
 		$('#peers').bind("zoomToPeersview", function(evt, bbox){
 			self.map.fitBounds([[bbox.bottom,bbox.left],[bbox.top,bbox.right]]);
@@ -110,6 +121,7 @@ $.widget("cow.LeaflMapWidget", {
 		    d3.selectAll('.popup').remove();//Remove all popups on map
             self.controls.editcontrol.save();
             self.controls.editcontrol.disable();
+            self.editLayer.clearLayers();
 		});
 //		this.controls.select.activate();
     },
@@ -203,36 +215,80 @@ $.widget("cow.LeaflMapWidget", {
 
 	_reloadLayer: function(e){
 	    var self = this;
-		self.editLayer.clearLayers(); //TODO: possble problem because while editing a feature we do not want to clear it
 		
 		var items = self.core.itemstore().items('feature');
 		var collection = {"type":"FeatureCollection","features":[]};
 		var viewcollection = {"type":"FeatureCollection","features":[]};
 		$.each(items, function(i, item){
+		    var mygroups = self.core.project.myGroups();
 			var feature = item.data();
             if(feature === undefined) {
                 console.warn('old item type');
                 return false;
             }
             else{
+                var opacity = 1;
                 feature.id = feature.properties.key;
+                //Filter on 'gedeeld beeld'
+                //if gedeeld beeld:
+                if ($('#chk-gedeeld').prop('checked')){
+                    //if item is editable by me
+                    if (item.status() != 'deleted'
+                        && (item.permissionHasGroup('edit',mygroups) || item.permissionHasGroup('view',mygroups)) //Filter on editable/viewable feats
+                        ){
+                        //if item is viewable by *all* selected groups and me
+                        //check for all selected groups
+                        var bright = true;
+                        $('.other').each(function(i,d){
+                            var groupid = $(this).attr('value');
+                            var checked = $(this).prop('checked');
+                            if (checked && !item.permissionHasGroup('view',groupid))
+                                bright = false;
+                        });
+                        //check for my group(s)
+                        if (!item.permissionHasGroup('view',self.core.project.myGroups()))
+                                bright = false;
+                        if (bright){
+                            //Show bright
+                            opacity = 1;
+                        }
+                        //if item is not viewable *all* selected groups
+                        else{
+                            //Show dimmed
+                            opacity = 0.1;
+                        }
+                 }
+                 //else do not show
+                 else{
+                     opacity = 0; //Trick the if statement in not null
+                 }
+              }
+              //else do normal flow
+                
                 
                 feature.style = {
                     icon: feature.properties.icon,
                     stroke: feature.properties.linecolor,
                     fill:  feature.properties.polycolor,
-                    "fill-opacity": 0.5
-                } 
-                var mygroups = self.core.project.myGroups();
-                if (item.status() != 'deleted'
-                    && item.permissionHasGroup('edit',mygroups)
+                    "fill-opacity": 0.5,
+                    //"fill-opacity": opacity,
+                    opacity: opacity
+                }
+                //Workaround for lines with a fill
+                if (feature.geometry.type == 'LineString')
+                    feature.style.fill = 'none';
+                    
+                
+                
+                if (item.status() != 'deleted' && opacity > 0
+                    && item.permissionHasGroup('edit',mygroups) //Filter on editable feats
                 ){
                     collection.features.push(feature);
                     //self.editLayer.addData(feature)
                     //	.setStyle(self.layerstyle);
                 }
-                else if (item.status() != 'deleted'
-                    && item.permissionHasGroup('view',mygroups)
+                else if (item.status() != 'deleted' && opacity > 0
+                    && item.permissionHasGroup('view',mygroups) //Filter remaining feats on viewable feats
                 ){
                     viewcollection.features.push(feature);
                 } 
@@ -303,22 +359,22 @@ $.widget("cow.LeaflMapWidget", {
 		}
 		
 		var editlayer = L.geoJson(null,{
-				style: this.layerstyle,
-				onEachFeature: onEachFeature,
-				pointToLayer: function (feature, latlng) {
-					return L.marker(latlng, {
-							icon: L.icon({
-									iconUrl: feature.properties.icon,
-									iconSize: [20, 22],
-									opacity: 0.5,
-									fillOpacity: 0.5
-							})
-					})//.bindLabel(feature.properties.name,{noHide: true})
-					;
-				}
+            style: this.layerstyle,
+            onEachFeature: onEachFeature,
+            pointToLayer: function (feature, latlng) {
+                return L.marker(latlng, {
+                    icon: L.icon({
+                            iconUrl: feature.properties.icon,
+                            iconSize: [40, 44],
+                            opacity: 0.5,
+                            fillOpacity: 0.5
+                    })
+                })//.bindLabel(feature.properties.name,{noHide: true})
+                ;
+            }
 		}
 		).addTo(this.map);
-		tmp = editlayer;
+		
 		// Initialize the draw control and pass it the FeatureGroup of editable layers
 		this.drawControl = new L.Control.Draw({
 			draw: false,
@@ -326,10 +382,11 @@ $.widget("cow.LeaflMapWidget", {
 				featureGroup: editlayer,
 				edit: false,
 				remove: false
-				
 			}
-			
 		});
+		L.drawLocal.edit.handlers.edit.tooltip.subtext = '';
+
+
 
 		this.map.addControl(this.drawControl);
 		
@@ -375,6 +432,8 @@ $.widget("cow.LeaflMapWidget", {
             item.permissions('view',self.core.project.myGroups());//Set default permissions to my groups
             item.permissions('edit',self.core.project.myGroups());//Set default permissions to my groups
             item.permissions('share',self.core.project.myGroups());//Set default permissions to my groups
+            //TODO: 2x submitting an item is not the proper way to do permissions
+            var item = self.core.itemstore().items('feature',{data: item.flatten()}, 'user'); 
 		});
 		
 		//See following URL for custom draw controls in leaflet
@@ -412,6 +471,7 @@ $.widget("cow.LeaflMapWidget", {
 			self.controls.linecontrol.enable();
 			var layer = self.editLayer;
 			core.current_linecolor = key;
+			core.current_polycolor = 'none';
 		});
 		$('#newfeatpanel').bind("newpoly", function(evt, key){
 			self.controls.linecontrol.disable();
@@ -482,54 +542,59 @@ $.widget("cow.LeaflMapWidget", {
 			}, false);
 		};
 		*/
-		
-		
-		var d3editlyr = new d3layer("editlayer",{
-		    maptype: "Leaflet",
-			map: self,
-			//onClick: editPopup,
-			type: "path",
-			onClick: cow.menu,
-			labels: true,
-			labelconfig: {
-                field: "desc",
-                style: {
-                    stroke: "steelBlue"
-                }
-            },
-			style: {
-					fill: "none",
-					stroke: "steelBlue",
-					'stroke-width': 2
-					
-				}
-		});
-        self.d3Layers(d3editlyr);
-        
+
         var d3viewlyr = new d3layer("viewlayer",{
 		    maptype: "Leaflet",
 			map: self,
 			//onClick: editPopup,
 			type: "path",
-			//onClick: cow.menu,
+			onMouseover: cow.textbox,
+			coolCircles: true,
 			labels: true,
 			labelconfig: {
                 field: "desc",
                 style: {
                     stroke: "steelBlue",
-                    opacity: 0.5
+                    //opacity: 0.5
                 }
             },
 			style: {
 					fill: "none",
 					stroke: "steelBlue",
 					'stroke-width': 2,
-					opacity: 0.5
+					//opacity: 0.5
 				}
 		});
         self.d3Layers(d3viewlyr);
         
-        tmp = d3editlyr;
+		
+        /* D3 Editlayer */
+		var d3editlyr = new d3layer("editlayer",{
+		    maptype: "Leaflet",
+			map: self,
+			//onClick: editPopup,
+			type: "path",
+			onClick: cow.menu,
+			onMouseover: cow.textbox,
+			labels: true,
+			labelconfig: {
+                field: "desc",
+                style: {
+                    stroke: "#000033"
+                    //stroke: "steelBlue"
+                }
+            },
+			style: {
+					fill: "none",
+					stroke: "steelBlue",
+					'stroke-width': 4
+					
+				}
+		});
+        self.d3Layers(d3editlyr);
+        
+        
+        
 		var extentlyr = new d3layer("extentlayer",{
 			maptype: "Leaflet",
 			map: self,
@@ -584,6 +649,95 @@ $.widget("cow.LeaflMapWidget", {
             }
         });
         self.d3Layers(routelayer);
+        
+        var data = [];
+        /* Floodlayer */
+        var floodlayer = new L.geoJson(data, {
+            style: function (feature) {
+                var style = {};
+                if (feature.properties.tijdstip == 'na 4 uur'){
+                    style.opacity  = 0.2;
+                }
+                else if (feature.properties.tijdstip == 'na 8 uur'){
+                    style.opacity  = 0.4;
+                }
+                else if (feature.properties.tijdstip == 'na 12 uur'){
+                    style.opacity  = 0.6;
+                }
+                else if (feature.properties.tijdstip == 'na 16 uur'){
+                    style.opacity  = 0.8;
+                }
+                //style.fillOpacity = 0;
+                style.fillColor = "None";
+                return style;
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(feature.properties.tijdstip);
+            }
+        }).addTo(map);
+        self.layercontrol.addOverlay(floodlayer,"Inundatie");
+        d3.json('./data/flood_merged.geojson',function(data){
+               var collection = {"type":"FeatureCollection","features":[]};
+                collection.features = data.features;
+                floodlayer.addData(collection);
+        });
+        /*Kwetsbare objecten*/
+        var geojsonMarkerOptions = {
+            radius: 8,
+            fillColor: "#ff7800",
+            color: "#000",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        };
+        var kwetsbareobjectenlayer = new L.geoJson(data, {
+            pointToLayer: function(feature, latlng){
+                return L.circleMarker(latlng, geojsonMarkerOptions);
+            },
+            style: function (feature) {
+                if (feature.properties.PRIORITEIT == 1){
+                    return {fillColor: 'red'}
+                }
+                else if (feature.properties.PRIORITEIT == 2){
+                    return {fillColor: 'orange'}
+                }
+                else if (feature.properties.PRIORITEIT == 3){
+                    return {fillColor: 'yellow'}
+                }
+                else if (feature.properties.PRIORITEIT == 4){
+                    return {fillColor: 'blue'}
+                }
+                else{
+                    return {fillColor: 'blue'}
+                }
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(feature.properties.ROT_NAAM + "<br>" + feature.properties.OMSCHRI5);
+            }
+        });
+        self.layercontrol.addOverlay(kwetsbareobjectenlayer,"Kwetsbare objecten");
+        d3.json('./data/kwetsbareobjecten.geojson',function(data){
+               var collection = {"type":"FeatureCollection","features":[]};
+                collection.features = data.features;
+                kwetsbareobjectenlayer.addData(collection);
+        });
+        /* Opvanglocaties */
+        var opvanglocatieslayer = new L.geoJson(data, {
+            style: function (feature) {
+                return {color: 'red',weight: 1}
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindLabel(feature.properties.gebruiksdoelverblijfsobject,{ noHide: true });
+                layer.bindPopup(feature.properties.gebruiksdoelverblijfsobject);
+            }
+        });
+        self.layercontrol.addOverlay(opvanglocatieslayer,"Openbare functies");
+        d3.json('./data/publieke_functie.geojson',function(data){
+               var collection = {"type":"FeatureCollection","features":[]};
+                collection.features = data.features;
+                opvanglocatieslayer.addData(collection);
+        });
+        
 	},
 	
 	editfeature: function(self, feature){
