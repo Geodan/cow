@@ -71,13 +71,13 @@ $.widget("cow.KnopWidget", {
 		 
          element.on('click','.sknop',function() {
 		 if($(this).hasClass('newpoint')){
-		 $('#pointbutton').empty().html($(this).removeClass('sknop'));
+		 $('#pointbutton').empty().html($(this).clone().removeClass('sknop'));
 		 }
 		 else if($(this).hasClass('newline')){
-		 $('#linebutton').empty().html($(this).removeClass('sknop'));
+		 $('#linebutton').empty().html($(this).clone().removeClass('sknop'));
 		 }
 		 else if($(this).hasClass('newpoly')){
-		 $('#polybutton').empty().html($(this).removeClass('sknop'));
+		 $('#polybutton').empty().html($(this).clone().removeClass('sknop'));
 		 }
          $('.sideknop').hide('fold');
          });
