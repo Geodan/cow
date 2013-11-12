@@ -234,7 +234,7 @@ $.widget("cow.LeaflMapWidget", {
                 if ($('#chk-gedeeld').prop('checked')){
                     //if item is editable by me
                     if (item.status() != 'deleted'
-                        && item.permissionHasGroup('edit',mygroups) //Filter on editable feats
+                        && (item.permissionHasGroup('edit',mygroups) || item.permissionHasGroup('view',mygroups)) //Filter on editable/viewable feats
                         ){
                         //if item is viewable by *all* selected groups and me
                         //check for all selected groups
@@ -382,10 +382,11 @@ $.widget("cow.LeaflMapWidget", {
 				featureGroup: editlayer,
 				edit: false,
 				remove: false
-				
 			}
-			
 		});
+		L.drawLocal.edit.handlers.edit.tooltip.subtext = '';
+
+
 
 		this.map.addControl(this.drawControl);
 		
@@ -723,15 +724,15 @@ $.widget("cow.LeaflMapWidget", {
         /* Opvanglocaties */
         var opvanglocatieslayer = new L.geoJson(data, {
             style: function (feature) {
-                return {color: 'green'}
+                return {color: 'red',weight: 1}
             },
             onEachFeature: function (feature, layer) {
-                layer.bindLabel(feature.properties.omschrijvi,{ noHide: true });
-                layer.bindPopup(feature.properties.naam + "<br>" + feature.properties.omschrijvi);
+                layer.bindLabel(feature.properties.gebruiksdoelverblijfsobject,{ noHide: true });
+                layer.bindPopup(feature.properties.gebruiksdoelverblijfsobject);
             }
         });
-        self.layercontrol.addOverlay(opvanglocatieslayer,"Opvanglocaties");
-        d3.json('./data/opvanglocaties.geojson',function(data){
+        self.layercontrol.addOverlay(opvanglocatieslayer,"Openbare functies");
+        d3.json('./data/publieke_functie.geojson',function(data){
                var collection = {"type":"FeatureCollection","features":[]};
                 collection.features = data.features;
                 opvanglocatieslayer.addData(collection);

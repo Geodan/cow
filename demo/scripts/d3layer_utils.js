@@ -377,12 +377,12 @@ cow.menu = function(feature,obj){
                 
             }
             else if (name == 'D'){//Delete feature
-                //if (confirm('Verwijderen?')) {
+                if (confirm('Verwijderen?')) {
                     entity.remove();
                     self.deletefeature(self,feature);
-                //} else {
+                } else {
                     // Do nothing!
-                //}
+                }
                 
 
             }   
