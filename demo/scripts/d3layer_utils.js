@@ -3,9 +3,9 @@ var cow = {};
 cow.textbox = function(feature,obj){
     var _this = this;
     var self = this.map;
-    d3.selectAll('.popup').remove(); //Remove any old menu's
+    //d3.selectAll('.popup').remove(); //Remove any old menu's
     d3.select(obj).on('mouseout', function(d){
-          d3.selectAll('.share').remove();
+          d3.selectAll('.textbox').remove();
     });
     var loc = d3.mouse(obj); //Wrong on firefox
     var divloc = [d3.event.screenX ,d3.event.screenY ];
@@ -29,9 +29,9 @@ cow.textbox = function(feature,obj){
     });
     
     var div = d3.select('body').append('div')
-        .style('left',divloc[0] + 0 +  'px')
-        .style('top',divloc[1] + 0 + 'px')
-        .classed("popup share ui-draggable", true);
+        .style('left',divloc[0] + 25 +  'px')
+        .style('top',divloc[1] + -100 + 'px')
+        .classed("textbox popup share ui-draggable", true);
     var sheader = div.append('div')
         .classed('sheader', true)
         .attr('title','Dit object is gemaakt door');
@@ -44,7 +44,8 @@ cow.textbox = function(feature,obj){
     scontent.append('div').classed('ssubheader', true).html(desc);
     sfooter = div.append('div')
         .classed('sfooter',true)
-        .attr('id','permissionlist');//TODO dont use ids;
+        .attr('id','permissionlist')
+        .html("Gedeeld met:");//TODO dont use ids;
     var itemgroups = item.permissions('view')[0].groups;
     var blokje = d3.select('#permissionlist').selectAll('.permission').data(itemgroups);
     blokje.enter()
@@ -97,7 +98,7 @@ cow.menu = function(feature,obj){
           size: 1
      }]
     };
-    if (feature.geometry.type == 'Polygon'){
+    if (feature.geometry.type == 'Polygon' && self.core.project.myGroups().indexOf(2) > -1){
         data.children.push({
           "name": "Pop",
           icon: './css/img/users_icon.png',
@@ -148,6 +149,14 @@ cow.menu = function(feature,obj){
         .data(partition.nodes)
         .enter().append("g")
         .attr("class", "arc1")
+        .on('dblclick',function(d){
+            d3.event.stopPropagation();//Prevent the map from firing click event as well
+            var name = d.name;
+            if (name == 'D'){//Delete feature without asking
+                entity.remove();
+                self.deletefeature(self,feature);
+            }
+        })
         .on('click', function(d){
              d3.event.stopPropagation();//Prevent the map from firing click event as well
              var name = d.name;
@@ -178,30 +187,45 @@ cow.menu = function(feature,obj){
                     
                     //Doing the same as for text edit
                     var name = feature.properties.name || "";
-                    var desc = (feature.properties.desc || "") + population; 
+                    //var desc = (feature.properties.desc || "") + population; 
+                    var desc = population; //Replace original text
                     var innerHtml = ''
                     //+ translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
-                    + 'Description: <br> <textarea id="descfld" name="desc" rows="6" cols="40">'+desc+'</textarea><br/>'
-                    //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
+                    + 'Description: <br> <textarea id="descfld" name="desc" rows="6" cols="25">'+desc+'</textarea><br/>'
+                    //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Opslaan')+'</button>'
                     + '';
                     var div = d3.select('body').append('div')
-                        .attr("height", 500)
-                        .style('left',divloc[0]  -100 +  'px')
-                        .style('top',divloc[1] + 0 + 'px')
-                        .style('background-color','white')
-                        .style('opacity',0.7)
-                        .style('position','absolute');
-    
-                    div.append('div').attr("width", 480)
-                    .html(innerHtml);
-    
-                    div.append('div')
-                        .html('Done')
+                    .style('left',divloc[0] + 0 +  'px')
+                    .style('top',divloc[1] + 0 + 'px')
+                    .classed("popup share ui-draggable", true);
+                var sheader = div.append('div')
+                    .classed('sheader', true)
+                    .attr('title','Dit object is gemaakt door');
+                sheader.append('span')
+                    .classed('group populatie',true); //TODO add own groups here
+                sheader.append('span').html(groupnames);
+                var scontent = div.append('div')
+                    .classed('scontent', true);
+                desc = desc.replace(/\r\n?|\n/g, '<br />');
+                scontent.append('div').classed('ssubheader', true).html(innerHtml);
+                scontent.append('div')
+                        .html('Opslaan')
                         .classed('popupbutton', true)
                         .on('click',function(z){
                                 self.changeFeature(self, feature);
                                 div.remove();
-                     });
+                        });
+                sfooter = div.append('div')
+                    .classed('sfooter',true)
+                    .attr('id','permissionlist');//TODO dont use ids;
+                var itemgroups = item.permissions('view')[0].groups;
+                var blokje = d3.select('#permissionlist').selectAll('.permission').data(itemgroups);
+                blokje.enter()
+                    .append('span')
+                    .attr('class',function(d){
+                        var groupname = self.core.project.getGroupById(d).name
+                        return 'group ' + groupname;
+                    });
                     }
                     //Will generate a callback to 'callback'
                     var geom = JSON.stringify(feature.geometry);
@@ -219,8 +243,8 @@ cow.menu = function(feature,obj){
                 var desc = feature.properties.desc || "";
                 var innerHtml = ''
                 //+ translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
-                + 'Description: <br> <textarea id="descfld" name="desc" rows="4" cols="25">'+desc+'</textarea><br/>'
-                //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Done')+'</button>'
+                + 'Description: <br> <textarea id="descfld" name="desc" rows="6" cols="25">'+desc+'</textarea><br/>'
+                //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Opslaan')+'</button>'
                 + '';
                 
                 var div = d3.select('body').append('div')
@@ -238,7 +262,7 @@ cow.menu = function(feature,obj){
                 desc = desc.replace(/\r\n?|\n/g, '<br />');
                 scontent.append('div').classed('ssubheader', true).html(innerHtml);
                 scontent.append('div')
-                        .html('Done')
+                        .html('Opslaan')
                         .classed('popupbutton', true)
                         .on('click',function(z){
                                 self.changeFeature(self, feature);
@@ -268,7 +292,7 @@ cow.menu = function(feature,obj){
                     .html(innerHtml);
 
                     div.append('div')
-                        .html('Done')
+                        .html('Opslaan')
                         .classed('popupbutton', true)
                         .on('click',function(z){
                                 self.changeFeature(self, feature);
@@ -342,27 +366,47 @@ cow.menu = function(feature,obj){
                         });
                     pdiv.append('span')
                         .html(function(d){return d.name});
-                
+                scontent.append('div')
+                        .html('Sluiten')
+                        .classed('popupbutton', true)
+                        .on('click',function(z){
+                                //Close share window, 
+                                div.remove();
+                        });
                 //formbox.html(form);
                 
             }
             else if (name == 'D'){//Delete feature
-                entity.remove();
-                self.deletefeature(self,feature);
+                if (confirm('Verwijderen?')) {
+                    entity.remove();
+                    self.deletefeature(self,feature);
+                } else {
+                    // Do nothing!
+                }
+                
+
             }   
         })
         .on('mouseover', function(d){ //Mouseover menulabel
             d3.select(this)
-             .style('opacity',0.5)
+                 .append("text")
+                  .classed('menu_shadow',true)
+                  //.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+                  .attr("dy", 0)
+                  .attr("dx", 0)
+                  .text(function(d) { 
+                          return d.label; 
+                  });
+            d3.select(this)
              .append("text")
               .classed('menu',true)
               //.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
               .attr("dy", 0)
               .attr("dx", 0)
-              .style("text-anchor", "middle")
               .text(function(d) { 
                       return d.label; 
               });
+              
         })
         .on('mouseout', function(d){
             d3.select(this)
