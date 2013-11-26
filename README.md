@@ -9,7 +9,7 @@ The core has been tested with jQuery versions 1.8.2 and 1.9.1. The demo client h
 
 API
 ===
-Cow is a plugin for jQuery to use websockets to work together with geographical data. Peers represent the people who connected to the same websocket. Peers share their physical location (if available) and their current viewextent of the map. Peers are member of an herd and members of the same herd can share features. 
+Cow is a plugin for jQuery to use websockets to work together with geographical data. Peers represent the people who connected to the same websocket. Peers share their physical location (if available) and their current viewextent of the map. Peers are member of a project and members of the same project share features. 
 
 #### Core
 >$(selector).cow([options])
@@ -19,13 +19,13 @@ Cow is a plugin for jQuery to use websockets to work together with geographical 
 [options]: websocket (object with url to the websocket server ) - default: wss://localhost:443 
  
 * me()
-* activeherd([options])
+* activeproject([options])
 * username(string)
 * center([options])
-* herds([options])
- * getHerdById(id)
- * getHerdByPeerUid(peeruid)
- * removeHerd(id)
+* projects([options])
+ * getProjectById(id)
+ * getProjectByPeerUid(peeruid)
+ * removeProject(id)
 * peers([options])
  * getPeerExtents()
  * getPeerPositions()
@@ -40,10 +40,10 @@ Cow is a plugin for jQuery to use websockets to work together with geographical 
 * bind()
 * trigger()
 
-#### Herd
->cow.Herd(core, [options])
+#### Project
+>cow.Project(core, [options])
 
-**description** The Herd object. It is constructed with the herd options object in cow.herds([options]). The Herd object is refered to as *herd* in the documentation. An Herd is a group of zero or more Peers which share features, allowing for collaborative map-editing. There is one special Herd, the 'sketch' herd, the default, non-removable herd; this one deletes features older than a week to prevent cluttering. 
+**description** The Project object. It is constructed with the project options object in cow.projects([options]). The Project object is refered to as *project* in the documentation. A Project is a group of zero or more Peers which share features, allowing for collaborative map-editing. There is one special Project, the 'sketch' project, the default, non-removable project; this one deletes features older than a week to prevent cluttering. 
 
 core: the cow object
 
@@ -89,7 +89,7 @@ core: the cow object
 #### FeatureStore
 >cow.FeatureStore(core, [options])
 
-**description** The FeatureStore object. It is constructed with the featurestore options object in cow.featurestore([options]). The FeatureStore object is refered to as *fs* in the documentation. The fs keeps all features in the active herd in memory and syncs those with peers, the db and the map
+**description** The FeatureStore object. It is constructed with the featurestore options object in cow.featurestore([options]). The FeatureStore object is refered to as *fs* in the documentation. The fs keeps all features in the active project in memory and syncs those with peers, the db and the map
 
 core: the cow object
 
@@ -101,15 +101,15 @@ core: the cow object
 #### LocalDbase
 >cow.LocalDbase(core, [options])
 
-**description** The LocalDbase object. It is constructed with the localdbase options object in cow.localdbase([options]). The localdbase object is refered to as *db* in the documentation. The db stores the uid, name and state of all known herds of cow in a persistent database using indexeddb. It also stores all features per herd in persistent databases using indexeddb. Only the features of active herds get synced with the db.
+**description** The LocalDbase object. It is constructed with the localdbase options object in cow.localdbase([options]). The localdbase object is refered to as *db* in the documentation. The db stores the uid, name and state of all known projects of cow in a persistent database using indexeddb. It also stores all features per project in persistent databases using indexeddb. Only the features of active projects get synced with the db.
 
 core: the cow object
 
 [options]: {dbname : string } (not yet working)
 
-* herdsdb([options])
+* projectsdb([options])
 * featuresdb([options])
-* removeherd(herdId)
+* removeproject(projectId)
 * removefeature(featureId)
 
 #### GeoLocator
@@ -142,7 +142,7 @@ webscocket confirms connection by returning a CID
 Client should: 
     1. assign CID to self. 
     2. Let the world know about self with  'newPeer'
-    3. Let the world know about own herd with 'herdInfo'
+    3. Let the world know about own project with 'projectInfo'
     4. Sent feature idlist to world with 'newPeerFidList'
 
 #### peerGone
@@ -186,7 +186,7 @@ The alpha peer sends a sync message with new features and a feature request
     "payload":{
         "requestlist":[<feature ids>],
         "pushlist":[<features>],
-        "storename":<herdid>
+        "storename":<projectid>
      }
 }
 `````
@@ -203,7 +203,7 @@ requested feats are returning from peer
     "action":"requestedFeats",
     "payload":{
         "features":[<features>],
-        "storename":<herdid>
+        "storename":<projectid>
     }
 }
 `````
@@ -243,7 +243,7 @@ a new peer just joined, recieve its status: connection-id, uid, extent
 Client should: 
     1. Add peer to own peerslist
     2. Sent own peerinformation with 'informPeer'
-    3. Sent info on own herd with 'herdInfo'
+    3. Sent info on own project with 'projectInfo'
 
 #### newPeerFidList
 a new peer just sent it's fidlist
@@ -253,7 +253,7 @@ a new peer just sent it's fidlist
     "action":"newPeerFidList",
     "payload":{
         "fids":[<fidlist>],
-        "storename":<herdid>
+        "storename":<projectid>
     }
 } 
 `````
@@ -293,19 +293,19 @@ a new object was drawn or updated by a peer
 Client should: add feature to own store
 TODO: THERE's SOMETHING WRONG WITH THE JSON HERE, too complex
 
-#### getHerdInfo
+#### getProjectInfo
 >
-A peer request information about a herd
+A peer request information about a project
 
-#### herdInfo
-Info about a herd comes in...
+#### projectInfo
+Info about a project comes in...
 `````javascript
 {
     "uid":<origin-id>,
-    "action":"herdInfo",
+    "action":"projectInfo",
     "payload":{
-        "uid":<herdid>,
-        "name":<herdname>,
+        "uid":<projectid>,
+        "name":<projectname>,
         "peeruid":<????>,
         "active":<true/false>
     }
