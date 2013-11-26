@@ -12,12 +12,6 @@ $.Cow.Core = function(element, options) {
     var self = this;
     var time = new Date();
     this.UID = time.getTime(); 
-    /* SMO: obsolete 7/8/2013
-    this.MYLOCATION = "My location";
-    this.LOCATION_ICON = './mapicons/male.png';
-    this.MYLOCATION_ICON = './mapicons/you-are-here-2.png';
-    this.current_icon;
-    */
     this.options = $.extend({}, new $.fn.cow.defaults.core(), options);
     this.element = element;
     this.map = window[this.options.map];
@@ -28,8 +22,7 @@ $.Cow.Core = function(element, options) {
     this._username = 'Anonymous';
     this._pid; //Personal ID. Used to identify people.
     this.project; //This will become the active project object
-    this.activeProject = 666; //Carefull, order matters! Make sure the activeProject is set before localdbase is initialized
-    this.localDbase;
+    this.activeProject = 666; //Carefull, order matters! Make sure the activeProject is set before local dbase is initialized
     this.projectsDb;
     this.groupsDb;
     this.itemsDb;
@@ -50,10 +43,7 @@ $.Cow.Core = function(element, options) {
     }
     if(this.options.itemsdb!==undefined) {
         this.itemsdb(this.options.itemsdb);
-    }/*
-    if(this.options.localdbase!==undefined) {
-        this.localdbase(this.options.localdbase);
-    }*/
+    }
     if(this.options.geolocator!==undefined) {
         this.geolocator(this.options.geolocator);
     }
@@ -81,7 +71,6 @@ $.Cow.Core = function(element, options) {
         self.itemstore().removeAllItems(); //Clear itemstore
         self.activeproject(uid);
         self.options.storename = "store_"+uid; //TODO: the link between activeProject and storename can be better
-        //var items = self.localdbase().itemsdb();//Fill itemstore with what we have
     });    
 };
 /**
@@ -206,24 +195,6 @@ $.Cow.Item = function(core, options) {
     
 }
 
-/***
-$.Cow.LocalDbase object
-Accessed from the core the localbase.
-On creation it also populates the itemstore.
-***/
-$.Cow.LocalDbase = function(core, options) {
-    var self = this;
-    this.loaded = false;
-    this.core = core;
-    this.options = options;
-    this.options.dbname = "cow";
-    // items in sketch are not loaded anymore after x secs
-    this.options.expirytime = 1 * 12 * 60 * 60; //1/2 day
-    //this.options.expirytime = 7 * 24 * 60 * 60; //1 week
-    //var projects = self.projectsdb();//Projects are initialized from localdb
-    var items = self.itemsdb(); //features are initialized from localdb
-}
-
 /*** 
 $.Cow.Store object
 Pouchdb access
@@ -247,9 +218,6 @@ $.Cow.ItemStore = function(core, options) {
     this.events = $({});
     this.uid = this.core.UID;
     this.itemList = [];
-    //this.name = this.options.name || "store1";
-    //Obs: this.core.bind('sketchcomplete', {widget: self}, self._onSketchComplete);
-    //Obs: this.core.bind('afterfeaturemodified', {widget: self}, self._onFeatureModified);
 }
 
 
@@ -344,8 +312,6 @@ $.Cow.Core.prototype = {
                });
                
                this.itemstore().removeAllItems(); //Clear featurestore
-               //TODO: change to POUCHDB
-               //this.localdbase().itemsdb();//Fill featurestore with what we have
                this.itemsdb().getRecords().done(function(d){
                        self.itemstore().loadItemsFromDb(d);
                });
@@ -464,13 +430,6 @@ When adding projects, those are returned.
         }      
     },
     _getProjects: function() {
-        //haal alleen de projects op uit de lijst waar de status != deleted
-        /* SMO obs: 12/8/13
-        var projects = [];
-        $.each(this.projectList, function(id, project) {
-            if (project.active)
-                projects.push(project);
-        });        */
         return this.projectList;
     },
     _addProject: function(options) {
@@ -632,10 +591,6 @@ A Peer is on object containing:
         var peer = new $.Cow.Peer(this, options);        
         
         if (options.uid != this.UID){
-            //TT: Obsolete?
-            //var geojson_format = new OpenLayers.Format.GeoJSON();
-            //var feature = geojson_format.read(peer.view());
-            //peer.params.feature = feature;
             peer.view({"extent":options.extent});
             if (options.position){
                 peer.position({"point":options.position});
@@ -731,35 +686,7 @@ A Peer is on object containing:
         //TODO: remove peer from d3 layers
     },
         
-    /***
-    LOCAL DATABASE
-    ***/
-    /*Obsolete
-    localdbase: function(options){
-        var self = this;
-        switch(arguments.length) {
-        case 0:
-            return this._getLocalDbase();
-        case 1:
-            if (!$.isArray(options)) {
-                return this._setLocalDbase(options);
-            }
-            else {
-                throw('only one dbase allowed');
-            }
-            break;
-        default:
-            throw('wrong argument number');
-        }
-    },
-    _getLocalDbase: function(){
-        return this.localDbase;
-    },
-    _setLocalDbase: function(options){
-        var dbase = new $.Cow.LocalDbase(this, options);
-        this.localDbase = dbase;
-    },
-    */
+    
     /***
     POUCH DB stores
     ****/
@@ -974,7 +901,6 @@ $.fn.cow.defaults = {
         return {
             websocket: {url: 'wss://localhost:443'},
             itemstore: {},
-            //localdbase: {},
             geolocator: {},
             groupsdb: {},
             projectsdb: {},
