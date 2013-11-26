@@ -52,9 +52,9 @@ $.Cow.Core = function(element, options) {
     //Standard project, always available
     var startproject = this.projects({_id:666,name:"sketch", peeruid: this.UID}); //Add after localdb has been initialized
     //Standard public group, always available
-    //TODO CHANGED FOR PROGIDEON
-    //var startgroup = startproject.groups({_id:1, name: 'public', peeruid:this.UID});
-    //startgroup.members(this.UID);//Default become member of public
+
+    var startgroup = startproject.groups({_id:1, name: 'public', peeruid:this.UID});
+    startgroup.members(this.UID);//Default become member of public
     var startgroup = startproject.groups({_id:1, name: 'public'});
             
     //Loading existing projects from dbase
