@@ -11,12 +11,21 @@ Cow.db.prototype =
     _getRecord: function(id){}, //returns promise
     _removeRecord: function(id){} //returns promise
 };
-
+Cow.record = function(){};
+Cow.record.prototype = {
+    getStatus: function(){},
+    setStatus: function(status){},
+    data: function(param, value){}, // data() -> get all data, data(key) -> get value, data(key,value) -> set value
+    deflate: function(){},
+    inflate: function(config){}            
+};
+    
 Cow.syncstore =  function(){}; //Synstore keeps track of records
 Cow.syncstore.prototype = 
 {
-    _pouchdb: Object.create(Cow.db.prototype),
-    _initRecords: function(){}, //This will start the process of getting records from pouchdb (returns promise)
+    _db: Object.create(Cow.db.prototype),
+    initDb: function(name){},   //Create/Open the dbase for use
+    initRecords: function(){}, //This will start the process of getting records from pouchdb (returns promise)
 
     _records: [],
     getRecords: function(IDarray){}, //returns all records, if ID array is filled, only return that records 
@@ -31,50 +40,49 @@ Cow.syncstore.prototype =
 Cow.item = function(){};
 Cow.item.prototype = 
 {
-    
-    deflate: function(){},
-    inflate: function(config){}
-}
+    __proto__: Cow.record
+
+};
 
 Cow.group = function(){};
 Cow.group.prototype =
 {
+    __proto__: Cow.record,
     //Possibly we can forget about keeping track of all the users in the group
     //we only care about what group we are in ourselves
     _users: [], //array of IDs 
     _groups: [], //array of IDs
     getUsers: function(){},
     addUser: function(ID){},
-    removeUser: function(ID){},
-    deflate: function(){},
-    inflate: function(config){}
+    removeUser: function(ID){}
 };
 
 Cow.project = function(){};
 Cow.project.prototype = 
 {
-    _groupStore: Object.create(syncstore.prototype,{ //Inherits from syncStore
+    __proto__: Cow.record,
+    _groupStore: {
+        __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
         getGroups: function(){},
         getGroup: function(ID){},
         addGroup: function(config){},
         updateGroup: function(config){},
-        removeGroup: function(ID){},
-    }), 
+        removeGroup: function(ID){}
+    }, 
     
-    _itemstore: Object.create(syncstore.prototype,{ //Inherits from syncStore
+    _itemstore: {
+        __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
         getItems: function(options){},
         getItem: function(ID){},
         addItem: function(config){},
         updateItem: function(config){},
         removeItem: function(ID){}
-    }), 
+    }, 
     
     _members:[], //array of ID
     getMembers: function(){},
     addMembers: function(ID){},
-    removeMembers: function(ID){},
-    deflate: function(){},
-    inflate: function(config){}
+    removeMembers: function(ID){}
 };
 
 
@@ -93,6 +101,7 @@ Cow.peer.prototype =
 Cow.user = function(){};
 Cow.user.prototype = 
 {
+    __proto__: Cow.record,
     _id: null,
     _name: null,
     _mail: null,
@@ -115,13 +124,14 @@ Cow.core.prototype =
     
     
     /*PROJECTS*/
-    _projectStore:  Object.create(Cow.syncstore.prototype,{ //Inherits from syncStore
+    _projectStore:  { 
+        __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
         getProjects:    function(){}, //returns all projects
         getProject:     function(ID){}, //returns 1 project
         addProject:     function(config){}, //adds (and returns) 1 project
         updateProject:  function(config){}, //changes 1 project
         removeProject:  function(ID){} //set status to inactive
-    }),
+    },
     projectStore:       function(){}, //returns the _projectstore object
     
     /*PEERS*/
@@ -135,13 +145,14 @@ Cow.core.prototype =
     getPeerPositions:   function(){},//returns featurecollection of peerpositions
     
     /*USERS*/
-    _userStore:     Object.create(Cow.syncstore.prototype,{ //Inherits from syncStore
+    _userStore:  { 
+        __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
         getUsers:       function(){},
         getUser:        function(ID){},
         addUser:        function(config){}, //returns user object
         updateUser:     function(config){},
         removeUser:     function(ID){}//sets user inactive (should only be allowed to admin)
-    }),
+    },
     userStore:      function(){}, //returns the _userStore object
     
     /*WEBSOCKET*/

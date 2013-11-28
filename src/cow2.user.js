@@ -1,21 +1,15 @@
+window.Cow = window.Cow || {};
 Cow.user = function(){};
 Cow.user.prototype = 
 {
-    _id: null,
+    __proto__: Cow.record.prototype,
     _name: null,
     _mail: null,
+    
     getName: function(){
-        return _name;
+        return this.data('mail');
     },
     getMail: function(){
-        return _mail;
-    },
-    deflate: function(){
-        return {_id: _id, name: _name, mail: _mail}; 
-    },
-    inflate: function(config){
-        _id = config._id;
-        _name = config.name;
-        _mail = config.mail;
+        return this.data('mail');
     }
 };

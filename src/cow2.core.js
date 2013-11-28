@@ -11,13 +11,23 @@ Cow.core.prototype =
     
     
     /*PROJECTS*/
-    _projectStore:  Object.create(Cow.syncstore.prototype,{ //Inherits from syncStore
-        getProjects:    function(){}, //returns all projects
-        getProject:     function(ID){}, //returns 1 project
-        addProject:     function(config){}, //adds (and returns) 1 project
-        updateProject:  function(config){}, //changes 1 project
-        removeProject:  function(ID){} //set status to inactive
-    }),
+    _projectStore:  {
+        __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
+        _recordproto:   Cow.project.prototype,
+        _dbname:        'projects',
+        getProjects:    function(){ //returns all projects
+            return this._records;
+        }, 
+        getProject:     function(id){ //returns 1 project
+            return this._getRecord(id);
+        }, 
+        addProject:     function(config){ //adds (and returns) 1 project
+            return this._addRecord(config);
+        }, 
+        updateProject:  function(config){ //changes and returns 1 project
+            return this.updateRecord(config);
+        }
+    },
     projectStore:       function(){
         return this._projectStore;
     }, //returns the _projectstore object
@@ -33,14 +43,26 @@ Cow.core.prototype =
     getPeerPositions:   function(){},//returns featurecollection of peerpositions
     
     /*USERS*/
-    _userStore:     Object.create(Cow.syncstore.prototype,{ //Inherits from syncStore
-        getUsers:       function(){},
-        getUser:        function(ID){},
-        addUser:        function(config){}, //returns user object
-        updateUser:     function(config){},
-        removeUser:     function(ID){}//sets user inactive (should only be allowed to admin)
-    }),
-    userStore:      function(){}, //returns the _userStore object
+    _userStore: {   
+        __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
+        _recordproto:   Cow.user.prototype,     //prototype for record
+        _dbname:        'users',
+        getUsers:       function(){
+            return this._records;
+        },
+        getUser:        function(id){
+            return this._getRecord(id);
+        },
+        addUser:        function(config){ //returns record
+            return this._addRecord(config);
+        }, 
+        updateUser:     function(config){ //returns record
+            return this._updateRecord(config); 
+        }
+    },
+    userStore:      function(){
+        return this._userStore;
+    }, //returns the _userStore object
     
     /*WEBSOCKET*/
     _websocket: {
