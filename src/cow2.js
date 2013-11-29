@@ -1,33 +1,34 @@
 var mycore = null;
 
-var updaterecord = function(){
+var adduser = function(){
     s = mycore.userStore();
-    var rec = s.getUsers()[0];
+    var rec = new Cow.user();
+    rec.inflate({_id: 2, status: 'active'});
     rec.data('mail','hoeps');
-    s.updateUser({source:'UI', data: rec.deflate()});
+    s.addUser({source:'UI', data: rec.deflate()});
     
 };
 
 var addproject = function(){
     ps = mycore.projectStore();
-    var rec = new Cow.project();
-    rec.inflate({_id: 1, status: 'active',data: {name: 'project1'}});
-    rec.populate();
-    ps.addProject({source: 'UI', data: rec.deflate()});
+    var rec2 = new Cow.project();
+    rec2.inflate({_id: 2, status: 'active',data: {name: 'project1'}});
+    rec2.populate();
+    ps.addProject({source: 'UI', data: rec2.deflate()});
     
-}
+};
 
 $(document).ready(function(){
     mycore = new Cow.core();
     var us = mycore.userStore();
     us.initDb();
     var promise1 = us._initRecords(); 
-    promise1.done(updaterecord);
+    //promise1.done(adduser);
     
     var ps = mycore.projectStore();
     ps.initDb();
     var promise2 = ps._initRecords();
-    promise2.done(addproject);
+    //promise2.done(addproject);
     
     
 });

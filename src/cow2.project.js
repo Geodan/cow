@@ -14,8 +14,7 @@ Cow.project.prototype =
         getGroups: function(){},
         getGroup: function(ID){},
         addGroup: function(config){},
-        updateGroup: function(config){},
-        removeGroup: function(ID){}
+        updateGroup: function(config){}
     }, 
     groupStore: function(){
         return this._groupStore;
@@ -30,8 +29,7 @@ Cow.project.prototype =
         getItems:       function(options){},
         getItem:        function(ID){},
         addItem:        function(config){},
-        updateItem:     function(config){},
-        removeItem:     function(ID){}
+        updateItem:     function(config){}
     }, 
     itemStore: function(){
         return this._itemStore;

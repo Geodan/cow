@@ -28,11 +28,10 @@ Cow.syncstore.prototype =
     initRecords: function(){}, //This will start the process of getting records from pouchdb (returns promise)
 
     _records: [],
-    getRecords: function(IDarray){}, //returns all records, if ID array is filled, only return that records 
-    getRecord: function(ID){},
-    addRecord: function(config){},
-    updateRecord: function(config){},
-    removeRecords: function(ID){},
+    _getRecords: function(IDarray){}, //returns all records, if ID array is filled, only return that records 
+    _getRecord: function(ID){},
+    _addRecord: function(config){},
+    _updateRecord: function(config){},
 
     _syncRecords: function(data){} //Compare ID/status array from other peer with your list and returns requestlist and pushlist  
 };
@@ -60,29 +59,34 @@ Cow.group.prototype =
 Cow.project = function(){};
 Cow.project.prototype = 
 {
-    __proto__: Cow.record,
+    __proto__: Cow.record.prototype,
     _groupStore: {
         __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
+        _recordproto:   Cow.group.prototype,
+        _dbname: null,
+        dbname:  function(name){}, //Set name of dbase (based on project it is in)
         getGroups: function(){},
         getGroup: function(ID){},
         addGroup: function(config){},
-        updateGroup: function(config){},
-        removeGroup: function(ID){}
+        updateGroup: function(config){}
     }, 
-    
-    _itemstore: {
+    groupStore: function(){},//return _groupStore
+    _itemStore: {
         __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
+        _recordproto:   Cow.item.prototype,
+        _dbname:        null,
+        dbname:  function(name){},//Set name of dbase (based on project it is in)
         getItems: function(options){},
         getItem: function(ID){},
         addItem: function(config){},
-        updateItem: function(config){},
-        removeItem: function(ID){}
+        updateItem: function(config){}
     }, 
-    
+    itemStore: function(){},//returns _itemStore
     _members:[], //array of ID
     getMembers: function(){},
     addMembers: function(ID){},
-    removeMembers: function(ID){}
+    removeMembers: function(ID){},
+    populate: function(){} //populates the groups and items for this project from db
 };
 
 
@@ -101,14 +105,11 @@ Cow.peer.prototype =
 Cow.user = function(){};
 Cow.user.prototype = 
 {
-    __proto__: Cow.record,
-    _id: null,
+    __proto__: Cow.record.prototype,
     _name: null,
     _mail: null,
     getName: function(){},
-    getMail: function(){},
-    deflate: function(){},
-    inflate: function(config){}
+    getMail: function(){}
 };
 
 Cow.core = function(){};
@@ -126,11 +127,12 @@ Cow.core.prototype =
     /*PROJECTS*/
     _projectStore:  { 
         __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
+        _recordproto:   Cow.project.prototype,
+        _dbname:        'projects',
         getProjects:    function(){}, //returns all projects
         getProject:     function(ID){}, //returns 1 project
         addProject:     function(config){}, //adds (and returns) 1 project
         updateProject:  function(config){}, //changes 1 project
-        removeProject:  function(ID){} //set status to inactive
     },
     projectStore:       function(){}, //returns the _projectstore object
     
@@ -147,11 +149,12 @@ Cow.core.prototype =
     /*USERS*/
     _userStore:  { 
         __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
+        _recordproto:   Cow.user.prototype,     //prototype for record
+        _dbname:        'users',
         getUsers:       function(){},
         getUser:        function(ID){},
         addUser:        function(config){}, //returns user object
-        updateUser:     function(config){},
-        removeUser:     function(ID){}//sets user inactive (should only be allowed to admin)
+        updateUser:     function(config){}
     },
     userStore:      function(){}, //returns the _userStore object
     
