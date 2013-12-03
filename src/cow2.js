@@ -1,3 +1,6 @@
+
+
+
 var mycore = null;
 
 var adduser = function(){
@@ -11,23 +14,24 @@ var adduser = function(){
 
 var addproject = function(){
     ps = mycore.projectStore();
-    var rec2 = new Cow.project();
-    rec2.inflate({_id: 2, status: 'active',data: {name: 'project1'}});
+    var rec2 = new Cow.project({_id: 2});
+    rec2.inflate({status: 'active',data: {name: 'project1'}});
     rec2.populate();
+    var item = new Cow.item();
+    item.inflate({_id: 2, status: 'active',data: {name: 'item1', dbase: ps._dbname}});
+    rec2.itemStore().addItem({source: 'UI', data: item.deflate()});
     ps.addProject({source: 'UI', data: rec2.deflate()});
     
 };
 
 $(document).ready(function(){
     mycore = new Cow.core();
-    var us = mycore.userStore();
-    us.initDb();
-    var promise1 = us._initRecords(); 
+    //mycore.userStore().initDb();
+    //var promise1 = mycore.userStore()._initRecords(); 
     //promise1.done(adduser);
     
-    var ps = mycore.projectStore();
-    ps.initDb();
-    var promise2 = ps._initRecords();
+    //mycore.projectStore().initDb();
+    //var promise2 = mycore.projectStore()._initRecords();
     //promise2.done(addproject);
     
     

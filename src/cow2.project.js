@@ -1,41 +1,70 @@
 window.Cow = window.Cow || {};
-Cow.project = function(){};
+Cow.project = function(config){
+    this._members = []; //array of ID
+    if (!config._id) {throw 'No _id given for project';}
+    var dbname = 'groups_' + config._id;
+    this._groupStore = _.extend(
+        new Cow.syncstore(dbname),{
+        _records: [],
+        _recordproto: function(){return new Cow.group();},
+        _dbname: dbname,
+        dbname:  function(name){
+            this._dbname =  name;
+        },
+        getGroups: function(){
+            return this._records;
+        },
+        getGroup: function(id){
+            return this._getRecord(id);
+        },
+        addGroup: function(config){
+            return this._addRecord(config);
+        },
+        updateGroup: function(config){
+            return this._updateRecord(config);
+        }
+    });
+    dbname = 'items_' + config._id;
+    this._itemStore = _.extend(
+        new Cow.syncstore(dbname),{
+        _recordproto:   function(){return new Cow.item();},
+        _records: [],
+        _dbname: dbname,
+        dbname:  function(name){
+            this._dbname =  name;
+        },
+        getItems:       function(){
+            return this._records;
+        },
+        getItem:        function(id){
+            return this._getRecord(id);
+        },
+        addItem:        function(config){
+            return this._addRecord(config);
+        },
+        updateItem:     function(config){
+            return this._updateRecord(config);
+        }
+    });
+};
 Cow.project.prototype = 
 {
     __proto__: Cow.record.prototype,
-    
-    _groupStore: {
-        __proto__:  Cow.syncstore.prototype, //Inherits from syncStore
-        _recordproto:   Cow.group.prototype,
-        _dbname: null,
-        dbname:  function(name){
-            this._dbname =  name;
-        },
-        getGroups: function(){},
-        getGroup: function(ID){},
-        addGroup: function(config){},
-        updateGroup: function(config){}
-    }, 
+ 
     groupStore: function(){
         return this._groupStore;
     },
-    _itemStore: {
-        __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
-        _recordproto:   Cow.item.prototype,
-        _dbname:        null,
-        dbname:  function(name){
-            this._dbname =  name;
-        },
-        getItems:       function(options){},
-        getItem:        function(ID){},
-        addItem:        function(config){},
-        updateItem:     function(config){}
-    }, 
+    groups: function(){
+        return this._groupStore.getGroups();
+    },
+ 
     itemStore: function(){
         return this._itemStore;
     },
+    items: function(){
+        return this._itemStore.getItems();
+    },
     
-    _members:[], //array of ID
     getMembers: function(){
         return this._members;
     },
@@ -59,13 +88,13 @@ Cow.project.prototype =
                 return true;
             }
         }
-    },
-    
-    populate: function(){ //Gets the groups and items for this project
-        this.groupStore().dbname('groups_'+ this._id);
-        this.groupStore().initDb();
-        this.itemStore().dbname('items_'+ this._id);
-        this.itemStore().initDb();
     }
+    
+    //populate: function(){ //Gets the groups and items for this project
+        //this.groupStore().dbname('groups_'+ this._id);
+        //this.groupStore().initDb();
+        //this.itemStore().dbname('items_'+ this._id);
+        //this.itemStore().initDb();
+    //}
 
 };

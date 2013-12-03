@@ -10,10 +10,12 @@ Cow.core.prototype =
     },   
     
     
+    
     /*PROJECTS*/
-    _projectStore:  {
-        __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
-        _recordproto:   Cow.project.prototype,
+    _projectStore: _.extend(
+        new Cow.syncstore('projects'),{
+        _records: [],
+        _recordproto:   function(_id){return new Cow.project({_id:_id});},
         _dbname:        'projects',
         getProjects:    function(){ //returns all projects
             return this._records;
@@ -27,10 +29,15 @@ Cow.core.prototype =
         updateProject:  function(config){ //changes and returns 1 project
             return this.updateRecord(config);
         }
-    },
+    }),
+    
     projectStore:       function(){
         return this._projectStore;
     }, //returns the _projectstore object
+    
+    projects:       function(){
+        return this._projectStore.getProjects();
+    }, //returns the project objects
     
     /*PEERS*/
     _peers:             [], //array of peer
@@ -43,9 +50,10 @@ Cow.core.prototype =
     getPeerPositions:   function(){},//returns featurecollection of peerpositions
     
     /*USERS*/
-    _userStore: {   
-        __proto__:      Cow.syncstore.prototype, //Inherits from syncStore
-        _recordproto:   Cow.user.prototype,     //prototype for record
+    _userStore:  _.extend(
+        new Cow.syncstore('users'), {
+        _records: [],
+        _recordproto:   function(){return new Cow.user();},     //prototype for record
         _dbname:        'users',
         getUsers:       function(){
             return this._records;
@@ -59,10 +67,14 @@ Cow.core.prototype =
         updateUser:     function(config){ //returns record
             return this._updateRecord(config); 
         }
-    },
+        
+    }),
     userStore:      function(){
         return this._userStore;
     }, //returns the _userStore object
+    users:       function(){
+        return this._userStore.getUsers();
+    }, //returns the user objects
     
     /*WEBSOCKET*/
     _websocket: {

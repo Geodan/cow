@@ -40,12 +40,12 @@ Cow.record.prototype =
         }; 
     },
     inflate: function(config){
-        this._id = config._id;
-        this._rev = config._rev;
-        this._status = config.status;
-        this._created = config.created;
-        this._updated = config.updated;
-        this._data = config.data || {};
+        this._id = config._id || this._id;
+        this._rev = config._rev || this._rev;
+        this._status = config.status || this._status;
+        this._created = config.created || this._created;
+        this._updated = config.updated || this._updated;
+        this._data = config.data || this._data || {};
         return this;
     }
 };

@@ -1,16 +1,18 @@
 window.Cow = window.Cow || {};
-Cow.syncstore =  function(){}; //Synstore keeps track of records
+//Synstore keeps track of records
+Cow.syncstore =  function(dbname){
+    this._db = new PouchDB(dbname);
+    this.promise = this._initRecords();
+}; 
+
 Cow.syncstore.prototype =  
 { //pouchdb object
     //All these calls will be asynchronous and thus returning a promise instead of data
-    _db_init: function(){
-        this._db = new PouchDB(this._dbname);
-    },
     _db_addRecord: function(config){
         var data = config.data;
         var source = config.source;
         data._id = data._id.toString();
-        var deferred = jQuery.Deferred(); //TODO, remove jquery dependency
+        var deferred = new jQuery.Deferred(); //TODO, remove jquery dependency
         switch (source){
             case 'UI': //New for sure, so we can use put
                 this._db.put(data, function(err, out){
@@ -45,7 +47,7 @@ Cow.syncstore.prototype =
         }
         var source = config.source;
         data._id = data._id.toString();
-        var deferred = jQuery.Deferred(); //TODO, remove jquery dependency
+        var deferred = new jQuery.Deferred(); //TODO, remove jquery dependency
         var promise;
         //TODO: the way I try to get a promise is not right here....
         //as a result I'm not getting a promise from _updateRecord or at least not in time
@@ -88,7 +90,7 @@ Cow.syncstore.prototype =
     
     },
     _db_getRecords: function(){
-        var deferred = jQuery.Deferred();
+        var deferred = new jQuery.Deferred();
         this._db.allDocs({include_docs:true,descending: true}, function(err,doc){
             if (err) {
                 //console.warn('Dbase error: ' , err);
@@ -101,7 +103,7 @@ Cow.syncstore.prototype =
         return deferred.promise();
     },  //returns promise
     _db_getRecord: function(id){
-        var deferred = jQuery.Deferred();
+        var deferred = new jQuery.Deferred();
         this._db.get(id, function(err,doc){
             if (err) {
                 //console.warn('Dbase error: ' , err);
@@ -114,7 +116,7 @@ Cow.syncstore.prototype =
         return deferred.promise();
     }, //returns promise
     _db_removeRecord: function(id){
-        var deferred = jQuery.Deferred();
+        var deferred = new jQuery.Deferred();
         this._db.get(id, function(err,doc){
             if (err) {
                 //console.warn('Dbase error: ' , err);
@@ -128,17 +130,14 @@ Cow.syncstore.prototype =
         });
         return deferred.promise();
     }, //returns promise
-    initDb: function(){
-        this._db_init();
-    },
-    _records: [],
     _initRecords: function(){ //This will start the process of getting records from pouchdb (returns promise)
         var promise = this._db_getRecords();
         var self = this;
         promise.done(function(r){
+             
              r.rows.forEach(function(d){
                  //console.log(d.doc);
-                 var record = Object.create(self._recordproto);
+                 var record = self._recordproto(d.doc._id);
                  record.inflate(d.doc);
                  var existing = false; //Not likely to exist in the _records at this time but better safe then sorry..
                  for (var i=0;i<self._records.length;i++){
@@ -148,6 +147,7 @@ Cow.syncstore.prototype =
                     }
                  }
                  if (!existing){
+                     console.log('Adding to: ', self._dbname, r.rows);
                      self._records.push(record); //Adding to the list
                  }
              });
@@ -181,7 +181,7 @@ Cow.syncstore.prototype =
         var source = config.source;
         var data = config.data;
         var existing = false;
-        var record = Object.create(this._recordproto);
+        var record = self._recordproto();
         
         for (var i=0;i<this._records.length;i++){
             if (this._records[i]._id == data._id) {
@@ -207,7 +207,7 @@ Cow.syncstore.prototype =
         }
         var source = config.source;
         var data = config.data;
-        var record = Object.create(this._recordproto);
+        var record = self._recordproto();
         var promise = this._db_updateRecord({source:source, data: data});
         //promise.done(function(d){
         //    data._rev = d.rev;
@@ -221,6 +221,8 @@ Cow.syncstore.prototype =
         return record;
     },
     _removeRecord: function(id){}, //This is not likely to happen, we only change the 'active' parameter 
-
+    load: function(){
+        return this._initRecords();
+    },
     syncRecords: function(){} //Compare ID/status array from other peer with your list and returns requestlist and pushlist  
 };
