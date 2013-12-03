@@ -1,8 +1,11 @@
 window.Cow = window.Cow || {};
 //Synstore keeps track of records
-Cow.syncstore =  function(dbname){
-    this._db = new PouchDB(dbname);
-    this.promise = this._initRecords();
+Cow.syncstore =  function(config){
+    this._dbname = config.dbname;
+    if (!config.noIDB){
+        this._db = new PouchDB(config.dbname);
+        this.initpromise = this._initRecords();
+    }
 }; 
 
 Cow.syncstore.prototype =  
@@ -147,7 +150,6 @@ Cow.syncstore.prototype =
                     }
                  }
                  if (!existing){
-                     console.log('Adding to: ', self._dbname, r.rows);
                      self._records.push(record); //Adding to the list
                  }
              });
@@ -190,12 +192,13 @@ Cow.syncstore.prototype =
             }
         }
         if (!existing){
-            promise = this._db_addRecord({source:source,data:data});
-            //promise.done(function(d){
-            //    data._rev = d.rev;
-                record.inflate(data);
-                self._records.push(record); //Adding to the list
-            //});
+            if (this._db){
+                promise = this._db_addRecord({source:source,data:data});
+                //TODO: get _rev id from promise and add to record
+            }
+            else {console.warn('No IDB active for ', this._dbname);}
+            record.inflate(data);
+            self._records.push(record); //Adding to the list
         }
         return record;
     },
@@ -208,21 +211,30 @@ Cow.syncstore.prototype =
         var source = config.source;
         var data = config.data;
         var record = self._recordproto();
-        var promise = this._db_updateRecord({source:source, data: data});
-        //promise.done(function(d){
-        //    data._rev = d.rev;
-            record.inflate(data);
-            for (var i=0;i<this._records.length;i++){
-                if (self._records[i]._id == record._id) {
-                        self._records.splice(i,1,record);
-                }
+        var promise = null;
+        if (this._db){
+            promise = this._db_updateRecord({source:source, data: data});
+            //TODO: get _rev id from promise and add to record
+        }
+        else {console.warn('No IDB active for ', this._dbname);}
+        record.inflate(data);
+        for (var i=0;i<this._records.length;i++){
+            if (self._records[i]._id == record._id) {
+                    self._records.splice(i,1,record);
             }
-        //});
+        }
+       
         return record;
     },
-    _removeRecord: function(id){}, //This is not likely to happen, we only change the 'active' parameter 
-    load: function(){
-        return this._initRecords();
-    },
+    //Removing records is only useful if no local dbase is used among peers
+    _removeRecord: function(id){
+        for (var i=0;i<this._records.length;i++){
+            if (self._records[i]._id == id) {
+                    self._records.splice(i,1);
+                    return true;
+            }
+        }
+        return false;
+    }, 
     syncRecords: function(){} //Compare ID/status array from other peer with your list and returns requestlist and pushlist  
 };

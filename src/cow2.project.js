@@ -1,12 +1,12 @@
 window.Cow = window.Cow || {};
 Cow.project = function(config){
-    this._members = []; //array of ID
     if (!config._id) {throw 'No _id given for project';}
     var dbname = 'groups_' + config._id;
+    this._members = []; //array of ID
     this._groupStore = _.extend(
-        new Cow.syncstore(dbname),{
+        new Cow.syncstore({dbname: dbname}),{
         _records: [],
-        _recordproto: function(){return new Cow.group();},
+        _recordproto: function(_id){return new Cow.group({_id: _id});},
         _dbname: dbname,
         dbname:  function(name){
             this._dbname =  name;
@@ -26,8 +26,8 @@ Cow.project = function(config){
     });
     dbname = 'items_' + config._id;
     this._itemStore = _.extend(
-        new Cow.syncstore(dbname),{
-        _recordproto:   function(){return new Cow.item();},
+        new Cow.syncstore({dbname: dbname}),{
+        _recordproto:   function(_id){return new Cow.item({_id: _id});},
         _records: [],
         _dbname: dbname,
         dbname:  function(name){
@@ -89,12 +89,4 @@ Cow.project.prototype =
             }
         }
     }
-    
-    //populate: function(){ //Gets the groups and items for this project
-        //this.groupStore().dbname('groups_'+ this._id);
-        //this.groupStore().initDb();
-        //this.itemStore().dbname('items_'+ this._id);
-        //this.itemStore().initDb();
-    //}
-
 };

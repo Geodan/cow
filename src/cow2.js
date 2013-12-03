@@ -25,14 +25,7 @@ var addproject = function(){
 };
 
 $(document).ready(function(){
-    mycore = new Cow.core();
-    //mycore.userStore().initDb();
-    //var promise1 = mycore.userStore()._initRecords(); 
-    //promise1.done(adduser);
-    
-    //mycore.projectStore().initDb();
-    //var promise2 = mycore.projectStore()._initRecords();
-    //promise2.done(addproject);
-    
-    
+    mycore = new Cow.core({
+            wsUrl: 'wss://websocket.geodan.nl:443/test'
+    });
 });
