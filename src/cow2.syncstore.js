@@ -175,7 +175,6 @@ Cow.syncstore.prototype =
         }
     },
     _addRecord: function(config){
-        var self = this;
         if (!config.source || !config.data){
             console.warn('Wrong input: ',config);
             return -1;
@@ -184,22 +183,21 @@ Cow.syncstore.prototype =
         var source = config.source;
         var data = config.data;
         var existing = false;
-        var record = self._recordproto(data._id);
-        
+        var record = this._recordproto(data._id);
+        record.inflate(data);
         for (var i=0;i<this._records.length;i++){
             if (this._records[i]._id == data._id) {
                 existing = true; //Already in list
-                record = -1;
+                this._records.splice(i,1,record);
             }
         }
         if (!existing){
             if (this._db){
-                promise = this._db_addRecord({source:source,data:data});
+                promise = this._db_addRecord({source:source,data:record.deflate()});
                 //TODO: get _rev id from promise and add to record
             }
             else {console.warn('No IDB active for ', this._dbname);}
-            record.inflate(data);
-            self._records.push(record); //Adding to the list
+            this._records.push(record); //Adding to the list
         }
         return record;
     },
@@ -255,7 +253,24 @@ Cow.syncstore.prototype =
         }
         return fids;
     },
-    
+    /**
+    requestItems - returns the items that were requested 
+    **/
+    requestRecords: function(fidlist){
+		var pushlist = [];
+		for (i=0;i<this._records.length;i++){
+		//OBS $.each(this.items(), function(i, item){
+		    var localrecord =  this._records[i];
+		    for (j=0;j<fidlist.length;j++){
+            //OBS $.each(fidlist, function(j,rem_val){
+                var rem_val = fidlist[j];
+                if (rem_val == localrecord._id){
+                    pushlist.push(localrecord.deflate());
+                }
+            }
+		}
+		return pushlist;
+	},
     /**
 	syncRecords - compares incoming idlist with idlist from current stack based on timestamp and status
 					generates 2 lists: requestlist and pushlist

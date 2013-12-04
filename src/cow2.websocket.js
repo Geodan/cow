@@ -145,6 +145,16 @@ Cow.websocket.prototype = {
     _onError: function(e){
         console.warn('error in websocket connection: ' + e.type);
     },
+    _getStore: function(name){
+        switch (name) {
+            case 'peers': //peers is a little different, there's only 1 peer per time
+                return this._core.peerStore();
+            case 'projects':
+                return this._core.projectStore();
+            //TODO add all stores
+        }
+    },
+    
     //A peer initiates a sync
     _onNewList: function(payload,sender) {
         //TODO: alphapeer check
@@ -153,16 +163,8 @@ Cow.websocket.prototype = {
         message.sender = sender;
         message.payload = payload;
         var listtype = payload.syncType;
-        var store;
-        switch (payload.syncType) {
-            case 'peers': //peers is a little different, there's only 1 peer per time
-                store = this._core.peerStore();
-            break;
-            case 'projects':
-                store = this._core.projectStore();
-            break;
-            //TODO add all stores
-        }
+        var store = this._getStore(payload.syncType);
+        
         var syncobject = store.syncRecords({uid:sender, list: payload.list});
         var data =  {
             "syncType" : payload.syncType,
@@ -173,20 +175,38 @@ Cow.websocket.prototype = {
             "syncType" : payload.syncType,
             "list" : syncobject.pushlist
         };
-        this.sendData(data, 'missingList', sender);
+        this.sendData(data, 'missingItems', sender);
         //TODO this.core.trigger('ws-newList',message); 
     },
     
     _onWantedList: function(payload) {
-        
+        var store = this._getStore(payload.syncType);
+        var returnlist = store.requestRecords(payload.list);
+        var data =  {
+            "syncType" : payload.syncType,
+            "list" : returnlist
+        };
+        this.sendData(data, 'requestedItems');
         //TODO this.core.trigger('ws-wantedList',payload); 
     },
     
     _onMissingItems: function(payload) {
+        var store = this._getStore(payload.syncType);
+        var list = payload.list;
+        for (var i=0;i<list.length;i++){
+            var data = list[i];
+            store._addRecord({source: 'WS', data: data});
+        }
         //TODO this.core.trigger('ws-missingItems',payload); 
     },
     
     _onRequestedItems: function(payload) {
+        var store = this._getStore(payload.syncType);
+        var list = payload.list;
+        for (var i=0;i<list.length;i++){
+            var data = list[i];
+            store._addRecord({source: 'WS', data: data});
+        }
         //TODO this.core.trigger('ws-onRequestedItems',payload); 
     }
     // END Syncing messages
