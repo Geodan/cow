@@ -6,7 +6,7 @@ $.Cow.Websocket.prototype = {
     },
     _onMessage: function(message) {
         var core = this.obj.core;
-        console.debug('message: '+message.data);
+        //console.debug('message: '+message.data);
         var data = JSON.parse(message.data);
         var uid = data.uid;
         var UID = core.UID; 
@@ -17,7 +17,7 @@ $.Cow.Websocket.prototype = {
         //Messages from Server
             //webscocket confirms connection by returning a CID
             case 'connected':
-                this.obj._onConnect(payload)
+                this.obj._onConnect(payload);
             break;
             //the server noticed a peer disconnecting and send its connection-id to the pool
             case 'peerGone':

@@ -20,10 +20,8 @@ $.Cow.ItemStore.prototype = {
             break;
         case 2:
             throw("Not enough arguments for new item. Given: " + name + " " + value);
-            break;
         case 3:
             return this._addItem(name,value,source);
-            break;
         default:
             throw('wrong argument number');
         }
@@ -45,28 +43,28 @@ $.Cow.ItemStore.prototype = {
 		        existing = true;
 		    }
 		});
-		if (!existing)
+		if (!existing){
 		    this.itemList.push(newitem);
-		else
+		}
+		else{
 		    this.itemList.splice(ix,1,newitem);
+		}
 		
 		if (source == 'db'){
 		    
 		}
 		else if (source == 'user'){
 		    self.core.itemsdb().updateRecord_UI(newitem.flatten());
-		    //self.core.localdbase().itemsdb(newitem);
 		    self.core.trigger('storeChanged');
 		    var message = JSON.stringify(newitem.flatten());//TODO, bit weird heh...?
 		    self.core.websocket().sendData(message, "newItem");
 		}
 		else if (source == 'ws'){
 		    self.core.itemsdb().updateRecord_UI(newitem.flatten());
-		    //self.core.localdbase().itemsdb(newitem);
 		    self.core.trigger('storeChanged');
 		}
 		else {
-		    throw 'unknown source given: ' + source
+		    throw 'unknown source given: ' + source;
 		}
 		
 		return newitem;
@@ -101,14 +99,14 @@ $.Cow.ItemStore.prototype = {
 			if (item._id == iid){
 				var d = new Date();
 				var timestamp = d.getTime();
-				if (item.status() != 'deleted')
+				if (item.status() != 'deleted'){
 					item.status('deleted');
-				else
+				}
+				else{
 					item.status('active');//undelete
+				}
 				item.timestamp(timestamp);
 				self.core.itemsdb().updateRecord_UI(item.flatten());
-				//self.core.localdbase().update(item.options);
-				//self.core.localdbase().itemsdb(item);
 				//send to world
 				var message = JSON.stringify(item.flatten());
 				self.core.websocket().sendData(message, "updateItem");
@@ -134,8 +132,9 @@ $.Cow.ItemStore.prototype = {
 		$.each(this.items(), function(i, item){
 				var local_item = item;
 				$.each(fidlist, function(j,rem_val){
-						if (rem_val == local_item.id())
+						if (rem_val == local_item.id()){
 							pushlist.push(local_item.flatten());
+						}
 				});
 		});
 		return pushlist;
@@ -154,8 +153,9 @@ $.Cow.ItemStore.prototype = {
 		//Prepare copy of remote fids as un-ticklist, but only for non-deleted items
 		if (fidlist){
 			$.each(fidlist, function(i,val){
-				if (val.status != 'deleted')
-					copyof_rem_list.push(val._id);	
+				if (val.status != 'deleted'){
+					copyof_rem_list.push(val._id);
+				}
 			});
 			$.each(this.items(), function(i,loc_val){
 					var local_item = loc_val;
@@ -165,15 +165,18 @@ $.Cow.ItemStore.prototype = {
 							if (rem_val._id == local_item._id){
 								found = 1;
 								//local is newer
-								if (rem_val.timestamp < local_item.timestamp())
+								if (rem_val.timestamp < local_item.timestamp()){
 									syncMessage.pushlist.push(local_item.flatten());
+								}
 								//remote is newer
-								else if (rem_val.timestamp > local_item.timestamp())
+								else if (rem_val.timestamp > local_item.timestamp()){
 									syncMessage.requestlist.push(rem_val._id);
+								}
 								//remove from copyremotelist
 								var tmppos = $.inArray(local_item._id,copyof_rem_list);
-								if (tmppos >= 0)
+								if (tmppos >= 0){
 									copyof_rem_list.splice(tmppos,1);
+								}
 							}
 					});
 					//local but not remote and not deleted
@@ -206,7 +209,8 @@ $.Cow.ItemStore.prototype = {
                 }
         });
         //sent the remainder of the list
-        if (i > 0)
+        if (i > 0){
             self.core.websocket().sendData(message,'syncPeer',uid);
+        }
 	}
 };
