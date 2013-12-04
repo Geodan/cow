@@ -2,6 +2,7 @@ window.Cow = window.Cow || {};
 //Synstore keeps track of records
 Cow.syncstore =  function(config){
     this._dbname = config.dbname;
+    this._core = config.core;
     if (!config.noIDB){
         this._db = new PouchDB(config.dbname);
         this.initpromise = this._initRecords();
@@ -235,6 +236,89 @@ Cow.syncstore.prototype =
             }
         }
         return false;
-    }, 
-    syncRecords: function(){} //Compare ID/status array from other peer with your list and returns requestlist and pushlist  
+    },
+    /**
+	syncRecords - compares incoming idlist with idlist from current stack based on timestamp and status
+					generates 2 lists: requestlist and pushlist
+	**/
+    syncRecords: function(config){
+        var payload = config.payload; //list with ids and status
+        var uid = config.uid;   //id of peer that sends syncrequest
+        var fidlist = payload.fids;
+		var returndata = {};
+		var copyof_rem_list = [];
+		returndata.requestlist = [];
+		returndata.pushlist = [];
+		var i;
+		//Prepare copy of remote fids as un-ticklist, but only for non-deleted items
+		if (fidlist){
+			for (i=0;i<fidlist.length;i++){
+				if (fidlist[i].status != 'deleted'){
+					copyof_rem_list.push(fidlist[i]._id);
+				}
+			}
+			for (i=0;i<this._records.length;i++){
+					var local_item = this._records[i];
+					var found = -1;
+					for (var j=0;j<fidlist.length;j++){
+							//in both lists
+							var rem_val = fidlist[j];
+							if (rem_val._id == local_item._id){
+								found = 1;
+								//local is newer
+								if (rem_val._updated < local_item._updated){
+									returndata.pushlist.push(local_item.deflate());
+								}
+								//remote is newer
+								else if (rem_val._updated > local_item._updated){
+									returndata.requestlist.push(rem_val._id);
+								}
+								//remove from copyremotelist
+								//OBS var tmppos = $.inArray(local_item._id,copyof_rem_list);
+								var tmppos = copyof_rem_list.indexOf(local_item._id);
+								if (tmppos >= 0){
+									copyof_rem_list.splice(tmppos,1);
+								}
+							}
+					}
+					//local but not remote and not deleted
+					if (found == -1 && local_item.status() != 'deleted'){
+						returndata.pushlist.push(local_item.deflate());
+					}
+			}
+		}
+		//Add remainder of copyof_rem_list to requestlist
+		for (i=0;i<copyof_rem_list.length;i++){
+		    var val = copyof_rem_list[i];
+			returndata.requestlist.push(val);	
+		}
+		
+  //This part is only for sending the data 
+		var message = {};
+        //First the requestlist
+        message.requestlist = returndata.requestlist;
+        message.pushlist = []; //empty
+        //message.storename = payload.storename;
+        message.dbname = this._dbname;
+        self._core.websocket().sendData(message,'syncPeer',uid);
+        //Now the pushlist bit by bit
+        message.requestlist = []; //empty
+        var k = 0;
+        for (j=0;j<returndata.pushlist.length;j++){
+                var item = returndata.pushlist[j];
+                message.pushlist.push(item);
+                k++;
+                if (k >= 1) { //max 1 feat every time
+                    k = 0;
+                    self._core.websocket().sendData(message,'syncPeer',uid);
+                    message.pushlist = []; //empty
+                }
+        }
+        //sent the remainder of the list
+        if (k > 0){
+            self._core.websocket().sendData(message,'syncPeer',uid);
+        }
+   //end of sending data
+        return returndata;
+    } 
 };

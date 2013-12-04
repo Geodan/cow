@@ -8,6 +8,9 @@ Cow.record.prototype =
     _created: null,
     _updated: null,
     _data: {},
+    status: function(){
+        return this._status;
+    },
     getStatus: function(){
         return this._status;
     },
@@ -48,4 +51,5 @@ Cow.record.prototype =
         this._data = config.data || this._data || {};
         return this;
     }
+
 };

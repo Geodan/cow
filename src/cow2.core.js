@@ -1,20 +1,14 @@
 Cow.core = function(config){
+    
     if (!config.wsUrl){throw('No wsURL given');}
     this._wsUrl = config.wsUrl;
-};
-Cow.core.prototype = 
-{
-    /*
-    MYSPECS
-    */
-    _mySpecs: { //Contain
-        _location:  null,   //
-        _logontime: null   //timestamp
-    },   
-   
+    
+    /*WEBSOCKET*/
+    this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
+    
     /*PROJECTS*/
-    _projectStore: _.extend(
-        new Cow.syncstore({dbname: 'projects'}),{
+    this._projectStore =  _.extend(
+        new Cow.syncstore({dbname: 'projects', core: this}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id});},
         _dbname:        'projects',
@@ -30,19 +24,11 @@ Cow.core.prototype =
         updateProject:  function(config){ //changes and returns 1 project
             return this._updateRecord(config);
         }
-    }),
-    
-    projectStore:       function(){
-        return this._projectStore;
-    }, //returns the _projectstore object
-    
-    projects:       function(){
-        return this._projectStore.getProjects();
-    }, //returns the project objects
+    });
     
     /*PEERS*/
-    _peerStore:  _.extend(
-        new Cow.syncstore({dbname: 'peers', noIDB: true}), {
+    this._peerStore =  _.extend(
+        new Cow.syncstore({dbname: 'peers', noIDB: true, core: this}), {
          _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.peer({_id: _id});}, 
@@ -72,17 +58,11 @@ Cow.core.prototype =
         getPeerPositions:   function(){
             //TODO
         }
-    }),
-    peerStore:  function(){
-        return this._peerStore;
-    },
-    peers:              function(){
-        return this._peerStore.getPeers();
-    },
+    });
     
     /*USERS*/
-    _userStore:  _.extend(
-        new Cow.syncstore({dbname: 'users'}), {
+    this._userStore =  _.extend(
+        new Cow.syncstore({dbname: 'users', core: this}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id});},     
@@ -100,7 +80,34 @@ Cow.core.prototype =
             return this._updateRecord(config); 
         }
         
-    }),
+    });
+    
+};
+Cow.core.prototype = 
+{
+    /*
+    MYSPECS
+    */
+    _mySpecs: { //Contain
+        _location:  null,   //
+        _logontime: null   //timestamp
+    },   
+    
+    projectStore:       function(){
+        return this._projectStore;
+    }, //returns the _projectstore object
+    
+    projects:       function(){
+        return this._projectStore.getProjects();
+    }, //returns the project objects
+    
+    peerStore:  function(){
+        return this._peerStore;
+    },
+    peers:              function(){
+        return this._peerStore.getPeers();
+    },
+    
     //return the _userStore object
     userStore:      function(){
         return this._userStore;
@@ -110,8 +117,6 @@ Cow.core.prototype =
         return this._userStore.getUsers();
     }, 
     
-    /*WEBSOCKET*/
-    _websocket: new Cow.websocket({wsUrl: this._wsUrl}),
     //return the _websocket object
     websocket: function(){
         return this._websocket;
