@@ -125,16 +125,41 @@ Cow.websocket.prototype = {
         setTimeout(restart,5000);
     },
     _onConnect: function(payload){
+        var self = this;
         this._core.peerid(payload.peerID);
         var peer = new Cow.peer({_id: payload.peerID});
         var me = this._core.peerStore().addPeer({source: 'UI', data: peer.deflate()});
         //TODO this.core.trigger('ws-connected',payload); 
+        
         //initiate peer-sync
         var message = {};
         message.syncType = 'peers';
         //We can immediately use the peerStore here because it's not depending on a slow loading indexeddb
         message.list = this._core.peerStore().idList();
         this.sendData(message, 'newList');
+        
+        
+        //TODO: make generic init_sync function
+        //initiate project sync
+        var store = this._core.projectStore();
+        store.initpromise.done(function(d){
+            var message = {};
+            message.syncType = 'projects';
+            message.list = store.idList();
+            self.sendData(message, 'newList');
+        });
+        
+        //initiate user sync
+        store = this._core.userStore();
+        store.initpromise.done(function(d){
+            var message = {};
+            message.syncType = 'users';
+            message.list = store.idList();
+            self.sendData(message, 'newList');
+        });
+        
+        
+
     },
     //A peer has disconnected, remove it from your peerList
     _onPeerGone: function(payload) {
@@ -151,6 +176,8 @@ Cow.websocket.prototype = {
                 return this._core.peerStore();
             case 'projects':
                 return this._core.projectStore();
+            case 'users':
+                return this._core.userStore();
             //TODO add all stores
         }
     },
@@ -166,11 +193,13 @@ Cow.websocket.prototype = {
         var store = this._getStore(payload.syncType);
         
         var syncobject = store.syncRecords({uid:sender, list: payload.list});
-        var data =  {
+        var data; 
+        data =  {
             "syncType" : payload.syncType,
             "list" : syncobject.requestlist
         };
         this.sendData(data, 'wantedList', sender);
+        
         data =  {
             "syncType" : payload.syncType,
             "list" : syncobject.pushlist
