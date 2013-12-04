@@ -8,6 +8,10 @@ Cow.record.prototype =
     _created: null,
     _updated: null,
     _data: {},
+    timestamp: function(timestamp){
+        this._updated = timestamp || this._updated;
+        return this._updated;
+    },
     status: function(){
         return this._status;
     },

@@ -26,6 +26,6 @@ var addproject = function(){
 
 $(document).ready(function(){
     mycore = new Cow.core({
-            wsUrl: 'wss://websocket.geodan.nl:443/test'
+            wsUrl: 'wss://websocket.geodan.nl:443/new'
     });
 });

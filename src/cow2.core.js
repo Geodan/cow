@@ -2,7 +2,7 @@ Cow.core = function(config){
     
     if (!config.wsUrl){throw('No wsURL given');}
     this._wsUrl = config.wsUrl;
-    
+    this._peerid = new Date().getTime();
     /*WEBSOCKET*/
     this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     
@@ -85,13 +85,10 @@ Cow.core = function(config){
 };
 Cow.core.prototype = 
 {
-    /*
-    MYSPECS
-    */
-    _mySpecs: { //Contain
-        _location:  null,   //
-        _logontime: null   //timestamp
-    },   
+    peerid: function(id){
+        this._peerid = id || this._peerid;
+        return this._peerid;
+    },
     
     projectStore:       function(){
         return this._projectStore;

@@ -184,7 +184,7 @@ Cow.syncstore.prototype =
         var source = config.source;
         var data = config.data;
         var existing = false;
-        var record = self._recordproto();
+        var record = self._recordproto(data._id);
         
         for (var i=0;i<this._records.length;i++){
             if (this._records[i]._id == data._id) {
@@ -211,7 +211,7 @@ Cow.syncstore.prototype =
         }
         var source = config.source;
         var data = config.data;
-        var record = self._recordproto();
+        var record = self._recordproto(data._id);
         var promise = null;
         if (this._db){
             promise = this._db_updateRecord({source:source, data: data});
@@ -230,21 +230,39 @@ Cow.syncstore.prototype =
     //Removing records is only useful if no local dbase is used among peers
     _removeRecord: function(id){
         for (var i=0;i<this._records.length;i++){
-            if (self._records[i]._id == id) {
-                    self._records.splice(i,1);
+            if (this._records[i]._id == id) {
+                    this._records.splice(i,1);
                     return true;
             }
         }
         return false;
     },
     /**
+    idList - needed to start the syncing with other peers
+                only makes sense after fully loading the indexeddb 
+    **/
+    idList: function(){
+        var fids = [];
+        var items = core.itemstore().items();
+        for (var i=0;i<this._records.length;i++){
+        //OBS $.each(items, function(i,item){
+            var item = this._records[i];
+            var iditem = {};
+            iditem._id = item._id;
+            iditem.timestamp = item.timestamp();
+            iditem.status = item.status();
+            fids.push(iditem);    
+        }
+        return fids;
+    },
+    
+    /**
 	syncRecords - compares incoming idlist with idlist from current stack based on timestamp and status
 					generates 2 lists: requestlist and pushlist
 	**/
     syncRecords: function(config){
-        var payload = config.payload; //list with ids and status
         var uid = config.uid;   //id of peer that sends syncrequest
-        var fidlist = payload.fids;
+        var fidlist = config.list;
 		var returndata = {};
 		var copyof_rem_list = [];
 		returndata.requestlist = [];
@@ -293,14 +311,15 @@ Cow.syncstore.prototype =
 			returndata.requestlist.push(val);	
 		}
 		
-  //This part is only for sending the data 
+  //This part is only for sending the data
+  /*
 		var message = {};
         //First the requestlist
         message.requestlist = returndata.requestlist;
         message.pushlist = []; //empty
         //message.storename = payload.storename;
         message.dbname = this._dbname;
-        self._core.websocket().sendData(message,'syncPeer',uid);
+        //this._core.websocket().sendData(message,'syncPeer',uid);
         //Now the pushlist bit by bit
         message.requestlist = []; //empty
         var k = 0;
@@ -310,14 +329,15 @@ Cow.syncstore.prototype =
                 k++;
                 if (k >= 1) { //max 1 feat every time
                     k = 0;
-                    self._core.websocket().sendData(message,'syncPeer',uid);
+                    //this._core.websocket().sendData(message,'syncPeer',uid);
                     message.pushlist = []; //empty
                 }
         }
         //sent the remainder of the list
         if (k > 0){
-            self._core.websocket().sendData(message,'syncPeer',uid);
+            //this._core.websocket().sendData(message,'syncPeer',uid);
         }
+    */
    //end of sending data
         return returndata;
     } 
