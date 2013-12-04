@@ -1,13 +1,18 @@
 window.Cow = window.Cow || {};
 Cow.project = function(config){
     if (!config._id) {throw 'No _id given for project';}
-    var dbname = 'groups_' + config._id;
+    this._id = config._id;
+    this._core = config.core;
     this._members = []; //array of ID
+    
+    var dbname = 'groups_' + config._id;
     this._groupStore = _.extend(
-        new Cow.syncstore({dbname: dbname}),{
+        new Cow.syncstore({dbname: dbname, core: this._core}),{
         _records: [],
-        _recordproto: function(_id){return new Cow.group({_id: _id});},
+        _recordproto: function(_id){return new Cow.group({_id: _id, store: this});},
+        _type: 'groups',
         _dbname: dbname,
+        _projectid: this._id,
         dbname:  function(name){
             this._dbname =  name;
         },
@@ -24,11 +29,14 @@ Cow.project = function(config){
             return this._updateRecord(config);
         }
     });
+    
     dbname = 'items_' + config._id;
     this._itemStore = _.extend(
-        new Cow.syncstore({dbname: dbname}),{
-        _recordproto:   function(_id){return new Cow.item({_id: _id});},
+        new Cow.syncstore({dbname: dbname, core: this._core}),{
+        _recordproto:   function(_id){return new Cow.item({_id: _id, store: this});},
+        _projectid: this._id,
         _records: [],
+        _type: 'items',
         _dbname: dbname,
         dbname:  function(name){
             this._dbname =  name;

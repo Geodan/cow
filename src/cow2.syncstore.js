@@ -60,7 +60,7 @@ Cow.syncstore.prototype =
                 this._db.get(data._id, function(err,doc){
                     if (err) {
                         if (err.reason == 'missing'){ //not really an error, just a notice that the record would be new
-                            return self._addRecord({source: source, data: data});
+                            return self._db_addRecord({source: source, data: data});
                         }
                         else{
                             //console.warn('Dbase error: ' , err);
@@ -70,7 +70,7 @@ Cow.syncstore.prototype =
                     }
                     else { //overwrite existing
                         data._rev = doc._rev;
-                        return self._addRecord({source: source, data: data});
+                        return self._db_addRecord({source: source, data: data});
                     }
                 });
                 break;
@@ -161,7 +161,8 @@ Cow.syncstore.prototype =
     _getRecords: function(idarray){
         var returnArray = [];
         for (var i=0;i<this._records.length;i++){
-            if (idarray.indexOf(this._records[i]._id) > -1) {
+            var record = this._records[i];
+            if (idarray.indexOf(record._id) > -1) {
                 returnArray.push(record);
             }
         }
@@ -169,7 +170,8 @@ Cow.syncstore.prototype =
     }, //returns all records, if ID array is filled, only return that records 
     _getRecord: function(id){
         for (var i=0;i<this._records.length;i++){
-            if (this._records[i]._id == id) {
+            var record = this._records[i];
+            if (record._id == id) {
                 return record;
             }
         }
@@ -187,6 +189,10 @@ Cow.syncstore.prototype =
         record.inflate(data);
         for (var i=0;i<this._records.length;i++){
             if (this._records[i]._id == data._id) {
+                if (this._db){
+                    promise = this._db_updateRecord({source:source, data: record.deflate()});
+                    //TODO: get _rev id from promise and add to record
+                }
                 existing = true; //Already in list
                 this._records.splice(i,1,record);
             }
@@ -196,11 +202,20 @@ Cow.syncstore.prototype =
                 promise = this._db_addRecord({source:source,data:record.deflate()});
                 //TODO: get _rev id from promise and add to record
             }
-            else {console.warn('No IDB active for ', this._dbname);}
             this._records.push(record); //Adding to the list
+        }
+        if (source == 'UI'){
+            var message = {};
+            message.syncType = this._dbname;
+            message.record = record.deflate();
+            if (record._projectid){ //parent store
+                message.project = record._projectid;
+            }
+            this._core.websocket().sendData(message, 'updatedRecord');
         }
         return record;
     },
+    /* Obsolete, handled by _addRecord
     _updateRecord: function(config){
         var self = this;
         if (!config.source || !config.data){
@@ -224,7 +239,7 @@ Cow.syncstore.prototype =
         }
        
         return record;
-    },
+    },*/
     //Removing records is only useful if no local dbase is used among peers
     _removeRecord: function(id){
         for (var i=0;i<this._records.length;i++){
@@ -327,7 +342,7 @@ Cow.syncstore.prototype =
 		}
 		
   //This part is only for sending the data
-  /*
+  /* Obsolete by new websocket prototcol. Still interesting for partial syncing method though.
 		var message = {};
         //First the requestlist
         message.requestlist = returndata.requestlist;

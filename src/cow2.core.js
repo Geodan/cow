@@ -1,5 +1,5 @@
 Cow.core = function(config){
-    
+    var self = this;
     if (!config.wsUrl){throw('No wsURL given');}
     this._wsUrl = config.wsUrl;
     this._peerid = new Date().getTime();
@@ -10,8 +10,9 @@ Cow.core = function(config){
     this._projectStore =  _.extend(
         new Cow.syncstore({dbname: 'projects', core: this}),{
         _records: [],
-        _recordproto:   function(_id){return new Cow.project({_id:_id});},
+        _recordproto:   function(_id){return new Cow.project({_id:_id, core: self});},
         _dbname:        'projects',
+        _type:          'projects',
         getProjects:    function(){ //returns all projects
             return this._records;
         }, 
@@ -31,8 +32,9 @@ Cow.core = function(config){
         new Cow.syncstore({dbname: 'peers', noIDB: true, core: this}), {
          _records: [],
         //prototype for record
-        _recordproto:   function(_id){return new Cow.peer({_id: _id});}, 
-        _dbname: 'peers',    
+        _recordproto:   function(_id){return new Cow.peer({_id: _id, core: self});}, 
+        _dbname: 'peers',
+        _type: 'peers',
         //returns all peer objects
         getPeers:           function(){
             return this._records;
@@ -67,6 +69,7 @@ Cow.core = function(config){
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id});},     
         _dbname:        'users',
+        _type:          'users',
         getUsers:       function(){
             return this._records;
         },

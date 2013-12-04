@@ -141,21 +141,33 @@ Cow.websocket.prototype = {
         
         //TODO: make generic init_sync function
         //initiate project sync
-        var store = this._core.projectStore();
-        store.initpromise.done(function(d){
+        var store1 = this._core.projectStore();
+        store1.initpromise.done(function(d){
             var message = {};
             message.syncType = 'projects';
-            message.list = store.idList();
+            message.list = store1.idList();
             self.sendData(message, 'newList');
         });
         
         //initiate user sync
-        store = this._core.userStore();
-        store.initpromise.done(function(d){
+        var store2 = this._core.userStore();
+        store2.initpromise.done(function(d){
             var message = {};
             message.syncType = 'users';
-            message.list = store.idList();
+            message.list = store2.idList();
             self.sendData(message, 'newList');
+        });
+        
+        //initiate item sync
+        store1.initpromise.done(function(d){
+            store3 = store1.getProject('3').itemStore(); //FIXME !!!
+            store3.initpromise.done(function(d){
+                var message = {};
+                message.syncType = 'items';
+                message.project = store3._projectid;
+                message.list = store3.idList();
+                self.sendData(message, 'newList');
+            });
         });
         
         
@@ -170,15 +182,25 @@ Cow.websocket.prototype = {
     _onError: function(e){
         console.warn('error in websocket connection: ' + e.type);
     },
-    _getStore: function(name){
-        switch (name) {
-            case 'peers': //peers is a little different, there's only 1 peer per time
+    _getStore: function(payload){
+        var storetype = payload.syncType;
+        var projectid = payload.project;
+        var project;
+        switch (storetype) {
+            case 'peers':
                 return this._core.peerStore();
             case 'projects':
                 return this._core.projectStore();
             case 'users':
                 return this._core.userStore();
-            //TODO add all stores
+            case 'items':
+                if (!projectid) {throw('No project id given');}
+                project = this._core.projectStore().getProject(projectid);
+                return project.itemStore();
+            case 'groups':
+                if (!projectid) {throw('No project id given');}
+                project = this._core.projectStore().getProject(projectid);
+                return project.groupStore();
         }
     },
     
@@ -186,22 +208,21 @@ Cow.websocket.prototype = {
     _onNewList: function(payload,sender) {
         //TODO: alphapeer check
         
-        var message = {};
-        message.sender = sender;
-        message.payload = payload;
-        var listtype = payload.syncType;
-        var store = this._getStore(payload.syncType);
-        
+        var store = this._getStore(payload);
+        var project = store._projectid;
         var syncobject = store.syncRecords({uid:sender, list: payload.list});
-        var data; 
+        var data;
+        
         data =  {
             "syncType" : payload.syncType,
+            "project" : project,
             "list" : syncobject.requestlist
         };
         this.sendData(data, 'wantedList', sender);
         
         data =  {
             "syncType" : payload.syncType,
+            "project" : project,
             "list" : syncobject.pushlist
         };
         this.sendData(data, 'missingItems', sender);
@@ -209,10 +230,11 @@ Cow.websocket.prototype = {
     },
     
     _onWantedList: function(payload) {
-        var store = this._getStore(payload.syncType);
+        var store = this._getStore(payload);
         var returnlist = store.requestRecords(payload.list);
         var data =  {
             "syncType" : payload.syncType,
+            "project" : store._projectid,
             "list" : returnlist
         };
         this.sendData(data, 'requestedItems');
@@ -220,7 +242,7 @@ Cow.websocket.prototype = {
     },
     
     _onMissingItems: function(payload) {
-        var store = this._getStore(payload.syncType);
+        var store = this._getStore(payload);
         var list = payload.list;
         for (var i=0;i<list.length;i++){
             var data = list[i];
@@ -230,7 +252,7 @@ Cow.websocket.prototype = {
     },
     
     _onRequestedItems: function(payload) {
-        var store = this._getStore(payload.syncType);
+        var store = this._getStore(payload);
         var list = payload.list;
         for (var i=0;i<list.length;i++){
             var data = list[i];
