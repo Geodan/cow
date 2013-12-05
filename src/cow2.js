@@ -9,7 +9,6 @@ var adduser = function(){
     rec.inflate({_id: 2, status: 'active'});
     rec.data('mail','hoeps');
     s.addUser({source:'UI', data: rec.deflate()});
-    
 };
 
 var addproject = function(){
@@ -24,8 +23,34 @@ var addproject = function(){
     
 };
 
+var stresstest = function(){
+    //Empty test database
+    PouchDB.destroy('items_99', function(err, info) {
+            console.log(info);
+    });
+    //Create project test
+    var project = mycore.projects({_id: '99'})
+        .data({name: 'testproject'}).sync();
+    
+    //Create user test
+    var user = mycore.users({_id: '99'})
+        .data({name: 'testuser'}).sync();
+    //Add N items to project
+    var item;
+    var N = 101;
+    for (i=1;i<N; i++){
+        project.items({_id: i})
+            .data('type', 'msg')
+            .data('json', {'topic':'topic','text': 'blabla'});
+    }
+    project.itemStore().syncRecords();
+    
+    
+};
+
 $(document).ready(function(){
     mycore = new Cow.core({
             wsUrl: 'wss://websocket.geodan.nl:443/new'
     });
+    //stresstest();
 });

@@ -60,7 +60,7 @@ Cow.syncstore.prototype =
                 this._db.get(data._id, function(err,doc){
                     if (err) {
                         if (err.reason == 'missing'){ //not really an error, just a notice that the record would be new
-                            return self._addRecord({source: source, data: data});
+                            return self._db_addRecord({source: source, data: data});
                         }
                         else{
                             //console.warn('Dbase error: ' , err);
@@ -70,7 +70,7 @@ Cow.syncstore.prototype =
                     }
                     else { //overwrite existing
                         data._rev = doc._rev;
-                        return self._addRecord({source: source, data: data});
+                        return self._db_addRecord({source: source, data: data});
                     }
                 });
                 break;
@@ -161,7 +161,8 @@ Cow.syncstore.prototype =
     _getRecords: function(idarray){
         var returnArray = [];
         for (var i=0;i<this._records.length;i++){
-            if (idarray.indexOf(this._records[i]._id) > -1) {
+            var record = this._records[i];
+            if (idarray.indexOf(record._id) > -1) {
                 returnArray.push(record);
             }
         }
@@ -169,61 +170,70 @@ Cow.syncstore.prototype =
     }, //returns all records, if ID array is filled, only return that records 
     _getRecord: function(id){
         for (var i=0;i<this._records.length;i++){
-            if (this._records[i]._id == id) {
+            var record = this._records[i];
+            if (record._id == id) {
                 return record;
             }
         }
     },
+    /**
+    _addRecord - creates a new record and replaces an existing one with the same _id
+        when the source is 'WS' it immidiately sends to the _db, if not the record needs a manual record.sync()
+    **/
     _addRecord: function(config){
         if (!config.source || !config.data){
             console.warn('Wrong input: ',config);
-            return -1;
+            return false;
         }
         var promise = null;
         var source = config.source;
         var data = config.data;
         var existing = false;
+        //Create a new record and inflate with the data we got
         var record = this._recordproto(data._id);
         record.inflate(data);
+        //Check to see if the record is existing or new
         for (var i=0;i<this._records.length;i++){
             if (this._records[i]._id == data._id) {
+                if (this._db && source == 'WS'){ //update the db
+                    promise = this._db_updateRecord({source:source, data: record.deflate()});
+                    //TODO: get _rev id from promise and add to record
+                }
                 existing = true; //Already in list
+                //replace the record with the newly created one
                 this._records.splice(i,1,record);
             }
         }
         if (!existing){
-            if (this._db){
+            if (this._db && source == 'WS'){
                 promise = this._db_addRecord({source:source,data:record.deflate()});
                 //TODO: get _rev id from promise and add to record
             }
-            else {console.warn('No IDB active for ', this._dbname);}
             this._records.push(record); //Adding to the list
         }
         return record;
     },
-    _updateRecord: function(config){
-        var self = this;
-        if (!config.source || !config.data){
-            console.warn('Wrong input: ',config);
-            return -1;
+   /**
+        Only to be used from client API
+   
+        records() - returns array of all records
+        records(id) - returns record with id (or null)
+        records({config}) - creates and returns record
+    **/
+
+    records: function(config){
+        if (config && Array.isArray(config)){
+            return this._getRecords(config);
         }
-        var source = config.source;
-        var data = config.data;
-        var record = self._recordproto(data._id);
-        var promise = null;
-        if (this._db){
-            promise = this._db_updateRecord({source:source, data: data});
-            //TODO: get _rev id from promise and add to record
+        else if (config && typeof(config) == 'object'){
+            return this._addRecord({source: 'UI', data: config});
         }
-        else {console.warn('No IDB active for ', this._dbname);}
-        record.inflate(data);
-        for (var i=0;i<this._records.length;i++){
-            if (self._records[i]._id == record._id) {
-                    self._records.splice(i,1,record);
-            }
+        else if (config && (typeof(config) == 'number') || typeof(config) == 'string'){
+            return this._getRecord(config);
         }
-       
-        return record;
+        else{
+            return this._records;
+        }
     },
     //Removing records is only useful if no local dbase is used among peers
     _removeRecord: function(id){
@@ -235,6 +245,34 @@ Cow.syncstore.prototype =
         }
         return false;
     },
+    /**
+    syncRecord - sync 1 record
+    **/
+    syncRecord: function(record){
+        var message = {};
+        message.syncType = this._type;
+        record.status('clean');
+        message.record = record.deflate();
+        if (this._projectid){ //parent store
+            message.project = this._projectid;
+        }
+        var promise = this._db_updateRecord({source:'UI', data: record.deflate()});
+        this._core.websocket().sendData(message, 'updatedRecord');
+    },
+    
+    /**
+    syncRecords - looks for dirty records and starts syncing them
+    **/
+    syncRecords: function(){
+        for (var i=0;i<this._records.length;i++){
+            var record = this._records[i];
+            if (record._status == 'dirty') {
+                this.syncRecord(record);
+            }
+        }
+    },
+    
+    
     /**
     idList - needed to start the syncing with other peers
                 only makes sense after fully loading the indexeddb 
@@ -275,7 +313,7 @@ Cow.syncstore.prototype =
 	syncRecords - compares incoming idlist with idlist from current stack based on timestamp and status
 					generates 2 lists: requestlist and pushlist
 	**/
-    syncRecords: function(config){
+    compareRecords: function(config){
         var uid = config.uid;   //id of peer that sends syncrequest
         var fidlist = config.list;
 		var returndata = {};
@@ -327,7 +365,7 @@ Cow.syncstore.prototype =
 		}
 		
   //This part is only for sending the data
-  /*
+  /* Obsolete by new websocket prototcol. Still interesting for partial syncing method though.
 		var message = {};
         //First the requestlist
         message.requestlist = returndata.requestlist;

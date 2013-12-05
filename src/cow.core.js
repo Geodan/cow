@@ -871,7 +871,7 @@ A Peer is on object containing:
     trigger: function() {
         // There is no point in using trigger() insted of triggerHandler(), as
         // we don't fire native events
-        console.debug('trigger: ' + arguments[0]);
+        //console.debug('trigger: ' + arguments[0]);
         this.events.triggerHandler.apply(this.events, arguments);
         return this;
     },

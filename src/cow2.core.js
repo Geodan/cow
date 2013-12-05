@@ -1,5 +1,5 @@
 Cow.core = function(config){
-    
+    var self = this;
     if (!config.wsUrl){throw('No wsURL given');}
     this._wsUrl = config.wsUrl;
     this._peerid = new Date().getTime();
@@ -8,10 +8,11 @@ Cow.core = function(config){
     
     /*PROJECTS*/
     this._projectStore =  _.extend(
-        new Cow.syncstore({dbname: 'projects', core: this}),{
+        new Cow.syncstore({dbname: 'projects', core: self}),{
         _records: [],
-        _recordproto:   function(_id){return new Cow.project({_id:_id});},
+        _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
         _dbname:        'projects',
+        _type:          'projects',
         getProjects:    function(){ //returns all projects
             return this._records;
         }, 
@@ -31,8 +32,9 @@ Cow.core = function(config){
         new Cow.syncstore({dbname: 'peers', noIDB: true, core: this}), {
          _records: [],
         //prototype for record
-        _recordproto:   function(_id){return new Cow.peer({_id: _id});}, 
-        _dbname: 'peers',    
+        _recordproto:   function(_id){return new Cow.peer({_id: _id, store: this});}, 
+        _dbname: 'peers',
+        _type: 'peers',
         //returns all peer objects
         getPeers:           function(){
             return this._records;
@@ -65,8 +67,9 @@ Cow.core = function(config){
         new Cow.syncstore({dbname: 'users', core: this}), {
         _records: [],
         //prototype for record
-        _recordproto:   function(_id){return new Cow.user({_id: _id});},     
+        _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
         _dbname:        'users',
+        _type:          'users',
         getUsers:       function(){
             return this._records;
         },
@@ -94,15 +97,20 @@ Cow.core.prototype =
         return this._projectStore;
     }, //returns the _projectstore object
     
-    projects:       function(){
-        return this._projectStore.getProjects();
-    }, //returns the project objects
+    /**
+        projects() - returns array of all projects
+        projects(id) - returns project with id (or null)
+        projects({config}) - creates and returns project
+    **/
+    projects:       function(config){
+            return this._projectStore.records(config);
+    },
     
     peerStore:  function(){
         return this._peerStore;
     },
-    peers:              function(){
-        return this._peerStore.getPeers();
+    peers:              function(config){
+        return this._peerStore.records(config);
     },
     
     //return the _userStore object
@@ -110,8 +118,8 @@ Cow.core.prototype =
         return this._userStore;
     }, 
     //return the user objects
-    users:       function(){
-        return this._userStore.getUsers();
+    users:       function(config){
+        return this._userStore.records(config);
     }, 
     
     //return the _websocket object

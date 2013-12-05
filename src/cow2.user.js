@@ -2,6 +2,7 @@ window.Cow = window.Cow || {};
 Cow.user = function(config){
     if (!config._id) {throw 'No _id given for user';}
     this._id = config._id;
+    this._store = config.store;
 };
 Cow.user.prototype = 
 {

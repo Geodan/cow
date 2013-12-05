@@ -40,7 +40,6 @@ Cow.websocket.prototype = {
         return this._connection;
     },    
     sendData: function(data, action, target){
-        console.log('COW2 sendData: ', data);
         //TODO: check if data is an object
         var message = {};        
         message.sender = this._core.peerid();
@@ -101,6 +100,12 @@ Cow.websocket.prototype = {
                 }
             break;
             
+            case 'updatedRecord':
+                if(sender != PEERID) {
+                    this.obj._onUpdatedItems(payload);
+                }
+            break;
+            
         }
         //TODO
     },
@@ -138,29 +143,40 @@ Cow.websocket.prototype = {
         message.list = this._core.peerStore().idList();
         this.sendData(message, 'newList');
         
-        
-        //TODO: make generic init_sync function
-        //initiate project sync
-        var store = this._core.projectStore();
-        store.initpromise.done(function(d){
-            var message = {};
-            message.syncType = 'projects';
-            message.list = store.idList();
-            self.sendData(message, 'newList');
-        });
-        
-        //initiate user sync
-        store = this._core.userStore();
-        store.initpromise.done(function(d){
-            var message = {};
-            message.syncType = 'users';
-            message.list = store.idList();
-            self.sendData(message, 'newList');
-        });
-        
+        var startsync = function(synctype, store){
+            //TODO: when there's no _db object, syncing should start immediately (like peers store)
+            store.initpromise.done(function(d){
+                var message = {};
+                message.syncType = synctype;
+                message.project = store._projectid;
+                message.list = store.idList();
+                self.sendData(message, 'newList');
+            });
+        };
         
 
+        //initiate project sync
+        var store1 = this._core.projectStore();
+        startsync('projects', store1);
+        
+        //initiate user sync
+        var store2 = this._core.userStore();
+        startsync('users', store2);
+        
+        //wait for projectstore to load
+        store1.initpromise.done(function(d){
+            var projects = store1.getProjects();
+            for (var i=0;i<projects.length;i++){
+                var project = projects[i];
+                store = store1.getProject(project._id).itemStore(); 
+                startsync('items', store);
+                store = store1.getProject(project._id).groupStore(); 
+                startsync('groups', store);
+            }
+        });
     },
+    
+    
     //A peer has disconnected, remove it from your peerList
     _onPeerGone: function(payload) {
         var peerGone = payload.gonePeerID;    
@@ -170,15 +186,25 @@ Cow.websocket.prototype = {
     _onError: function(e){
         console.warn('error in websocket connection: ' + e.type);
     },
-    _getStore: function(name){
-        switch (name) {
-            case 'peers': //peers is a little different, there's only 1 peer per time
+    _getStore: function(payload){
+        var storetype = payload.syncType;
+        var projectid = payload.project;
+        var project;
+        switch (storetype) {
+            case 'peers':
                 return this._core.peerStore();
             case 'projects':
                 return this._core.projectStore();
             case 'users':
                 return this._core.userStore();
-            //TODO add all stores
+            case 'items':
+                if (!projectid) {throw('No project id given');}
+                project = this._core.projectStore().getProject(projectid);
+                return project.itemStore();
+            case 'groups':
+                if (!projectid) {throw('No project id given');}
+                project = this._core.projectStore().getProject(projectid);
+                return project.groupStore();
         }
     },
     
@@ -186,22 +212,21 @@ Cow.websocket.prototype = {
     _onNewList: function(payload,sender) {
         //TODO: alphapeer check
         
-        var message = {};
-        message.sender = sender;
-        message.payload = payload;
-        var listtype = payload.syncType;
-        var store = this._getStore(payload.syncType);
+        var store = this._getStore(payload);
+        var project = store._projectid;
+        var syncobject = store.compareRecords({uid:sender, list: payload.list});
+        var data;
         
-        var syncobject = store.syncRecords({uid:sender, list: payload.list});
-        var data; 
         data =  {
             "syncType" : payload.syncType,
+            "project" : project,
             "list" : syncobject.requestlist
         };
         this.sendData(data, 'wantedList', sender);
         
         data =  {
             "syncType" : payload.syncType,
+            "project" : project,
             "list" : syncobject.pushlist
         };
         this.sendData(data, 'missingItems', sender);
@@ -209,10 +234,11 @@ Cow.websocket.prototype = {
     },
     
     _onWantedList: function(payload) {
-        var store = this._getStore(payload.syncType);
+        var store = this._getStore(payload);
         var returnlist = store.requestRecords(payload.list);
         var data =  {
             "syncType" : payload.syncType,
+            "project" : store._projectid,
             "list" : returnlist
         };
         this.sendData(data, 'requestedItems');
@@ -220,7 +246,7 @@ Cow.websocket.prototype = {
     },
     
     _onMissingItems: function(payload) {
-        var store = this._getStore(payload.syncType);
+        var store = this._getStore(payload);
         var list = payload.list;
         for (var i=0;i<list.length;i++){
             var data = list[i];
@@ -230,12 +256,19 @@ Cow.websocket.prototype = {
     },
     
     _onRequestedItems: function(payload) {
-        var store = this._getStore(payload.syncType);
+        var store = this._getStore(payload);
         var list = payload.list;
         for (var i=0;i<list.length;i++){
             var data = list[i];
             store._addRecord({source: 'WS', data: data});
         }
+        //TODO this.core.trigger('ws-onRequestedItems',payload); 
+    },
+    
+    _onUpdatedItems: function(payload) {
+        var store = this._getStore(payload);
+        var data = payload.record;
+        store._addRecord({source: 'WS', data: data});
         //TODO this.core.trigger('ws-onRequestedItems',payload); 
     }
     // END Syncing messages
