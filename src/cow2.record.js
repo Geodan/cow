@@ -1,39 +1,62 @@
 window.Cow = window.Cow || {};
-Cow.record = function(){};
+Cow.record = function(){
+    this._id    = null;
+    this._rev   = null;
+    this._status= 'new';
+    this._created= new Date().getTime();
+    this._updated= new Date().getTime();
+    this._data  = {};
+};
 Cow.record.prototype = 
 {
-    _id: null,
-    _rev: null,
-    _status: 'active',
-    _created: null,
-    _updated: null,
-    _data: {},
+    sync: function(){
+        this._store.syncRecords(this);
+        return this;
+    },
     timestamp: function(timestamp){
-        this._updated = timestamp || this._updated;
-        return this._updated;
+        if (timestamp) {
+            this._updated = timestamp;
+            
+            return this;
+        }
+        else {
+            return this._updated;
+        }
     },
-    status: function(){
-        return this._status;
+    status: function(status){
+        if (status){
+            this._status = status;
+            this.timestamp(new Date().getTime());
+            return this;
+        }
+        else {
+            return this._status;
+        }
     },
-    getStatus: function(){
-        return this._status;
-    },
-    setStatus: function(status){
-        this._status = status;
-        this._updated = new Date().getTime();
-        return this._status;
-    },
+    /**
+        Only to be used from client API
+        
+        data() - returns data object
+        data(param) - returns value of data param (only 1 deep)
+        data(param, value) - sets value of data param and returns record (only 1 deep)
+        data(object) - sets data to object and returns record
+    **/
     data: function(param, value){
         if (!param){
             return this._data;
+        }
+        else if (param && typeof(param) == 'object'){
+            this._data = param;
+            this.status('dirty');
+            return this;
         }
         else if (param && !value){
             return this._data[param];
         }
         else if (param && value){
-            this._updated = new Date().getTime();
             this._data[param] = value;
-            return this._data; 
+            this.status('dirty');
+            return this; 
         }
     },
     deflate: function(){
