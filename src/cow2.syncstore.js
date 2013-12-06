@@ -4,7 +4,7 @@ Cow.syncstore =  function(config){
     this._dbname = config.dbname;
     this._core = config.core;
     if (!config.noIDB){
-        this._db = new PouchDB(config.dbname);
+        this._db = new Pouch(config.dbname);
         this.initpromise = this._initRecords();
     }
 }; 
@@ -226,7 +226,7 @@ Cow.syncstore.prototype =
             return this._getRecords(config);
         }
         else if (config && typeof(config) == 'object'){
-            return this._addRecord({source: 'UI', data: config});
+            return this._addRecord({source: 'UI', data: config}).status('dirty');
         }
         else if (config && (typeof(config) == 'number') || typeof(config) == 'string'){
             return this._getRecord(config);
@@ -256,7 +256,9 @@ Cow.syncstore.prototype =
         if (this._projectid){ //parent store
             message.project = this._projectid;
         }
-        var promise = this._db_updateRecord({source:'UI', data: record.deflate()});
+        if (this._db){
+            var promise = this._db_updateRecord({source:'UI', data: record.deflate()});
+        }
         this._core.websocket().sendData(message, 'updatedRecord');
     },
     

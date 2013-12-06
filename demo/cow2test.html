@@ -17,7 +17,7 @@
   <script src="../lib/jquery.indexeddb/jquery.indexeddb.min.js" type="text/javascript"></script>
   
   <!-- PouchDB -->
-  <script src="../lib/pouchdb/pouchdb-nightly.js"></script>
+  <script src="../lib/pouchdb/pouchdb-nightly.min.js"></script>
 <!--  
   <script src="http://openlayers.org/api/OpenLayers.js" type="text/javascript"></script>    
   <script src="http://maps.stamen.com/js/tile.stamen.js?v1.1.3"></script>
@@ -52,26 +52,101 @@
   
   <script src="scripts/cookies.js" type="text/javascript"></script>
 <style>
-.node circle {
-  cursor: pointer;
-  stroke: #3182bd;
-  stroke-width: 1.5px;
+HTML {
+	font-family: 'Dosis', Arial, sans-serif; 
+	font-weight: 300; 
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	color: #555753;
+	overflow: hidden;
 }
- 
-.node text {
-  font: 10px sans-serif;
-  pointer-events: none;
-  text-anchor: middle;
+h1{
+	font-family: 'Dosis', Arial, sans-serif;
+	font-weight: 500; 
+	font-size: 28pt;
+	color: #555753;
+	margin-top: 0.6em;
 }
- 
-line.link {
-  fill: none;
-  stroke: #9ecae1;
-  stroke-width: 1.5px;
+h3 {
+	font-family: 'Dosis', Arial, sans-serif;
+	font-weight: 500; 
+	font-size: 14pt;
+	color: #555753;
 }
 </style>
 <script type="text/javascript">
 
+var updateLists = function(){
+  var data = core.peers();
+  var peer = d3.select('#peerlist').selectAll('.peer')
+    .data(data, function(d){return 'peer'+d._id.toString();});
+   peer.enter().append('div')
+    .attr('id', function(d){return 'peer'+d._id.toString();})
+    .classed('peer', true);
+    peer.html(function(d){
+        var user = core.users(d.getUserId());
+        var username = user._id;
+        var since = new Date(d.timestamp()).toLocaleString();
+        return '<h3> ' + d._id + ' ('+ username+ ') <small> Since ' + since + ' </h3>'});
+    peer.exit().remove();
+  
+  core.userStore().initpromise.done(function(x){
+    var data = core.users();
+      var user = d3.select('#userlist').selectAll('.user')
+        .data(data, function(d){return 'user'+ d._id.toString();});
+       user.enter().append('div')
+        //.attr('id', function(d){return 'user'+d._id.toString();})
+        .classed('user', true);
+       user.html(function(d){return '<h3>' + d._id + (d.data('name')||"") + '</h3>'})
+       user.exit().remove();
+        
+  });
+  core.projectStore().initpromise.done(function(x){
+
+      var expand_project = function(d){
+        var self = this;
+        d.itemStore().initpromise.done(function(x){
+            var data = d.items();
+            d3.select(self).append('h4').html('Items: ');
+            var item = d3.select(self).selectAll('.item').data(data, function(e){return 'item'+e._id.toString()});
+            item.enter().append('span')
+                .classed('item', true)
+                .attr('id', function(d){return 'item'+d._id.toString();});
+            item.html(function(d){
+                var name = d.data('type');
+                return d._id + ' ' + name + ','});
+            item.exit().remove();
+        });
+        d.groupStore().initpromise.done(function(x){
+            var data = d.groups();
+            d3.select(self).append('h4').html('Groups: ');
+            var group = d3.select(self).selectAll('.group').data(data, function(e){return 'group'+e._id.toString()});
+            group.enter().append('span')
+                .classed('group', true)
+                .attr('id', function(d){return 'group'+d._id.toString();});
+            group.html(function(e){
+                var name = e.data('name');
+                return e._id + ' '+ name+','});
+            group.exit().remove();
+        });
+        
+        
+      }
+      
+      var data = core.projects();
+      var project = d3.select('#projectlist').selectAll('.project')
+        .data(data, function(d){return 'project'+d._id.toString();});
+       project.enter().append('div')
+        .attr('id', function(d){return 'project'+d._id.toString();})
+        .classed('project', true)
+        .html(function(d){return '<h3>' + d._id + ' '+ d.data('name') + '</h3>'})
+        .append('div')
+        .each(expand_project);
+       project.exit().remove();
+   });
+}
 
 
 var core;
@@ -89,203 +164,46 @@ $(document).ready(function(){
   //TODO: move username admin to other place
   //Some username administration with cookies
   var username=getCookie("username");
+  var logon = function(username){
+    $('#myname').val(username);
+    core.users({_id:username}).sync();
+    core.user(username);
+  }
   if (username!=null && username!="")
   {
-    //core.username(username);
+    logon(username);
   }
   else 
   {
     username=prompt("Please enter your name:","");
     if (username!=null && username!="")
     {
-        //core.username(username);
+        logon(username);
         setCookie("username",username,1);
     }
   }
   
   
-  //Settings for ProGideon workshop
-  var progideon = core.projects({_id:999,name:"Overstroming"})
-    .data('peeruid', 'core.UID').sync(); 
-  progideon.groups({_id:1}).data('name','Public');
-  progideon.groups({_id:2}).data('name','Populatie');
-  progideon.groups({_id:3}).data('name','Evacuatie');
-  progideon.groups({_id:4}).data('name','Opvang');
-  
-  var progideon = core.projects({_id:998})
-    .data({name:"Overstroming 2", peeruid: core.UID}); 
-  progideon.groups({_id:1}).data('name','Public');
-  progideon.groups({_id:2}).data('name','Populatie');
-  progideon.groups({_id:3}).data('name','Evacuatie');
-  progideon.groups({_id:4}).data('name','Opvang');
-  //core.activeproject({activeProjectId:666});
-  
-  core.projectStore().initpromise.done(function(x){
-    var findnode = function(nodename){
-        var flat = flatten(root);
-        $.each(flat, function(i,node){
-            if (node.name = nodename){
-                return node;
-            }
-        });
-    };
+  //Default init settings
+  var defaultproject = core.projects({_id:1}).data('name',"Sketch").sync(); 
+  var defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
+  var firstitem = defaultproject.items({_id:1})
+    .data('type','msg')
+    .data('creator',core.user())
+    .sync();
   
   
-      $.each(core.projects(), function(i,p){
-        var project = {"name" : 'id'+p._id, "children": []};
-        root.children.push(project);
-        //p.itemStore().initpromise.done(function(x){
-        //    var node = findnode('id'+q._id.toString());
-        //    $.each(p.items(), function(i,q){
-        //        
-        //        var item = {"name": 'id'+q._id, size: 1000};
-        //        if (node && node.children){
-        //            node.children.push(item);
-        //        }
-        //    });
-        //    //update();
-        //});
-        
-      });
-      update();
-  /*
-      var expand_project = function(d){
-        var data = d.items();
-        var item = d3.select(this).selectAll('p').data(data, function(e){return e._id});
-        item.enter().append('p').html(function(e){return e._id});
-        
-      }
-      
-      var data = core.projects();
-      var project = d3.select('#projectlist').selectAll('project')
-        .data(data, function(d){return d._id.toString();});
-       project.enter().append('div')
-        .classed('project', true)
-        .html(function(d){return '<h2>' + d._id + '</h2>'})
-        .on('click', expand_project)
-        .append('div')
-        .attr('id', function(d){return 'project'+d._id;});
-        */
-   });
+  window.setInterval(updateLists, 2000);
   
+   
+   
   
   //What to do when a user changes name
   $('#myname').on('blur', function(e, ui) {
     var username = $(this).val();
-    //core.me().owner({name:username});
-    //core.username(username);
+    logon(username);
     setCookie("username",username,1);
   });
-  
-  var root = {"name" : "PROJECTS", "children": []};
-  
-  
-/** D3 **/  
-    var width = 960,
-        height = 500,
-        root;
-     
-    var force = d3.layout.force()
-        .linkDistance(80)
-        .charge(-120)
-        .gravity(.05)
-        .size([width, height])
-        .on("tick", tick);
-     
-    var svg = d3.select("#content").append("svg")
-        .attr("width", width)
-        .attr("height", height);
-     
-    var link = svg.selectAll(".link"),
-        node = svg.selectAll(".node");
-     
-    
-    
-    update();
-         
-    function update() {
-      var nodes = flatten(root),
-          links = d3.layout.tree().links(nodes);
-     
-      // Restart the force layout.
-      force
-          .nodes(nodes)
-          .links(links)
-          .start();
-     
-      // Update links.
-      link = link.data(links, function(d) { return d.target.id; });
-     
-      link.exit().remove();
-     
-      link.enter().insert("line", ".node")
-          .attr("class", "link");
-     
-      // Update nodes.
-      node = node.data(nodes, function(d) { return d.id; });
-     
-      node.exit().remove();
-     
-      var nodeEnter = node.enter().append("g")
-          .attr("class", "node")
-          .on("click", click)
-          .call(force.drag);
-     
-      nodeEnter.append("circle")
-          .attr("r", function(d) { return Math.sqrt(d.size) / 10 || 4.5; });
-     
-      nodeEnter.append("text")
-          .attr("dy", ".35em")
-          .text(function(d) { return d.name; });
-     
-      node.select("circle")
-          .style("fill", color);
-    }
-     
-    function tick() {
-      link.attr("x1", function(d) { return d.source.x; })
-          .attr("y1", function(d) { return d.source.y; })
-          .attr("x2", function(d) { return d.target.x; })
-          .attr("y2", function(d) { return d.target.y; });
-     
-      node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-    }
-     
-    function color(d) {
-      return d._children ? "#3182bd" // collapsed package
-          : d.children ? "#c6dbef" // expanded package
-          : "#fd8d3c"; // leaf node
-    }
-     
-    // Toggle children on click.
-    function click(d) {
-      if (d3.event.defaultPrevented) return; // ignore drag
-      if (d.children) {
-        d._children = d.children;
-        d.children = null;
-      } else {
-        d.children = d._children;
-        d._children = null;
-      }
-      update();
-    }
-     
-    // Returns a list of all nodes under the root.
-    function flatten(root) {
-      var nodes = [], i = 0;
-     
-      function recurse(node) {
-        if (node.children) node.children.forEach(recurse);
-        if (!node.id) node.id = ++i;
-        nodes.push(node);
-      }
-     
-      recurse(root);
-      return nodes;
-    }
-/** END OF D3**/
-  
-  
 });
  
 
@@ -297,7 +215,9 @@ $(document).ready(function(){
     <span class="welcome"><span data-i18n="txt_welcome" id="txt_welcome">Welcome</span> <input id="myname"/ name="myname" title="click to change your name" value="anonymous" size="13"/></span>
   </div>
   <div id="content">
-  <div id="projectlist"></div>
+  <div id="peerlist"><h1>Peers</h1></div>
+  <div id="userlist"><h1>Users:</h1></div>
+  <div id="projectlist"><h1>Projects:</h1></div>
   </div>
   <div id="cow"></div>	
   <div id="help" ></div>

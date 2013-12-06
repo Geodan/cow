@@ -133,8 +133,12 @@ Cow.websocket.prototype = {
     _onConnect: function(payload){
         var self = this;
         this._core.peerid(payload.peerID);
-        var peer = new Cow.peer({_id: payload.peerID});
-        var me = this._core.peerStore().addPeer({source: 'UI', data: peer.deflate()});
+        var mypeer = this._core.peers({_id: payload.peerID});
+        //add userid to peer object
+        if (core.user()){
+            mypeer.data('userid',core.user()._id);
+        }
+        mypeer.sync();
         //TODO this.core.trigger('ws-connected',payload); 
         
         //initiate peer-sync
@@ -166,12 +170,12 @@ Cow.websocket.prototype = {
         
         //wait for projectstore to load
         store1.initpromise.done(function(d){
-            var projects = store1.getProjects();
+            var projects = self._core.projects();
             for (var i=0;i<projects.length;i++){
                 var project = projects[i];
-                store = store1.getProject(project._id).itemStore(); 
+                store = self._core.projects(project._id).itemStore(); 
                 startsync('items', store);
-                store = store1.getProject(project._id).groupStore(); 
+                store = self._core.projects(project._id).groupStore(); 
                 startsync('groups', store);
             }
         });
@@ -200,11 +204,11 @@ Cow.websocket.prototype = {
                 return this._core.userStore();
             case 'items':
                 if (!projectid) {throw('No project id given');}
-                project = this._core.projectStore().getProject(projectid);
+                project = this._core.projects(projectid);
                 return project.itemStore();
             case 'groups':
                 if (!projectid) {throw('No project id given');}
-                project = this._core.projectStore().getProject(projectid);
+                project = this._core.projects(projectid);
                 return project.groupStore();
         }
     },

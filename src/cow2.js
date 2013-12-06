@@ -48,4 +48,10 @@ var stresstest = function(){
     
 };
 
-
+window.onload =function(){
+    /**
+        Settings some defaults
+    **/
+            
+        
+};
