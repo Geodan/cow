@@ -246,7 +246,7 @@ Cow.syncstore.prototype =
         return false;
     },
     /**
-    syncRecord - sync 1 record
+    syncRecord() - sync 1 record
     **/
     syncRecord: function(record){
         var message = {};
@@ -261,7 +261,7 @@ Cow.syncstore.prototype =
     },
     
     /**
-    syncRecords - looks for dirty records and starts syncing them
+    syncRecords() - looks for dirty records and starts syncing them
     **/
     syncRecords: function(){
         for (var i=0;i<this._records.length;i++){
@@ -274,14 +274,12 @@ Cow.syncstore.prototype =
     
     
     /**
-    idList - needed to start the syncing with other peers
+    idList() - needed to start the syncing with other peers
                 only makes sense after fully loading the indexeddb 
     **/
     idList: function(){
         var fids = [];
-        var items = core.itemstore().items();
         for (var i=0;i<this._records.length;i++){
-        //OBS $.each(items, function(i,item){
             var item = this._records[i];
             var iditem = {};
             iditem._id = item._id;
@@ -292,15 +290,13 @@ Cow.syncstore.prototype =
         return fids;
     },
     /**
-    requestItems - returns the items that were requested 
+    requestItems(array) - returns the items that were requested 
     **/
     requestRecords: function(fidlist){
 		var pushlist = [];
 		for (i=0;i<this._records.length;i++){
-		//OBS $.each(this.items(), function(i, item){
 		    var localrecord =  this._records[i];
 		    for (j=0;j<fidlist.length;j++){
-            //OBS $.each(fidlist, function(j,rem_val){
                 var rem_val = fidlist[j];
                 if (rem_val == localrecord._id){
                     pushlist.push(localrecord.deflate());
@@ -310,7 +306,7 @@ Cow.syncstore.prototype =
 		return pushlist;
 	},
     /**
-	syncRecords - compares incoming idlist with idlist from current stack based on timestamp and status
+	compareRecords(config) - compares incoming idlist with idlist from current stack based on timestamp and status
 					generates 2 lists: requestlist and pushlist
 	**/
     compareRecords: function(config){

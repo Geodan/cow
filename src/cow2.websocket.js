@@ -1,5 +1,5 @@
 window.Cow = window.Cow || {};
-//TODO: complete rewrite from cow.websocket.js and core.js
+
 Cow.websocket = function(config){
     this._core = config.core;
     //socket connection object
@@ -27,7 +27,7 @@ Cow.websocket.prototype = {
                 connection.onmessage = this._onMessage;
                 connection.onclose = this._onClose;    
                 connection.onerror = this._onError;
-                connection.obj = this; //TT: Why is this?
+                connection.obj = this;
             }
             else {throw('Incorrect URL: ' + url);}
         }
@@ -100,6 +100,7 @@ Cow.websocket.prototype = {
                 }
             break;
             
+            //a peer sends a new or updated record
             case 'updatedRecord':
                 if(sender != PEERID) {
                     this.obj._onUpdatedItems(payload);
@@ -107,7 +108,7 @@ Cow.websocket.prototype = {
             break;
             
         }
-        //TODO
+        
     },
     _onClose: function(event){
         var code = event.code;

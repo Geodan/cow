@@ -1,6 +1,10 @@
 Cow.core = function(config){
     var self = this;
     if (!config.wsUrl){throw('No wsURL given');}
+    this._me = {
+        userid: null,
+        location: null
+    };
     this._wsUrl = config.wsUrl;
     this._peerid = new Date().getTime();
     /*WEBSOCKET*/
@@ -91,6 +95,23 @@ Cow.core.prototype =
     peerid: function(id){
         this._peerid = id || this._peerid;
         return this._peerid;
+    },
+    
+    /**
+        user() - get current user object
+        user(id) - set current user based on id from userStore
+    **/
+    user: function(id){
+        if (id){
+            this._me.user = id;
+            return this.users(id);
+        }
+        else {
+            if (!this._me.user) {
+                throw('No user set');
+            }
+            return this.users(this._me.user); 
+        }
     },
     
     projectStore:       function(){
