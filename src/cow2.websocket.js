@@ -1,5 +1,5 @@
 window.Cow = window.Cow || {};
-//TODO: complete rewrite from cow.websocket.js and core.js
+
 Cow.websocket = function(config){
     this._core = config.core;
     //socket connection object
@@ -27,7 +27,7 @@ Cow.websocket.prototype = {
                 connection.onmessage = this._onMessage;
                 connection.onclose = this._onClose;    
                 connection.onerror = this._onError;
-                connection.obj = this; //TT: Why is this?
+                connection.obj = this;
             }
             else {throw('Incorrect URL: ' + url);}
         }
@@ -46,6 +46,13 @@ Cow.websocket.prototype = {
         message.target = target;
         message.action = action;
         message.payload = data;
+        var stringified;
+        try {
+            stringified = JSON.stringify(message);
+        }
+        catch (e){
+            console.error(e, message);
+        }
         if (this._connection && this._connection.readyState == 1){
             this._connection.send(JSON.stringify(message));
         }
@@ -100,6 +107,7 @@ Cow.websocket.prototype = {
                 }
             break;
             
+            //a peer sends a new or updated record
             case 'updatedRecord':
                 if(sender != PEERID) {
                     this.obj._onUpdatedItems(payload);
@@ -107,7 +115,7 @@ Cow.websocket.prototype = {
             break;
             
         }
-        //TODO
+        
     },
     _onClose: function(event){
         var code = event.code;
@@ -115,7 +123,7 @@ Cow.websocket.prototype = {
         var wasClean = event.wasClean;
         var self = this;
         //this.close(); //FIME: TT: why was this needed?
-        //TODO this.obj._core.removeAllPeers();
+        this.obj._core.peerStore().clear();
         //TODO this.obj._core.trigger('ws-disconnected');    
         var restart = function(){
             try{
@@ -132,8 +140,12 @@ Cow.websocket.prototype = {
     _onConnect: function(payload){
         var self = this;
         this._core.peerid(payload.peerID);
-        var peer = new Cow.peer({_id: payload.peerID});
-        var me = this._core.peerStore().addPeer({source: 'UI', data: peer.deflate()});
+        var mypeer = this._core.peers({_id: payload.peerID});
+        //add userid to peer object
+        if (core.user()){
+            mypeer.data('userid',core.user()._id);
+        }
+        mypeer.sync();
         //TODO this.core.trigger('ws-connected',payload); 
         
         //initiate peer-sync
@@ -165,12 +177,12 @@ Cow.websocket.prototype = {
         
         //wait for projectstore to load
         store1.initpromise.done(function(d){
-            var projects = store1.getProjects();
+            var projects = self._core.projects();
             for (var i=0;i<projects.length;i++){
                 var project = projects[i];
-                store = store1.getProject(project._id).itemStore(); 
+                store = self._core.projects(project._id).itemStore(); 
                 startsync('items', store);
-                store = store1.getProject(project._id).groupStore(); 
+                store = self._core.projects(project._id).groupStore(); 
                 startsync('groups', store);
             }
         });
@@ -199,11 +211,11 @@ Cow.websocket.prototype = {
                 return this._core.userStore();
             case 'items':
                 if (!projectid) {throw('No project id given');}
-                project = this._core.projectStore().getProject(projectid);
+                project = this._core.projects(projectid);
                 return project.itemStore();
             case 'groups':
                 if (!projectid) {throw('No project id given');}
-                project = this._core.projectStore().getProject(projectid);
+                project = this._core.projects(projectid);
                 return project.groupStore();
         }
     },

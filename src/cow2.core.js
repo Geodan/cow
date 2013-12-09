@@ -1,8 +1,10 @@
 Cow.core = function(config){
     var self = this;
     if (!config.wsUrl){throw('No wsURL given');}
-    this._wsUrl = config.wsUrl;
-    this._peerid = new Date().getTime();
+    this._userid = null;
+    this._wsUrl = config.wsUrl || 'wss://localhost:443';
+    this._peerid = null;
+    
     /*WEBSOCKET*/
     this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     
@@ -12,19 +14,7 @@ Cow.core = function(config){
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
         _dbname:        'projects',
-        _type:          'projects',
-        getProjects:    function(){ //returns all projects
-            return this._records;
-        }, 
-        getProject:     function(id){ //returns 1 project
-            return this._getRecord(id);
-        }, 
-        addProject:     function(config){ //adds (and returns) 1 project
-            return this._addRecord(config);
-        }, 
-        updateProject:  function(config){ //changes and returns 1 project
-            return this._updateRecord(config);
-        }
+        _type:          'projects'
     });
     
     /*PEERS*/
@@ -35,30 +25,9 @@ Cow.core = function(config){
         _recordproto:   function(_id){return new Cow.peer({_id: _id, store: this});}, 
         _dbname: 'peers',
         _type: 'peers',
-        //returns all peer objects
-        getPeers:           function(){
-            return this._records;
-        },
-        getPeer:            function(id){
-            return this._getRecord(id);
-        }, 
-        addPeer:            function(config){
-            return this._addRecord(config);
-        },
-        updatePeer:         function(config){
-            return this._updateRecord(config);
-        },
         //remove peer from _peers
         removePeer:         function(id){
             return this._removeRecord(id);
-        },
-        //returns featurecollection of peerextents
-        getPeerExtents:     function(){
-            //TODO
-        },
-        //returns featurecollection of peerpositions
-        getPeerPositions:   function(){
-            //TODO
         }
     });
     
@@ -69,20 +38,7 @@ Cow.core = function(config){
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
         _dbname:        'users',
-        _type:          'users',
-        getUsers:       function(){
-            return this._records;
-        },
-        getUser:        function(id){
-            return this._getRecord(id);
-        },
-        addUser:        function(config){ 
-            return this._addRecord(config);
-        }, 
-        updateUser:     function(config){ 
-            return this._updateRecord(config); 
-        }
-        
+        _type:          'users'
     });
     
 };
@@ -91,6 +47,27 @@ Cow.core.prototype =
     peerid: function(id){
         this._peerid = id || this._peerid;
         return this._peerid;
+    },
+   
+    /**
+        user() - get current user object
+        user(id) - set current user based on id from userStore
+    **/
+    user: function(id){
+        if (id){
+            this._userid = id;
+            //Add user to peer object
+            if (this.peerid()){
+                this.peers(this.peerid()).data('userid',id).sync();
+            }
+            return this.users(id);
+        }
+        else {
+            if (!this._userid) {
+                return false;
+            }
+            return this.users(this._userid); 
+        }
     },
     
     projectStore:       function(){
