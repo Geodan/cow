@@ -189,7 +189,7 @@ $(document).ready(function(){
   var defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
   var firstitem = defaultproject.items({_id:1})
     .data('type','msg')
-    .data('creator',core.user())
+    .data('creator',core.user().id())
     .sync();
   
   

@@ -13,6 +13,11 @@ Cow.record.prototype =
         this._store.syncRecords(this);
         return this;
     },
+    
+    id: function(){
+        return this._id;
+        //No setting id, that only happens when object is created
+    },
     timestamp: function(timestamp){
         if (timestamp) {
             this._updated = timestamp;

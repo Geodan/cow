@@ -46,6 +46,13 @@ Cow.websocket.prototype = {
         message.target = target;
         message.action = action;
         message.payload = data;
+        var stringified;
+        try {
+            stringified = JSON.stringify(message);
+        }
+        catch (e){
+            console.error(e, message);
+        }
         if (this._connection && this._connection.readyState == 1){
             this._connection.send(JSON.stringify(message));
         }
@@ -116,7 +123,7 @@ Cow.websocket.prototype = {
         var wasClean = event.wasClean;
         var self = this;
         //this.close(); //FIME: TT: why was this needed?
-        //TODO this.obj._core.removeAllPeers();
+        this.obj._core.peerStore().clear();
         //TODO this.obj._core.trigger('ws-disconnected');    
         var restart = function(){
             try{

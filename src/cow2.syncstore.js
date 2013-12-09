@@ -246,6 +246,12 @@ Cow.syncstore.prototype =
         return false;
     },
     /**
+        clear() - remove all records
+    **/
+    clear: function(){
+        this._records = [];
+    },
+    /**
     syncRecord() - sync 1 record
     **/
     syncRecord: function(record){

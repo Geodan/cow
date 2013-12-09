@@ -17,7 +17,8 @@ Cow.project = function(config){
         _projectid: this._id,
         dbname:  function(name){
             this._dbname =  name;
-        },
+        }
+        /* Obs
         getGroups: function(){
             return this._records;
         },
@@ -29,7 +30,7 @@ Cow.project = function(config){
         },
         updateGroup: function(config){
             return this._updateRecord(config);
-        }
+        } */
     });
     
     dbname = 'items_' + config._id;
@@ -42,7 +43,8 @@ Cow.project = function(config){
         _dbname: dbname,
         dbname:  function(name){
             this._dbname =  name;
-        },
+        }
+        /*Obs
         getItems:       function(){
             return this._records;
         },
@@ -54,7 +56,7 @@ Cow.project = function(config){
         },
         updateItem:     function(config){
             return this._updateRecord(config);
-        }
+        }*/
     });
 };
 Cow.project.prototype = 
