@@ -67,7 +67,9 @@ Cow.websocket.prototype = {
         var payload = data.payload;    
         var target = data.target;
         switch (action) {
-        //Messages related to the websocket connection
+        /**
+            Messages related to the websocket connection
+        **/
             //websocket confirms connection by returning the unique peerID (targeted)
             case 'connected':
                 this.obj._onConnect(payload);
@@ -78,39 +80,43 @@ Cow.websocket.prototype = {
                 this.obj._onPeerGone(payload);
             break;      
         
-        //Messages related to the syncing protocol
-            //a new peer has arrived and gives a list of its items
+        /**
+            Messages related to the syncing protocol
+        **/
+            //a new peer has arrived and gives a list of its records
             case 'newList':
                 if(sender != PEERID) {
                     this.obj._onNewList(payload,sender);
                 }
             break;
             
-            //you just joined and you receive a list of items the others want (targeted)
+            //you just joined and you receive a list of records the others want (targeted)
             case 'wantedList':
                 if(target == PEERID) {
                     this.obj._onWantedList(payload);
                 }
             break;
             
-            //you just joined and receive the items you are missing (targeted)
-            case 'missingItems':
+            //you just joined and receive the records you are missing (targeted)
+            case 'missingRecords':
                 if(target == PEERID) {
-                    this.obj._onMissingItems(payload);
+                    this.obj._onMissingRecords(payload);
                 }   
             break;
             
-            //a new peer has arrived and sends everybody the items that are requested in the *wantedList*
-            case 'requestedItems':
+            //a new peer has arrived and sends everybody the records that are requested in the *wantedList*
+            case 'requestedRecords':
                 if(sender != PEERID) {
-                    this.obj._onRequestedItems(payload);
+                    this.obj._onRequestedRecords(payload);
                 }
             break;
-            
+        /**
+            Messages related to real-time changes in records
+        **/
             //a peer sends a new or updated record
             case 'updatedRecord':
                 if(sender != PEERID) {
-                    this.obj._onUpdatedItems(payload);
+                    this.obj._onUpdatedRecords(payload);
                 }
             break;
             
@@ -241,7 +247,7 @@ Cow.websocket.prototype = {
             "project" : project,
             "list" : syncobject.pushlist
         };
-        this.sendData(data, 'missingItems', sender);
+        this.sendData(data, 'missingRecords', sender);
         //TODO this.core.trigger('ws-newList',message); 
     },
     
@@ -253,35 +259,35 @@ Cow.websocket.prototype = {
             "project" : store._projectid,
             "list" : returnlist
         };
-        this.sendData(data, 'requestedItems');
+        this.sendData(data, 'requestedRecords');
         //TODO this.core.trigger('ws-wantedList',payload); 
     },
     
-    _onMissingItems: function(payload) {
+    _onMissingRecords: function(payload) {
         var store = this._getStore(payload);
         var list = payload.list;
         for (var i=0;i<list.length;i++){
             var data = list[i];
             store._addRecord({source: 'WS', data: data});
         }
-        //TODO this.core.trigger('ws-missingItems',payload); 
+        //TODO this.core.trigger('ws-missingRecords',payload); 
     },
     
-    _onRequestedItems: function(payload) {
+    _onRequestedRecords: function(payload) {
         var store = this._getStore(payload);
         var list = payload.list;
         for (var i=0;i<list.length;i++){
             var data = list[i];
             store._addRecord({source: 'WS', data: data});
         }
-        //TODO this.core.trigger('ws-onRequestedItems',payload); 
+        //TODO this.core.trigger('ws-onRequestedRecords',payload); 
     },
     
-    _onUpdatedItems: function(payload) {
+    _onUpdatedRecords: function(payload) {
         var store = this._getStore(payload);
         var data = payload.record;
         store._addRecord({source: 'WS', data: data});
-        //TODO this.core.trigger('ws-onRequestedItems',payload); 
+        //TODO this.core.trigger('ws-onRequestedRecords',payload); 
     }
     // END Syncing messages
 };
