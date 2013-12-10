@@ -43,12 +43,12 @@ Cow.item.prototype =
     
     },
     _permissionsByType: function(type) {
-        
+        var permissions = this.permissions();
         //TT: this used to return an array, but afaik there can/should be only 1 permission per type
         //var returnval = [];
         var returnval = null;
-        for (var i=0;i<this._permissions.length;i++){
-            var permission = this._permissions[i];
+        for (var i=0;i<permissions.length;i++){
+            var permission = permissions[i];
             if (permission.type == type){
                 //returnval.push(this._permissions[i]);
                 returnval = permission;
@@ -94,8 +94,8 @@ Cow.item.prototype =
         return this;
     },
     /**
-        function to check if a particular type contains a particular group
-        returns true if it is the case, false in all other cases
+        permissionsHasGroup(type <string>,group <string>) - function to check if a particular type contains a particular group
+            returns true if it is the case, false in all other cases
     */
     permissionHasGroup: function(type,group) {
         var permission  = this.permissions(type);
@@ -129,6 +129,9 @@ Cow.item.prototype =
             }
         }
     },
+    /**
+        hasPermission(<string>) - check to see if current user has <string> permission on item
+    **/
     hasPermission: function(type) {
         var core = this._store._core;
         var user = core.user().id();

@@ -36,7 +36,6 @@ Cow.group.prototype =
         for (var i=0;i<memberList.length;i++){
             if (memberList[i] == userid) {
                 existing = true; //Already a member
-                return peerid;
             }
         }
         if (!existing){
