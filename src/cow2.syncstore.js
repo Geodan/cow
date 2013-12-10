@@ -55,49 +55,28 @@ Cow.syncstore.prototype =
         var promise;
         //TODO: the way I try to get a promise is not right here....
         //as a result I'm not getting a promise from _updateRecord or at least not in time
-        switch (source){
-            case 'UI': 
-                this._db.get(data._id, function(err,doc){
-                    if (err) {
-                        if (err.reason == 'missing'){ //not really an error, just a notice that the record would be new
-                            return self._db_addRecord({source: source, data: data});
-                        }
-                        else{
-                            //console.warn('Dbase error: ' , err);
-                            deferred.reject(err);
-                            return deferred.promise();
-                        }
-                    }
-                    else { //overwrite existing
-                        data._rev = doc._rev;
-                        return self._db_addRecord({source: source, data: data});
-                    }
-                });
-                break;
-            case 'WS':
-                this._db.put(data,function(err, out){
-                    if (err) {
-                        //console.warn('Dbase error: ' , err);
-                        deferred.reject(err);
-                    }
-                    else {
-                        deferred.resolve(out);
-                    }
+        this._db.get(data._id, function(err,doc){
+            if (err) {
+                if (err.reason == 'missing'){ //not really an error, just a notice that the record would be new
+                    return self._db_addRecord({source: source, data: data});
+                }
+                else{
+                    console.warn('Dbase error: ' , err);
+                    deferred.reject(err);
                     return deferred.promise();
-                });
-                break;
-            default:
-                console.warn('Wrong source type: ',source);
-                return null;
-        }
-        
-    
+                }
+            }
+            else { //overwrite existing
+                data._rev = doc._rev;
+                return self._db_addRecord({source: source, data: data});
+            }
+        });
     },
     _db_getRecords: function(){
         var deferred = new jQuery.Deferred();
         this._db.allDocs({include_docs:true,descending: true}, function(err,doc){
             if (err) {
-                //console.warn('Dbase error: ' , err);
+                console.warn('Dbase error: ' , err);
                 deferred.reject(err);
             }
             else {
@@ -110,7 +89,7 @@ Cow.syncstore.prototype =
         var deferred = new jQuery.Deferred();
         this._db.get(id, function(err,doc){
             if (err) {
-                //console.warn('Dbase error: ' , err);
+                console.warn('Dbase error: ' , err);
                 deferred.reject(err);
             }
             else {
@@ -158,6 +137,7 @@ Cow.syncstore.prototype =
         });
         return promise;
      },
+    //_getRecords([<string>]) - return all records, if ID array is filled, only return that records
     _getRecords: function(idarray){
         var returnArray = [];
         for (var i=0;i<this._records.length;i++){
@@ -167,7 +147,8 @@ Cow.syncstore.prototype =
             }
         }
         return returnArray;
-    }, //returns all records, if ID array is filled, only return that records 
+    },
+    //_getRecord(<string>) - return record or create new one based on id
     _getRecord: function(id){
         for (var i=0;i<this._records.length;i++){
             var record = this._records[i];
@@ -175,6 +156,8 @@ Cow.syncstore.prototype =
                 return record;
             }
         }
+        var config = {_id: id};
+        return this._addRecord({source: 'UI', data: config}).status('dirty');
     },
     /**
     _addRecord - creates a new record and replaces an existing one with the same _id

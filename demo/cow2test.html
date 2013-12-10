@@ -141,7 +141,7 @@ var updateLists = function(){
        project.enter().append('div')
         .attr('id', function(d){return 'project'+d._id.toString();})
         .classed('project', true)
-        .html(function(d){return '<h3>' + d._id + ' '+ d.data('name') + '</h3>'})
+       project.html(function(d){return '<h3>' + d._id + ' '+ d.data('name') + '</h3>'})
         .append('div')
         .each(expand_project);
        project.exit().remove();
@@ -150,10 +150,8 @@ var updateLists = function(){
 
 
 var core;
-
-
-
-
+var defaultproject;
+var defualtgroup;
 
 $(document).ready(function(){
   
@@ -185,12 +183,30 @@ $(document).ready(function(){
   
   
   //Default init settings
-  var defaultproject = core.projects({_id:1}).data('name',"Sketch").sync(); 
-  var defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
-  var firstitem = defaultproject.items({_id:1})
-    .data('type','msg')
-    .data('creator',core.user().id())
-    .sync();
+  
+  core.projectStore().initpromise.done(function(x){
+      if (!core.projects(1)){
+        defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
+      } else {
+        defaultproject = core.projects(1);
+      }
+      defaultproject.groupStore().initpromise.done(function(x){
+        if (!defaultproject.groups(1)){
+            defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
+        } else {
+            defaultgroup = defaultproject.groups(1);
+        }
+        defaultgroup.members(core.user().id()); //make me a member
+      });
+  });
+  
+  
+  //
+  //var firstitem = defaultproject.items({_id:1}) //create a new item (overwrite old)
+  //  .data('type','msg') //type is msg
+  //  .data('creator',core.user().id()) //creator is me
+  //  .permissions('edit', 1) //give group 1 the 'edit' permission
+  //  .sync();
   
   
   window.setInterval(updateLists, 2000);

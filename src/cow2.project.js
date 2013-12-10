@@ -5,7 +5,6 @@ Cow.project = function(config){
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;
-    this._members = []; //array of ID
     
     var dbname = 'groups_' + config._id;
     this._groupStore = _.extend(
@@ -78,25 +77,29 @@ Cow.project.prototype =
     },
     
     getMembers: function(){
-        return this._members;
+        return this.data('members') || [];
     },
     addMember: function(id){
         var existing = false;
-        for (var i=0;i<this._members.length;i++){
-            if (this._members[i] == id) {
+        var curmembers = this.getMembers();
+        for (var i=0;i<curmembers.length;i++){
+            if (curmembers[i] == id) {
                 existing = true; //Already a member
                 return false;
             }
         }
         if (!existing){
-            this.memberList.push(id); //Adding to the list
+            curmembers.push(id); //Adding to the list
+            this.data('members', curmembers);
         }
         return id;
     },
     removeMember: function(id){
-        for (var i=0;i<this._members.length;i++){
-            if (this._members[i] == id) {
-                this._members.splice(i,1); //Remove from list
+        var curmembers = this.getMembers();
+        for (var i=0;i<curmembers.length;i++){
+            if (curmembers[i] == id) {
+                curmembers.splice(i,1); //Remove from list
+                this.data('members', curmembers);
                 return true;
             }
         }
