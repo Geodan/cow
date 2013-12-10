@@ -141,7 +141,7 @@ var updateLists = function(){
        project.enter().append('div')
         .attr('id', function(d){return 'project'+d._id.toString();})
         .classed('project', true)
-        .html(function(d){return '<h3>' + d._id + ' '+ d.data('name') + '</h3>'})
+       project.html(function(d){return '<h3>' + d._id + ' '+ d.data('name') + '</h3>'})
         .append('div')
         .each(expand_project);
        project.exit().remove();
