@@ -3,7 +3,6 @@ Cow.item = function(config){
     if (!config || !config._id) {throw 'No _id given for item';}
     this._id = config._id;
     this._store = config.store;
-    this._permissions = [];
 };
 Cow.item.prototype = 
 {
@@ -13,15 +12,15 @@ Cow.item.prototype =
         permissions() will return an array with all permissions set on this item
         permissions('type') will return an array with the permission of type 'type'
         permissions('type',group) will add the group to the permissions 
-            of type 'type' (and create permission of type 'type' if needed
+            of type 'type' (and create permission of type 'type' if needed), returns item
         permissions('type',[group]) will add the array of groups to the permissions 
-            of type 'type' (and create permission of type 'type' if needed
+            of type 'type' (and create permission of type 'type' if needed), returns item
     */
     permissions: function(type,groups) {
         var self = this;
         switch(arguments.length) {
         case 0:
-            return self._permissions;
+            return self.data('permissions');
         case 1:
             if(typeof type === "string") {
                 return self._permissionsByType(type);
@@ -92,7 +91,7 @@ Cow.item.prototype =
             }
         }
         this.data('permissions', permissions);
-        return this.permissions();
+        return this;
     },
     /**
         function to check if a particular type contains a particular group
@@ -138,11 +137,13 @@ Cow.item.prototype =
         var groups  = project.groups();
         var hasperm = false;
         var permittedgroups = this.permissions(type);
-        for (var i=0;i<permittedgroups[0].groups.length;i++){
-        //$.each(permittedgroups[0].groups, function(key,value) {
-            var value = permittedgroups[0].groups[i];
-            if((project.groups(value) !== undefined) &&(project.groups(value).hasMember(user))) {
-                hasperm = true;
+        if (permittedgroups){
+            for (var i=0;i<permittedgroups.groups.length;i++){
+            //$.each(permittedgroups[0].groups, function(key,value) {
+                var value = permittedgroups.groups[i];
+                if((project.groups(value) !== undefined) &&(project.groups(value).hasMember(user))) {
+                    hasperm = true;
+                }
             }
         }
         return hasperm;

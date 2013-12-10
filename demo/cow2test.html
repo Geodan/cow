@@ -185,18 +185,18 @@ $(document).ready(function(){
   
   
   //Default init settings
-  if (!core.projects(1)){
-  var defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
   
-  var defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
-  defaultgroup.members(core.user().id()); //make me a member
+  //var defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
+  //
+  //var defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
+  //defaultgroup.members(core.user().id()); //make me a member
+  //
+  //var firstitem = defaultproject.items({_id:1}) //create a new item (overwrite old)
+  //  .data('type','msg') //type is msg
+  //  .data('creator',core.user().id()) //creator is me
+  //  .permissions('edit', 1) //give group 1 the 'edit' permission
+  //  .sync();
   
-  var firstitem = defaultproject.items({_id:1}) //create a new item (overwrite old)
-    .data('type','msg') //type is msg
-    .data('creator',core.user().id()) //creator is me
-    .permissions('edit', 1) //give group 1 the 'edit' permission
-    .sync();
-  }
   
   window.setInterval(updateLists, 2000);
   
