@@ -175,6 +175,7 @@ Cow.syncstore.prototype =
                 return record;
             }
         }
+        return false;
     },
     /**
     _addRecord - creates a new record and replaces an existing one with the same _id
