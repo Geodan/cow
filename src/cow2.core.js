@@ -2,6 +2,7 @@ Cow.core = function(config){
     var self = this;
     if (!config.wsUrl){throw('No wsURL given');}
     this._userid = null;
+    this._projectid = null;
     this._wsUrl = config.wsUrl || 'wss://localhost:443';
     this._peerid = null;
     
@@ -50,6 +51,27 @@ Cow.core.prototype =
     },
    
     /**
+        project() -- get current project object
+        project(id) -- set current project based on id from projectStore
+        
+        to discuss: with the current code it is not needed to have only 1 project active
+            in theory the UI part can deal with that while the core can deal with multiple projects at the same time
+    **/
+    project: function(id){
+        if (id){
+            this.projects(id); //creates project if not existing
+            this._projectid = id;
+            return true;
+        }
+        else {
+            if (!this._projectid) {
+                return false;
+            }
+            return this.projects(this._projectid); 
+        }
+    },
+    
+    /**
         user() - get current user object
         user(id) - set current user based on id from userStore
     **/
@@ -58,9 +80,10 @@ Cow.core.prototype =
             this._userid = id;
             //Add user to peer object
             if (this.peerid()){
+                //TODO: separate name and id 
                 this.peers(this.peerid()).data('userid',id).sync();
             }
-            return this.users(id);
+            return this.users(id).data('name', id);
         }
         else {
             if (!this._userid) {
@@ -70,9 +93,10 @@ Cow.core.prototype =
         }
     },
     
+    //returns the _projectstore object
     projectStore:       function(){
         return this._projectStore;
-    }, //returns the _projectstore object
+    }, 
     
     /**
         projects() - returns array of all projects

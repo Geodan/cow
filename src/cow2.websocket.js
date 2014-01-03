@@ -7,6 +7,7 @@ Cow.websocket = function(config){
     this._connection = this.connect(this._url);
 };
 
+
 Cow.websocket.prototype = {
     disconnect: function() {
         if (this._connection){
@@ -67,6 +68,14 @@ Cow.websocket.prototype = {
         var payload = data.payload;    
         var target = data.target;
         switch (action) {
+        /**
+            Commands 
+        **/
+            case 'command':
+                if (sender != PEERID){
+                    this.obj._onCommand(payload);
+                }
+            break;
         /**
             Messages related to the websocket connection
         **/
@@ -288,6 +297,21 @@ Cow.websocket.prototype = {
         var data = payload.record;
         store._addRecord({source: 'WS', data: data});
         //TODO this.core.trigger('ws-onRequestedRecords',payload); 
-    }
+    },
     // END Syncing messages
+    
+    //Command messages:
+    _onCommand: function(payload) {
+        var command = payload.command;
+        var targetuser = payload.targetuser;
+        console.log('Command received: ',command);
+        if (command == 'zoomTo'){
+            if (targetuser && targetuser == this._core.user().id()){
+                this.trigger(command, payload.location);
+            }
+        }
+    }
+    
 };
+//Adding some Backbone event binding functionality to the store
+_.extend(Cow.websocket.prototype, Events);

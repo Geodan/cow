@@ -98,8 +98,288 @@ h3 {
     background-color: #ff6666;
 }
 
+
 </style>
+<style>
+
+.node circle {
+  cursor: pointer;
+  radius: 10;
+  stroke: none;
+}
+
+.node text {
+  font: 12px sans-serif;
+  font-color: blue;
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+line.link {
+  fill: none;
+  stroke: #9ecae1;
+  stroke-width: 1.5px;
+}
+
+.node circle.user {
+    fill: red;
+}
+.node circle.project {
+    fill: green;
+}
+.node circle.peer {
+    fill: blue;
+}
+
+</style>
+<script>
+
+var width = 960,
+    height = 500,
+    root;
+
+var force = d3.layout.force()
+    .linkDistance(80)
+    .charge(-120)
+    .gravity(.05)
+    .size([width, height])
+    .on("tick", tick);
+
+var svg, link, node;
+function init(){
+    svg= d3.select("#content").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+        link = svg.selectAll(".link");
+        node = svg.selectAll(".node");
+}
+
+var firstrun = true;
+function update() {
+  
+  var nodes = flatten(root, force.nodes()),
+      links = d3.layout.tree().links(nodes);
+                  
+  // Restart the force layout.
+  force
+      .nodes(nodes)
+      .links(links)
+      .start();
+  
+  // Update links.
+  link = link.data(links, function(d) { 
+    return d.target.uid; 
+  });
+
+  link.exit().remove();
+
+  link.enter().insert("line", ".node")
+      .attr("class", "link");
+
+  // Update nodes.
+  node = node.data(nodes, function(d) { 
+    return d.uid; 
+  });
+  
+  node.attr('x',function(d){
+    return d.x;
+  });
+  
+  
+  node.exit().remove();
+
+  var nodeEnter = node.enter().append("g")
+      .attr("class", "node")
+      .on("click", click)
+      .call(force.drag);
+
+  nodeEnter.append("circle")
+      .attr("r", function(d) { return d.size || 4.5; });
+
+  nodeEnter.append("text")
+      .attr("dy", ".35em")
+      .text(function(d) { return d.name; });
+
+  node.select("circle")
+      //.style("fill", color);
+    .attr('class', function(d){
+        return d.klass;
+    });
+  if (firstrun){
+    d3.timer(force.resume);
+    firstrun = false;
+  }
+}
+
+function tick() {
+  link.attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+  //node.attr("cx", function(d) { return d.x; })
+  //        .attr("cy", function(d) { return d.y; })              
+  node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+}
+
+function color(d) {
+  return d._children ? "#3182bd" // collapsed package
+      : d.children ? "#c6dbef" // expanded package
+      : "#fd8d3c"; // leaf node
+}
+
+// Toggle children on click.
+function click(d) {
+    if (d.klass == 'item'){
+        if (d.data('type') == 'feature'){
+            var targetuser = core.user().id(); 
+            var f = d.data('feature');
+            var coords = f.geometry.coordinates;
+            if (f.geometry.type == 'Point'){
+                var loc = {'latitude':coords[1],'longitude':coords[0],'level':13};
+                core.websocket().sendData({'command':'zoomTo', 'location':loc,'targetuser':targetuser},'command');
+            }
+         }
+    }
+
+  if (d3.event.defaultPrevented) return; // ignore drag
+  if (!d.collapsed) {
+    d._children = d.children;
+    d.children = null;
+    d.collapsed = true;
+  } else {
+    d.children = d._children;
+    d._children = null;
+    d.collapsed = false;
+  }
+  update();
+}
+
+// Returns a list of all nodes under the root.
+function flatten(root, oldnodes) {
+  var nodes = [], i = 0;
+
+  function oldnode(node){
+    for (var j=0;j<oldnodes.length;j++){
+        if (oldnodes[j].uid == node.uid){
+            return oldnodes[j];
+        }
+    }
+  }
+  
+  function recurse(node) {
+    if (!node.uid) node.uid = ++i;
+    if (oldnode(node)){
+        //Keep old location
+        node.x = oldnode(node).x;
+        node.y = oldnode(node).y;
+        node.collapsed = oldnode(node).collapsed;
+    }
+    if (node.children && !node.collapsed) {
+        node.children.forEach(recurse);
+    }
+    else if (node.children){
+        node._children = node.children.slice(0);
+        node.children = [];
+    }
+   
+    nodes.push(node);
+  }
+
+  recurse(root);
+  return nodes;
+}
+
+</script>
+
 <script type="text/javascript">
+                  
+var updateSpider = function(){
+    root = {
+        name: 'root',
+        uid: '0',
+        children: [
+        {
+            name: 'peers',
+            klass: 'peer',
+            uid: '1',
+            size: 10,
+            children:[]
+        },{
+            name: 'users',
+            klass: 'user',
+            uid: '2',
+            size: 10,
+            children: []
+        },{
+            name: 'projects',
+            klass: 'project',
+            uid: '3',
+            size: 10,
+            children: []
+        }
+        ]
+    }
+    
+    var peerdata = core.peers();
+    for (var i = 0;i < peerdata.length;i++){
+        var child = {};
+        var peer = peerdata[i]; 
+        child.name = peer.id();
+        child.uid = peer.id();
+        child.klass = 'peer';
+        root.children[0].children.push(child);
+    }
+    
+    core.userStore().initpromise.done(function(x){
+        var userdata = core.users();
+        for (var i = 0;i < userdata.length;i++){
+            var child = {};
+            var user = userdata[i]; 
+            child.name = user.data('name') || user.id();
+            child.uid = 'u'+user.id();
+            child.klass = 'user';
+            if (!user.deleted()){
+                root.children[1].children.push(child);
+            }
+        }
+    });
+    
+    core.projectStore().initpromise.done(function(x){
+        var projectdata = core.projects();
+        for (var i = 0;i < projectdata.length;i++){
+            var store = projectdata[i].itemStore(); 
+            store.initpromise.done(function(x){
+                var features = store.features();
+                var child = {};
+                var project = projectdata[i]; 
+                child.name = project.data('name') || project.id();
+                child.uid = 'p'+project.id();
+                child.klass = 'project';
+                child.children = [];
+                for (var j = 0;j < features.length;j++){
+                    var feature = features[j];
+                    //adapt to d3 tree
+                    var name;
+                    if (feature.data('feature')) name = feature.data('feature').geometry.type; 
+                    feature.name = name || feature.id();
+                    feature.uid = 'i'+feature.id();
+                    feature.klass = 'item';
+                    child.children.push(feature);
+                }
+                
+                if (!project.deleted()){
+                    root.children[2].children.push(child);
+                }
+             });
+        }
+    });
+    core.userStore().initpromise.done(function(x){
+        core.projectStore().initpromise.done(function(x){
+            update();
+        });
+    });
+}
 
 var updateLists = function(){
   var data = core.peers();
@@ -114,7 +394,8 @@ var updateLists = function(){
         var since = new Date(d.timestamp()).toLocaleString();
         return '<h3> ' + d._id + ' ('+ username+ ') <small> Since ' + since + ' </h3>'});
     peer.exit().remove();
-  
+
+    
   core.userStore().initpromise.done(function(x){
     var data = core.users();
     var user = d3.select('#userlist').selectAll('.user')
@@ -131,15 +412,27 @@ var updateLists = function(){
       var expand_project = function(d){
         var self = this;
         d.itemStore().initpromise.done(function(x){
-            var data = d.items();
-            d3.select(self).append('h4').html('Items: ');
+            var data = d.itemStore().features();
+            d3.select(self).append('h4').html('Features: ');
             var item = d3.select(self).selectAll('.item').data(data, function(e){return 'item'+e._id.toString()});
             item.enter().append('span')
                 .classed('item', true)
+                .on('click',function(d){
+                    if (d.data('type') == 'feature'){
+                        var targetuser = core.user().id(); 
+                        var f = d.data('feature');
+                        var coords = f.geometry.coordinates;
+                        if (f.geometry.type == 'Point'){
+                            var loc = {'latitude':coords[1],'longitude':coords[0],'level':13};
+                            core.websocket().sendData({'command':'zoomTo', 'location':loc,'targetuser':targetuser},'command');
+                        }
+                        
+                     }
+                })
                 .attr('id', function(d){return 'item'+d._id.toString();});
             item.html(function(d){
                 var name = d.data('type');
-                return d._id + ' ' + name + ','});
+                return d._id + ' ' + name + '<br>'});
             item.exit().remove();
         });
         d.groupStore().initpromise.done(function(x){
@@ -169,6 +462,7 @@ var updateLists = function(){
         .each(expand_project);
        project.exit().remove();
    });
+   
 }
 
 
@@ -177,7 +471,7 @@ var defaultproject;
 var defualtgroup;
 
 $(document).ready(function(){
-  
+  init();
   core = new Cow.core({
      wsUrl: 'wss://websocket.geodan.nl:443/new'
   });
@@ -231,10 +525,23 @@ $(document).ready(function(){
   //  .permissions('edit', 1) //give group 1 the 'edit' permission
   //  .sync();
   
+                      
+  //window.setInterval(updateLists, 2000);
+  window.setTimeout(updateSpider, 2000);
   
-  window.setInterval(updateLists, 2000);
+  core.peerStore().on('datachange', function(e){
+    window.setTimeout(updateSpider, 1000);
+  });
+  core.userStore().on('datachange', function(e){
+    //updateSpider();
+    window.setTimeout(updateSpider, 1000);
+  });
+  core.projectStore().on('datachange', function(e){
+    //updateSpider();
+    window.setTimeout(updateSpider, 1000);
+  });
   
-   
+  
    
   
   //What to do when a user changes name
@@ -254,9 +561,11 @@ $(document).ready(function(){
     <span class="welcome"><span data-i18n="txt_welcome" id="txt_welcome">Welcome</span> <input id="myname"/ name="myname" title="click to change your name" value="anonymous" size="13"/></span>
   </div>
   <div id="content">
+  <!--
     <div id="peerlist"><h1>Peers</h1></div>
     <div id="userlist"><h1>Users:</h1></div>
     <div id="projectlist"><h1>Projects:</h1></div>
+    -->
   </div>
   <div id="cow"></div>	
   <div id="help" ></div>

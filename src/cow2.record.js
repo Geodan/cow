@@ -2,7 +2,8 @@ window.Cow = window.Cow || {};
 Cow.record = function(){
     this._id    = null;
     this._rev   = null;
-    this._status= 'new';
+    this._status= 'dirty';
+    this._deleted= 'false';
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
     this._data  = {};
@@ -26,6 +27,16 @@ Cow.record.prototype =
         }
         else {
             return this._updated;
+        }
+    },
+    deleted: function(truefalse){
+        if (truefalse != null){ //TODO, this is not the recommended way, but !== gives always true
+            this._deleted = truefalse;
+            this._status = 'dirty';
+            return this;
+        }
+        else {
+            return this._deleted;
         }
     },
     status: function(status){
@@ -70,6 +81,7 @@ Cow.record.prototype =
             _rev: this._rev,
             status: this._status,
             created: this._created,
+            deleted: this._deleted,
             updated: this._updated,
             data: this._data
         }; 
@@ -79,6 +91,7 @@ Cow.record.prototype =
         this._rev = config._rev || this._rev;
         this._status = config.status || this._status;
         this._created = config.created || this._created;
+        this._deleted = config.deleted || this._deleted;
         this._updated = config.updated || this._updated;
         this._data = config.data || this._data || {};
         return this;

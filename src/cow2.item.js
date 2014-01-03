@@ -20,7 +20,7 @@ Cow.item.prototype =
         var self = this;
         switch(arguments.length) {
         case 0:
-            return self.data('permissions');
+            return self.data('permissions') || [];
         case 1:
             if(typeof type === "string") {
                 return self._permissionsByType(type);
@@ -106,11 +106,11 @@ Cow.item.prototype =
         else if (group){
             ingroups.push(group);
         }
-        if(permission.length===0) {
+        if(!permission) {
             return false;
         }
         else {
-            var groups = permission[0].groups;
+            var groups = permission.groups;
             if(groups.length === 0) {
                 return false;
             }

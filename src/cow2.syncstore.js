@@ -9,6 +9,7 @@ Cow.syncstore =  function(config){
     }
 }; 
 
+
 Cow.syncstore.prototype =  
 { //pouchdb object
     //All these calls will be asynchronous and thus returning a promise instead of data
@@ -133,7 +134,7 @@ Cow.syncstore.prototype =
                      self._records.push(record); //Adding to the list
                  }
              });
-             //TODO: trigger 'storeInitialized'
+             self.trigger('datachange');
         });
         return promise;
      },
@@ -194,6 +195,7 @@ Cow.syncstore.prototype =
             }
             this._records.push(record); //Adding to the list
         }
+        this.trigger('datachange');
         return record;
     },
    /**
@@ -275,7 +277,7 @@ Cow.syncstore.prototype =
             var iditem = {};
             iditem._id = item._id;
             iditem.timestamp = item.timestamp();
-            iditem.status = item.status();
+            iditem.deleted = item.deleted();
             fids.push(iditem);    
         }
         return fids;
@@ -311,7 +313,7 @@ Cow.syncstore.prototype =
 		//Prepare copy of remote fids as un-ticklist, but only for non-deleted items
 		if (fidlist){
 			for (i=0;i<fidlist.length;i++){
-				if (fidlist[i].status != 'deleted'){
+				if (fidlist[i].deleted != 'true'){
 					copyof_rem_list.push(fidlist[i]._id);
 				}
 			}
@@ -324,11 +326,11 @@ Cow.syncstore.prototype =
 							if (rem_val._id == local_item._id){
 								found = 1;
 								//local is newer
-								if (rem_val._updated < local_item._updated){
+								if (rem_val.timestamp < local_item._updated){
 									returndata.pushlist.push(local_item.deflate());
 								}
 								//remote is newer
-								else if (rem_val._updated > local_item._updated){
+								else if (rem_val.timestamp > local_item._updated){
 									returndata.requestlist.push(rem_val._id);
 								}
 								//remove from copyremotelist
@@ -340,7 +342,7 @@ Cow.syncstore.prototype =
 							}
 					}
 					//local but not remote and not deleted
-					if (found == -1 && local_item.status() != 'deleted'){
+					if (found == -1 && local_item.deleted() != 'true'){
 						returndata.pushlist.push(local_item.deflate());
 					}
 			}
@@ -382,3 +384,5 @@ Cow.syncstore.prototype =
         return returndata;
     } 
 };
+//Adding some Backbone event binding functionality to the store
+_.extend(Cow.syncstore.prototype, Events);
