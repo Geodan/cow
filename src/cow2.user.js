@@ -7,10 +7,53 @@ Cow.user = function(config){
 Cow.user.prototype = 
 {
     __proto__: Cow.record.prototype,
-    getName: function(){
+    name: function(name){
+        if (name){
+            return this.data('name', name);
+        }
+        return this.data('name');
+    },
+    mail: function(mail){
+        if (mail){
+            return this.data('mail', mail);
+        }
         return this.data('mail');
     },
-    getMail: function(){
-        return this.data('mail');
+    /** 
+        activeprojects() - returns array of active projects
+        activeprojects(id) - adds project to array of active projects
+        activeprojects(id,true) - removes project from array of active projects
+    **/
+    activeprojects: function(projectid, deleteme){
+        var projectarr = this.data('activeprojects') || [];
+        if (projectid && deleteme){
+            var idx = projectarr.indexOf(projectid);
+            projectarr.splice(idx,1);
+            return this.data('activeprojects',projectarr);
+        }
+        if (projectid){
+            projectarr.push(projectid);
+            return this.data('activeprojects',projectarr);
+        }
+        return this.data('activeprojects') || [];
+    },
+    /** 
+        mutedprojects() - returns array of muted projects
+        mutedprojects(id) - adds project to array of muted projects
+        mutedprojects(id,true) - removes project from array of muted projects
+    **/
+    mutedprojects: function(projectid, deleteme){
+        var projectarr = this.data('mutedprojects') || [];
+        if (projectid && deleteme){
+            var idx = projectarr.indexOf(projectid);
+            projectarr.splice(idx,1);
+            return this.data('mutedprojects',projectarr);
+        }
+        if (projectid){
+            projectarr.push(projectid);
+            return this.data('mutedprojects',projectarr);
+        }
+        return this.data('mutedprojects') || [];
     }
+    
 };
