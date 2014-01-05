@@ -8,7 +8,14 @@ Cow.peer = function(config){
 
 Cow.peer.prototype = {
         __proto__: Cow.record.prototype,
-        getUserId: function(){
-            return this._data.userid;
+        /**
+            user() - return id of currently connected user
+            user(id) - sets id of currently connected user, returns peer object
+        **/
+        user: function(id){
+            if (id) {
+                return this.data('userid',id);
+            }
+            return this.data('userid');
         }
 };

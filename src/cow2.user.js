@@ -19,6 +19,19 @@ Cow.user.prototype =
         }
         return this.data('mail');
     },
+    /**
+        isActive() - returns wether or not the user is connected to a peer at the moment
+    **/
+    isActive: function(){
+        var returnVal = false;
+        var peers = this._store._core.peers();
+        for (var i = 0;i < peers.length;i++){
+            if (peers[i].user() == this._id){
+                returnVal = true;
+            }
+        }
+        return returnVal;
+    },
     /** 
         activeprojects() - returns array of active projects
         activeprojects(id) - adds project to array of active projects

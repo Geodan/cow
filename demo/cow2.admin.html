@@ -139,7 +139,9 @@ var width = 960,
     root;
 
 var force = d3.layout.force()
-    .linkDistance(80)
+    .linkDistance(function(d){
+        return d.target.distance || 20;
+     })
     .charge(-120)
     .gravity(.05)
     .size([width, height])
@@ -165,6 +167,7 @@ function update() {
   force
       .nodes(nodes)
       .links(links)
+      
       .start();
   
   // Update links.
@@ -304,18 +307,21 @@ var updateSpider = function(){
             klass: 'peer',
             uid: '1',
             size: 10,
+            distance: 50,
             children:[]
         },{
             name: 'users',
             klass: 'user',
             uid: '2',
             size: 10,
+            distance: 50,
             children: []
         },{
             name: 'projects',
             klass: 'project',
             uid: '3',
             size: 10,
+            distance: 50,
             children: []
         }
         ]
