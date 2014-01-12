@@ -10,7 +10,7 @@
 <!--  <link href='http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css' rel='stylesheet' type='text/css'>
 -->  <link href='http://fonts.googleapis.com/css?family=Dosis:300,500' rel='stylesheet' type='text/css'>
 
-
+  <script src="./lib/shapefile-js/shp.min.js" type="text/javascript"></script>
   <script src="../lib/underscore/underscore-min.js" type="text/javascript"></script>
   <script src="../lib/jquery-2.0.3/jquery-2.0.3.js" type="text/javascript"></script>	
   <script src="./lib/jquery-ui-1.10.2/jquery-ui.js" type="text/javascript"></script>
@@ -39,8 +39,8 @@
 	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6/leaflet.ie.css" />
   <![endif]-->
 
-  <script src="./lib/d3layer/d3layer.js" type="text/javascript"></script>
-  <link rel="stylesheet" href="./lib/d3layer/d3layer.css" />
+  <script src="../lib/d3layer/d3layer.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="../lib/d3layer/d3layer.css" />
   
   <!-- Peerjs -->
   <!--
@@ -63,6 +63,7 @@
   <script src="./scripts/cow2.d3layer_utils.js" type="text/javascript"></script>
   <script src="./scripts/cow2.leaflmap.js" type="text/javascript"></script>
   <script src="./scripts/cow2.icm.js" type="text/javascript"></script>
+  <script src="./scripts/cow2.shapedrop.js" type="text/javascript"></script>
   
   <script src="scripts/cookies.js" type="text/javascript"></script>
 <style>
@@ -382,6 +383,7 @@ var defaultgroup;
 //
 
 $(document).ready(function(){
+
   d3.select('#msgbox').style('display','none');
     
   core = new Cow.core({
@@ -410,6 +412,8 @@ $(document).ready(function(){
     var layercontrol = new L.control.layers(baseLayers).setPosition("bottomleft").addTo(map);
     L.Control.measureControl({position: "bottomleft"}).addTo(map);
   
+    shapedrop_init(map);
+    
   //TODO: move username admin to other place
   //Some username administration with cookies
   var username=getCookie("username");
