@@ -161,7 +161,7 @@ Cow.websocket.prototype = {
             mypeer.data('userid',core.user()._id);
         }
         mypeer.sync();
-        //TODO this.core.trigger('ws-connected',payload); 
+        //TODO this.core.trigger('ws-connected',payload);
         
         //initiate peer-sync
         var message = {};
@@ -206,8 +206,9 @@ Cow.websocket.prototype = {
     
     //A peer has disconnected, remove it from your peerList
     _onPeerGone: function(payload) {
-        var peerGone = payload.gonePeerID;    
-        this._core.peerStore().removePeer(peerGone);        
+        var peerGone = payload.gonePeerID;
+        this._core.peers(peerGone).deleted(true).sync();
+        //this._core.peerStore().removePeer(peerGone);        
         //TODO this.core.trigger('ws-peerGone',payload); 
     },
     _onError: function(e){
@@ -308,6 +309,13 @@ Cow.websocket.prototype = {
         if (command == 'zoomTo'){
             if (targetuser && targetuser == this._core.user().id()){
                 this.trigger(command, payload.location);
+            }
+        }
+        if (command == 'killPeer'){
+            if (targetuser && targetuser == this._core.peerid()){
+                //TODO: make this more gentle, possibly with a trigger
+                window.open('', '_self', ''); 
+                window.close();
             }
         }
     }

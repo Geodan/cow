@@ -44,23 +44,14 @@ Cow.item.prototype =
     },
     _permissionsByType: function(type) {
         var permissions = this.permissions();
-        //TT: this used to return an array, but afaik there can/should be only 1 permission per type
-        //var returnval = [];
         var returnval = null;
         for (var i=0;i<permissions.length;i++){
             var permission = permissions[i];
             if (permission.type == type){
-                //returnval.push(this._permissions[i]);
                 returnval = permission;
             }
         }
         return returnval;
-        /*OBS
-        var result = $.grep(this._permissions, function(e){ 
-                return e.type === type; 
-        });
-        return result;
-        */
     },
     _setPermission: function(type,groups) {
         var self = this;
@@ -78,7 +69,8 @@ Cow.item.prototype =
             permissions.push(permission);
         }
         else {
-            if(!Array.isArray(groups)&&!self.permissionHasGroup(type,groups)) {            
+            if(!Array.isArray(groups)&&!self.permissionHasGroup(type,groups)) {
+                //1 group that is not in permissionlist yet
                 permission.groups.push(groups);
             }
             else {
@@ -157,27 +149,25 @@ Cow.item.prototype =
         removePermission('type',[groups]) removes the groups from the permission type
     */
     removePermission: function(type,groups) {
-        var self = this;
-        var index, permission, i;
+        var index, permission, permissions, i;
         switch(arguments.length) {
         case 0:
             throw("this function doesn't take no arguments");
         case 1:
             if(typeof type === "string") {
                 index = null;
-                for (i=0;i<self._permissions.length;i++){
-                //$.each(self._permissions,function(i){
-                    permission = self._permissions[i];
-                    if(permission._type == type) {
+                permissions = this.permissions();
+                for (i=0;i<permissions.length;i++){
+                    permission = permissions[i];
+                    if(permission.type == type) {
                         index = i;
                     }
                 }
                 if(index >= 0) {
-                    self._permissions.splice(index,1);
+                    permissions.splice(index,1);
                 }
-                self.data('permissions', self._permissions);
-                //self._timestamp = new Date().getTime();
-                return self.permissions();
+                this.data('permissions', permissions);
+                return this;
             }
             else {
                 throw('type should be a string');
@@ -185,14 +175,21 @@ Cow.item.prototype =
             break;
         case 2: 
             if(typeof type === "string") {
-                permission = self.permissions(type);
-                if(permission.length>=0) {
-                    var pgroups = permission[0].groups;
+                permissions = this.permissions();
+                for (i=0;i<permissions.length;i++){
+                    permission = permissions[i];
+                    if(permission.type == type) {
+                        index = i;
+                    }
+                }
+                //TODO, this is prone to errors
+                permission = permissions[index];
+                if(permission) {
+                    var pgroups = permission.groups;
                     if(pgroups.length >= 0) {
                         if(!Array.isArray(groups)) {
                             index = null;
                             for (i=0;i<pgroups.length;i++){
-                            //$.each(pgroups, function(i){
                                 if(pgroups[i] == groups) {            
                                     index = i;
                                 }            
@@ -203,10 +200,8 @@ Cow.item.prototype =
                         }
                         else {
                             for (i=0;i<groups.length;i++){                            
-                            //$.each(groups,function(j) {
                                 index = null;
                                 for (j=0;j<pgroups.length;j++){
-                                //$.each(pgroups, function(i){
                                     if(pgroups[j] == groups[i]) {            
                                         index = j;
                                     }                                    
@@ -217,10 +212,11 @@ Cow.item.prototype =
                             }
                         }
                     }
+                    permission.groups = pgroups;
+                    this.data('permissions',permissions);
                 }
                 //self._timestamp = new Date().getTime();
-                self.data('permissions',self._permissions);
-                return self.permissions();
+                return this;
             }
             else {
                 throw('type should be a string');

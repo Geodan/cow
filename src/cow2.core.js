@@ -61,6 +61,7 @@ Cow.core.prototype =
         if (id){
             this.projects(id); //creates project if not existing
             this._projectid = id;
+            this.trigger('projectChanged');
             return true;
         }
         else {
@@ -92,7 +93,34 @@ Cow.core.prototype =
             return this.users(this._userid); 
         }
     },
-    
+    /**
+        peer() - return my peer object
+    **/
+    peer: function(){
+        if (this.peerid()){
+            return this.peers(this.peerid());
+        }
+        else {
+            return false;
+        }
+    },
+    /**
+        location() - get the last known location
+        location(location) - set the current location
+    **/
+    location:   function(location){
+        if (location){
+            this._location = location;
+            if (this.peerid()){
+                this.peers(this.peerid()).data('location',location).sync();
+            }
+            return this._location;
+        }
+        else {
+            return this._location;
+        }
+        
+    },
     //returns the _projectstore object
     projectStore:       function(){
         return this._projectStore;
@@ -122,9 +150,23 @@ Cow.core.prototype =
     users:       function(config){
         return this._userStore.records(config);
     }, 
-    
+    /**
+        activeUsers() - returns array with userobjects that are currently active
+    **/
+    activeUsers: function(){
+        var returnArr = [];
+        var users = this.users();
+        for (var i = 0;i<users.length;i++){
+            if (users[i].isActive()){
+                returnArr.push(users[i]);
+            }
+        }
+        return returnArr;
+    },
     //return the _websocket object
     websocket: function(){
         return this._websocket;
     } 
 };
+//Adding some Backbone event binding functionality to the store
+_.extend(Cow.core.prototype, Events);

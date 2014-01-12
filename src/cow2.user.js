@@ -26,11 +26,25 @@ Cow.user.prototype =
         var returnVal = false;
         var peers = this._store._core.peers();
         for (var i = 0;i < peers.length;i++){
-            if (peers[i].user() == this._id){
+            if (peers[i].user() == this._id && !peers[i].deleted()){
                 returnVal = true;
             }
         }
         return returnVal;
+    },
+    /**
+        groups() - returns an array of groups that the user is member of
+    **/
+    groups: function(){
+        var core = this._store._core;
+        var returnArr = [];
+        var groups = core.project().groups();
+        for (var i = 0;groups.length;i++){
+            if (groups[i].hasMember(core.user().id())){
+                returnArr.push(groups[i]);
+            }
+        }
+        return returnArr;
     },
     /** 
         activeprojects() - returns array of active projects

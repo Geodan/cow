@@ -46,6 +46,9 @@ Cow.project = function(config){
             }
             return returnarr;
         },
+        /**
+            messages() - get only items with type==msg
+        **/
         messages: function(){
             var items = this._records;
             var returnarr = [];

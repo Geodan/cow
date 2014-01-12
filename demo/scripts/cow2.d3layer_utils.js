@@ -13,7 +13,7 @@ cow.textbox = function(feature,obj, svg){
     var name = feature.properties.name || "";
     var desc = feature.properties.desc || "";
     var ownername = feature.properties.owner || "Anoniem";
-    //var mygroups = self.core.project.myGroups();
+    //var mygroups = self.core.project().myGroups();
     var groupnames = "";
     if (item.permissions('edit')){
         var editgroups = item.permissions('edit').groups;
@@ -278,33 +278,67 @@ cow.menu = function(feature,obj, self){
             }
             else if (name == 'T'){ //edit tekst
                 entity.remove();
+                var item = self._map.core.project().items(feature.properties.key);
+                item.data('msg','emtpy').sync();//TODO
+                //icm.msg(item);
+                /*
                 name = feature.properties.name || "";
                 desc = feature.properties.desc || "";
                 innerHtml = '' + 
                 //+ translator.translate('Label') + ': <input id="titlefld" name="name" value ="'+name+'""><br/>'
-                'Description: <br> <textarea id="descfld" name="desc" rows="6" cols="25">'+desc+'</textarea><br/>' + 
+                'Description: <br> <textarea class="mention" id="descfld" name="desc" rows="6" cols="25">'+desc+'</textarea><br/>' + 
                 //+ '<button class="popupbutton" id="closeButton"">' + translator.translate('Opslaan')+'</button>'
                 '';
                 
+                
+                
                 var div = d3.select('body').append('div')
-                    .style('left',divloc[0] + 0 +  'px')
-                    .style('top',divloc[1] + 0 + 'px')
+                    //.style('left',divloc[0] + 0 +  'px')
+                    //.style('top',divloc[1] + 0 + 'px')
+                    .style('left',100 +  'px')
+                    .style('top',100 + 'px')
                     .classed("popup share ui-draggable", true);
+                
+                
                 var sheader = div.append('div')
                     .classed('sheader', true)
                     .attr('title','Dit object is gemaakt door');
                 sheader.append('span')
                     .classed('group populatie',true); //TODO add own groups here
-                sheader.append('span').html(groupnames);
+                //sheader.append('span').html(groupnames);
                 var scontent = div.append('div')
                     .classed('scontent', true);
                 desc = desc.replace(/\r\n?|\n/g, '<br />');
                 scontent.append('div').classed('ssubheader', true).html(innerHtml);
+                var names = ['Tom', 'Steven', 'Luis'];
+                var tags = ['Flood','hospital'];
+                $('#descfld').textcomplete([
+                {
+                    match: /(^|\s)@(\w*)$/,
+                    search: function (term, callback) {
+                      callback($.map(names, function (element) {
+                            return element.indexOf(term) === 0 ? element : null;
+                        }));
+                    },
+                    replace: function (value) {
+                      return '$1@' + value + ' ';
+                    }
+                 },{
+                    match: /(^|\s)#(\w*)$/,
+                    search: function (term, callback) {
+                      callback($.map(tags, function (element) {
+                            return element.indexOf(term) === 0 ? element : null;
+                        }));
+                    },
+                    replace: function (value) {
+                      return '$1#' + value + ' ';
+                    }
+                 }]);
                 scontent.append('div')
                         .html('Opslaan')
                         .classed('popupbutton', true)
                         .on('click',function(z){
-                                self.changeFeature(self, feature);
+                                leaflmap.changeFeature(self, feature);
                                 div.remove();
                         });
                 sfooter = div.append('div')
@@ -344,7 +378,7 @@ cow.menu = function(feature,obj, self){
             else if (name == 'S'){//Share permissions
                 entity.remove();
                 
-                var mygroups = self.core.project.myGroups();
+                var mygroups = self.core.project().myGroups();
                 groupnames = "";
                 $.each(mygroups,function(i,d){
                     groupnames = groupnames + self.core.projects(1).groups(d).data('name');

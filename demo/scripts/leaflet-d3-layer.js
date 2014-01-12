@@ -211,7 +211,9 @@ Based on: https://github.com/rclark/leaflet-d3-layer/blob/master/dist/scripts/le
 			//Now apply remaining styles of feature (possible doing a bit double work from previous loop)
 			if (d.style) { //If feature has style information
 				for (var key in d.style){ //run through the styles
-				    path.style(key,d.style[key]); //and apply them
+				    if (d.style[key] != null){
+				        path.style(key,d.style[key]); //and apply them
+				    }
 				}
 			}
 		  }
