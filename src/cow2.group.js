@@ -7,6 +7,11 @@ Cow.group = function(config){
 Cow.group.prototype = 
 {
     __proto__: Cow.record.prototype,
+    /**
+        members() - return array of member ids
+        members(id) - add id to member array, return group object
+        members([id]) - add id's to member array, return group object
+    **/
     members: function(userid){
         var self = this;
         switch(arguments.length) {
@@ -14,13 +19,15 @@ Cow.group.prototype =
                 return this._getMembers();
             case 1:
                 if (!Array.isArray(userid)) {
-                    return this._addMember(userid);
+                    //return this._addMember(userid);
+                    return this;
                 }
                 else {
                    $.each(peerid, function(i,d){
                            self._addMember(d);
                    });
-                   return this._getMembers();
+                   //return this._getMembers();
+                   return this;
                 }
                 break;
             default:
@@ -45,6 +52,9 @@ Cow.group.prototype =
         }
         return userid;
     },
+    /**
+        removeMember(id) - remove id from array of member id's, return group object
+    **/
     removeMember: function(userid){
         var core = this._store._core;
         var memberList = this.members();
@@ -54,13 +64,17 @@ Cow.group.prototype =
                 memberList.splice(i,1); //Remove from list
                 this.data('members', memberList);
                 //TODO core.trigger('projectListChanged', this.core.UID);
-                return;
+                return this;
             }
         }
     },
+    /**
+        removeAllMembers() - empty 
+    **/
     removeAllMembers: function(){
         var memberList = [];
         this.data('members', memberList);
+        return this;
     },
     //Next can be confusing: groups can be member of another group, hence the groups item in a group
     //They are not the same in functionality, the groups is only an array of group id's
