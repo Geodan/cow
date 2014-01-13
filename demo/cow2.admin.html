@@ -50,6 +50,8 @@
   <script src="../src/cow2.core.js" type="text/javascript"></script>
   <script src="../src/cow2.js" type="text/javascript"></script>
   
+  <script src="./scripts/cow2.icm.js" type="text/javascript"></script>
+  
   <script src="scripts/cookies.js" type="text/javascript"></script>
 <style>
 HTML {
@@ -139,7 +141,9 @@ var width = 960,
     root;
 
 var force = d3.layout.force()
-    .linkDistance(80)
+    .linkDistance(function(d){
+        return d.target.distance || 20;
+     })
     .charge(-120)
     .gravity(.05)
     .size([width, height])
@@ -165,6 +169,7 @@ function update() {
   force
       .nodes(nodes)
       .links(links)
+      
       .start();
   
   // Update links.
@@ -293,7 +298,7 @@ function flatten(root, oldnodes) {
 </script>
 
 <script type="text/javascript">
-                  
+
 var updateSpider = function(){
     root = {
         name: 'root',
@@ -304,24 +309,27 @@ var updateSpider = function(){
             klass: 'peer',
             uid: '1',
             size: 10,
+            distance: 50,
             children:[]
         },{
             name: 'users',
             klass: 'user',
             uid: '2',
             size: 10,
+            distance: 50,
             children: []
         },{
             name: 'projects',
             klass: 'project',
             uid: '3',
             size: 10,
+            distance: 50,
             children: []
         }
         ]
     }
     
-    var peerdata = core.peers();
+    var peerdata = icm.peers();
     for (var i = 0;i < peerdata.length;i++){
         var child = {};
         var peer = peerdata[i]; 
@@ -339,6 +347,12 @@ var updateSpider = function(){
             child.name = user.data('name') || user.id();
             child.uid = 'u'+user.id();
             child.klass = 'user';
+            if (user.isActive() == true){
+                child.distance = 100; 
+            }
+            else {
+                child.distance = 50;
+            }
             if (!user.deleted()){
                 root.children[1].children.push(child);
             }
@@ -348,25 +362,27 @@ var updateSpider = function(){
     core.projectStore().initpromise.done(function(x){
         var projectdata = core.projects();
         for (var i = 0;i < projectdata.length;i++){
-            var store = projectdata[i].itemStore(); 
+            var store = projectdata[i].groupStore(); 
             store.initpromise.done(function(x){
-                var features = store.features();
+                var features = store.records();
                 var child = {};
                 var project = projectdata[i]; 
                 child.name = project.data('name') || project.id();
                 child.uid = 'p'+project.id();
                 child.klass = 'project';
+                
                 child.children = [];
                 for (var j = 0;j < features.length;j++){
                     var feature = features[j];
                     //adapt to d3 tree
                     var name;
-                    if (feature.data('feature')) name = feature.data('feature').geometry.type; 
-                    feature.name = name || feature.id();
+                    //if (feature.data('feature')) name = feature.data('feature').geometry.type; 
+                    feature.name = feature.data('name') || feature.id();
                     feature.uid = 'i'+feature.id();
                     feature.klass = 'item';
                     child.children.push(feature);
                 }
+                
                 
                 if (!project.deleted()){
                     root.children[2].children.push(child);

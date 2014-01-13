@@ -45,6 +45,10 @@ Cow.core = function(config){
 };
 Cow.core.prototype = 
 {
+    /**
+        peerid() -- get the current peerid
+        peerid(id) -- set the current peerid
+    **/
     peerid: function(id){
         this._peerid = id || this._peerid;
         return this._peerid;
@@ -61,6 +65,7 @@ Cow.core.prototype =
         if (id){
             this.projects(id); //creates project if not existing
             this._projectid = id;
+            this.trigger('projectChanged');
             return true;
         }
         else {
@@ -92,8 +97,37 @@ Cow.core.prototype =
             return this.users(this._userid); 
         }
     },
-    
-    //returns the _projectstore object
+    /**
+        peer() - return my peer object
+    **/
+    peer: function(){
+        if (this.peerid()){
+            return this.peers(this.peerid());
+        }
+        else {
+            return false;
+        }
+    },
+    /**
+        location() - get the last known location
+        location(location) - set the current location
+    **/
+    location:   function(location){
+        if (location){
+            this._location = location;
+            if (this.peerid()){
+                this.peers(this.peerid()).data('location',location).sync();
+            }
+            return this._location;
+        }
+        else {
+            return this._location;
+        }
+        
+    },
+    /**
+        projectStore() - returns the _projectstore object
+    **/
     projectStore:       function(){
         return this._projectStore;
     }, 
@@ -106,25 +140,53 @@ Cow.core.prototype =
     projects:       function(config){
             return this._projectStore.records(config);
     },
-    
+    /**
+        peerStore() - returns the _peerstore object
+    **/
     peerStore:  function(){
         return this._peerStore;
     },
+    /**
+        peers() - returns array of all peers
+        peers(id) - returns peer with id (or null)
+        peers({config}) - creates and returns peer
+    **/
     peers:              function(config){
         return this._peerStore.records(config);
     },
-    
-    //return the _userStore object
+    /**
+        userStore() - returns the _userstore object
+    **/
     userStore:      function(){
         return this._userStore;
     }, 
-    //return the user objects
+    /**
+        users() - returns array of all users
+        users(id) - returns user with id (or null)
+        users({config}) - creates and returns user
+    **/
     users:       function(config){
         return this._userStore.records(config);
     }, 
-    
-    //return the _websocket object
+    /**
+        activeUsers() - returns array with userobjects that are currently active
+    **/
+    activeUsers: function(){
+        var returnArr = [];
+        var users = this.users();
+        for (var i = 0;i<users.length;i++){
+            if (users[i].isActive()){
+                returnArr.push(users[i]);
+            }
+        }
+        return returnArr;
+    },
+    /**
+        websocket() - return the _websocket object
+    **/
     websocket: function(){
         return this._websocket;
     } 
 };
+//Adding some Backbone event binding functionality to the store
+_.extend(Cow.core.prototype, Events);

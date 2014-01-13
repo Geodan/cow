@@ -10,28 +10,30 @@
 <!--  <link href='http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css' rel='stylesheet' type='text/css'>
 -->  <link href='http://fonts.googleapis.com/css?family=Dosis:300,500' rel='stylesheet' type='text/css'>
 
-
+  <script src="./lib/shapefile-js/shp.min.js" type="text/javascript"></script>
   <script src="../lib/underscore/underscore-min.js" type="text/javascript"></script>
   <script src="../lib/jquery-2.0.3/jquery-2.0.3.js" type="text/javascript"></script>	
-  <script src="../lib/jquery-ui-1.10.2/jquery-ui.js" type="text/javascript"></script>  
-
+  <script src="./lib/jquery-ui-1.10.2/jquery-ui.js" type="text/javascript"></script>
+  <script src="./lib/jquery-textcomplete/jquery.textcomplete.js" type="text/javascript"></script>  
+  <script src="./lib/jquery-mentionsInput/jquery.mentionsInput.js" type="text/javascript"></script>
+  <link href='./lib/jquery-mentionsInput/jquery.mentionsInput.css' rel='stylesheet' type='text/css'>
   <!-- PouchDB -->
   <script src="../lib/pouchdb/pouchdb-nightly.min.js"></script>
 
   <!-- Adding leaflet and D3 libs -->
   
-  <script src="../lib/leaflet-0.7/leaflet.js"></script>
-  <script src="../lib/leaflet_draw/leaflet.draw.js"></script>
-  <script src="../lib/leaflet_label/leaflet.label.js"></script>
-  <script src="../lib/leaflet_measure/leaflet.measurecontrol.js"></script>
+  <script src="./lib/leaflet-0.7/leaflet.js"></script>
+  <script src="./lib/leaflet_draw/leaflet.draw.js"></script>
+  <script src="./lib/leaflet_label/leaflet.label.js"></script>
+  <script src="./lib/leaflet_measure/leaflet.measurecontrol.js"></script>
   
-  <link rel="stylesheet" href="../lib/leaflet-0.7/leaflet.css" />
-  <link rel="stylesheet" href="../lib/leaflet_draw/leaflet.draw.css" />
-  <link rel="stylesheet" href="../lib/leaflet_label/leaflet.label.css" />
-  <link rel="stylesheet" href="../lib/leaflet_measure/leaflet.measurecontrol.css" />
+  <link rel="stylesheet" href="./lib/leaflet-0.7/leaflet.css" />
+  <link rel="stylesheet" href="./lib/leaflet_draw/leaflet.draw.css" />
+  <link rel="stylesheet" href="./lib/leaflet_label/leaflet.label.css" />
+  <link rel="stylesheet" href="./lib/leaflet_measure/leaflet.measurecontrol.css" />
   
-  <script src="../lib/d3/d3.v3.min.js" charset="utf-8"></script>
-  <!--<script src="../lib/d3/topojson.v1.min.js"></script>-->
+  <script src="./lib/d3/d3.v3.min.js" charset="utf-8"></script>
+  <!--<script src="./lib/d3/topojson.v1.min.js"></script>-->
   
   <!--[if lte IE 8]>
 	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6/leaflet.ie.css" />
@@ -60,8 +62,10 @@
   <script src="./scripts/leaflet-d3-layer.js"></script>
   <script src="./scripts/cow2.d3layer_utils.js" type="text/javascript"></script>
   <script src="./scripts/cow2.leaflmap.js" type="text/javascript"></script>
+  <script src="./scripts/cow2.icm.js" type="text/javascript"></script>
+  <script src="./scripts/cow2.shapedrop.js" type="text/javascript"></script>
   
-  <script src="scripts/cookies.js" type="text/javascript"></script>
+  <script src="./scripts/cookies.js" type="text/javascript"></script>
 <style>
 HTML {
 	font-family: 'Dosis', Arial, sans-serif; 
@@ -71,7 +75,10 @@ HTML {
 	width: 100%;
 	height: 100%;
 	color: #555753;
-	overflow: hidden;
+	/*overflow: hidden;*/
+}
+body {
+    color: #555753;
 }
 h1{
 	font-family: 'Dosis', Arial, sans-serif;
@@ -87,78 +94,279 @@ h3 {
 	color: #555753;
 }
 
-#peerlist {
+#map {
     position: absolute;
     left: 0px;
-    top: 50px;
+    width: 80%;
 }
 
-#userlist {
+#sidebar {
+    float: right;
     position: absolute;
-    left: 30%;
-    top: 50px;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    width: 330px;
+    background: white;
+    z-index: 1001;
 }
 
-#projectlist {
+.item.msg {
+       background-color: #cccccc;
+       cursor: pointer;
+}
+.item.feature {
+       background-color: #aaaaaa;
+       cursor: pointer;
+}
+path {
+    cursor: pointer;
+}
+
+.group {
+    width: 10px;
+    height: 10px;
+    border: solid 2px black;
+    display: inline-block;
+    margin: 2px;
+    border-radius: 2px;
+    margin-bottom: 0px;
+}
+
+.iedereen, .individueel {
+    padding: 10px;
+    border-bottom: solid 1px #eeeeec;
+}
+.eigen {
+    padding: 0px;
+}
+
+.selected{
+    background-color: steelBlue;
+    width: 100%;
+}
+/*
+.unselected:hover{
+    width: 100%;
+    background-color: #0099cc;
+}
+.selected:hover{
+    width: 100%;
+    background-color: #0099cc;
+}
+*/
+.public {
+    background: black;
+}
+.populatie, .Populatie{
+    background: green;
+}
+.evacuatie, .Evacuatie {
+    background: purple;
+}
+.opvang, .Opvang {
+    background: orange;
+}
+#msglist {
+    position: relative;
+}
+.list {
+    position: relative;
+    height: 400px;
+    top: 10px;
+    bottom: 10px;
+    overflow: auto;
+}
+.item {
+    position: relative;
+    
+}
+.itembutton {
     position: absolute;
-    left: 60%;
-    top: 50px;
+    background: 'red';
 }
-
-.project {
-    background-color: #ff6666;
+.invisible {
+    display: none;
 }
 
 </style>
 <script type="text/javascript">
 
+
+
 var updateLists = function(){
-  var data = core.peers();
+  var data = icm.peers();
   var peer = d3.select('#peerlist').selectAll('.peer')
     .data(data, function(d){return 'peer'+d._id.toString();});
-   peer.enter().append('div')
+  peer.enter().append('div')
     .attr('id', function(d){return 'peer'+d._id.toString();})
     .classed('peer', true);
-    peer.html(function(d){
+  peer.html(function(d){
         var user = core.users(d.getUserId());
         var username = user._id;
         var since = new Date(d.timestamp()).toLocaleString();
         return '<h3> ' + d._id + ' ('+ username+ ') <small> Since ' + since + ' </h3>'});
-    peer.exit().remove();
+  peer.exit().remove();
   
   core.userStore().initpromise.done(function(x){
-    var data = core.users();
+    var data = icm.activeusers();
     var user = d3.select('#userlist').selectAll('.user')
         .data(data, function(d){return 'user'+ d._id.toString();});
        user.enter().append('div')
         //.attr('id', function(d){return 'user'+d._id.toString();})
         .classed('user', true);
-       user.html(function(d){return '<h3>' + d._id + (d.data('name')||"") + '</h3>'})
+       user.html(function(d){return '<h3>' + (d.data('name')||"") + '</h3>'})
        user.exit().remove();
         
   });
   
+  
   core.projectStore().initpromise.done(function(x){
-      var expand_project = function(d){
         var self = this;
-        d.itemStore().initpromise.done(function(x){
-            var data = d.items();
+        //ITEMS
+        core.project().itemStore().initpromise.done(function(x){
+        
+            var processMsg = function(item, msgbox){
+                msgbox.classed('selected',false);
+                var id = item.id();
+                //var msg = msgbox.select('textarea').html() || "";
+                var msg = msgbox.select('textarea')[0][0].value || "";
+                //Note to self:
+                // (^|\s) begin of string or space
+                // (\w+) whole word
+                var tags = (/(^|\s)#(\w+)/g);
+                var mentions = (/(^|\s)@(\w+)/g);
+                var subjects = (/(\w+)=(\w+)/g);
+                
+                //Get tags
+                var tagarray = [];
+                var match;
+                while (match = tags.exec(msg)){
+                    tagarray.push(match[2]);
+                }
+                item.data('tags',tagarray);
+                
+                //Get mentions
+                var mentionarray = [];
+                while (match = mentions.exec(msg)){
+                    mentionarray.push(match[2]);
+                }
+                item.data('mentions',mentionarray);
+                
+                //Get subjects
+                while (match = subjects.exec(msg)){
+                    item.data(match[1],match[2]);
+                }
+                
+                var type = item.data('type') || 'msg';
+                if (type == 'feature'){
+                    item.data('feature').properties.desc = msg;
+                    item.data('feature').properties.name = name;
+                }
+                item.data('type',type).data('msg',msg).sync();
+                
+            };
+        
+            var data = icm.messages('edit');
+            var item = d3.select('#msglist .list').selectAll('.item')
+                .data(data, function(d){return 'item'+ d._id.toString();});
+            var newitem = item.enter().append('div')
+                .attr('id', function(d){return 'msg'+d._id.toString();})
+                .classed('item', true)
+                .classed('feature', function(d){return d.data('type') == 'feature';})
+                .classed('msg', function(d){return d.data('type') == 'msg';});
+
+            item.each(function(d){
+                var me = d3.select(this);
+                if (me.classed('selected')){
+                    //Do nothing
+                    me.on('click', null);
+                }
+                else {
+                    me.html('');
+                    var card = me.append('div').classed('card',true);
+                    card.append('h3').html(function(d){return d.data('name');});
+                    card.append('span').html(function(d){
+                        var subjects = (/(\w+)=(\w+)/g);
+                        var msg = d.data('msg');
+                        var msg = msg.replace(subjects,"");
+                        return  msg + '<br><small>'+new Date(d.timestamp()).toLocaleTimeString()+'</small><br>';
+                    });
+                    card.append('div').html(function(d){
+                        return (d.data('tags') || []).toString();
+                    });
+                    
+                    var form = me.append('div').classed('form',true).classed('invisible',true);
+                    form.append('textarea')
+                        .attr('id','nwmsg'+d.id()).attr('cols','30').attr('rows','6')
+                        .on('focus', function(d){ //Focus happens on keyboard 'tabbing'
+                            //console.log(d.id() + 'got focus');
+                            
+                            //me.classed('selected',true);
+                            //me.select('.form').classed('invisible',false);
+                        })
+                        .on('blur', function(d){
+                                console.log(d.id() + 'got blur');
+                                processMsg(d,me);
+                         })
+                        .html(d.data('msg'));
+                        
+                    card.on('click',function(d){
+                        var me = d3.select('#msg'+d._id.toString());
+                        me.select('.card').classed('invisible',true);
+                        me.select('.form').classed('invisible',false);
+                        document.getElementById('nwmsg'+d.id());//.focus();
+                        //me.select('textarea');
+                        me.classed('selected',true);
+                        //Zoom to feature
+                        if (d.data('type') == 'feature'){
+                            leaflmap._map.fitBounds(L.geoJson(d.data('feature')).getBounds());
+                        }
+                        me.call(icm.msg,d);
+                    });
+                }
+            });
+            
+            item.exit().remove();
             
         });
-        d.groupStore().initpromise.done(function(x){
-            var data = d.groups();
-            d3.select(self).append('h4').html('Groups: ');
-            var group = d3.select(self).selectAll('.group').data(data, function(e){return 'group'+e._id.toString()});
+      //GROUPS  
+      core.project().groupStore().initpromise.done(function(x){
+            var data = icm.groups();
+            var item = d3.select('#grouplist').selectAll('.group')
+                .data(data, function(d){return 'group'+ d._id.toString();});
+            var div = item.enter().append('div')
+                .append('span').html(function(d){
+                    var members = d.members();
+                    return d.data('name') + ' (<small>'+members.toString()+'</small>)<br>';
+                }).attr('class',function(d){
+                    return 'group ' + d.data('name');
+                });
             
+            div.on('click',function(d){
+                //TODO add/remove membership
+            });
+            item.exit().remove();
+        });  
+        
+        
+        //core.project().groupStore().initpromise.done(function(x){
+        //    var data = core.project().groups();
+        //    d3.select(self).append('h4').html('Groups: ');
+        //    var group = d3.select(self).selectAll('.group').data(data, function(e){return 'group'+e._id.toString()});
+        //    
+        //});
+        
+        //PROJECTS
+        var data = icm.projects();
+        var project = d3.select('#projectlist').selectAll('.project')
+            .data(data, function(d){return 'project'+d._id.toString();});
+        project.enter().append('div').classed('project',true).attr('id',function(d){return 'project'+d._id.toString();});
+        project.html(function(d){return d.data('name')});
+        project.on('click', function(d){
+            core.project(d.id());
         });
-        
-        
-      }
-      
-      var data = core.projects();
-      var project = d3.select('#projectlist').selectAll('.project')
-        .data(data, function(d){return 'project'+d._id.toString();});
-       
+        project.exit().remove();
    });
 }
 
@@ -167,8 +375,7 @@ var core;
 var leaflmap;
 var map;
 var defaultproject;
-var defualtgroup;
-
+var defaultgroup;
 
 
 //
@@ -177,6 +384,8 @@ var defualtgroup;
 
 $(document).ready(function(){
 
+  d3.select('#msgbox').style('display','none');
+    
   core = new Cow.core({
      wsUrl: 'wss://websocket.geodan.nl:443/new'
   });
@@ -189,13 +398,6 @@ $(document).ready(function(){
     var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
     });
-    // add Dutch AHN layer
-    var ahnUrl = "http://t3.edugis.nl/tiles/tilecache.py?map=maps/edugis/cache/hoogte.map";
-    var ahnLayer = L.tileLayer.wms(ahnUrl, {
-        layers: 'hoogtes',
-        format: 'image/png',
-        transparent: true
-    });
     // Add a darker themd OSM layer
     var tileUrl = 'http://a{s}.acetate.geoiq.com/tiles/acetate-hillshading/{z}/{x}/{y}.png';
     var osmDarkLayer = L.tileLayer(tileUrl, {
@@ -206,10 +408,12 @@ $(document).ready(function(){
     }).addTo(map);
     
     //Layer controls
-    var baseLayers = {"Open Street Map": osmLayer, "Open Street Map (achtergrond)": osmDarkLayer, "Hoogtekaart": ahnLayer};
+    var baseLayers = {"Open Street Map": osmLayer, "OSM Dark": osmDarkLayer};
     var layercontrol = new L.control.layers(baseLayers).setPosition("bottomleft").addTo(map);
     L.Control.measureControl({position: "bottomleft"}).addTo(map);
   
+    shapedrop_init(map);
+    
   //TODO: move username admin to other place
   //Some username administration with cookies
   var username=getCookie("username");
@@ -250,9 +454,18 @@ $(document).ready(function(){
         }
         defaultgroup.members(core.user().id()); //make me a member
       });
+      core.project(1); //set 1 as active project
   });
   
-  window.setInterval(updateLists, 2000);
+  //window.setInterval(updateLists, 2000);
+  core.projectStore().on('datachange',updateLists);
+  core.userStore().on('datachange',updateLists);
+ 
+  core.on('projectChanged',function(){
+    updateLists();
+    core.project().itemStore().on('datachange',updateLists);
+    core.project().groupStore().on('datachange',updateLists);
+  });
   
   //What to do when a user changes name
   $('#myname').on('blur', function(e, ui) {
@@ -260,6 +473,15 @@ $(document).ready(function(){
     logon(username);
     setCookie("username",username,1);
   });
+  
+  var tracker = new icm.tracker();
+  tracker.startTracking();
+  core.websocket().on('connected',function(){
+    if (core.location()){
+        core.peer().data('location',core.location());
+    }
+  });
+  
 });
  
 
@@ -275,8 +497,23 @@ $(document).ready(function(){
     <!--
     <div id="peerlist"><h1>Peers</h1></div>
     <div id="userlist"><h1>Users:</h1></div>
-    <div id="projectlist"><h1>Projects:</h1></div>
+    <div id="messagelist"><h1>Messages:</h1></div>
     -->
+    <div id="sidebar">
+        <div id="projectlist"><h1>Projects:</h1></div>
+        <div id="userlist"><h1>Users:</h1></div>
+        <div id="grouplist"><h1>Groups:</h1></div>
+        <div id="msglist"><h1>Messages:</h1>
+            <div class='list'></div>
+        </div>
+        <div id="msgbox">
+            
+            
+        </div>
+    </div>
+    
+    
+    
   </div>
   <div id="cow"></div>	
   <div id="help" ></div>

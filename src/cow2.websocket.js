@@ -9,6 +9,9 @@ Cow.websocket = function(config){
 
 
 Cow.websocket.prototype = {
+    /**
+        disconnect() - disconnect us from websocket server
+    **/
     disconnect: function() {
         if (this._connection){
             this._connection.close();    
@@ -18,6 +21,9 @@ Cow.websocket.prototype = {
             throw('No websocket active');
         }
     },
+    /**
+        connect(url) - connect to websocket server on url, returns connection
+    **/
     connect: function(url) {
         var core = this.core;
         if (!this._connection || this._connection.readyState != 1) //if no connection
@@ -37,9 +43,18 @@ Cow.websocket.prototype = {
         }
         return connection;
     },
+    /**
+        connection() - returns connection object
+    **/
     connection: function(){
         return this._connection;
     },    
+    /**
+        sendData(data, action, target) - send data to websocket server with params:
+            data - json object
+            action - string that describes the context of the message
+            target - (optional) id of the target peer
+    **/
     sendData: function(data, action, target){
         //TODO: check if data is an object
         var message = {};        
@@ -161,7 +176,7 @@ Cow.websocket.prototype = {
             mypeer.data('userid',core.user()._id);
         }
         mypeer.sync();
-        //TODO this.core.trigger('ws-connected',payload); 
+        //TODO this.core.trigger('ws-connected',payload);
         
         //initiate peer-sync
         var message = {};
@@ -206,8 +221,9 @@ Cow.websocket.prototype = {
     
     //A peer has disconnected, remove it from your peerList
     _onPeerGone: function(payload) {
-        var peerGone = payload.gonePeerID;    
-        this._core.peerStore().removePeer(peerGone);        
+        var peerGone = payload.gonePeerID;
+        this._core.peers(peerGone).deleted(true).sync();
+        //this._core.peerStore().removePeer(peerGone);        
         //TODO this.core.trigger('ws-peerGone',payload); 
     },
     _onError: function(e){
@@ -308,6 +324,13 @@ Cow.websocket.prototype = {
         if (command == 'zoomTo'){
             if (targetuser && targetuser == this._core.user().id()){
                 this.trigger(command, payload.location);
+            }
+        }
+        if (command == 'killPeer'){
+            if (targetuser && targetuser == this._core.peerid()){
+                //TODO: make this more gentle, possibly with a trigger
+                window.open('', '_self', ''); 
+                window.close();
             }
         }
     }

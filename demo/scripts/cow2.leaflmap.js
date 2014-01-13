@@ -1,5 +1,6 @@
 Cow.leaflmap = function(config){
     var self = this;
+    this.project = null;
     this.core = config.core;
     this.bbox = [-180, -85, 180, 85];
     this.bboxMax= [-180, -85, 180, 85];
@@ -27,17 +28,28 @@ Cow.leaflmap = function(config){
        self._onPeerStoreChanged();     
     });
     
+    /*OBS by projectChanged?    
     this.core.projectStore().on('datachange', function(e){
        self._reloadLayer();
-       self.core.projects(1).itemStore().on('datachange', function(e){ //TODO
+       self.core.project().itemStore().on('datachange', function(e){ //TODO
             self._reloadLayer();
        });
        
     });
-    
+    */
     this.core.websocket().on('zoomTo', function(location){
        console.log('Zooming to: ',location);
        self._map.setView([location.latitude,location.longitude],location.level);
+    });
+    
+    this.core.on('projectChanged', function(){
+       self._reloadLayer();
+       self.core.project().itemStore().on('datachange', function(e){ //TODO
+            self._reloadLayer();
+       });     
+    });
+    this.core.on('myLocationChanged', function(){
+            self._onMyLocationChanged();
     });
     
     return this;
@@ -48,6 +60,9 @@ Cow.leaflmap.prototype =
     map: function(){
         return this._map;
     },
+
+
+
     handleOnLoad: function(){
         var bounds = this._map.getBounds();
         var extent = {
@@ -86,7 +101,7 @@ Cow.leaflmap.prototype =
                     }
                 };
         if (core.peerid()){
-            var peer = self.core.peers(self.core.peerid());
+            var peer = core.peers(core.peerid());
             peer.data('extent',feature).sync();
         }
     },
@@ -105,19 +120,29 @@ Cow.leaflmap.prototype =
 		return this.controls;
 	},
 	
+	_onMyLocationChanged: function(){
+	    var myLocationCollection = {"type":"FeatureCollection","features":[]};
+	    myLocationCollection.push(self.core.location());
+	    if (self.myLocationLayer){
+	        self.myLocationLayer.data(myLocationCollection);
+	        self.myLocationLayer.updateData(self._map);
+	    }
+	},
+	
 	//Anything changed in the peers store results in redraw of peer items (extents & points)
 	_onPeerStoreChanged: function() {
 	    //var self = evt.data.widget;
 	    var self = this;
 	    var extentCollection = {"type":"FeatureCollection","features":[]};
 	    var locationCollection  = {"type":"FeatureCollection","features":[]};
-	    var peers = self.core.peers();
+	    var peers = icm.peers();
 	    for (i=0;i<peers.length;i++){
 	        var peer = peers[i];
 	        if (peer.data('extent') && peer.id() != self.core.peerid()){
 	            extentCollection.features.push(peer.data('extent'));
 	        }
 	        if (peer.data('location') && peer.id() != self.core.peerid()){
+	            //Own location is handled somewhere else
 	            locationCollection.features.push(peer.data('location'));
 	        }
 	    }
@@ -153,21 +178,25 @@ Cow.leaflmap.prototype =
 	_reloadLayer: function(){
 	    console.log('Reloadlayer');
 	    var self = this;
+	    
+	    //Start with featureCollections
+	    var collections = icm.featureCollections();
+	    for (i=0;i<collections.length;i++){
+	        var layer = new L.GeoJSON(collections[i].data('featureCollection'));
+	        if (!this._map.hasLayer(layer)){
+	                this._map.addLayer(layer);
+	        }
+	    }
+	    //End featCollections
+	    
 		self.editLayer.clearLayers(); //Remove existing leaflet features in editlayers (only d3 feats remaining) 
-
-		var arr = self.core.projects('1').items(); //TODO
-		var items = [];
-		for (i=0;i<arr.length;i++){
-		    if (arr[i].data('type') == 'feature'){
-		        items.push(arr[i]);
-		    }
-		}
 		var editCollection = {"type":"FeatureCollection","features":[]};
 		var viewCollection = {"type":"FeatureCollection","features":[]};
 		//TODO
+		var items = icm.features('edit');
+		var mygroups = self.core.project().myGroups();
 		$.each(items, function(i, item){
-		    //var mygroups = self.core.project.myGroups();
-		    var mygroups = self.core.projects(1).myGroups();
+		    
 			var feature = item.data('feature');
             if(feature === undefined) {
                 console.warn('old item type');
@@ -175,85 +204,30 @@ Cow.leaflmap.prototype =
             }
             else{
                 var opacity = 1;
-                feature.id = feature.properties.key;
-                //Filter on 'gedeeld beeld'
-                //if gedeeld beeld:
-                if ($('#chk-gedeeld').prop('checked')){
-                    //if item is editable by me
-                    if (item.deleted() != 'true' &&
-                         (item.permissionHasGroup('edit',mygroups) || item.permissionHasGroup('view',mygroups)) //Filter on editable/viewable feats
-                        ){
-                        //if item is viewable by *all* selected groups and me
-                        //check for all selected groups
-                        var bright = true;
-                        $('.other').each(function(i,d){ //TODO
-                            var groupid = $(this).attr('value');
-                            var checked = $(this).prop('checked');
-                            if (checked && !item.permissionHasGroup('view',groupid)){
-                                bright = false;
-                            }
-                        });
-                        //check for my group(s)
-                        if (!item.permissionHasGroup('view',self.core.projects(1).myGroups())){ //TODO
-                                bright = false;
-                        }
-                        if (bright){
-                            //Show bright
-                            opacity = 1;
-                        }
-                        //if item is not viewable *all* selected groups
-                        else{
-                            //Show dimmed
-                            opacity = 0.1;
-                        }
-                 }
-                 //else do not show
-                 else{
-                     opacity = 0; //Trick the if statement in not null
-                 }
-              }
-              //else do normal flow
-                
-                
-                feature.style = {
-                    icon: feature.properties.icon,
-                    stroke: feature.properties.linecolor,
-                    fill:  feature.properties.polycolor,
-                    "fill-opacity": 0.5,
-                    //"fill-opacity": opacity,
-                    opacity: opacity
-                };
-                feature.id = feature.properties.key = item.id();
-                //Workaround for lines with a fill
-                if (feature.geometry.type == 'LineString'){
-                    feature.style.fill = 'none';
-                }
-                
-                if (item.deleted() != 'true' && opacity > 0 //TODO
-                    //&& item.permissionHasGroup('edit',mygroups) //Filter on editable feats
-                ){
+                var addFeature = function(feature){
+                    feature.id = feature.properties.key;
+                    feature.properties.name = item.data('name'); 
+                    feature.style = {
+                        icon: feature.properties.icon,
+                        stroke: feature.properties.linecolor,
+                        fill:  feature.properties.polycolor,
+                        "fill-opacity": 0.5,
+                        //"fill-opacity": opacity,
+                        opacity: opacity
+                    };
+                    feature.id = feature.properties.key = item.id();
+                    //Workaround for lines with a fill
+                    if (feature.geometry.type == 'LineString'){
+                        feature.style.fill = 'none';
+                    }
                     editCollection.features.push(feature);
-                    //self.editLayer.addData(feature)
-                    //	.setStyle(self.layerstyle);
-                }
-                else if (item.deleted() != 'true' && opacity > 0 &&
-                    item.permissionHasGroup('view',mygroups) //Filter remaining feats on viewable feats
-                ){
-                    viewCollection.features.push(feature);
-                } 
+              };
+              addFeature(feature);
 			}
 		});
 		if (self.editLayer){
-		    //self.editLayer.clearLayers();
-			//self.editLayer.addData(editCollection);
 			self.editLayer.data(editCollection);
 		    self.editLayer.updateData(self._map);
-		}
-		if (self.viewLayer){
-		    //self.viewLayer.clearLayers();
-			//self.viewLayer.addData(viewCollection);
-			self.viewLayer.data(viewCollection);
-		    self.viewLayer.updateData(self._map);
 		}
 	},
 	
@@ -276,6 +250,15 @@ Cow.leaflmap.prototype =
                     }
                 };
 		var dummyCollection = {"type":"FeatureCollection","features":[dummyfeature]};
+		
+		this.myLocationLayer = new L.GeoJSON.d3(dummyCollection, {
+		        labels: false,
+		        style:{
+		            fill: 'red',
+		            stroke: 'red'
+		        }
+		});
+		this._map.addLayer(this.myLocationLayer);
 		
 		this.extentLayer = new L.GeoJSON.d3(dummyCollection, {
 		    labels: true,
@@ -314,7 +297,7 @@ Cow.leaflmap.prototype =
             //onMouseover: cow.textbox,
             labels: true,
             labelconfig: {
-                field: "desc",
+                field: "name",
                 style: {
                     stroke: "#000033"
                     //stroke: "steelBlue"
@@ -395,7 +378,7 @@ Cow.leaflmap.prototype =
 				layers.eachLayer(function (layer) {
 				    var feature = layer.toGeoJSON();
 				    //First transform into featurestore item
-                    var item = core.projects(1).items(feature.properties.key) //TODO
+                    var item = core.project().items(feature.properties.key) //TODO
                         .data('feature',feature)
                         .sync();
 				});
@@ -413,22 +396,22 @@ Cow.leaflmap.prototype =
             var d = new Date();
             var timestamp = d.getTime();
             feature.properties.icon = self.core.current_icon; //TODO TT: not nice
-            feature.properties.linecolor = self.core.current_linecolor;
-            feature.properties.fillcolor = self.core.current_fillcolor;
-            feature.properties.polycolor = self.core.current_polycolor;
-            feature.properties.key = self.core.UID + "#" + timestamp;
+            feature.properties.linecolor = "aliceBlue";
+            feature.properties.fillcolor = "green";
+            feature.properties.polycolor = "red";
+            feature.properties.key = self.core.UID + "_" + timestamp;
             //feature.properties.store = self.core.activeproject();
             feature.properties.creator = self.core.user().data('name');
             feature.properties.owner = self.core.user().data('name');
 
-            var id = self.core.UID + "#" + timestamp;
+            var id = self.core.peerid() + "_" + timestamp;
             
-            var item = core.projects(1).items(id)
+            var item = core.project().items(id)
                 .data('type','feature')
                 .data('feature', feature)
-                .permissions('view',self.core.projects(1).myGroups())//Set default permissions to my groups
-                .permissions('edit',self.core.projects(1).myGroups())//Set default permissions to my groups
-                .permissions('share',self.core.projects(1).myGroups())//Set default permissions to my groups
+                .permissions('view',self.core.project().myGroups())//Set default permissions to my groups
+                .permissions('edit',self.core.project().myGroups())//Set default permissions to my groups
+                .permissions('share',self.core.project().myGroups())//Set default permissions to my groups
                 .sync();
             self.editLayer.clearLayers();
             self._reloadLayer();
@@ -460,18 +443,20 @@ Cow.leaflmap.prototype =
 	},
 	deletefeature: function(self,feature, layer){
 		var key = feature.properties.key;
-		core.projects(1).items(key).deleted('true').sync();
+		core.project().items(key).deleted('true').sync();
 		self._map.closePopup();
 	},                
 	changeFeature: function(self, feature){
+	    var desc = document.getElementById('descfld').value;
         //feature.properties.name = document.getElementById('titlefld').value; //TODO. Yuck, yuck yuck....
-        feature.properties.desc = document.getElementById('descfld').value;
-        feature.properties.owner = self.core.user().data('name');
+        feature.properties.desc = desc;
+        feature.properties.owner = self._map.core.user().data('name');
         self._map.closePopup(); //we have to destroy since the next line triggers a reload of all features
 		//if (self.core.activeproject() == feature.properties.store){
             var key = feature.properties.key;
-            var item = core.projects(1).items(key)
+            var item = self._map.core.project().items(key)
                 .data('feature', feature)
+                .data('msg',desc)
                 .sync();
         //}
         //self.editLayer.clearLayers();

@@ -198,6 +198,7 @@ Cow.syncstore.prototype =
         this.trigger('datachange');
         return record;
     },
+    
    /**
         Only to be used from client API
    
@@ -225,16 +226,28 @@ Cow.syncstore.prototype =
         for (var i=0;i<this._records.length;i++){
             if (this._records[i]._id == id) {
                     this._records.splice(i,1);
+                    this.trigger('datachange');
                     return true;
             }
         }
         return false;
     },
     /**
-        clear() - remove all records
+        clear() - remove all records, generally not useful since other peers will resent the data
     **/
     clear: function(){
         this._records = [];
+    },
+    /**
+        deleteAll() - sets all records to deleted=true
+    **/
+    deleteAll: function(){
+        for (var i=0;i<this._records.length;i++){
+            this._records[i].deleted(true);
+        }
+        this.syncRecords();
+        this.trigger('datachange');
+        return this;
     },
     /**
     syncRecord() - sync 1 record
@@ -250,6 +263,7 @@ Cow.syncstore.prototype =
         if (this._db){
             var promise = this._db_updateRecord({source:'UI', data: record.deflate()});
         }
+        this.trigger('datachange');
         this._core.websocket().sendData(message, 'updatedRecord');
     },
     
