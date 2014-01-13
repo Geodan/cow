@@ -9,7 +9,69 @@ The core has been tested with jQuery versions 1.8.2 and 1.9.1. The demo client h
 
 API
 ===
-Cow is a plugin for jQuery to use websockets to work together with geographical data. Peers represent the people who connected to the same websocket. Peers share their physical location (if available) and their current viewextent of the map. Peers are member of a project and members of the same project share features. 
+COW is a workspace to concurrently share data with peers over a webscoket. Peers represent the people who connected to the same websocket. It is build around a core object that binds together the syncStores, records and messaging components.
+
+Schematically, it looks like:
+-----------
+* core
+   * websocket
+   * peerStore 
+       * peers
+   * userStore
+       * users
+   * projectStore
+       * projects
+           * groupStore
+               * groups
+           * itemStore
+               * items
+               
+-----------
+
+All the stores behave the same* and as follows (userStore as example):
+`````javascript
+    core.users({_id:<string>}) -> adds a record with id, returns record object
+    core.users(<string>) -> returns record object with id = <string>
+    core.users([<string>]) -> returns array of record objects with matching ids
+    core.users()   -> returns array of all record objects
+    core.userStore() -> returns the userstore object
+    core.userStore().syncRecords() -> syncs all records with status 'dirty'
+`````
+*: with an exeption of the peerStore that doesn't use an indexedDb 
+
+
+All *record objects* behave the same* and as follows (user object as example):
+`````javascript
+    user.id() -> returns the id of the record
+    user.status() -> returns the status of the record (being one of  'clean', 'dirty', 'deleted')
+    user.status(<string>) -> sets the status of the record, returns record
+    user.timestamp() -> returns the timestamp (last edit) of the record
+    user.timestamp(<timestamp>) -> sets the timestamp of the record, returns record
+    user.data() -> returns the data (object) of the record
+    user.data('key', 'value') -> sets a key value pair of the data, returns the record
+    user.data({object}) -> sets the data of the record, overrides old data, returns the record
+    user.sync() -> syncs the record with the database and with the websocket
+`````
+**core specific:**
+`````javascript
+    core.peerid()    -> returns our own peerid
+    core.peerid(<string>) -> sets our own peerd
+    core.user() -> returns the user object of currently logged on user (false when no user logged on)
+    core.user(<string>) -> sets the current users id to the core and to the current peer, returns user object
+    core.websocket() -> returns the websocket object
+    core.webscoket().disconnect() -> disconnects websocket (auto reconnect in 5 secs)
+`````
+Since most methods return their own object, the methods are chainable. So you can write rather condensed code:
+`````javascript
+    var defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
+    var defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
+    var firstitem = defaultproject.items({_id:1})
+        .data('type','msg')
+        .data('creator',core.user().id())
+        .sync();
+`````
+The timestamp and status are automatically updated when invoking the data(<whatever>) method so you don't need to worry about that.
+
 
 #### Core
 >$(selector).cow([options])
@@ -62,10 +124,23 @@ creating a project: core.projects(newid)
 * myGroups() - return the group objects that I am member of
 
 #### Group
- TODO
+* members() - return array of member ids
+* members(id) - add id to member array, return group object
+* members([id]) - add id's to member array, return group object
+* removeMember(id) - remove id from array of member id's, return group object
+* removeAllMembers() - empty
 
 #### Item
- TODO
+* permissions() will return an array with all permissions set on this item
+* permissions('type') will return an array with the permission of type 'type'
+* permissions('type',group) will add the group to the permissions 
+*     of type 'type' (and create permission of type 'type' if needed), returns item
+* permissions('type',[group]) will add the array of groups to the permissions 
+    of type 'type' (and create permission of type 'type' if needed), returns item
+* permissionsHasGroup(type <string>,group <string>) - function to check if a particular type contains a particular group. Returns true if it is the case, false in all other cases
+* hasPermission(<string>) - check to see if current user has <string> permission on item
+* removePermission('type') removes the entire permission type from the item
+* removePermission('type',[groups]) removes the groups from the permission type
 
 #### Peer
 >cow.Peer(core, [options])

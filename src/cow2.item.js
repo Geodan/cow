@@ -88,7 +88,7 @@ Cow.item.prototype =
     /**
         permissionsHasGroup(type <string>,group <string>) - function to check if a particular type contains a particular group
             returns true if it is the case, false in all other cases
-    */
+    **/
     permissionHasGroup: function(type,group) {
         var permission  = this.permissions(type);
         var ingroups = [];
