@@ -206,6 +206,7 @@ Cow.leaflmap.prototype =
                 var opacity = 1;
                 var addFeature = function(feature){
                     feature.id = feature.properties.key;
+                    feature.properties.name = item.data('name'); 
                     feature.style = {
                         icon: feature.properties.icon,
                         stroke: feature.properties.linecolor,
@@ -296,7 +297,7 @@ Cow.leaflmap.prototype =
             //onMouseover: cow.textbox,
             labels: true,
             labelconfig: {
-                field: "desc",
+                field: "name",
                 style: {
                     stroke: "#000033"
                     //stroke: "steelBlue"

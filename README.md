@@ -16,44 +16,56 @@ Cow is a plugin for jQuery to use websockets to work together with geographical 
 
 **description** initialise Cow and associate it with the matched element. The Cow object is refered to as *cow* in the documentation
 
-[options]: websocket (object with url to the websocket server ) - default: wss://localhost:443 
+[options]: wsUrl (url to the websocket server 
  
-* me()
-* activeproject([options])
-* username(string)
-* center([options])
-* projects([options])
- * getProjectById(id)
- * getProjectByPeerUid(peeruid)
- * removeProject(id)
-* peers([options])
- * getPeerExtents()
- * getPeerPositions()
- * getPeerByUid(uid)
- * getPeerByCid(cid)
- * removePeer(cid)
- * removeAllPeers()
-* featurestore([options])
-* localdbase([options])
-* websocket([options])
-* geolocator([options])
-* bind()
-* trigger()
+* peerid() -- get peerid
+* peerid(id) -- set peerid
+* project() -- get current project object
+* project(id) -- set current project based on id from projectStore
+* user() - get current user object
+* user(id) - set current user based on id from userStore
+* peer() - return my peer object
+* location() - get the last known location
+* location(location) - set the current location
+* projectStore() - returns the _projectstore object
+* projects() - returns array of all projects
+* projects(id) - returns project with id (or null)
+* projects({config}) - creates and returns project
+* peerStore() - returns the _peerstore object
+* peers() - returns array of all peers
+* peers(id) - returns peer with id (or null)
+* peers({config}) - creates and returns peer
+* userStore() - returns the _userstore object
+* users() - returns array of all users
+* users(id) - returns user with id (or null)
+* users({config}) - creates and returns user
+* activeUsers() - returns array with userobjects that are currently active
+* websocket() - return the _websocket object
+
 
 #### Project
 >cow.Project(core, [options])
 
-**description** The Project object. It is constructed with the project options object in cow.projects([options]). The Project object is refered to as *project* in the documentation. A Project is a group of zero or more Peers which share features, allowing for collaborative map-editing. There is one special Project, the 'sketch' project, the default, non-removable project; this one deletes features older than a week to prevent cluttering. 
+**description** The Project object. It is constructed with the project options object in cow.projects([options]). The Project object is refered to as *project* in the documentation. A Project has a group of zero or more Peers which share items, allowing for collaborative map-editing. There is one special Project, the 'sketch' project, the default, non-removable project; this one deletes features older than a week to prevent cluttering. 
 
 core: the cow object
+creating a project: core.projects(newid)
 
-[options]: { uid : int, name : string [,active: boolean] [,members: [peeruids]] }
- 
-* members(peerid)
-* removeMember(peerid)
-* removeAllMembers()
-* bind()
-* trigger()
+* groupStore() - return groupStore object
+* groups() - return array of group objects
+* groups(id) - returns group with id
+* groups({options}) - creates and returns group object
+* itemStore() - return itemStore object
+* items() - return array of item objects
+* items(id) - returns item with id
+* items({options}) - creates and returns item object
+* myGroups() - return the group objects that I am member of
+
+#### Group
+ TODO
+
+#### Item
+ TODO
 
 #### Peer
 >cow.Peer(core, [options])
@@ -62,14 +74,9 @@ core: the cow object
 
 core: the cow object
 
-[options]: { uid : int, cid: int ,extent: {bottom: float, left: float, top: float, right: float}, [position: {latitude: float, longitude: float, time: timestamp}]  }
- 
-* view([options])
-* position([options])
-* owner([options])
-* video([options])
-* bind()
-* trigger()
+* user() - return id of currently connected user
+* user(id) - sets id of currently connected user, returns peer object
+
 
 #### Websocket
 >cow.Websocket(core, [options])
@@ -77,52 +84,15 @@ core: the cow object
 **description** The Websocket object. It is constructed with the websocket options object in cow.websocket([options]). The Websocket object is refered to as *ws* in the documentation. The Websocket object contains all the relevant info to make a websocket connection and manages the actual connection.
 
 core: the cow object
+[options]: wsUrl
 
-[options]: {url: string}
-
-* sendData(data, action, [target])
-* openws(url)
-* closews()
-* bind()
-* trigger()
-
-#### FeatureStore
->cow.FeatureStore(core, [options])
-
-**description** The FeatureStore object. It is constructed with the featurestore options object in cow.featurestore([options]). The FeatureStore object is refered to as *fs* in the documentation. The fs keeps all features in the active project in memory and syncs those with peers, the db and the map
-
-core: the cow object
-
-[options]: none available
-
-* featureitems([options],[source])
-* syncFids([fids])
-
-#### LocalDbase
->cow.LocalDbase(core, [options])
-
-**description** The LocalDbase object. It is constructed with the localdbase options object in cow.localdbase([options]). The localdbase object is refered to as *db* in the documentation. The db stores the uid, name and state of all known projects of cow in a persistent database using indexeddb. It also stores all features per project in persistent databases using indexeddb. Only the features of active projects get synced with the db.
-
-core: the cow object
-
-[options]: {dbname : string } (not yet working)
-
-* projectsdb([options])
-* featuresdb([options])
-* removeproject(projectId)
-* removefeature(featureId)
-
-#### GeoLocator
->cow.GeoLocator(core, [options])
-
-**description** The GeoLocator object. It is constructed with the geolocator options object in cow.geolocator([options]). The geolocator object is refered to as *geolocator* in the documentation. The geolocator manages the retrieval of the real world location of cow, if available
-
-core: the cow object
-
-[options]: none available
-
-* getLocation()
-
+* disconnect() - disconnect us from websocket server
+* connect(url) - connect to websocket server on url, returns connection
+* connection() - returns connection object
+* sendData(data, action, target) - send data to websocket server with params:
+            data - json object
+            action - string that describes the context of the message
+            target - (optional) id of the target peer
 
 Messaging
 ===

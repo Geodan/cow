@@ -9,6 +9,9 @@ Cow.websocket = function(config){
 
 
 Cow.websocket.prototype = {
+    /**
+        disconnect() - disconnect us from websocket server
+    **/
     disconnect: function() {
         if (this._connection){
             this._connection.close();    
@@ -18,6 +21,9 @@ Cow.websocket.prototype = {
             throw('No websocket active');
         }
     },
+    /**
+        connect(url) - connect to websocket server on url, returns connection
+    **/
     connect: function(url) {
         var core = this.core;
         if (!this._connection || this._connection.readyState != 1) //if no connection
@@ -37,9 +43,18 @@ Cow.websocket.prototype = {
         }
         return connection;
     },
+    /**
+        connection() - returns connection object
+    **/
     connection: function(){
         return this._connection;
     },    
+    /**
+        sendData(data, action, target) - send data to websocket server with params:
+            data - json object
+            action - string that describes the context of the message
+            target - (optional) id of the target peer
+    **/
     sendData: function(data, action, target){
         //TODO: check if data is an object
         var message = {};        

@@ -1,7 +1,16 @@
 //Based on:
 //https://github.com/calvinmetcalf/shapefile-js
 
+//Alternative might be:
+//https://github.com/wavded/js-shapefile-to-geojson
 
+
+
+/** TODO
+Compress the JSON (maybe http://pieroxy.net/blog/pages/lz-string/index.html)
+
+
+**/
 var dropgroup;
 var shapedrop_init = function(map){
      var m = map;
@@ -15,8 +24,9 @@ var shapedrop_init = function(map){
             console.log(shp.parseZip(this.result));
             json = shp.parseZip(this.result);
             var newid = new Date().getTime();
-            core.project().items(newid).data('type','featureCollection').data('featureCollection',json).sync();
-            //var layer = new L.GeoJSON(json).addTo(dropgroup);
+            //TODO: add some checks (size, validity) before we add this to COW project
+            //core.project().items(newid).data('type','featureCollection').data('featureCollection',json).sync();
+            var layer = new L.GeoJSON(json).addTo(dropgroup);
             console.log('Shapefile added');
         }
     }

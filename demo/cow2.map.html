@@ -65,7 +65,7 @@
   <script src="./scripts/cow2.icm.js" type="text/javascript"></script>
   <script src="./scripts/cow2.shapedrop.js" type="text/javascript"></script>
   
-  <script src="scripts/cookies.js" type="text/javascript"></script>
+  <script src="./scripts/cookies.js" type="text/javascript"></script>
 <style>
 HTML {
 	font-family: 'Dosis', Arial, sans-serif; 
@@ -229,8 +229,8 @@ var updateLists = function(){
             var processMsg = function(item, msgbox){
                 msgbox.classed('selected',false);
                 var id = item.id();
-                var msg = msgbox.select('textarea').html() || "";
-                
+                //var msg = msgbox.select('textarea').html() || "";
+                var msg = msgbox.select('textarea')[0][0].value || "";
                 //Note to self:
                 // (^|\s) begin of string or space
                 // (\w+) whole word
@@ -307,7 +307,7 @@ var updateLists = function(){
                         })
                         .on('blur', function(d){
                                 console.log(d.id() + 'got blur');
-                                //processMsg(d,me);
+                                processMsg(d,me);
                          })
                         .html(d.data('msg'));
                         
@@ -315,7 +315,7 @@ var updateLists = function(){
                         var me = d3.select('#msg'+d._id.toString());
                         me.select('.card').classed('invisible',true);
                         me.select('.form').classed('invisible',false);
-                        document.getElementById('nwmsg'+d.id()).focus();
+                        document.getElementById('nwmsg'+d.id());//.focus();
                         //me.select('textarea');
                         me.classed('selected',true);
                         //Zoom to feature

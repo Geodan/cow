@@ -32,10 +32,12 @@ Cow.project = function(config){
         **/
         dbname:  function(name){
             this._dbname =  name;
-        },
+        }
+        
         /**
             features() - get only items with type==feature
         **/
+/*OBS
         features: function(){
             var items = this._records;
             var returnarr = [];
@@ -46,9 +48,10 @@ Cow.project = function(config){
             }
             return returnarr;
         },
-        /**
+*/        /**
             messages() - get only items with type==msg
         **/
+/*OBS
         messages: function(){
             var items = this._records;
             var returnarr = [];
@@ -59,26 +62,41 @@ Cow.project = function(config){
             }
             return returnarr;
         }
+*/
     });
 };
 Cow.project.prototype = 
 {
     __proto__: Cow.record.prototype,
- 
+    /**
+        groupStore() - return groupStore object
+    **/
     groupStore: function(){
         return this._groupStore;
     },
+    /**
+        groups() - return array of group objects
+        groups(id) - returns group with id
+        groups({options}) - creates and returns group object
+    **/
     groups: function(data){
            return this._groupStore.records(data);
     },
- 
+    /**
+        itemStore() - return itemStore object
+    **/
     itemStore: function(){
         return this._itemStore;
     },
+    /**
+        items() - return array of item objects
+        items(id) - returns item with id
+        items({options}) - creates and returns item object
+    **/
     items: function(data){
         return this._itemStore.records(data);
     },
-    
+    /* OBS
     getMembers: function(){
         return this.data('members') || [];
     },
@@ -107,6 +125,10 @@ Cow.project.prototype =
             }
         }
     },
+    */
+    /**
+        myGroups() - return the group objects that I am member of
+    **/
     myGroups: function(){
         var groups = this.groups();
         var myid = this._core.user().id();
