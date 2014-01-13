@@ -12,28 +12,29 @@ API
 COW is a workspace to concurrently share data with peers over a webscoket. Peers represent the people who connected to the same websocket. It is build around a core object that binds together the syncStores, records and messaging components.
 Schematically, it looks like:
 -----------
-core
-    websocket
-    peerStore 
-        peers
-    userStore
-        users
-    projectStore
-        projects
-            groupStore
-                groups
-            itemStore
-                items
+* core
+   * websocket
+   * peerStore 
+       * peers
+   * userStore
+       * users
+   * projectStore
+       * projects
+           * groupStore
+               * groups
+           * itemStore
+               * items
 -----------
 
 All the stores behave the same* and as follows (userStore as example):
+`````javascript
     core.users({_id:<string>}) -> adds a record with id, returns record object
     core.users(<string>) -> returns record object with id = <string>
     core.users([<string>]) -> returns array of record objects with matching ids
     core.users()   -> returns array of all record objects
     core.userStore() -> returns the userstore object
     core.userStore().syncRecords() -> syncs all records with status 'dirty'
-
+`````
 *: with an exeption of the peerStore that doesn't use an indexedDb 
 
 
