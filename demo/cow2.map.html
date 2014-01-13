@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+  <title>Concurrent Online Webgis</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+<!--  <link href='http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css' rel='stylesheet' type='text/css'>
+-->  <link href='http://fonts.googleapis.com/css?family=Dosis:300,500' rel='stylesheet' type='text/css'>
+
+
+  <script src="../lib/underscore/underscore-min.js" type="text/javascript"></script>
+  <script src="../lib/jquery-2.0.3/jquery-2.0.3.js" type="text/javascript"></script>	
+  <script src="../lib/jquery-ui-1.10.2/jquery-ui.js" type="text/javascript"></script>  
+
+  <!-- PouchDB -->
+  <script src="../lib/pouchdb/pouchdb-nightly.min.js"></script>
+
+  <!-- Adding leaflet and D3 libs -->
+  
+  <script src="../lib/leaflet-0.7/leaflet.js"></script>
+  <script src="../lib/leaflet_draw/leaflet.draw.js"></script>
+  <script src="../lib/leaflet_label/leaflet.label.js"></script>
+  <script src="../lib/leaflet_measure/leaflet.measurecontrol.js"></script>
+  
+  <link rel="stylesheet" href="../lib/leaflet-0.7/leaflet.css" />
+  <link rel="stylesheet" href="../lib/leaflet_draw/leaflet.draw.css" />
+  <link rel="stylesheet" href="../lib/leaflet_label/leaflet.label.css" />
+  <link rel="stylesheet" href="../lib/leaflet_measure/leaflet.measurecontrol.css" />
+  
+  <script src="../lib/d3/d3.v3.min.js" charset="utf-8"></script>
+  <!--<script src="../lib/d3/topojson.v1.min.js"></script>-->
+  
+  <!--[if lte IE 8]>
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6/leaflet.ie.css" />
+  <![endif]-->
+
+  <script src="../lib/d3layer/d3layer.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="../lib/d3layer/d3layer.css" />
+  
+  <!-- Peerjs -->
+  <!--
+  <script type="text/javascript" src="../lib/peerjs-0.3/peer.min.js"></script>
+  -->
+
+  <script src="../src/cow2.utils.js" type="text/javascript"></script>
+  <script src="../src/cow2.record.js" type="text/javascript"></script>
+  <script src="../src/cow2.syncstore.js" type="text/javascript"></script>
+  <script src="../src/cow2.peer.js" type="text/javascript"></script>
+  <script src="../src/cow2.user.js" type="text/javascript"></script>
+  <script src="../src/cow2.group.js" type="text/javascript"></script>
+  <script src="../src/cow2.item.js" type="text/javascript"></script>
+  <script src="../src/cow2.project.js" type="text/javascript"></script>
+  <script src="../src/cow2.websocket.js" type="text/javascript"></script>
+  <script src="../src/cow2.core.js" type="text/javascript"></script>
+  <script src="../src/cow2.js" type="text/javascript"></script>
+  
+  <script src="./scripts/leaflet-d3-layer.js"></script>
+  <script src="./scripts/cow2.d3layer_utils.js" type="text/javascript"></script>
+  <script src="./scripts/cow2.leaflmap.js" type="text/javascript"></script>
+  
+  <script src="scripts/cookies.js" type="text/javascript"></script>
+<style>
+HTML {
+	font-family: 'Dosis', Arial, sans-serif; 
+	font-weight: 300; 
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	color: #555753;
+	overflow: hidden;
+}
+h1{
+	font-family: 'Dosis', Arial, sans-serif;
+	font-weight: 500; 
+	font-size: 28pt;
+	color: #555753;
+	margin-top: 0.6em;
+}
+h3 {
+	font-family: 'Dosis', Arial, sans-serif;
+	font-weight: 500; 
+	font-size: 14pt;
+	color: #555753;
+}
+
+#peerlist {
+    position: absolute;
+    left: 0px;
+    top: 50px;
+}
+
+#userlist {
+    position: absolute;
+    left: 30%;
+    top: 50px;
+}
+
+#projectlist {
+    position: absolute;
+    left: 60%;
+    top: 50px;
+}
+
+.project {
+    background-color: #ff6666;
+}
+
+</style>
+<script type="text/javascript">
+
+var updateLists = function(){
+  var data = core.peers();
+  var peer = d3.select('#peerlist').selectAll('.peer')
+    .data(data, function(d){return 'peer'+d._id.toString();});
+   peer.enter().append('div')
+    .attr('id', function(d){return 'peer'+d._id.toString();})
+    .classed('peer', true);
+    peer.html(function(d){
+        var user = core.users(d.getUserId());
+        var username = user._id;
+        var since = new Date(d.timestamp()).toLocaleString();
+        return '<h3> ' + d._id + ' ('+ username+ ') <small> Since ' + since + ' </h3>'});
+    peer.exit().remove();
+  
+  core.userStore().initpromise.done(function(x){
+    var data = core.users();
+    var user = d3.select('#userlist').selectAll('.user')
+        .data(data, function(d){return 'user'+ d._id.toString();});
+       user.enter().append('div')
+        //.attr('id', function(d){return 'user'+d._id.toString();})
+        .classed('user', true);
+       user.html(function(d){return '<h3>' + d._id + (d.data('name')||"") + '</h3>'})
+       user.exit().remove();
+        
+  });
+  
+  core.projectStore().initpromise.done(function(x){
+      var expand_project = function(d){
+        var self = this;
+        d.itemStore().initpromise.done(function(x){
+            var data = d.items();
+            
+        });
+        d.groupStore().initpromise.done(function(x){
+            var data = d.groups();
+            d3.select(self).append('h4').html('Groups: ');
+            var group = d3.select(self).selectAll('.group').data(data, function(e){return 'group'+e._id.toString()});
+            
+        });
+        
+        
+      }
+      
+      var data = core.projects();
+      var project = d3.select('#projectlist').selectAll('.project')
+        .data(data, function(d){return 'project'+d._id.toString();});
+       
+   });
+}
+
+
+var core;
+var leaflmap;
+var map;
+var defaultproject;
+var defualtgroup;
+
+
+
+//
+// Document Ready
+//
+
+$(document).ready(function(){
+
+  core = new Cow.core({
+     wsUrl: 'wss://websocket.geodan.nl:443/new'
+  });
+  
+  leaflmap = new Cow.leaflmap({core:core});
+  map = leaflmap.map();
+  
+  map.setView([52.083726,5.111282], 9);//Utrecht
+  // add an OpenStreetMap tile layer
+    var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    });
+    // add Dutch AHN layer
+    var ahnUrl = "http://t3.edugis.nl/tiles/tilecache.py?map=maps/edugis/cache/hoogte.map";
+    var ahnLayer = L.tileLayer.wms(ahnUrl, {
+        layers: 'hoogtes',
+        format: 'image/png',
+        transparent: true
+    });
+    // Add a darker themd OSM layer
+    var tileUrl = 'http://a{s}.acetate.geoiq.com/tiles/acetate-hillshading/{z}/{x}/{y}.png';
+    var osmDarkLayer = L.tileLayer(tileUrl, {
+        attribution: 'Background map design by <a href="http://www.stamen.com/">Stamen</a>. Tiles hosted by <a href="http://www.geoiq.com/">GeoIQ</a>. Map data: <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors and <a href="http://www.naturalearthdata.org/">Natural Earth Data</a>.',
+        subdomains: '0123',
+        minZoom: 2,
+        maxZoom: 18
+    }).addTo(map);
+    
+    //Layer controls
+    var baseLayers = {"Open Street Map": osmLayer, "Open Street Map (achtergrond)": osmDarkLayer, "Hoogtekaart": ahnLayer};
+    var layercontrol = new L.control.layers(baseLayers).setPosition("bottomleft").addTo(map);
+    L.Control.measureControl({position: "bottomleft"}).addTo(map);
+  
+  //TODO: move username admin to other place
+  //Some username administration with cookies
+  var username=getCookie("username");
+  var logon = function(username){
+    $('#myname').val(username);
+    core.users({_id:username}).sync();
+    core.user(username);
+  }
+  if (username!=null && username!="")
+  {
+    logon(username);
+  }
+  else 
+  {
+    username=prompt("Please enter your name:","");
+    if (username!=null && username!="")
+    {
+        logon(username);
+        setCookie("username",username,1);
+    }
+  }
+  logon(username);
+  
+  
+  //Default init settings
+  
+  core.projectStore().initpromise.done(function(x){
+      if (!core.projects(1)){
+        defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
+      } else {
+        defaultproject = core.projects(1);
+      }
+      defaultproject.groupStore().initpromise.done(function(x){
+        if (!defaultproject.groups(1)){
+            defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
+        } else {
+            defaultgroup = defaultproject.groups(1);
+        }
+        defaultgroup.members(core.user().id()); //make me a member
+      });
+  });
+  
+  window.setInterval(updateLists, 2000);
+  
+  //What to do when a user changes name
+  $('#myname').on('blur', function(e, ui) {
+    var username = $(this).val();
+    logon(username);
+    setCookie("username",username,1);
+  });
+});
+ 
+
+</script>
+  </head>
+  <body>
+  <div id="top">
+    <span id="connect" title="click to change connection status"></span>
+    <span class="welcome"><span data-i18n="txt_welcome" id="txt_welcome">Welcome</span> <input id="myname"/ name="myname" title="click to change your name" value="anonymous" size="13"/></span>
+  </div>
+  <div id="content">
+    <div id="map"><h1>Map</h1></div>
+    <!--
+    <div id="peerlist"><h1>Peers</h1></div>
+    <div id="userlist"><h1>Users:</h1></div>
+    <div id="projectlist"><h1>Projects:</h1></div>
+    -->
+  </div>
+  <div id="cow"></div>	
+  <div id="help" ></div>
+ 
+  </body>
+</html>
+
+

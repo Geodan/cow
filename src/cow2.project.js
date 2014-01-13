@@ -17,19 +17,6 @@ Cow.project = function(config){
         dbname:  function(name){
             this._dbname =  name;
         }
-        /* Obs
-        getGroups: function(){
-            return this._records;
-        },
-        getGroup: function(id){
-            return this._getRecord(id);
-        },
-        addGroup: function(config){
-            return this._addRecord(config);
-        },
-        updateGroup: function(config){
-            return this._updateRecord(config);
-        } */
     });
     
     dbname = 'items_' + config._id;
@@ -40,22 +27,35 @@ Cow.project = function(config){
         _records: [],
         _type: 'items',
         _dbname: dbname,
+        /**
+            dbname(string) - set name of dbase
+        **/
         dbname:  function(name){
             this._dbname =  name;
+        },
+        /**
+            features() - get only items with type==feature
+        **/
+        features: function(){
+            var items = this._records;
+            var returnarr = [];
+            for (var i = 0;i<items.length;i++){
+                if (items[i].data('type') == 'feature'){
+                    returnarr.push(items[i]);
+                }
+            }
+            return returnarr;
+        },
+        messages: function(){
+            var items = this._records;
+            var returnarr = [];
+            for (var i = 0;i<items.length;i++){
+                if (items[i].data('type') == 'msg'){
+                    returnarr.push(items[i]);
+                }
+            }
+            return returnarr;
         }
-        /*Obs
-        getItems:       function(){
-            return this._records;
-        },
-        getItem:        function(id){
-            return this._getRecord(id);
-        },
-        addItem:        function(config){
-            return this._addRecord(config);
-        },
-        updateItem:     function(config){
-            return this._updateRecord(config);
-        }*/
     });
 };
 Cow.project.prototype = 
@@ -103,5 +103,17 @@ Cow.project.prototype =
                 return true;
             }
         }
+    },
+    myGroups: function(){
+        var groups = this.groups();
+        var myid = this._core.user().id();
+        var mygroups = [];
+        for (i=0;i<groups.length;i++){
+            var group = groups[i];
+            if (group.hasMember(myid)){
+                mygroups.push(group.id());
+            }
+        }
+        return mygroups;
     }
 };

@@ -1,0 +1,3 @@
+[submodule "lib/d3layer"]
+	path = lib/d3layer
+	url = https://github.com/Geodan/D3Layer.git
