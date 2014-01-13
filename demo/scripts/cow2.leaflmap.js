@@ -361,11 +361,14 @@ Cow.leaflmap.prototype =
 		// Initialize the draw control and pass it the FeatureGroup of editable layers
 		this.drawControl = new L.Control.Draw({
 			draw: true,
+			draw: {
+			    circle: false
+			},
 			edit: {
 				//featureGroup: self.editLayer,
 				featureGroup: this.editLayer,
-				edit: true,
-				remove: true
+				edit: false,
+				remove: false
 			}
 		});
 		L.drawLocal.edit.handlers.edit.tooltip.subtext = '';

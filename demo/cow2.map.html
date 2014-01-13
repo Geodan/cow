@@ -12,6 +12,7 @@
 
   <script src="./lib/shapefile-js/shp.min.js" type="text/javascript"></script>
   <script src="../lib/underscore/underscore-min.js" type="text/javascript"></script>
+  <script src="../lib/polyfill-promise/promise-0.1.1.min.js" type="text/javascript"></script>
   <script src="../lib/jquery-2.0.3/jquery-2.0.3.js" type="text/javascript"></script>	
   <script src="./lib/jquery-ui-1.10.2/jquery-ui.js" type="text/javascript"></script>
   <script src="./lib/jquery-textcomplete/jquery.textcomplete.js" type="text/javascript"></script>  
@@ -97,12 +98,13 @@ h3 {
 #map {
     position: absolute;
     left: 0px;
-    width: 80%;
+    width: 100%;
 }
 
 #sidebar {
     float: right;
     position: absolute;
+    padding-left: 20px;
     top: 0px;
     right: 0px;
     bottom: 0px;
@@ -111,19 +113,26 @@ h3 {
     z-index: 1001;
 }
 
+#sidebar #ruler {
+    position: absolute;
+    left: 0px;
+    width: 10px;
+    height: 100%;
+    background: steelBlue;
+    cursor: pointer;
+}
+
 .item.msg {
-       background-color: #cccccc;
        cursor: pointer;
 }
 .item.feature {
-       background-color: #aaaaaa;
        cursor: pointer;
 }
 path {
     cursor: pointer;
 }
 
-.group {
+.groupbox {
     width: 10px;
     height: 10px;
     border: solid 2px black;
@@ -131,6 +140,7 @@ path {
     margin: 2px;
     border-radius: 2px;
     margin-bottom: 0px;
+    cursor: pointer;
 }
 
 .iedereen, .individueel {
@@ -142,8 +152,16 @@ path {
 }
 
 .selected{
-    background-color: steelBlue;
     width: 100%;
+}
+.project{
+    cursor: pointer;
+}
+/*.project:hover{
+    background-color: grey;
+}*/
+.active{
+    font-weight: bold;
 }
 /*
 .unselected:hover{
@@ -173,7 +191,7 @@ path {
 .list {
     position: relative;
     height: 400px;
-    top: 10px;
+    top: 0px;
     bottom: 10px;
     overflow: auto;
 }
@@ -183,10 +201,31 @@ path {
 }
 .itembutton {
     position: absolute;
-    background: 'red';
 }
 .invisible {
     display: none;
+}
+
+#nwmsgbutton {
+    padding: 2px;
+    background-color: steelBlue;
+    cursor: pointer;
+}
+
+.card {
+    padding: 5px;
+    padding-left: 25px;
+    border-top: 2px solid steelBlue;
+}
+.card .ruler {
+    position: absolute;
+    left: 0px;
+    padding-top: 2px;
+    padding-left: 2px;
+    height: 80%;
+    width: 20px;
+    background: steelBlue;
+    cursor: pointer;
 }
 
 </style>
@@ -195,36 +234,46 @@ path {
 
 
 var updateLists = function(){
-  var data = icm.peers();
-  var peer = d3.select('#peerlist').selectAll('.peer')
-    .data(data, function(d){return 'peer'+d._id.toString();});
-  peer.enter().append('div')
-    .attr('id', function(d){return 'peer'+d._id.toString();})
-    .classed('peer', true);
-  peer.html(function(d){
-        var user = core.users(d.getUserId());
-        var username = user._id;
-        var since = new Date(d.timestamp()).toLocaleString();
-        return '<h3> ' + d._id + ' ('+ username+ ') <small> Since ' + since + ' </h3>'});
-  peer.exit().remove();
+  //peers not used
+  //var data = icm.peers();
+  //var peer = d3.select('#peerlist').selectAll('.peer')
+  //  .data(data, function(d){return 'peer'+d._id.toString();});
+  //peer.enter().append('div')
+  //  .attr('id', function(d){return 'peer'+d._id.toString();})
+  //  .classed('peer', true);
+  //peer.html(function(d){
+  //      var user = core.users(d.getUserId());
+  //      var username = user._id;
+  //      var since = new Date(d.timestamp()).toLocaleString();
+  //      return '<h3> ' + d._id + ' ('+ username+ ') <small> Since ' + since + ' </h3>'});
+  //peer.exit().remove();
   
-  core.userStore().initpromise.done(function(x){
-    var data = icm.activeusers();
+  core.userStore().initpromise.then(function(x){
+    //USERS
+    var data = icm.users();
     var user = d3.select('#userlist').selectAll('.user')
         .data(data, function(d){return 'user'+ d._id.toString();});
        user.enter().append('div')
         //.attr('id', function(d){return 'user'+d._id.toString();})
         .classed('user', true);
-       user.html(function(d){return '<h3>' + (d.data('name')||"") + '</h3>'})
+       user.classed('active',function(d){
+            if (d.id() == core.user().id()){
+                return true;
+            }
+            else {
+                return false;
+            }
+        });
+       user.html(function(d){return d.data('name')||d.id()})
        user.exit().remove();
         
   });
   
   
-  core.projectStore().initpromise.done(function(x){
+  core.projectStore().initpromise.then(function(x){
         var self = this;
         //ITEMS
-        core.project().itemStore().initpromise.done(function(x){
+        core.project().itemStore().initpromise.then(function(x){
         
             var processMsg = function(item, msgbox){
                 msgbox.classed('selected',false);
@@ -285,21 +334,23 @@ var updateLists = function(){
                 else {
                     me.html('');
                     var card = me.append('div').classed('card',true);
-                    card.append('h3').html(function(d){return d.data('name');});
+                    var ruler = card.append('div').classed('ruler',true).append('img').attr('src','./css/img/pencil_icon.png');
+                    //card.append('h3').html(function(d){return d.data('name');});
                     card.append('span').html(function(d){
                         var subjects = (/(\w+)=(\w+)/g);
                         var msg = d.data('msg');
                         var msg = msg.replace(subjects,"");
-                        return  msg + '<br><small>'+new Date(d.timestamp()).toLocaleTimeString()+'</small><br>';
+                        var name = d.data('name')|| '';
+                        return  '<small>'+new Date(d.timestamp()).toLocaleTimeString()+'</small> &nbsp; <b>' + name + '</b><br>' + msg;
                     });
                     card.append('div').html(function(d){
-                        return (d.data('tags') || []).toString();
+                        return '<small>' + (d.data('tags') || []).toString() + '</small>';
                     });
                     
                     var form = me.append('div').classed('form',true).classed('invisible',true);
                     form.append('textarea')
                         .attr('id','nwmsg'+d.id()).attr('cols','30').attr('rows','6')
-                        .on('focus', function(d){ //Focus happens on keyboard 'tabbing'
+                        .on('focus', function(d){ //Focus happens on keyboard 'tabbing'?
                             //console.log(d.id() + 'got focus');
                             
                             //me.classed('selected',true);
@@ -310,47 +361,63 @@ var updateLists = function(){
                                 processMsg(d,me);
                          })
                         .html(d.data('msg'));
-                        
                     card.on('click',function(d){
+                        //Zoom to feature
+                        if (d.data('type') == 'feature'){
+                            leaflmap._map.fitBounds(L.geoJson(d.data('feature')).getBounds());
+                        }
+                    });
+                    ruler.on('click',function(d){
                         var me = d3.select('#msg'+d._id.toString());
                         me.select('.card').classed('invisible',true);
                         me.select('.form').classed('invisible',false);
                         document.getElementById('nwmsg'+d.id());//.focus();
                         //me.select('textarea');
                         me.classed('selected',true);
-                        //Zoom to feature
-                        if (d.data('type') == 'feature'){
-                            leaflmap._map.fitBounds(L.geoJson(d.data('feature')).getBounds());
-                        }
                         me.call(icm.msg,d);
                     });
                 }
             });
             
             item.exit().remove();
+            item.order();
             
         });
       //GROUPS  
-      core.project().groupStore().initpromise.done(function(x){
+      core.project().groupStore().initpromise.then(function(x){
             var data = icm.groups();
             var item = d3.select('#grouplist').selectAll('.group')
-                .data(data, function(d){return 'group'+ d._id.toString();});
+                .data(data, function(d){return 'group'+ d.id().toString();});
+                
             var div = item.enter().append('div')
-                .append('span').html(function(d){
+                .attr('class',function(d){
+                    return 'group';
+                });
+            div.append('span').attr('class',function(d){
+                    return 'groupbox ' + d.data('name');
+            });
+            div.append('span').attr('class','members');
+            item.select('.members').html('');
+            item.select('.members').html(function(d){
                     var members = d.members();
                     return d.data('name') + ' (<small>'+members.toString()+'</small>)<br>';
-                }).attr('class',function(d){
-                    return 'group ' + d.data('name');
                 });
             
-            div.on('click',function(d){
-                //TODO add/remove membership
+            item.on('click',function(d){
+                var group = core.project().groups(d.id());
+                var me = core.user().id();
+                if (group.hasMember(me)){
+                    group.removeMember(me).sync();
+                }
+                else {
+                    group.members(me).sync();
+                }
             });
             item.exit().remove();
         });  
         
         
-        //core.project().groupStore().initpromise.done(function(x){
+        //core.project().groupStore().initpromise.then(function(x){
         //    var data = core.project().groups();
         //    d3.select(self).append('h4').html('Groups: ');
         //    var group = d3.select(self).selectAll('.group').data(data, function(e){return 'group'+e._id.toString()});
@@ -362,7 +429,17 @@ var updateLists = function(){
         var project = d3.select('#projectlist').selectAll('.project')
             .data(data, function(d){return 'project'+d._id.toString();});
         project.enter().append('div').classed('project',true).attr('id',function(d){return 'project'+d._id.toString();});
-        project.html(function(d){return d.data('name')});
+        project.classed('active',function(d){
+            if (d.id() == core.project().id()){
+                return true;
+            }
+            else {
+                return false;
+            }
+        });
+        project.html(function(d){
+            return d.data('name');
+        });
         project.on('click', function(d){
             core.project(d.id());
         });
@@ -382,9 +459,28 @@ var defaultgroup;
 // Document Ready
 //
 
-$(document).ready(function(){
-
+var init = function(){
   d3.select('#msgbox').style('display','none');
+  d3.select('#nwmsgbutton').on('click',function(d){
+    var newid = new Date().getTime().toString();
+    var item = core.project().items(newid)
+        .permissions('view',core.project().myGroups())//Set default permissions to my groups
+        .permissions('edit',core.project().myGroups())//Set default permissions to my groups
+        .permissions('share',core.project().myGroups())//Set default permissions to my groups;
+        .data('msg','empty');
+    updateLists();
+  });
+  d3.select('#sidebar #ruler').on('click',function(d){
+    var me = d3.select('#sidebar');
+    var newwidth;
+    if (me.style('width') == '330px'){
+        newwidth = '20px';
+    }
+    else {
+        newwidth = '330px';
+    }
+    me.transition().style('width',newwidth);
+  });
     
   core = new Cow.core({
      wsUrl: 'wss://websocket.geodan.nl:443/new'
@@ -418,7 +514,7 @@ $(document).ready(function(){
   //Some username administration with cookies
   var username=getCookie("username");
   var logon = function(username){
-    $('#myname').val(username);
+    document.getElementById('myname').value = username;
     core.users({_id:username}).sync();
     core.user(username);
   }
@@ -440,13 +536,13 @@ $(document).ready(function(){
   
   //Default init settings
   
-  core.projectStore().initpromise.done(function(x){
+  core.projectStore().initpromise.then(function(x){
       if (!core.projects(1)){
         defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
       } else {
         defaultproject = core.projects(1);
       }
-      defaultproject.groupStore().initpromise.done(function(x){
+      defaultproject.groupStore().initpromise.then(function(x){
         if (!defaultproject.groups(1)){
             defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
         } else {
@@ -455,7 +551,11 @@ $(document).ready(function(){
         defaultgroup.members(core.user().id()); //make me a member
       });
       core.project(1); //set 1 as active project
-  });
+  },
+  function(e){
+    console.warn('Error: ', e.message);
+  }
+  );
   
   //window.setInterval(updateLists, 2000);
   core.projectStore().on('datachange',updateLists);
@@ -468,8 +568,8 @@ $(document).ready(function(){
   });
   
   //What to do when a user changes name
-  $('#myname').on('blur', function(e, ui) {
-    var username = $(this).val();
+  d3.select('#myname').on('blur', function(e, ui) {
+    var username = this.value;
     logon(username);
     setCookie("username",username,1);
   });
@@ -482,7 +582,7 @@ $(document).ready(function(){
     }
   });
   
-});
+};
  
 
 </script>
@@ -494,21 +594,17 @@ $(document).ready(function(){
   </div>
   <div id="content">
     <div id="map"><h1>Map</h1></div>
-    <!--
-    <div id="peerlist"><h1>Peers</h1></div>
-    <div id="userlist"><h1>Users:</h1></div>
-    <div id="messagelist"><h1>Messages:</h1></div>
-    -->
     <div id="sidebar">
-        <div id="projectlist"><h1>Projects:</h1></div>
-        <div id="userlist"><h1>Users:</h1></div>
-        <div id="grouplist"><h1>Groups:</h1></div>
-        <div id="msglist"><h1>Messages:</h1>
-            <div class='list'></div>
-        </div>
-        <div id="msgbox">
-            
-            
+        <div id="ruler"></div>
+        <div>
+            <div id="projectlist"><h3>Projects:</h3></div>
+            <div id="userlist"><h3>Users:</h3></div>
+            <div id="grouplist"><h3>Groups:</h3></div>
+
+            <div id="msglist"><h3>Messages:</h3>
+                <div id="nwmsgbutton"><h4>New message<h4></div>
+                <div class='list'></div>
+            </div>
         </div>
     </div>
     
@@ -517,7 +613,9 @@ $(document).ready(function(){
   </div>
   <div id="cow"></div>	
   <div id="help" ></div>
- 
+  <script type="text/javascript">
+    init();
+  </script>
   </body>
 </html>
 

@@ -65,6 +65,9 @@ Cow.core.prototype =
         if (id){
             this.projects(id); //creates project if not existing
             this._projectid = id;
+            if (this.peer()){
+                this.peer().data('activeproject',id).sync();
+            }
             this.trigger('projectChanged');
             return true;
         }

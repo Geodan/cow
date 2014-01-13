@@ -74,7 +74,7 @@ Cow.websocket.prototype = {
         }
     },
     _onMessage: function(message){
-        console.log('COW2 :',message.data);
+        
         var core = this.obj._core;
         var data = JSON.parse(message.data); //TODO: catch parse errors
         var sender = data.sender;
@@ -82,6 +82,7 @@ Cow.websocket.prototype = {
         var action = data.action;        
         var payload = data.payload;    
         var target = data.target;
+        console.log('COW2 :',data.action);
         switch (action) {
         /**
             Commands 
@@ -187,7 +188,7 @@ Cow.websocket.prototype = {
         
         var startsync = function(synctype, store){
             //TODO: when there's no _db object, syncing should start immediately (like peers store)
-            store.initpromise.done(function(d){
+            store.initpromise.then(function(d){
                 var message = {};
                 message.syncType = synctype;
                 message.project = store._projectid;
@@ -206,7 +207,7 @@ Cow.websocket.prototype = {
         startsync('users', store2);
         
         //wait for projectstore to load
-        store1.initpromise.done(function(d){
+        store1.initpromise.then(function(d){
             var projects = self._core.projects();
             for (var i=0;i<projects.length;i++){
                 var project = projects[i];

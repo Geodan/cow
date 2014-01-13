@@ -19,15 +19,19 @@ Cow.group.prototype =
                 return this._getMembers();
             case 1:
                 if (!Array.isArray(userid)) {
-                    //return this._addMember(userid);
+                    this._addMember(userid);
                     return this;
                 }
-                else {
-                   $.each(peerid, function(i,d){
-                           self._addMember(d);
-                   });
+                else if (Array.isArray(userid)){
+                   for (var i = 0;i<userid.length;i++){
+                       var d = userid[i];
+                       self._addMember(d);
+                   }
                    //return this._getMembers();
                    return this;
+                }
+                else {
+                    throw('Wrong input: ' + userid);
                 }
                 break;
             default:
