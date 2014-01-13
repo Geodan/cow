@@ -10,6 +10,7 @@ The core has been tested with jQuery versions 1.8.2 and 1.9.1. The demo client h
 API
 ===
 COW is a workspace to concurrently share data with peers over a webscoket. Peers represent the people who connected to the same websocket. It is build around a core object that binds together the syncStores, records and messaging components.
+
 Schematically, it looks like:
 -----------
 * core
@@ -24,6 +25,7 @@ Schematically, it looks like:
                * groups
            * itemStore
                * items
+               
 -----------
 
 All the stores behave the same* and as follows (userStore as example):
@@ -39,6 +41,7 @@ All the stores behave the same* and as follows (userStore as example):
 
 
 All *record objects* behave the same* and as follows (user object as example):
+`````javascript
     user.id() -> returns the id of the record
     user.status() -> returns the status of the record (being one of  'clean', 'dirty', 'deleted')
     user.status(<string>) -> sets the status of the record, returns record
@@ -48,23 +51,25 @@ All *record objects* behave the same* and as follows (user object as example):
     user.data('key', 'value') -> sets a key value pair of the data, returns the record
     user.data({object}) -> sets the data of the record, overrides old data, returns the record
     user.sync() -> syncs the record with the database and with the websocket
-
+`````
 **core specific:**
+`````javascript
     core.peerid()    -> returns our own peerid
     core.peerid(<string>) -> sets our own peerd
     core.user() -> returns the user object of currently logged on user (false when no user logged on)
     core.user(<string>) -> sets the current users id to the core and to the current peer, returns user object
     core.websocket() -> returns the websocket object
     core.webscoket().disconnect() -> disconnects websocket (auto reconnect in 5 secs)
-
+`````
 Since most methods return their own object, the methods are chainable. So you can write rather condensed code:
+`````javascript
     var defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
     var defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
     var firstitem = defaultproject.items({_id:1})
         .data('type','msg')
         .data('creator',core.user().id())
         .sync();
-
+`````
 The timestamp and status are automatically updated when invoking the data(<whatever>) method so you don't need to worry about that.
 
 
