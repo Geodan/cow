@@ -450,6 +450,8 @@ var updateLists = function(){
 
 var core;
 var leaflmap;
+var layercontrol;
+var baseLayers;
 var map;
 var defaultproject;
 var defaultgroup;
@@ -493,7 +495,7 @@ var init = function(){
   // add an OpenStreetMap tile layer
     var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-    });
+    }).addTo(map);
     // Add a darker themd OSM layer
     var tileUrl = 'http://a{s}.acetate.geoiq.com/tiles/acetate-hillshading/{z}/{x}/{y}.png';
     var osmDarkLayer = L.tileLayer(tileUrl, {
@@ -501,11 +503,19 @@ var init = function(){
         subdomains: '0123',
         minZoom: 2,
         maxZoom: 18
-    }).addTo(map);
+    });
     
     //Layer controls
-    var baseLayers = {"Open Street Map": osmLayer, "OSM Dark": osmDarkLayer};
-    var layercontrol = new L.control.layers(baseLayers).setPosition("bottomleft").addTo(map);
+    baseLayers = [{ 
+        name:"Open Street Map",
+        layer: osmLayer
+      },{
+        name: "OSM Dark",
+        layer: osmDarkLayer
+    }];
+    layercontrol = new L.control.layers().setPosition("bottomleft").addTo(map);
+    layercontrol.addBaseLayer(baseLayers[0].layer, baseLayers[0].name);
+    //layercontrol.addBaseLayer(osmDarkLayer,"OSM Dark");
     L.Control.measureControl({position: "bottomleft"}).addTo(map);
   
     shapedrop_init(map);
@@ -565,6 +575,28 @@ var init = function(){
     updateLists();
     core.project().itemStore().on('datachange',updateLists);
     core.project().groupStore().on('datachange',updateLists);
+    
+    //Change base layers
+    var layers = icm.layers();
+    var map = leaflmap._map;
+    //Remove existing layers
+    for (var i=0;i<baseLayers.length;i++){
+        var layer = baseLayers[i].layer;
+        map.removeLayer(layer);
+        layercontrol.removeLayer(layer);
+    }
+    //Empty baseLayers
+    baseLayers = [];
+    //Add layers from project config
+    for (var i=0;i<layers.length;i++){
+        var options = layers[i].options;
+        var name = layers[i].name;
+        var layer = L.tileLayer(options.url,options.config);
+        map.addLayer(layer);
+        layercontrol.addBaseLayer(layer,name);
+        baseLayers.push({name:name,layer: layer});
+    }
+    
   });
   
   //What to do when a user changes name

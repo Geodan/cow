@@ -13,7 +13,8 @@ icm.peers = function(){
 icm.features = function(permtype){
     return _(core.project().items()).filter(function(d){
         if (permtype){
-            return (!d.deleted() && d.hasPermission(permtype) && d.data('type')=='feature') || (!d.deleted() && d.data('creator') == core.user().id() && d.data('type')=='feature');
+            //return (!d.deleted() && d.hasPermission(permtype) && d.data('type')=='feature') || (!d.deleted() && d.data('creator') == core.user().id() && d.data('type')=='feature');
+            return (!d.deleted() && d.data('type') == 'feature' && d.hasPermission(permtype)) || (!d.deleted() && d.data('type') == 'feature' && d.data('creator') == core.user().id());
         }
         else {
             return (!d.deleted() && d.data('type')=='feature');
@@ -105,6 +106,19 @@ icm.tags = function(){
     }
     return returnArr;
 };
+
+/**
+    layers() - return leaflet layers from project
+**/
+icm.layers = function(){
+    if (core.project()){
+        return core.project().data('tilelayers') || [];
+    }
+    else {
+        return [];
+    }
+};
+
 /**
     msg(item) - create a messagebox based on the item
         purpose is to edit the properties of the item, including permisions
