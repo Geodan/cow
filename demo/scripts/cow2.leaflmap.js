@@ -5,6 +5,21 @@ Cow.leaflmap = function(config){
     this.bbox = [-180, -85, 180, 85];
     this.bboxMax= [-180, -85, 180, 85];
     this.center= [0, 0];
+    this.dummyfeature = { "id": 0,
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[
+                    [ 0, 1],[0,3],[2,3],[2,1],[0,1]
+                ]]
+            },
+         "properties": {
+            "uid":0,
+            "owner": 0,
+            "label":""
+        }
+    };
+    
     this._map = L.map('map', {}).setView([52.083726,5.111282], 9);//Utrecht
     this._map.core = core; //TODO, needed for d3layer_utils context menus, but not so nice
     this._map.on('moveend',function(e){
@@ -51,6 +66,7 @@ Cow.leaflmap = function(config){
     this.core.on('myLocationChanged', function(){
             self._onMyLocationChanged();
     });
+
     
     return this;
 };
@@ -190,41 +206,39 @@ Cow.leaflmap.prototype =
 	    //End featCollections
 	    
 		self.editLayer.clearLayers(); //Remove existing leaflet features in editlayers (only d3 feats remaining) 
-		var editCollection = {"type":"FeatureCollection","features":[]};
-		var viewCollection = {"type":"FeatureCollection","features":[]};
+		var editCollection = {"type":"FeatureCollection","features":[this.dummyfeature]}; //FIXME
+		var viewCollection = {"type":"FeatureCollection","features":[this.dummyfeature]}; //FIXME
 		//TODO
 		var items = icm.features('edit');
 		var mygroups = self.core.project().myGroups();
-		$.each(items, function(i, item){
-		    
+		for (i=0;i<items.length;i++){
+		    var item = items[i];
 			var feature = item.data('feature');
             if(feature === undefined) {
                 console.warn('old item type');
                 return false;
             }
             else{
+                //Add feature
                 var opacity = 1;
-                var addFeature = function(feature){
-                    feature.id = feature.properties.key;
-                    feature.properties.name = item.data('name'); 
-                    feature.style = {
-                        icon: feature.properties.icon,
-                        stroke: feature.properties.linecolor,
-                        fill:  feature.properties.polycolor,
-                        "fill-opacity": 0.5,
-                        //"fill-opacity": opacity,
-                        opacity: opacity
-                    };
-                    feature.id = feature.properties.key = item.id();
-                    //Workaround for lines with a fill
-                    if (feature.geometry.type == 'LineString'){
-                        feature.style.fill = 'none';
-                    }
-                    editCollection.features.push(feature);
-              };
-              addFeature(feature);
+                feature.id = feature.properties.key;
+                feature.properties.name = item.data('name'); 
+                feature.style = {
+                    icon: feature.properties.icon,
+                    stroke: feature.properties.linecolor,
+                    fill:  feature.properties.polycolor,
+                    "fill-opacity": 0.5,
+                    //"fill-opacity": opacity,
+                    opacity: opacity
+                };
+                feature.id = feature.properties.key = item.id();
+                //Workaround for lines with a fill
+                if (feature.geometry.type == 'LineString'){
+                    feature.style.fill = 'none';
+                }
+                editCollection.features.push(feature);
 			}
-		});
+		}
 		if (self.editLayer){
 			self.editLayer.data(editCollection);
 		    self.editLayer.updateData(self._map);
@@ -234,22 +248,8 @@ Cow.leaflmap.prototype =
 	
 	_createLayers: function(map) {
 		var self = this;
-		
-		var dummyfeature = { "id": 0,
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "Polygon",
-                            "coordinates": [[
-                                [ 0, 1],[0,3],[2,3],[2,1],[0,1]
-                            ]]
-                        },
-                     "properties": {
-                        "uid":0,
-                        "owner": 0,
-                        "label":""
-                    }
-                };
-		var dummyCollection = {"type":"FeatureCollection","features":[dummyfeature]};
+
+		var dummyCollection = {"type":"FeatureCollection","features":[this.dummyfeature]};
 		
 		this.myLocationLayer = new L.GeoJSON.d3(dummyCollection, {
 		        labels: false,
@@ -361,11 +361,14 @@ Cow.leaflmap.prototype =
 		// Initialize the draw control and pass it the FeatureGroup of editable layers
 		this.drawControl = new L.Control.Draw({
 			draw: true,
+			draw: {
+			    circle: false
+			},
 			edit: {
 				//featureGroup: self.editLayer,
 				featureGroup: this.editLayer,
-				edit: true,
-				remove: true
+				edit: false,
+				remove: false
 			}
 		});
 		L.drawLocal.edit.handlers.edit.tooltip.subtext = '';
@@ -462,7 +465,7 @@ Cow.leaflmap.prototype =
         //self.editLayer.clearLayers();
 	},
 	closepopup: function(self){
-	    $('#featurepopup').html('');//TODO
+	    d3.select('#featurepopup').html('');//TODO
 		self._map.closePopup();
 	}
 };

@@ -11,12 +11,13 @@ icm.peers = function(){
     features(permtype) - return non-deleted features with permission type permtype or that belong to user
 **/
 icm.features = function(permtype){
-    return _(core.project().itemStore().features()).filter(function(d){
+    return _(core.project().items()).filter(function(d){
         if (permtype){
-            return (!d.deleted() && d.hasPermission(permtype)) || (!d.deleted() && d.data('creator') == core.user().id());
+            //return (!d.deleted() && d.hasPermission(permtype) && d.data('type')=='feature') || (!d.deleted() && d.data('creator') == core.user().id() && d.data('type')=='feature');
+            return (!d.deleted() && d.data('type') == 'feature' && d.hasPermission(permtype)) || (!d.deleted() && d.data('type') == 'feature' && d.data('creator') == core.user().id());
         }
         else {
-            return (!d.deleted());
+            return (!d.deleted() && d.data('type')=='feature');
         }
     });
 };
@@ -42,9 +43,10 @@ icm.messages = function(permtype){
             return (!d.deleted());
         }
     });
-    return _(messages).sortBy(function(message) {
+    var returnarr =  _(messages).sortBy(function(message) {
         return message.timestamp();
     });
+    return returnarr.reverse();
 };
 /**
     groups() - return non-deleted groups in project
@@ -53,10 +55,18 @@ icm.groups = function(){
     return _(core.project().groups()).filter(function(d){return !d.deleted();});
 };
 /**
-    users() - return non-deleted users
+    users() - return non-deleted users that are in current project
 **/
 icm.users = function(){
-    return _(core.users()).filter(function(d){return !d.deleted();});
+    //first get peers
+    var peers = _(core.peers()).filter(function(d){return d.data('activeproject') == core.project().id();});
+    var users = [];
+    for (var i = 0; i<peers.length;i++){
+        var userid = peers[i].user(); 
+        users.push(core.users(userid));
+    }
+    return users;
+    //return _(peers).filter(function(d){return !d.deleted();});
 };
 /**
     activeusers() - return users that are currently active
@@ -96,6 +106,19 @@ icm.tags = function(){
     }
     return returnArr;
 };
+
+/**
+    layers() - return leaflet layers from project
+**/
+icm.layers = function(){
+    if (core.project()){
+        return core.project().data('tilelayers') || [];
+    }
+    else {
+        return [];
+    }
+};
+
 /**
     msg(item) - create a messagebox based on the item
         purpose is to edit the properties of the item, including permisions

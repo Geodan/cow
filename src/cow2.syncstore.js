@@ -8,7 +8,11 @@ Cow.syncstore =  function(config){
         this.initpromise = this._initRecords();
     }
 }; 
-
+/**
+    See for use of promises: 
+        1. http://www.html5rocks.com/en/tutorials/es6/promises/
+        2. https://github.com/jakearchibald/ES6-Promises
+**/
 
 Cow.syncstore.prototype =  
 { //pouchdb object
@@ -17,31 +21,38 @@ Cow.syncstore.prototype =
         var data = config.data;
         var source = config.source;
         data._id = data._id.toString();
-        var deferred = new jQuery.Deferred(); //TODO, remove jquery dependency
-        switch (source){
-            case 'UI': //New for sure, so we can use put
-                this._db.put(data, function(err, out){
-                    if (err){
-                        deferred.reject(err);
-                    }
-                    else{
-                        deferred.resolve(out);
-                    }
-                });
-                break;
-            case 'WS': //Unsure wether new, so we use post
-                //TODO: include the _rev here
-                this._db.post(data,function(err, out){
-                    if (err){
-                        deferred.reject(err);
-                    }
-                    else{
-                        deferred.resolve(out);
-                    }
-                });
-                break;
-        }
-        return deferred.promise();
+        var self = this;
+        //var deferred = new jQuery.Deferred(); //TODO, remove jquery dependency
+        return new Promise(function(resolve, reject){
+            switch (source){
+                case 'UI': //New for sure, so we can use put
+                    self._db.put(data, function(err, out){
+                        if (err){
+                            //deferred.reject(err);
+                            reject(err);
+                        }
+                        else{
+                            //deferred.resolve(out);
+                            resolve(out);
+                        }
+                    });
+                    break;
+                case 'WS': //Unsure wether new, so we use post
+                    //TODO: include the _rev here
+                    self._db.post(data,function(err, out){
+                        if (err){
+                            //deferred.reject(err);
+                            reject(err);
+                        }
+                        else{
+                            //deferred.resolve(out);
+                            resolve(out);
+                        }
+                    });
+                    break;
+            }
+            //return deferred.promise();
+        });
     }, 
     _db_updateRecord: function(config){
         var data = config.data;
@@ -52,72 +63,90 @@ Cow.syncstore.prototype =
         }
         var source = config.source;
         data._id = data._id.toString();
-        var deferred = new jQuery.Deferred(); //TODO, remove jquery dependency
-        var promise;
-        //TODO: the way I try to get a promise is not right here....
-        //as a result I'm not getting a promise from _updateRecord or at least not in time
-        this._db.get(data._id, function(err,doc){
-            if (err) {
-                if (err.reason == 'missing'){ //not really an error, just a notice that the record would be new
+        //var deferred = new jQuery.Deferred(); //TODO, remove jquery dependency
+        return new Promise(function(resolve, reject){
+            //TODO: the way I try to get a promise is not right here....
+            //as a result I'm not getting a promise from _updateRecord or at least not in time
+            self._db.get(data._id, function(err,doc){
+                if (err) {
+                    if (err.reason == 'missing'){ //not really an error, just a notice that the record would be new
+                        return self._db_addRecord({source: source, data: data});
+                    }
+                    else{
+                        console.warn('Dbase error: ' , err);
+                        //deferred.reject(err);
+                        reject(err);
+                        //return deferred.promise();
+                        return promise;
+                    }
+                }
+                else { //overwrite existing
+                    data._rev = doc._rev;
                     return self._db_addRecord({source: source, data: data});
                 }
-                else{
-                    console.warn('Dbase error: ' , err);
-                    deferred.reject(err);
-                    return deferred.promise();
-                }
-            }
-            else { //overwrite existing
-                data._rev = doc._rev;
-                return self._db_addRecord({source: source, data: data});
-            }
+            });
         });
     },
     _db_getRecords: function(){
-        var deferred = new jQuery.Deferred();
-        this._db.allDocs({include_docs:true,descending: true}, function(err,doc){
-            if (err) {
-                console.warn('Dbase error: ' , err);
-                deferred.reject(err);
-            }
-            else {
-                deferred.resolve(doc);
-            }
+        //var deferred = new jQuery.Deferred();
+        var self = this;
+        return new Promise(function(resolve, reject){
+            self._db.allDocs({include_docs:true,descending: true}, function(err,doc){
+                if (err) {
+                    console.warn('Dbase error: ' , err);
+                    //deferred.reject(err);
+                    reject(err);
+                }
+                else {
+                    //deferred.resolve(doc);
+                    resolve(doc);
+                }
+            });
+            //return deferred.promise();
         });
-        return deferred.promise();
     },  //returns promise
     _db_getRecord: function(id){
-        var deferred = new jQuery.Deferred();
-        this._db.get(id, function(err,doc){
-            if (err) {
-                console.warn('Dbase error: ' , err);
-                deferred.reject(err);
-            }
-            else {
-                deferred.resolve(doc);
-            }
+        //var deferred = new jQuery.Deferred();
+        var self = this;
+        return new Promise(function(resolve, reject){
+            self._db.get(id, function(err,doc){
+                if (err) {
+                    console.warn('Dbase error: ' , err);
+                    //deferred.reject(err);
+                    reject(err);
+                }
+                else {
+                    //deferred.resolve(doc);
+                    resolve(doc);
+                }
+            });
         });
-        return deferred.promise();
+        //return deferred.promise();
     }, //returns promise
     _db_removeRecord: function(id){
-        var deferred = new jQuery.Deferred();
-        this._db.get(id, function(err,doc){
-            if (err) {
-                //console.warn('Dbase error: ' , err);
-                deferred.reject(err);
-            }
-            else {
-                db.remove(doc, function(err, response) {
-                        deferred.resolve(response);
-                });
-            }
+        var self = this;
+        //var deferred = new jQuery.Deferred();
+        return new Promise(function(resolve, reject){
+            self._db.get(id, function(err,doc){
+                if (err) {
+                    //console.warn('Dbase error: ' , err);
+                    //deferred.reject(err);
+                    reject(err);
+                }
+                else {
+                    db.remove(doc, function(err, response) {
+                            //deferred.resolve(response);
+                            resolve(response);
+                    });
+                }
+            });
         });
-        return deferred.promise();
+        //return deferred.promise();
     }, //returns promise
     _initRecords: function(){ //This will start the process of getting records from pouchdb (returns promise)
         var promise = this._db_getRecords();
         var self = this;
-        promise.done(function(r){
+        promise.then(function(r){
              
              r.rows.forEach(function(d){
                  //console.log(d.doc);

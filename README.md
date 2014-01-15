@@ -172,9 +172,7 @@ core: the cow object
 Messaging
 ===
 COW makes use of websocket messages to communicate with peers. A peer is not necessarely a COW instance but can be any client that adheres to websocket standards and the COW messaging protocol.
-See the <a href='./docs/messaging.md'>image</a> and <a href='./docs/messaging_shema.png'>image</a> in docs for an overview of the message flow.
-
-
+See  <a href='./docs/messaging.md'>messaging.md</a> and <a href='./docs/messaging_shema.png'>schema</a> in docs for an overview of the message flow.
 
 Dependencies Core
 =================
