@@ -100,7 +100,11 @@ Cow.leaflmap.prototype =
         };
         var b = [bbox.left,bbox.bottom,bbox.right,bbox.top];
         var peerid = this.core.peerid();
-        var username = this.core.user().data('name'); 
+        var username = 'Anonymous';
+        if (this.core.user()){
+            username = this.core.user().data('name');
+        }
+        
         var feature = { "id": peerid,
                         "type": "Feature",
                         "geometry": {

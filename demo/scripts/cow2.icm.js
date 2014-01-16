@@ -112,6 +112,18 @@ icm.tags = function(){
 **/
 icm.layers = function(){
     if (core.project()){
+        return core.project().data('layers') || [];
+    }
+    else {
+        return [];
+    }
+};
+
+/**
+    baseLayers() - return leaflet baseLayers from project
+**/
+icm.baselayers = function(){
+    if (core.project()){
         return core.project().data('tilelayers') || [];
     }
     else {

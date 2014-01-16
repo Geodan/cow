@@ -27,6 +27,7 @@
   <script src="./lib/leaflet_draw/leaflet.draw.js"></script>
   <script src="./lib/leaflet_label/leaflet.label.js"></script>
   <script src="./lib/leaflet_measure/leaflet.measurecontrol.js"></script>
+  <script src="./lib/leaflet_esri/esri-leaflet.js"></script>
   
   <link rel="stylesheet" href="./lib/leaflet-0.7/leaflet.css" />
   <link rel="stylesheet" href="./lib/leaflet_draw/leaflet.draw.css" />
@@ -452,6 +453,7 @@ var core;
 var leaflmap;
 var layercontrol;
 var baseLayers;
+var overLayers;
 var map;
 var defaultproject;
 var defaultgroup;
@@ -462,60 +464,40 @@ var defaultgroup;
 //
 
 var init = function(){
-  d3.select('#msgbox').style('display','none');
-  d3.select('#nwmsgbutton').on('click',function(d){
-    var newid = new Date().getTime().toString();
-    var item = core.project().items(newid)
-        .permissions('view',core.project().myGroups())//Set default permissions to my groups
-        .permissions('edit',core.project().myGroups())//Set default permissions to my groups
-        .permissions('share',core.project().myGroups())//Set default permissions to my groups;
-        .data('msg','empty');
-    updateLists();
-  });
-  d3.select('#sidebar #ruler').on('click',function(d){
-    var me = d3.select('#sidebar');
-    var newwidth;
-    if (me.style('width') == '330px'){
-        newwidth = '20px';
-    }
-    else {
-        newwidth = '330px';
-    }
-    me.transition().style('width',newwidth);
-  });
-    
-  core = new Cow.core({
-     wsUrl: 'wss://websocket.geodan.nl:443/new'
-  });
-  
-  leaflmap = new Cow.leaflmap({core:core});
-  map = leaflmap.map();
-  
-  map.setView([52.083726,5.111282], 9);//Utrecht
-  // add an OpenStreetMap tile layer
-    var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-    // Add a darker themd OSM layer
-    var tileUrl = 'http://a{s}.acetate.geoiq.com/tiles/acetate-hillshading/{z}/{x}/{y}.png';
-    var osmDarkLayer = L.tileLayer(tileUrl, {
-        attribution: 'Background map design by <a href="http://www.stamen.com/">Stamen</a>. Tiles hosted by <a href="http://www.geoiq.com/">GeoIQ</a>. Map data: <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors and <a href="http://www.naturalearthdata.org/">Natural Earth Data</a>.',
-        subdomains: '0123',
-        minZoom: 2,
-        maxZoom: 18
+    d3.select('#msgbox').style('display','none');
+    d3.select('#nwmsgbutton').on('click',function(d){
+      var newid = new Date().getTime().toString();
+      var item = core.project().items(newid)
+          .permissions('view',core.project().myGroups())//Set default permissions to my groups
+          .permissions('edit',core.project().myGroups())//Set default permissions to my groups
+          .permissions('share',core.project().myGroups())//Set default permissions to my groups;
+          .data('msg','empty');
+      updateLists();
+    });
+    d3.select('#sidebar #ruler').on('click',function(d){
+      var me = d3.select('#sidebar');
+      var newwidth;
+      if (me.style('width') == '330px'){
+          newwidth = '20px';
+      }
+      else {
+          newwidth = '330px';
+      }
+      me.transition().style('width',newwidth);
+    });
+      
+    core = new Cow.core({
+       wsUrl: 'wss://websocket.geodan.nl:443/new'
     });
     
-    //Layer controls
-    baseLayers = [{ 
-        name:"Open Street Map",
-        layer: osmLayer
-      },{
-        name: "OSM Dark",
-        layer: osmDarkLayer
-    }];
-    layercontrol = new L.control.layers().setPosition("bottomleft").addTo(map);
-    layercontrol.addBaseLayer(baseLayers[0].layer, baseLayers[0].name);
-    //layercontrol.addBaseLayer(osmDarkLayer,"OSM Dark");
+    leaflmap = new Cow.leaflmap({core:core});
+    map = leaflmap.map();
+    
+    map.setView([52.083726,5.111282], 9);//Utrecht
+
+    baseLayers = [];
+    overLayers = [];
+    layercontrol = new L.control.layers(null,null,{autoZIndex : false}).setPosition("bottomleft").addTo(map);
     L.Control.measureControl({position: "bottomleft"}).addTo(map);
   
     shapedrop_init(map);
@@ -577,7 +559,7 @@ var init = function(){
     core.project().groupStore().on('datachange',updateLists);
     
     //Change base layers
-    var layers = icm.layers();
+    var baselayers = icm.baselayers();
     var map = leaflmap._map;
     //Remove existing layers
     for (var i=0;i<baseLayers.length;i++){
@@ -588,14 +570,35 @@ var init = function(){
     //Empty baseLayers
     baseLayers = [];
     //Add layers from project config
-    for (var i=0;i<layers.length;i++){
-        var options = layers[i].options;
-        var name = layers[i].name;
+    for (var i=0;i<baselayers.length;i++){
+        var options = baselayers[i].options;
+        var name = baselayers[i].name;
         var layer = L.tileLayer(options.url,options.config);
         map.addLayer(layer);
         layercontrol.addBaseLayer(layer,name);
         baseLayers.push({name:name,layer: layer});
     }
+    
+    //Change overlays
+    var layers = icm.layers();
+    //Remove existing layers
+    for (var i=0;i<overLayers.length;i++){
+        var layer = overLayers[i].layer;
+        map.removeLayer(layer);
+        layercontrol.removeLayer(layer);
+    }
+    //Empty overLayers
+    overLayers = [];
+    //Add layers from project config
+    for (var i=0;i<layers.length;i++){
+        var options = layers[i].options;
+        var name = layers[i].name;
+        var layer = L.tileLayer.wms(options.url,options.config);
+        //map.addLayer(layer);
+        layercontrol.addOverlay(layer,name);
+        overLayers.push({name:name,layer: layer});
+    }
+    
     
   });
   
