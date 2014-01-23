@@ -285,7 +285,7 @@ Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
     //First only get alpha peers
     var alphaPeers = _.sortBy(
         _.filter(this._core.peers(),function(d){
-            return d.data('family') == 'alpha';
+            return (d.data('family') == 'alpha' && !d.deleted());
         }),
      function(d){return d.id();});
     //If we are the oldest of alpha peers
