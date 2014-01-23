@@ -252,29 +252,30 @@ Cow.websocket.prototype._getStore = function(payload){
     }
 };
     
-    //A peer initiates a sync
+//A peer initiates a sync
 Cow.websocket.prototype._onNewList = function(payload,sender) {
-    //TODO: alphapeer check
-    
-    var store = this._getStore(payload);
-    var project = store._projectid;
-    var syncobject = store.compareRecords({uid:sender, list: payload.list});
-    var data;
-    
-    data =  {
-        "syncType" : payload.syncType,
-        "project" : project,
-        "list" : syncobject.requestlist
-    };
-    this.sendData(data, 'wantedList', sender);
-    
-    data =  {
-        "syncType" : payload.syncType,
-        "project" : project,
-        "list" : syncobject.pushlist
-    };
-    this.sendData(data, 'missingRecords', sender);
-    //TODO this.core.trigger('ws-newList',message); 
+    //Only answer if we are ths alpha peer
+    if (this._amIAlpha()){
+        var store = this._getStore(payload);
+        var project = store._projectid;
+        var syncobject = store.compareRecords({uid:sender, list: payload.list});
+        var data;
+        
+        data =  {
+            "syncType" : payload.syncType,
+            "project" : project,
+            "list" : syncobject.requestlist
+        };
+        this.sendData(data, 'wantedList', sender);
+        
+        data =  {
+            "syncType" : payload.syncType,
+            "project" : project,
+            "list" : syncobject.pushlist
+        };
+        this.sendData(data, 'missingRecords', sender);
+        //TODO this.core.trigger('ws-newList',message);
+    }
 };
 Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
     /** 
