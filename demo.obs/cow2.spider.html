@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+  <title>Concurrent Online Webgis</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+<!--  <link href='http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css' rel='stylesheet' type='text/css'>
+-->  <link href='http://fonts.googleapis.com/css?family=Dosis:300,500' rel='stylesheet' type='text/css'>
+
+
+  <script src="../lib/underscore/underscore-min.js" type="text/javascript"></script>
+  <script src="../lib/jquery-2.0.3/jquery-2.0.3.js" type="text/javascript"></script>	
+  <script src="./lib/jquery-ui-1.10.2/jquery-ui.js" type="text/javascript"></script>  
+  
+  <!-- PouchDB -->
+  <script src="../lib/pouchdb/pouchdb-nightly.min.js"></script>
+<!--  
+  <script src="http://openlayers.org/api/OpenLayers.js" type="text/javascript"></script>    
+  <script src="http://maps.stamen.com/js/tile.stamen.js?v1.1.3"></script>
+-->
+  <!-- Adding leaflet and D3 libs, possible replacement for OL -->
+
+  <script src="./lib/d3/d3.v3.min.js" charset="utf-8"></script>
+  <script src="./lib/d3/topojson.v1.min.js"></script>
+  
+  <!--[if lte IE 8]>
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6/leaflet.ie.css" />
+  <![endif]-->
+
+  <script src="./scripts/d3.jsonp.js" type="text/javascript"></script>
+  <script src="./scripts/d3layer.js" type="text/javascript"></script>
+  <script src="./scripts/d3layer_utils.js" type="text/javascript"></script>
+  
+  <!-- Peerjs -->
+  <script type="text/javascript" src="./lib/peerjs-0.3/peer.min.js"></script>
+
+  <script src="../src/cow2.utils.js" type="text/javascript"></script>
+  <script src="../src/cow2.record.js" type="text/javascript"></script>
+  <script src="../src/cow2.syncstore.js" type="text/javascript"></script>
+  <script src="../src/cow2.peer.js" type="text/javascript"></script>
+  <script src="../src/cow2.user.js" type="text/javascript"></script>
+  <script src="../src/cow2.group.js" type="text/javascript"></script>
+  <script src="../src/cow2.item.js" type="text/javascript"></script>
+  <script src="../src/cow2.project.js" type="text/javascript"></script>
+  <script src="../src/cow2.websocket.js" type="text/javascript"></script>
+  <script src="../src/cow2.core.js" type="text/javascript"></script>
+  <script src="../src/cow2.js" type="text/javascript"></script>
+  
+  <script src="./scripts/cow2.icm.js" type="text/javascript"></script>
+  
+  <script src="scripts/cookies.js" type="text/javascript"></script>
+<style>
+HTML {
+	font-family: 'Dosis', Arial, sans-serif; 
+	font-weight: 300; 
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	color: #555753;
+	overflow: hidden;
+}
+h1{
+	font-family: 'Dosis', Arial, sans-serif;
+	font-weight: 500; 
+	font-size: 28pt;
+	color: #555753;
+	margin-top: 0.6em;
+}
+h3 {
+	font-family: 'Dosis', Arial, sans-serif;
+	font-weight: 500; 
+	font-size: 14pt;
+	color: #555753;
+}
+
+#peerlist {
+    position: absolute;
+    left: 0px;
+    top: 50px;
+}
+
+#userlist {
+    position: absolute;
+    left: 30%;
+    top: 50px;
+}
+
+#projectlist {
+    position: absolute;
+    left: 60%;
+    top: 50px;
+}
+
+.project {
+    background-color: #ff6666;
+}
+
+
+</style>
+<style>
+
+.node circle {
+  cursor: pointer;
+  radius: 10;
+  stroke: none;
+}
+
+.node text {
+  font: 12px sans-serif;
+  font-color: blue;
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+line.link {
+  fill: none;
+  stroke: #9ecae1;
+  stroke-width: 1.5px;
+}
+
+.node circle.user {
+    fill: red;
+}
+.node circle.project {
+    fill: green;
+}
+.node circle.peer {
+    fill: blue;
+}
+
+</style>
+<script>
+
+var width = 960,
+    height = 500,
+    root;
+
+var force = d3.layout.force()
+    .linkDistance(function(d){
+        return d.target.distance || 20;
+     })
+    .charge(-120)
+    .gravity(.05)
+    .size([width, height])
+    .on("tick", tick);
+
+var svg, link, node;
+function init(){
+    svg= d3.select("#content").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+        link = svg.selectAll(".link");
+        node = svg.selectAll(".node");
+}
+
+var firstrun = true;
+function update() {
+  
+  var nodes = flatten(root, force.nodes()),
+      links = d3.layout.tree().links(nodes);
+                  
+  // Restart the force layout.
+  force
+      .nodes(nodes)
+      .links(links)
+      
+      .start();
+  
+  // Update links.
+  link = link.data(links, function(d) { 
+    return d.target.uid; 
+  });
+
+  link.exit().remove();
+
+  link.enter().insert("line", ".node")
+      .attr("class", "link");
+
+  // Update nodes.
+  node = node.data(nodes, function(d) { 
+    return d.uid; 
+  });
+  
+  node.attr('x',function(d){
+    return d.x;
+  });
+  
+  
+  node.exit().remove();
+
+  var nodeEnter = node.enter().append("g")
+      .attr("class", "node")
+      .on("click", click)
+      .call(force.drag);
+
+  nodeEnter.append("circle")
+      .attr("r", function(d) { return d.size || 4.5; });
+
+  nodeEnter.append("text")
+      .attr("dy", ".35em")
+      .text(function(d) { return d.name; });
+
+  node.select("circle")
+      //.style("fill", color);
+    .attr('class', function(d){
+        return d.klass;
+    });
+  if (firstrun){
+    d3.timer(force.resume);
+    firstrun = false;
+  }
+}
+
+function tick() {
+  link.attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+  //node.attr("cx", function(d) { return d.x; })
+  //        .attr("cy", function(d) { return d.y; })              
+  node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+}
+
+function color(d) {
+  return d._children ? "#3182bd" // collapsed package
+      : d.children ? "#c6dbef" // expanded package
+      : "#fd8d3c"; // leaf node
+}
+
+// Toggle children on click.
+function click(d) {
+    if (d.klass == 'item'){
+        if (d.data('type') == 'feature'){
+            var targetuser = core.user().id(); 
+            var f = d.data('feature');
+            var coords = f.geometry.coordinates;
+            if (f.geometry.type == 'Point'){
+                var loc = {'latitude':coords[1],'longitude':coords[0],'level':13};
+                core.websocket().sendData({'command':'zoomTo', 'location':loc,'targetuser':targetuser},'command');
+            }
+         }
+    }
+
+  if (d3.event.defaultPrevented) return; // ignore drag
+  if (!d.collapsed) {
+    d._children = d.children;
+    d.children = null;
+    d.collapsed = true;
+  } else {
+    d.children = d._children;
+    d._children = null;
+    d.collapsed = false;
+  }
+  update();
+}
+
+// Returns a list of all nodes under the root.
+function flatten(root, oldnodes) {
+  var nodes = [], i = 0;
+
+  function oldnode(node){
+    for (var j=0;j<oldnodes.length;j++){
+        if (oldnodes[j].uid == node.uid){
+            return oldnodes[j];
+        }
+    }
+  }
+  
+  function recurse(node) {
+    if (!node.uid) node.uid = ++i;
+    if (oldnode(node)){
+        //Keep old location
+        node.x = oldnode(node).x;
+        node.y = oldnode(node).y;
+        node.collapsed = oldnode(node).collapsed;
+    }
+    if (node.children && !node.collapsed) {
+        node.children.forEach(recurse);
+    }
+    else if (node.children){
+        node._children = node.children.slice(0);
+        node.children = [];
+    }
+   
+    nodes.push(node);
+  }
+
+  recurse(root);
+  return nodes;
+}
+
+</script>
+
+<script type="text/javascript">
+
+var updateSpider = function(){
+    root = {
+        name: 'root',
+        uid: '0',
+        children: [
+        {
+            name: 'peers',
+            klass: 'peer',
+            uid: '1',
+            size: 10,
+            distance: 50,
+            children:[]
+        },{
+            name: 'users',
+            klass: 'user',
+            uid: '2',
+            size: 10,
+            distance: 50,
+            children: []
+        },{
+            name: 'projects',
+            klass: 'project',
+            uid: '3',
+            size: 10,
+            distance: 50,
+            children: []
+        }
+        ]
+    }
+    
+    var peerdata = icm.peers();
+    for (var i = 0;i < peerdata.length;i++){
+        var child = {};
+        var peer = peerdata[i]; 
+        child.name = peer.id();
+        child.uid = peer.id();
+        child.klass = 'peer';
+        root.children[0].children.push(child);
+    }
+    
+    core.userStore().initpromise.done(function(x){
+        var userdata = core.users();
+        for (var i = 0;i < userdata.length;i++){
+            var child = {};
+            var user = userdata[i]; 
+            child.name = user.data('name') || user.id();
+            child.uid = 'u'+user.id();
+            child.klass = 'user';
+            if (user.isActive() == true){
+                child.distance = 100; 
+            }
+            else {
+                child.distance = 50;
+            }
+            if (!user.deleted()){
+                root.children[1].children.push(child);
+            }
+        }
+    });
+    
+    core.projectStore().initpromise.done(function(x){
+        var projectdata = core.projects();
+        for (var i = 0;i < projectdata.length;i++){
+            var store = projectdata[i].groupStore(); 
+            store.initpromise.done(function(x){
+                var features = store.records();
+                var child = {};
+                var project = projectdata[i]; 
+                child.name = project.data('name') || project.id();
+                child.uid = 'p'+project.id();
+                child.klass = 'project';
+                
+                child.children = [];
+                for (var j = 0;j < features.length;j++){
+                    var feature = features[j];
+                    //adapt to d3 tree
+                    var name;
+                    //if (feature.data('feature')) name = feature.data('feature').geometry.type; 
+                    feature.name = feature.data('name') || feature.id();
+                    feature.uid = 'i'+feature.id();
+                    feature.klass = 'item';
+                    child.children.push(feature);
+                }
+                
+                
+                if (!project.deleted()){
+                    root.children[2].children.push(child);
+                }
+             });
+        }
+    });
+    core.userStore().initpromise.done(function(x){
+        core.projectStore().initpromise.done(function(x){
+            update();
+        });
+    });
+}
+
+var updateLists = function(){
+  var data = core.peers();
+  var peer = d3.select('#peerlist').selectAll('.peer')
+    .data(data, function(d){return 'peer'+d._id.toString();});
+   peer.enter().append('div')
+    .attr('id', function(d){return 'peer'+d._id.toString();})
+    .classed('peer', true);
+    peer.html(function(d){
+        var user = core.users(d.getUserId());
+        var username = user._id;
+        var since = new Date(d.timestamp()).toLocaleString();
+        return '<h3> ' + d._id + ' ('+ username+ ') <small> Since ' + since + ' </h3>'});
+    peer.exit().remove();
+
+    
+  core.userStore().initpromise.done(function(x){
+    var data = core.users();
+    var user = d3.select('#userlist').selectAll('.user')
+        .data(data, function(d){return 'user'+ d._id.toString();});
+       user.enter().append('div')
+        //.attr('id', function(d){return 'user'+d._id.toString();})
+        .classed('user', true);
+       user.html(function(d){return '<h3>' + d._id + (d.data('name')||"") + '</h3>'})
+       user.exit().remove();
+        
+  });
+  
+  core.projectStore().initpromise.done(function(x){
+      var expand_project = function(d){
+        var self = this;
+        d.itemStore().initpromise.done(function(x){
+            var data = d.itemStore().features();
+            d3.select(self).append('h4').html('Features: ');
+            var item = d3.select(self).selectAll('.item').data(data, function(e){return 'item'+e._id.toString()});
+            item.enter().append('span')
+                .classed('item', true)
+                .on('click',function(d){
+                    if (d.data('type') == 'feature'){
+                        var targetuser = core.user().id(); 
+                        var f = d.data('feature');
+                        var coords = f.geometry.coordinates;
+                        if (f.geometry.type == 'Point'){
+                            var loc = {'latitude':coords[1],'longitude':coords[0],'level':13};
+                            core.websocket().sendData({'command':'zoomTo', 'location':loc,'targetuser':targetuser},'command');
+                        }
+                        
+                     }
+                })
+                .attr('id', function(d){return 'item'+d._id.toString();});
+            item.html(function(d){
+                var name = d.data('type');
+                return d._id + ' ' + name + '<br>'});
+            item.exit().remove();
+        });
+        d.groupStore().initpromise.done(function(x){
+            var data = d.groups();
+            d3.select(self).append('h4').html('Groups: ');
+            var group = d3.select(self).selectAll('.group').data(data, function(e){return 'group'+e._id.toString()});
+            group.enter().append('span')
+                .classed('group', true)
+                .attr('id', function(d){return 'group'+d._id.toString();});
+            group.html(function(e){
+                var name = e.data('name');
+                return e._id + ' '+ name+','});
+            group.exit().remove();
+        });
+        
+        
+      }
+      
+      var data = core.projects();
+      var project = d3.select('#projectlist').selectAll('.project')
+        .data(data, function(d){return 'project'+d._id.toString();});
+       project.enter().append('div')
+        .attr('id', function(d){return 'project'+d._id.toString();})
+        .classed('project', true)
+       project.html(function(d){return '<h3>' + d._id + ' '+ d.data('name') + '</h3>'})
+        .append('div')
+        .each(expand_project);
+       project.exit().remove();
+   });
+   
+}
+
+
+var core;
+var defaultproject;
+var defualtgroup;
+
+$(document).ready(function(){
+  init();
+  core = new Cow.core({
+     wsUrl: 'wss://websocket.geodan.nl:443/new'
+  });
+  
+  //TODO: move username admin to other place
+  //Some username administration with cookies
+  var username=getCookie("username");
+  var logon = function(username){
+    $('#myname').val(username);
+    core.users({_id:username}).sync();
+    core.user(username);
+  }
+  if (username!=null && username!="")
+  {
+    logon(username);
+  }
+  else 
+  {
+    username=prompt("Please enter your name:","");
+    if (username!=null && username!="")
+    {
+        logon(username);
+        setCookie("username",username,1);
+    }
+  }
+  
+  
+  //Default init settings
+  
+  core.projectStore().initpromise.done(function(x){
+      if (!core.projects(1)){
+        defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
+      } else {
+        defaultproject = core.projects(1);
+      }
+      defaultproject.groupStore().initpromise.done(function(x){
+        if (!defaultproject.groups(1)){
+            defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
+        } else {
+            defaultgroup = defaultproject.groups(1);
+        }
+        defaultgroup.members(core.user().id()); //make me a member
+      });
+  });
+  
+  
+  //
+  //var firstitem = defaultproject.items({_id:1}) //create a new item (overwrite old)
+  //  .data('type','msg') //type is msg
+  //  .data('creator',core.user().id()) //creator is me
+  //  .permissions('edit', 1) //give group 1 the 'edit' permission
+  //  .sync();
+  
+                      
+  //window.setInterval(updateLists, 2000);
+  window.setTimeout(updateSpider, 2000);
+  
+  core.peerStore().on('datachange', function(e){
+    window.setTimeout(updateSpider, 1000);
+  });
+  core.userStore().on('datachange', function(e){
+    //updateSpider();
+    window.setTimeout(updateSpider, 1000);
+  });
+  core.projectStore().on('datachange', function(e){
+    //updateSpider();
+    window.setTimeout(updateSpider, 1000);
+  });
+  
+  
+   
+  
+  //What to do when a user changes name
+  $('#myname').on('blur', function(e, ui) {
+    var username = $(this).val();
+    logon(username);
+    setCookie("username",username,1);
+  });
+});
+ 
+
+</script>
+  </head>
+  <body>
+  <div id="top">
+    <span id="connect" title="click to change connection status"></span>
+    <span class="welcome"><span data-i18n="txt_welcome" id="txt_welcome">Welcome</span> <input id="myname"/ name="myname" title="click to change your name" value="anonymous" size="13"/></span>
+  </div>
+  <div id="content">
+  <!--
+    <div id="peerlist"><h1>Peers</h1></div>
+    <div id="userlist"><h1>Users:</h1></div>
+    <div id="projectlist"><h1>Projects:</h1></div>
+    -->
+  </div>
+  <div id="cow"></div>	
+  <div id="help" ></div>
+ 
+  </body>
+</html>
+
+

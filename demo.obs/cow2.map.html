@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+  <title>Concurrent Online Webgis</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+<!--  <link href='http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css' rel='stylesheet' type='text/css'>
+-->  <link href='http://fonts.googleapis.com/css?family=Dosis:300,500' rel='stylesheet' type='text/css'>
+
+  <script src="./lib/shapefile-js/shp.min.js" type="text/javascript"></script>
+  <script src="../lib/underscore/underscore-min.js" type="text/javascript"></script>
+  <script src="../lib/polyfill-promise/promise-0.1.1.min.js" type="text/javascript"></script>
+  <script src="../lib/jquery-2.0.3/jquery-2.0.3.js" type="text/javascript"></script>	
+  <script src="./lib/jquery-ui-1.10.2/jquery-ui.js" type="text/javascript"></script>
+  <script src="./lib/jquery-textcomplete/jquery.textcomplete.js" type="text/javascript"></script>  
+  <script src="./lib/jquery-mentionsInput/jquery.mentionsInput.js" type="text/javascript"></script>
+  <link href='./lib/jquery-mentionsInput/jquery.mentionsInput.css' rel='stylesheet' type='text/css'>
+  <!-- PouchDB -->
+  <script src="../lib/pouchdb/pouchdb-nightly.min.js"></script>
+
+  <!-- Adding leaflet and D3 libs -->
+  
+  <script src="./lib/leaflet-0.7/leaflet.js"></script>
+  <script src="./lib/leaflet_draw/leaflet.draw.js"></script>
+  <script src="./lib/leaflet_label/leaflet.label.js"></script>
+  <script src="./lib/leaflet_measure/leaflet.measurecontrol.js"></script>
+  <script src="./lib/leaflet_esri/esri-leaflet.js"></script>
+  
+  <link rel="stylesheet" href="./lib/leaflet-0.7/leaflet.css" />
+  <link rel="stylesheet" href="./lib/leaflet_draw/leaflet.draw.css" />
+  <link rel="stylesheet" href="./lib/leaflet_label/leaflet.label.css" />
+  <link rel="stylesheet" href="./lib/leaflet_measure/leaflet.measurecontrol.css" />
+  
+  <script src="./lib/d3/d3.v3.min.js" charset="utf-8"></script>
+  <!--<script src="./lib/d3/topojson.v1.min.js"></script>-->
+  
+  <!--[if lte IE 8]>
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6/leaflet.ie.css" />
+  <![endif]-->
+
+  <script src="../lib/d3layer/d3layer.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="../lib/d3layer/d3layer.css" />
+  
+  <!-- Peerjs -->
+  <!--
+  <script type="text/javascript" src="../lib/peerjs-0.3/peer.min.js"></script>
+  -->
+
+  <script src="../src/cow2.utils.js" type="text/javascript"></script>
+  <script src="../src/cow2.record.js" type="text/javascript"></script>
+  <script src="../src/cow2.syncstore.js" type="text/javascript"></script>
+  <script src="../src/cow2.peer.js" type="text/javascript"></script>
+  <script src="../src/cow2.user.js" type="text/javascript"></script>
+  <script src="../src/cow2.group.js" type="text/javascript"></script>
+  <script src="../src/cow2.item.js" type="text/javascript"></script>
+  <script src="../src/cow2.project.js" type="text/javascript"></script>
+  <script src="../src/cow2.websocket.js" type="text/javascript"></script>
+  <script src="../src/cow2.core.js" type="text/javascript"></script>
+  <script src="../src/cow2.js" type="text/javascript"></script>
+  
+  <script src="./scripts/leaflet-d3-layer.js"></script>
+  <script src="./scripts/cow2.d3layer_utils.js" type="text/javascript"></script>
+  <script src="./scripts/cow2.leaflmap.js" type="text/javascript"></script>
+  <script src="./scripts/cow2.icm.js" type="text/javascript"></script>
+  <script src="./scripts/cow2.shapedrop.js" type="text/javascript"></script>
+  
+  <script src="./scripts/cookies.js" type="text/javascript"></script>
+<style>
+HTML {
+	font-family: 'Dosis', Arial, sans-serif; 
+	font-weight: 300; 
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	color: #555753;
+	/*overflow: hidden;*/
+}
+body {
+    color: #555753;
+}
+h1{
+	font-family: 'Dosis', Arial, sans-serif;
+	font-weight: 500; 
+	font-size: 28pt;
+	color: #555753;
+	margin-top: 0.6em;
+}
+h3 {
+	font-family: 'Dosis', Arial, sans-serif;
+	font-weight: 500; 
+	font-size: 14pt;
+	color: #555753;
+}
+
+#map {
+    position: absolute;
+    left: 0px;
+    width: 100%;
+}
+
+#sidebar {
+    float: right;
+    position: absolute;
+    padding-left: 20px;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    width: 330px;
+    background: white;
+    z-index: 1001;
+}
+
+#sidebar #ruler {
+    position: absolute;
+    left: 0px;
+    width: 10px;
+    height: 100%;
+    background: steelBlue;
+    cursor: pointer;
+}
+
+.item.msg {
+       cursor: pointer;
+}
+.item.feature {
+       cursor: pointer;
+}
+path {
+    cursor: pointer;
+}
+
+.groupbox {
+    width: 10px;
+    height: 10px;
+    border: solid 2px black;
+    display: inline-block;
+    margin: 2px;
+    border-radius: 2px;
+    margin-bottom: 0px;
+    cursor: pointer;
+}
+
+.iedereen, .individueel {
+    padding: 10px;
+    border-bottom: solid 1px #eeeeec;
+}
+.eigen {
+    padding: 0px;
+}
+
+.selected{
+    width: 100%;
+}
+.project{
+    cursor: pointer;
+}
+/*.project:hover{
+    background-color: grey;
+}*/
+.active{
+    font-weight: bold;
+}
+/*
+.unselected:hover{
+    width: 100%;
+    background-color: #0099cc;
+}
+.selected:hover{
+    width: 100%;
+    background-color: #0099cc;
+}
+*/
+.public {
+    background: black;
+}
+.populatie, .Populatie{
+    background: green;
+}
+.evacuatie, .Evacuatie {
+    background: purple;
+}
+.opvang, .Opvang {
+    background: orange;
+}
+#msglist {
+    position: relative;
+}
+.list {
+    position: relative;
+    height: 400px;
+    top: 0px;
+    bottom: 10px;
+    overflow: auto;
+}
+.item {
+    position: relative;
+    
+}
+.itembutton {
+    position: absolute;
+}
+.invisible {
+    display: none;
+}
+
+#nwmsgbutton {
+    padding: 2px;
+    background-color: steelBlue;
+    cursor: pointer;
+}
+
+.card {
+    padding: 5px;
+    padding-left: 25px;
+    border-top: 2px solid steelBlue;
+}
+.card .ruler {
+    position: absolute;
+    left: 0px;
+    padding-top: 2px;
+    padding-left: 2px;
+    height: 80%;
+    width: 20px;
+    background: steelBlue;
+    cursor: pointer;
+}
+
+</style>
+<script type="text/javascript">
+
+
+
+var updateLists = function(){
+  //peers not used
+  //var data = icm.peers();
+  //var peer = d3.select('#peerlist').selectAll('.peer')
+  //  .data(data, function(d){return 'peer'+d._id.toString();});
+  //peer.enter().append('div')
+  //  .attr('id', function(d){return 'peer'+d._id.toString();})
+  //  .classed('peer', true);
+  //peer.html(function(d){
+  //      var user = core.users(d.getUserId());
+  //      var username = user._id;
+  //      var since = new Date(d.timestamp()).toLocaleString();
+  //      return '<h3> ' + d._id + ' ('+ username+ ') <small> Since ' + since + ' </h3>'});
+  //peer.exit().remove();
+  
+  core.userStore().initpromise.then(function(x){
+    //USERS
+    var data = icm.users();
+    var user = d3.select('#userlist').selectAll('.user')
+        .data(data, function(d){return 'user'+ d._id.toString();});
+       user.enter().append('div')
+        //.attr('id', function(d){return 'user'+d._id.toString();})
+        .classed('user', true);
+       user.classed('active',function(d){
+            if (d.id() == core.user().id()){
+                return true;
+            }
+            else {
+                return false;
+            }
+        });
+       user.html(function(d){return d.data('name')||d.id()})
+       user.exit().remove();
+        
+  });
+  
+  
+  core.projectStore().initpromise.then(function(x){
+        var self = this;
+        //ITEMS
+        core.project().itemStore().initpromise.then(function(x){
+        
+            var processMsg = function(item, msgbox){
+                msgbox.classed('selected',false);
+                var id = item.id();
+                //var msg = msgbox.select('textarea').html() || "";
+                var msg = msgbox.select('textarea')[0][0].value || "";
+                //Note to self:
+                // (^|\s) begin of string or space
+                // (\w+) whole word
+                var tags = (/(^|\s)#(\w+)/g);
+                var mentions = (/(^|\s)@(\w+)/g);
+                var subjects = (/(\w+)=(\w+)/g);
+                
+                //Get tags
+                var tagarray = [];
+                var match;
+                while (match = tags.exec(msg)){
+                    tagarray.push(match[2]);
+                }
+                item.data('tags',tagarray);
+                
+                //Get mentions
+                var mentionarray = [];
+                while (match = mentions.exec(msg)){
+                    mentionarray.push(match[2]);
+                }
+                item.data('mentions',mentionarray);
+                
+                //Get subjects
+                while (match = subjects.exec(msg)){
+                    item.data(match[1],match[2]);
+                }
+                
+                var type = item.data('type') || 'msg';
+                if (type == 'feature'){
+                    item.data('feature').properties.desc = msg;
+                    item.data('feature').properties.name = name;
+                }
+                item.data('type',type).data('msg',msg).sync();
+                
+            };
+        
+            var data = icm.messages('edit');
+            var item = d3.select('#msglist .list').selectAll('.item')
+                .data(data, function(d){return 'item'+ d._id.toString();});
+            var newitem = item.enter().append('div')
+                .attr('id', function(d){return 'msg'+d._id.toString();})
+                .classed('item', true)
+                .classed('feature', function(d){return d.data('type') == 'feature';})
+                .classed('msg', function(d){return d.data('type') == 'msg';});
+
+            item.each(function(d){
+                var me = d3.select(this);
+                if (me.classed('selected')){
+                    //Do nothing
+                    me.on('click', null);
+                }
+                else {
+                    me.html('');
+                    var card = me.append('div').classed('card',true);
+                    var ruler = card.append('div').classed('ruler',true).append('img').attr('src','./css/img/pencil_icon.png');
+                    //card.append('h3').html(function(d){return d.data('name');});
+                    card.append('span').html(function(d){
+                        var subjects = (/(\w+)=(\w+)/g);
+                        var msg = d.data('msg');
+                        var msg = msg.replace(subjects,"");
+                        var name = d.data('name')|| '';
+                        return  '<small>'+new Date(d.timestamp()).toLocaleTimeString()+'</small> &nbsp; <b>' + name + '</b><br>' + msg;
+                    });
+                    card.append('div').html(function(d){
+                        return '<small>' + (d.data('tags') || []).toString() + '</small>';
+                    });
+                    
+                    var form = me.append('div').classed('form',true).classed('invisible',true);
+                    form.append('textarea')
+                        .attr('id','nwmsg'+d.id()).attr('cols','30').attr('rows','6')
+                        .on('focus', function(d){ //Focus happens on keyboard 'tabbing'?
+                            //console.log(d.id() + 'got focus');
+                            
+                            //me.classed('selected',true);
+                            //me.select('.form').classed('invisible',false);
+                        })
+                        .on('blur', function(d){
+                                console.log(d.id() + 'got blur');
+                                processMsg(d,me);
+                         })
+                        .html(d.data('msg'));
+                    card.on('click',function(d){
+                        //Zoom to feature
+                        if (d.data('type') == 'feature'){
+                            leaflmap._map.fitBounds(L.geoJson(d.data('feature')).getBounds());
+                        }
+                    });
+                    ruler.on('click',function(d){
+                        var me = d3.select('#msg'+d._id.toString());
+                        me.select('.card').classed('invisible',true);
+                        me.select('.form').classed('invisible',false);
+                        document.getElementById('nwmsg'+d.id());//.focus();
+                        //me.select('textarea');
+                        me.classed('selected',true);
+                        me.call(icm.msg,d);
+                    });
+                }
+            });
+            
+            item.exit().remove();
+            item.order();
+            
+        });
+      //GROUPS  
+      core.project().groupStore().initpromise.then(function(x){
+            var data = icm.groups();
+            var item = d3.select('#grouplist').selectAll('.group')
+                .data(data, function(d){return 'group'+ d.id().toString();});
+                
+            var div = item.enter().append('div')
+                .attr('class',function(d){
+                    return 'group';
+                });
+            div.append('span').attr('class',function(d){
+                    return 'groupbox ' + d.data('name');
+            });
+            div.append('span').attr('class','members');
+            item.select('.members').html('');
+            item.select('.members').html(function(d){
+                    var members = d.members();
+                    return d.data('name') + ' (<small>'+members.toString()+'</small>)<br>';
+                });
+            
+            item.on('click',function(d){
+                var group = core.project().groups(d.id());
+                var me = core.user().id();
+                if (group.hasMember(me)){
+                    group.removeMember(me).sync();
+                }
+                else {
+                    group.members(me).sync();
+                }
+            });
+            item.exit().remove();
+        });  
+        
+        
+        //core.project().groupStore().initpromise.then(function(x){
+        //    var data = core.project().groups();
+        //    d3.select(self).append('h4').html('Groups: ');
+        //    var group = d3.select(self).selectAll('.group').data(data, function(e){return 'group'+e._id.toString()});
+        //    
+        //});
+        
+        //PROJECTS
+        var data = icm.projects();
+        var project = d3.select('#projectlist').selectAll('.project')
+            .data(data, function(d){return 'project'+d._id.toString();});
+        project.enter().append('div').classed('project',true).attr('id',function(d){return 'project'+d._id.toString();});
+        project.classed('active',function(d){
+            if (d.id() == core.project().id()){
+                return true;
+            }
+            else {
+                return false;
+            }
+        });
+        project.html(function(d){
+            return d.data('name');
+        });
+        project.on('click', function(d){
+            core.project(d.id());
+        });
+        project.exit().remove();
+   });
+}
+
+
+var core;
+var leaflmap;
+var layercontrol;
+var baseLayers;
+var overLayers;
+var map;
+var defaultproject;
+var defaultgroup;
+
+
+//
+// Document Ready
+//
+
+var init = function(){
+    d3.select('#msgbox').style('display','none');
+    d3.select('#nwmsgbutton').on('click',function(d){
+      var newid = new Date().getTime().toString();
+      var item = core.project().items(newid)
+          .permissions('view',core.project().myGroups())//Set default permissions to my groups
+          .permissions('edit',core.project().myGroups())//Set default permissions to my groups
+          .permissions('share',core.project().myGroups())//Set default permissions to my groups;
+          .data('msg','empty');
+      updateLists();
+    });
+    d3.select('#sidebar #ruler').on('click',function(d){
+      var me = d3.select('#sidebar');
+      var newwidth;
+      if (me.style('width') == '330px'){
+          newwidth = '20px';
+      }
+      else {
+          newwidth = '330px';
+      }
+      me.transition().style('width',newwidth);
+    });
+      
+    core = new Cow.core({
+       wsUrl: 'wss://websocket.geodan.nl:443/new'
+    });
+    
+    leaflmap = new Cow.leaflmap({core:core});
+    map = leaflmap.map();
+    
+    map.setView([52.083726,5.111282], 9);//Utrecht
+
+    baseLayers = [];
+    overLayers = [];
+    layercontrol = new L.control.layers(null,null,{autoZIndex : false}).setPosition("bottomleft").addTo(map);
+    L.Control.measureControl({position: "bottomleft"}).addTo(map);
+  
+    shapedrop_init(map);
+    
+  //TODO: move username admin to other place
+  //Some username administration with cookies
+  var username=getCookie("username");
+  var logon = function(username){
+    document.getElementById('myname').value = username;
+    core.users({_id:username}).sync();
+    core.user(username);
+  }
+  if (username!=null && username!="")
+  {
+    logon(username);
+  }
+  else 
+  {
+    username=prompt("Please enter your name:","");
+    if (username!=null && username!="")
+    {
+        logon(username);
+        setCookie("username",username,1);
+    }
+  }
+  logon(username);
+  
+  
+  //Default init settings
+  
+  core.projectStore().initpromise.then(function(x){
+      if (!core.projects(1)){
+        defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
+      } else {
+        defaultproject = core.projects(1);
+      }
+      defaultproject.groupStore().initpromise.then(function(x){
+        if (!defaultproject.groups(1)){
+            defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
+        } else {
+            defaultgroup = defaultproject.groups(1);
+        }
+        defaultgroup.members(core.user().id()); //make me a member
+      });
+      core.project(1); //set 1 as active project
+  },
+  function(e){
+    console.warn('Error: ', e.message);
+  }
+  );
+  
+  //window.setInterval(updateLists, 2000);
+  core.projectStore().on('datachange',updateLists);
+  core.userStore().on('datachange',updateLists);
+ 
+  core.on('projectChanged',function(){
+    updateLists();
+    core.project().itemStore().on('datachange',updateLists);
+    core.project().groupStore().on('datachange',updateLists);
+    
+    //Change base layers
+    var baselayers = icm.baselayers();
+    var map = leaflmap._map;
+    //Remove existing layers
+    for (var i=0;i<baseLayers.length;i++){
+        var layer = baseLayers[i].layer;
+        map.removeLayer(layer);
+        layercontrol.removeLayer(layer);
+    }
+    //Empty baseLayers
+    baseLayers = [];
+    //Add layers from project config
+    for (var i=0;i<baselayers.length;i++){
+        var options = baselayers[i].options;
+        var name = baselayers[i].name;
+        var layer = L.tileLayer(options.url,options.config);
+        map.addLayer(layer);
+        layercontrol.addBaseLayer(layer,name);
+        baseLayers.push({name:name,layer: layer});
+    }
+    
+    //Change overlays
+    var layers = icm.layers();
+    //Remove existing layers
+    for (var i=0;i<overLayers.length;i++){
+        var layer = overLayers[i].layer;
+        map.removeLayer(layer);
+        layercontrol.removeLayer(layer);
+    }
+    //Empty overLayers
+    overLayers = [];
+    //Add layers from project config
+    for (var i=0;i<layers.length;i++){
+        var options = layers[i].options;
+        var name = layers[i].name;
+        var layer = L.tileLayer.wms(options.url,options.config);
+        //map.addLayer(layer);
+        layercontrol.addOverlay(layer,name);
+        overLayers.push({name:name,layer: layer});
+    }
+    
+    
+  });
+  
+  //What to do when a user changes name
+  d3.select('#myname').on('blur', function(e, ui) {
+    var username = this.value;
+    logon(username);
+    setCookie("username",username,1);
+  });
+  
+  var tracker = new icm.tracker();
+  tracker.startTracking();
+  core.websocket().on('connected',function(){
+    if (core.location()){
+        core.peer().data('location',core.location());
+    }
+  });
+  
+};
+ 
+
+</script>
+  </head>
+  <body>
+  <div id="top">
+    <span id="connect" title="click to change connection status"></span>
+    <span class="welcome"><span data-i18n="txt_welcome" id="txt_welcome">Welcome</span> <input id="myname"/ name="myname" title="click to change your name" value="anonymous" size="13"/></span>
+  </div>
+  <div id="content">
+    <div id="map"><h1>Map</h1></div>
+    <div id="sidebar">
+        <div id="ruler"></div>
+        <div>
+            <div id="projectlist"><h3>Projects:</h3></div>
+            <div id="userlist"><h3>Users:</h3></div>
+            <div id="grouplist"><h3>Groups:</h3></div>
+
+            <div id="msglist"><h3>Messages:</h3>
+                <div id="nwmsgbutton"><h4>New message<h4></div>
+                <div class='list'></div>
+            </div>
+        </div>
+    </div>
+    
+    
+    
+  </div>
+  <div id="cow"></div>	
+  <div id="help" ></div>
+  <script type="text/javascript">
+    init();
+  </script>
+  </body>
+</html>
+
+

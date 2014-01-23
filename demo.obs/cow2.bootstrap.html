@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+  <title>Concurrent Online Webgis</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+  <script src="../lib/underscore/underscore-min.js" type="text/javascript"></script>
+  <script src="../lib/jquery-2.0.3/jquery-2.0.3.js" type="text/javascript"></script>	
+  <script src="../lib/pouchdb/pouchdb-nightly.min.js"></script>
+
+  <!-- Adding leaflet and D3 libs -->
+  
+  <script src="../lib/leaflet-0.7/leaflet.js"></script>
+  <script src="../lib/leaflet_draw/leaflet.draw.js"></script>
+  <script src="../lib/leaflet_label/leaflet.label.js"></script>
+  <script src="../lib/leaflet_measure/leaflet.measurecontrol.js"></script>
+  
+  <link rel="stylesheet" href="../lib/leaflet-0.7/leaflet.css" />
+  <link rel="stylesheet" href="../lib/leaflet_draw/leaflet.draw.css" />
+  <link rel="stylesheet" href="../lib/leaflet_label/leaflet.label.css" />
+  <link rel="stylesheet" href="../lib/leaflet_measure/leaflet.measurecontrol.css" />
+  
+  <script src="../lib/d3/d3.v3.min.js" charset="utf-8"></script>
+  <!--<script src="../lib/d3/topojson.v1.min.js"></script>-->
+  
+  <!--[if lte IE 8]>
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6/leaflet.ie.css" />
+  <![endif]-->
+
+  <script src="../lib/d3layer/d3layer.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="../lib/d3layer/d3layer.css" />
+  
+  <!-- Peerjs -->
+  <!--
+  <script type="text/javascript" src="../lib/peerjs-0.3/peer.min.js"></script>
+  -->
+
+  <script src="../src/cow2.utils.js" type="text/javascript"></script>
+  <script src="../src/cow2.record.js" type="text/javascript"></script>
+  <script src="../src/cow2.syncstore.js" type="text/javascript"></script>
+  <script src="../src/cow2.peer.js" type="text/javascript"></script>
+  <script src="../src/cow2.user.js" type="text/javascript"></script>
+  <script src="../src/cow2.group.js" type="text/javascript"></script>
+  <script src="../src/cow2.item.js" type="text/javascript"></script>
+  <script src="../src/cow2.project.js" type="text/javascript"></script>
+  <script src="../src/cow2.websocket.js" type="text/javascript"></script>
+  <script src="../src/cow2.core.js" type="text/javascript"></script>
+  <script src="../src/cow2.js" type="text/javascript"></script>
+  
+  <script src="./scripts/leaflet-d3-layer.js"></script>
+  <script src="./scripts/cow2.d3layer_utils.js" type="text/javascript"></script>
+  <script src="./scripts/cow2.leaflmap.js" type="text/javascript"></script>
+  
+  <script src="scripts/cookies.js" type="text/javascript"></script>
+
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+    
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
+    
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+
+  
+  </head>
+  <body>
+  <script>
+  $(document).ready(function(){
+
+  core = new Cow.core({
+     wsUrl: 'wss://websocket.geodan.nl:443/new'
+  });
+  
+  leaflmap = new Cow.leaflmap({core:core});
+  map = leaflmap.map();
+  
+  map.setView([52.083726,5.111282], 9);//Utrecht
+  // add an OpenStreetMap tile layer
+    var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    });
+    // add Dutch AHN layer
+    var ahnUrl = "http://t3.edugis.nl/tiles/tilecache.py?map=maps/edugis/cache/hoogte.map";
+    var ahnLayer = L.tileLayer.wms(ahnUrl, {
+        layers: 'hoogtes',
+        format: 'image/png',
+        transparent: true
+    });
+    // Add a darker themd OSM layer
+    var tileUrl = 'http://a{s}.acetate.geoiq.com/tiles/acetate-hillshading/{z}/{x}/{y}.png';
+    var osmDarkLayer = L.tileLayer(tileUrl, {
+        attribution: 'Background map design by <a href="http://www.stamen.com/">Stamen</a>. Tiles hosted by <a href="http://www.geoiq.com/">GeoIQ</a>. Map data: <a href="http://www.openstreetmap.org/">OpenStreetMap</a> contributors and <a href="http://www.naturalearthdata.org/">Natural Earth Data</a>.',
+        subdomains: '0123',
+        minZoom: 2,
+        maxZoom: 18
+    }).addTo(map);
+    
+    //Layer controls
+    var baseLayers = {"Open Street Map": osmLayer, "Open Street Map (achtergrond)": osmDarkLayer, "Hoogtekaart": ahnLayer};
+    var layercontrol = new L.control.layers(baseLayers).setPosition("bottomleft").addTo(map);
+    L.Control.measureControl({position: "bottomleft"}).addTo(map);
+  
+  //TODO: move username admin to other place
+  //Some username administration with cookies
+  var username=getCookie("username");
+  var logon = function(username){
+    $('#myname').val(username);
+    core.users({_id:username}).sync();
+    core.user(username);
+  }
+  if (username!=null && username!="")
+  {
+    logon(username);
+  }
+  else 
+  {
+    username=prompt("Please enter your name:","");
+    if (username!=null && username!="")
+    {
+        logon(username);
+        setCookie("username",username,1);
+    }
+  }
+  logon(username);
+  
+  
+  //Default init settings
+  
+  core.projectStore().initpromise.done(function(x){
+      if (!core.projects(1)){
+        defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
+      } else {
+        defaultproject = core.projects(1);
+      }
+      defaultproject.groupStore().initpromise.done(function(x){
+        if (!defaultproject.groups(1)){
+            defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
+        } else {
+            defaultgroup = defaultproject.groups(1);
+        }
+        defaultgroup.members(core.user().id()); //make me a member
+      });
+  });
+  
+  window.setInterval(updateLists, 2000);
+  
+  //What to do when a user changes name
+  $('#myname').on('blur', function(e, ui) {
+    var username = $(this).val();
+    logon(username);
+    setCookie("username",username,1);
+  });
+});
+  </script>
+    <h3>Two columns</h3>
+      <p>Get two columns <strong>starting at desktops and scaling to large desktops</strong>.</p>
+      <div class="row">
+        <div id='map' class="col-md-8"></div>
+        <div class="col-md-4">.col-md-4</div>
+      </div>
+  </body>
+</html>

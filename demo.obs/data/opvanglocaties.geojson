@@ -1,0 +1,17 @@
+{
+"type": "FeatureCollection",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+                                                                                
+"features": [
+{ "type": "Feature", "properties": { "naam": "Kliniek \"medica\" Wieken", "omschrijvi": "ziekenhuis , opvangcapaciteit 25 bedden" }, "geometry": { "type": "Point", "coordinates": [ 5.285033144799832, 51.879651081237199 ] } },
+{ "type": "Feature", "properties": { "naam": "verzorg.h. Het Leede", "omschrijvi": "bejaardenhuis, opvangcapaciteit 50 bedden" }, "geometry": { "type": "Point", "coordinates": [ 5.090507830090041, 51.897485764310964 ] } },
+{ "type": "Feature", "properties": { "naam": "ÄV zorg locatie Emma", "omschrijvi": "bejaardenhuis, opvangcapaciteit 50 bedden" }, "geometry": { "type": "Point", "coordinates": [ 5.080380752391332, 51.893660190939862 ] } },
+{ "type": "Feature", "properties": { "naam": "Beatrix ziekenhuis", "omschrijvi": "zk, opvang speciale zorg 20, normaal 80 bed." }, "geometry": { "type": "Point", "coordinates": [ 4.958127888313602, 51.838499428843299 ] } },
+{ "type": "Feature", "properties": { "naam": "Partycentrum", "omschrijvi": "Tot 400 personen, catering aanwezig" }, "geometry": { "type": "Point", "coordinates": [ 5.18779192568477, 51.898204082331311 ] } },
+{ "type": "Feature", "properties": { "naam": "verz.h. Lingehof", "omschrijvi": "noodcapaciteit 25 bedden" }, "geometry": { "type": "Point", "coordinates": [ 5.1912567073161, 51.886614993145074 ] } },
+{ "type": "Feature", "properties": { "naam": "Hotel de Gentel", "omschrijvi": "# Beschikbare bedden op aanvraag" }, "geometry": { "type": "Point", "coordinates": [ 5.272361657634152, 51.882560590356618 ] } },
+{ "type": "Feature", "properties": { "naam": "zorgcentrum Wielewaal", "omschrijvi": "capaciteit 15-20 bedden" }, "geometry": { "type": "Point", "coordinates": [ 5.252990185845687, 51.80826038119941 ] } },
+{ "type": "Feature", "properties": { "naam": "sporthal Interweij", "omschrijvi": "tot max 2000 personen" }, "geometry": { "type": "Point", "coordinates": [ 5.244297667339519, 51.947793649048918 ] } },
+{ "type": "Feature", "properties": { "naam": "sporthal De Smidseberg", "omschrijvi": "maximaal 1500 personen" }, "geometry": { "type": "Point", "coordinates": [ 4.943673964348398, 51.903829345857915 ] } }
+]
+}

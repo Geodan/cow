@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ProGideon</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" href="../lib/leaflet-0.6/leaflet.css" />
+  <link rel="stylesheet" href="../lib/leaflet_draw/leaflet.draw.css" />
+  <link rel="stylesheet" href="../lib/leaflet_label/leaflet.label.css" />
+  <link rel="stylesheet" href="../lib/leaflet_measure/leaflet.measurecontrol.css" />
+
+  <script src="../lib/jquery-2.0.3/jquery-2.0.3.js" type="text/javascript"></script>	
+  <script src="../lib/jquery-ui-1.10.2/jquery-ui.js" type="text/javascript"></script>  
+  <script src="../lib/pouchdb/pouchdb-nightly.js"></script>
+
+  <script src="../lib/leaflet-0.6/leaflet.js"></script>
+  <script src="../lib/leaflet_draw/leaflet.draw.js"></script>
+  <script src="../lib/leaflet_label/leaflet.label.js"></script>
+  <script src="../lib/leaflet_measure/leaflet.measurecontrol.js"></script>
+  <script src="../lib/d3/d3.v3.min.js" charset="utf-8"></script>
+  <script src="../lib/d3/topojson.v1.min.js"></script>
+  
+  <script src="./scripts/d3layer_utils.js" type="text/javascript"></script>
+  <script src="./scripts/d3.jsonp.js" type="text/javascript"></script>
+  <script src="./scripts/d3layer.js" type="text/javascript"></script>
+
+  <script src="../src/cow.core.js" type="text/javascript"></script>
+  <script src="../src/cow.websocket.js" type="text/javascript"></script>
+  <script src="../src/cow.peer.js" type="text/javascript"></script>
+  <script src="../src/cow.group.js" type="text/javascript"></script>
+  <script src="../src/cow.project.js" type="text/javascript"></script>
+  <script src="../src/cow.item.js" type="text/javascript"></script>
+  <script src="../src/cow.items.js" type="text/javascript"></script>
+  <script src="../src/cow.geolocator.js" type="text/javascript"></script>
+  <script src="../src/cow.pouchdb.js" type="text/javascript"></script>
+
+  <script src="scripts/leaflmapwidget.js" type="text/javascript"></script>
+  <script src="scripts/messagewidget.js" type="text/javascript"></script>
+  <script src="scripts/knopwidget.js" type="text/javascript"></script>
+    <script src="scripts/cookies.js" type="text/javascript"></script>
+   <script type="text/javascript">
+var core;
+
+//internal function
+getUrlVars = function()
+{
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++)
+    {
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+};
+
+
+$(document).ready(function(){
+  
+  $('#cow').cow({
+    websocket: {url: 'wss://websocket.geodan.nl:443/item'}
+    //websocket: {url: 'wss://websocket.geodan.nl:443/geofort'}
+  });
+  
+  core =$('#cow').data('cow');
+    $('#map').LeaflMapWidget({core: '#cow'});
+    $('#sidebar').MessageWidget({core: '#cow'});
+     $('#newfeatpanel').KnopWidget({core: '#cow'});
+    
+    var username=getCookie("username");
+  if (username!=null && username!="")
+  {
+    core.username(username);
+    $('#username').val(username);
+  }
+  else 
+  {
+    username=prompt("Please enter your name:","");
+    if (username!=null && username!="")
+    {
+         $('#username').val(username);
+        core.username(username);
+        setCookie("username",username,1);
+    }
+  }
+  $('#username').keyup(function() {
+    core.username( $('#username').val());
+  });
+  $('#bericht').click(function(){
+
+    $('#sidebar').toggle('blind').animate({scrollTop:$("#sidebar").prop("scrollHeight") - $('#sidebar').height() },200);   
+
+  });
+
+
+  
+  /*$('#deeldropdown').click(function(){
+    $('#delen').toggle('blind');
+  });
+  */
+  
+  //Settings for ProGideon workshop
+  var progideon = core.projects({_id:1001,name:"Overstroming 1", peeruid: core.UID}); //Add after localdb has been initialized
+  progideon.groups({_id:2,name:'Populatie'});
+  progideon.groups({_id:3,name:'Evacuatie'});
+  progideon.groups({_id:4,name:'Opvang'});
+  var progideon = core.projects({_id:1002,name:"Overstroming 2", peeruid: core.UID}); //Add after localdb has been initialized
+  progideon.groups({_id:2,name:'Populatie'});
+  progideon.groups({_id:3,name:'Evacuatie'});
+  progideon.groups({_id:4,name:'Opvang'});
+  core.activeproject({activeProjectId:666}); //Default starting in sketch project
+  var publicgroup = core.project.groups({_id:1,name:'Public'});
+  var populatie = core.project.groups({_id:2,name:'Populatie'});
+  var evacuatie = core.project.groups({_id:3,name:'Evacuatie'});
+  var opvang = core.project.groups({_id:4,name:'Opvang'});
+  
+  var group = getUrlVars()["group"] || 'populatie';
+  var delenhtml = '';
+  delenhtml += '<div class="iedereen"><div><label><input type="checkbox" checked="true" class="cb cop"/><span class="group cop " title="COP"></span><span class="delencb aan">Iedereen</span></label></div></div>';
+  //Add yourself to the group
+  if (group == 'evacuatie'){
+    evacuatie.members(core.UID);
+     delenhtml += '<div class="individueel"><div><label><input value="2"  checked="true" type="checkbox" class="cb populatie other"/><span class="group populatie" title="populatie"></span><span  class="delencb">Populatie</span></label></div>';
+    delenhtml += '<div><label><input value="4" checked="true"  type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div></div>'
+delenhtml += '<div class="eigen"><div><label><input value="3" type="checkbox" class="cb evacuatie eigen"/><span class="group evacuatie" title="evacuatie"></span><span class="delencb">Eigen objecten</span></label></div></div>'
+  }
+  else if (group == 'populatie'){
+    populatie.members(core.UID);
+       delenhtml += '<div class="individueel"><div><label><input value="3" checked="true"  type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span  class="delencb">Evacuatie</span></label></div>';
+    delenhtml += '<div><label><input value="4" checked="true"  type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div></div>'
+delenhtml += '<div class="eigen"><div><label><input value="2" type="checkbox" class="cb populatie eigen"/><span class="group populatie" title="populatie"></span><span class="delencb">Eigen objecten</span></label></div></div>'
+  }
+  else if (group == 'opvang'){
+    opvang.members(core.UID);
+        delenhtml += '<div class="individueel"><div><label><input checked="true"  value="2" type="checkbox" class="cb populatie other"/><span class="group populatie" title="populatie"></span><span  class="delencb">Populatie</span></label></div>';
+    delenhtml += '<div><label><input value="3"  checked="true" type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span class="delencb">Evacuatie</span></label></div></div>'
+delenhtml += '<div class="eigen"><div><label><input value="4" type="checkbox" class="cb opvang eigen"/><span class="group opvang" title="opvang"></span><span class="delencb">Eigen objecten</span></label></div></div>'
+  }
+  else { //Default
+    populatie.members(core.UID);
+    //publicgroup.members(core.UID);
+         delenhtml += '<div class="individueel"><div><label><input  checked="true" value="3" type="checkbox" class="cb evacuatie other"/><span class="group evacuatie" title="evacuatie"></span><span  class="delencb">Evacuatie</span></label></div>';
+    delenhtml += '<div><label><input value="4" checked="true"  type="checkbox" class="cb opvang other"/><span class="group opvang" title="opvang"></span><span class="delencb">Opvang</span></label></div></div>'
+delenhtml += '<div class="eigen"><div><label><input value="2" type="checkbox" class="cb populatie eigen"/><span class="group populatie" title="populatie"></span><span class="delencb">Eigen objecten</span></label></div></div>'
+  }
+
+  $('#delen').append(delenhtml);
+  
+  var mygroups = core.project.myGroups();
+  var mygroupstring = ""; 
+  $.each(mygroups, function(i,d){
+    var name = self.core.project.getGroupById(d).name;
+    if (name != 'Public')
+        mygroupstring = mygroupstring + " " + name; 
+  });
+  var groupspan = d3.select('#group');
+  groupspan.select('.text').html(mygroupstring);
+  groupspan.select('.group').classed(mygroupstring, true);
+  
+  $('#delen').on('change','.cb',function(){
+    if($(this).hasClass('cop')) {
+        //het is de iedereen checkbox
+        if($(this).prop('checked')){
+            //en hij staan aan
+            
+            $('.other').prop('checked', true);
+            $('.eigen').prop('checked', false);
+        }
+        else {
+            //en hij staat uit
+            
+            $('.other').prop('checked', false);
+            $('.eigen').prop('checked', true);
+        }
+    }
+    else if($(this).hasClass('other')) {
+        //het is een andere groep
+        //opties: beide aan
+        //          beide uit
+        //       deze aan, andere uit
+        //       deze uit, andere aan        
+        
+        if($($('.other')[0]).prop('checked')&&$($('.other')[1]).prop('checked')){
+            //alles aan
+            $('.cb.cop').prop('checked',true);
+             $('.eigen').prop('checked', false);
+        }
+        else if(!$($('.other')[0]).prop('checked')&&!$($('.other')[1]).prop('checked')){
+            //alles uit
+            $('.cb.cop').prop('checked',false);
+             $('.eigen').prop('checked', true);
+        }
+        else {
+            $('.cb.cop').prop('checked',false);
+             $('.eigen').prop('checked', false);
+           }        
+        
+    
+    }
+    else if($(this).hasClass('eigen')) {
+        //het is de eigen checkbox
+         if($(this).prop('checked')){
+            //en hij staan aan
+            $('.other').prop('checked', false);
+            $('.cop').prop('checked', false);
+        }
+        else {
+            //en hij staat uit
+            $('.other').prop('checked', true);
+            $('.cop').prop('checked', true);
+        }
+    }
+    core.trigger('storeChanged');
+  });
+  $('#gedeeld').click(function(){  
+    $('#gedeeld').toggleClass('aan');
+    if($('#gedeeld').hasClass('aan')) {
+        $('#chk-gedeeld').prop('checked', true);
+    }
+    else {
+    $('#chk-gedeeld').prop('checked', false);
+    }
+    core.trigger('storeChanged');
+  });
+  $('#uitloggen').click(function(){
+        window.location('index.html'); 
+  });
+});
+</script>  
+<style>
+.arc1 {
+    cursor: pointer;
+}
+.menu {
+    font-size: 16px;
+    font-weight: bold;
+    fill: steelBlue;
+    stroke: None;
+    stroke-width: 1px;
+    text-anchor: middle;
+    opacity: 1;
+}
+.menu_shadow {
+    font-size: 16px;
+    font-weight: bold;
+    fill: white;
+    stroke: white;
+    stroke-width: 3px;
+    stroke-opacity: .8;
+    text-anchor: middle;
+    opacity: 1;
+}
+.entity{
+    cursor: pointer;
+}
+.leaflet-container .leaflet-control-zoom {
+margin-left: 10px;
+margin-top: 15px;
+}
+.leaflet-bar {
+  box-shadow: none;
+  border: none;
+  -webkit-border-radius: 1px;
+border-radius: 1px;
+}
+.leaflet-control-zoom a {
+  color: white;
+  width: 35px;
+  height: 35px;
+  border: none;
+}
+.leaflet-control-zoom a:hover {
+background-color: #abcb3b;
+}
+a.leaflet-disabled:hover {
+ color:  #b4cf6a;
+ background: #96be0a;
+}
+.leaflet-bar a {
+  background: #96be0a;
+  line-height:34px;
+}
+.leaflet-bar a:first-child {
+-webkit-border-radius: 1px ;
+border-radius: 1px;
+margin-bottom: 7px;
+}
+.leaflet-control-zoom-in {
+font: bold 24px/36px Arial, Helvetica, sans-serif;
+}
+.leaflet-bar a.leaflet-disabled {
+cursor: default;
+
+ color:  #b4cf6a;
+ background: #96be0a;
+}
+.leaflet-control-zoom-out {
+font: bold 24px/30px Tahoma, Verdana, sans-serif;
+}
+.leaflet-bar a:last-child {
+-webkit-border-radius: 1px;
+border-radius: 1px;
+border-bottom: none;
+}
+
+*{
+    font-family: Arial;
+}
+#map {
+    left: 0px;
+    right: 0px;
+    top: 36px;
+    bottom: 0px;
+    position: absolute;
+}
+#header {
+    left: 0px;
+    right: 0px;
+    top: 0px; 
+    height: 36px;
+     position: absolute;
+     border-bottom: solid 1px black;
+     z-index: 1000;
+     box-shadow:         0px 0px 0px 3px  rgba(90, 90, 90, 0.4);
+     line-height: 36px;
+     padding-left: 5px;
+     font-size: 20px;
+}
+.head-left {
+padding-top: 4px;
+}
+.button {
+    cursor: pointer;
+        border: solid 1px rgba(238, 238, 236, 0.2);
+        border-radius: 2px;
+        padding: 2px 10px 2px 10px;
+        background-image: -webkit-linear-gradient(top, rgba(238, 238, 236, 0) 0%, rgba(238, 238, 236, 0.2) 100%);
+}
+.button:hover {
+    border: solid 1px #d3d7cf;
+    background-image: -webkit-linear-gradient(top, rgba(238, 238, 236, 0) 0%, rgba(238, 238, 236, 0.5) 100%);
+}
+.button:active {
+    background-image: -webkit-linear-gradient(top, rgba(238, 238, 236, 0.5) 0%, rgba(238, 238, 236, 0) 100%);
+}
+.nieuw {
+    font-weight: bold;
+    color: red;
+}
+
+.popupbutton {
+    cursor: pointer;
+    border: solid 1px orange;
+    border-radius: 2px;
+    background-color: orange;
+}
+.popupbutton:hover {
+    border: solid 1px red;
+}
+
+#knoppen {
+    position: absolute;
+    top: 150px;
+    left: 10px;
+}
+.knop, .leaflet-control-zoom-in, .leaflet-control-zoom-in {
+ font: bold 24px/36px Arial, Helvetica, sans-serif;
+text-align: center;
+-webkit-border-radius: 1px;
+border-radius: 1px;
+
+  cursor: pointer;
+  background-color: #96be0a;
+color: white;
+width: 35px;
+height: 35px;
+border: none;
+line-height: 34px;
+}
+.subknop {
+    background-image: url('css/img/driehoek.png');
+    background-repeat: no-repeat;
+    background-position: right;
+    border-bottom: solid 1px #2e3436;
+    height: 10px;
+    
+}
+
+#plus {
+margin-bottom: 7px;
+}
+#edit {
+margin-top: 20px;
+}
+.knop:hover {
+  background-color: #abcb3b;
+}
+.knop:active {
+ background-color: #96be0a;
+}
+.sideknop {
+    float: right;
+    margin-left: 35px;
+    margin-top: -7px;
+    background: white;
+    border-top: solid 1px black;
+    border-bottom: solid 1px black;
+    border-right: solid 1px black;
+    border-left: solid 1px #96be0a;
+
+    padding: 5px;
+    
+    max-width: 268px;
+}
+.sknop {
+-webkit-border-radius: 1px;
+border-radius: 1px;
+display: inline-block;
+  cursor: pointer;
+width: 35px;
+height: 35px;
+border: none;
+background:#96be0a;
+line-height: 34px;
+margin: 2px;
+
+}
+.sknop:hover {
+opacity: 0.7;
+}
+.sknop:active {
+    opacity:1;
+}
+.floatright {
+    float: right;
+    width: 436px;
+}
+#lastmsg {
+    float: right;
+    margin-right: 10px;
+}
+#sidebar {
+    float: right;
+    position: absolute;
+    top: 36px;
+    right: 0px;
+    bottom: 0px;
+    width: 330px;
+    background: white;
+    z-index: 1001;
+    box-shadow:         -2px 0px 0px 0px  rgba(90, 90, 90, 0.4);
+    border-top: solid 1px #d3d7cf;
+        overflow: auto;
+}
+.msg {
+border-bottom: solid 2px #d3d7cf;
+display: flex;
+cursor:pointer;
+background: rgba(238,238,236,0.8);
+padding: 4px;
+}
+.msg:hover {
+background: rgba(238,238,236,0.2);
+}
+.msg:active {
+    background: rgba(238,238,236,0.8);
+}
+.m-left {
+ width: 55px;
+border-right: solid 1px #eeeeec;
+
+}
+.m-right {
+   width: 270px;
+}
+
+.msg.unread {
+    background: #96be0a;
+}
+.msg.unread:hover {
+    background: #abcb3b;
+}
+.msg.unread:active {
+    background: #96be0a;
+}
+.mshare {
+ margin:4px;
+}
+.mtext {
+    background: white;
+    border: solid 2px  #eeeeec;
+    border-radius: 2px;
+    margin:4px;
+}
+.group {
+    width: 10px;
+    height: 10px;
+    border: solid 2px black;
+    display: inline-block;
+    margin: 2px;
+    border-radius: 2px;
+    margin-bottom: 0px;
+}
+.public {
+    background: black;
+}
+.populatie, .Populatie{
+    background: green;
+}
+.evacuatie, .Evacuatie {
+    background: purple;
+}
+.opvang, .Opvang {
+    background: orange;
+}
+
+.share {
+    cursor: -webkit-grab;
+    position: absolute;
+    z-index: 1002;    
+    top: 400px;
+    left: 400px;
+}
+.sheader, .scontent {
+    background: white;
+    border: solid 1px black;
+}
+.sheader {
+padding: 2px;
+    display: inline;
+}
+.ssubheader {
+    margin: 4px;
+}
+.scontent {
+    width: 200px; 
+    box-shadow: 1px 1px 1px 1px rgba(90, 90, 90, 0.4);
+}
+.iedereen, .individueel {
+    padding: 10px;
+    border-bottom: solid 1px #eeeeec;
+}
+.eigen {
+padding: 10px;
+}
+
+.selected{
+    background-color: steelBlue;
+    width: 100%;
+}
+
+.unselected:hover, .selected:hover{
+    width: 100%;
+    background-color: #0099cc;
+}
+       
+#connect {
+    width: 50px;
+    border-right: 1px solid #eeeeec;
+    padding: 20px 15px 0px 12px;
+    height: 40px;
+    top: 5px;
+}
+
+#status {
+
+display: inline-block;
+     border-radius: 50%;
+    min-width: 20px;
+    height: 20px;
+    margin: 0px;
+    
+}
+
+.connected {
+background: #96be0a;
+}
+.disconnected {
+background: #ff0000;
+}
+input#username {
+    border: solid 1px #eeeeec;
+    font-size: 20px;
+    
+}
+input#username.default {
+    color: gray;
+}
+#delen {
+    width: 200px;
+    
+      background: white;
+    border: solid 1px black;
+    position: absolute;
+    top: 36px;
+    left: 400px;
+    z-index: 1005;
+    border-top: solid 1px #d3d7cf;
+     box-shadow:  1px 3px 2px 2px  rgba(90, 90, 90, 0.4);
+}
+
+#uitloggen a {
+    text-decoration: none;
+    color: black;
+}
+#uitloggen a:visited {
+color: black;
+}
+.menu {
+}
+
+#polybutton .newpoly,#linebutton .newline,#pointbutton .newpoint {
+	position: absolute;
+	margin-left: 4px;
+	left: 0px;
+}
+.leaflet-control-draw-measure {
+	display: none !important;
+}
+#helpbutton {
+margin-bottom: 7px;
+}
+.leaflet-bottom.leaflet-left {
+  top: 300px !important;
+}
+</style>
+  </head>
+<body>
+<div id="cow"></div>
+<div id="header">
+    <span id="connect" class="head-left"><div id="status" class="connected" title="Verbonden"></div></span>
+    <span id="group" class="head-left" title="Teamnaam"><span class="group populatie"></span><span class='text'>Populatie</span></span>
+    <span id="name" title="Gebruikersnaam" class="head-left"><input id="username" class="default" type="text" value="Vul hier je naam in"/></span>
+    
+    <span id="gedeeld" class="showalles button" title="Klik hier om alleen het gedeelde beeld te zien"><input id="chk-gedeeld" type="checkbox"/>Common Operational Picture</span>
+    <!--span id="deeldropdown" class="button">v</span-->
+    <div class="floatright">
+        <span id="uitloggen" class="button"><a href="index.htm">uitloggen</a></span>
+        <span id="bericht" class="button nieuw">berichten</span>
+        <span id="lastmsg">10s</span>
+    </div>
+</div>
+<div id="delen" style="display:none;">
+
+</div>
+<div id="map"></div>
+<div id="knoppen">
+
+<div id="newfeatpanel">
+
+
+</div>
+
+</div>
+</div>
+<div id="sidebar">
+</div>
+</body>
+</html>
