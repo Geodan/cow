@@ -3,7 +3,10 @@ Cow.peer = function(config){
      if (!config._id) {throw 'No _id given for peer';}
     this._id = config._id;
     this._store = config.store;
-    this._data = {userid:null};
+    this._data = {
+        userid:null, 
+        family: 'alpha' //default is alpha
+    };
 };
 
 Cow.peer.prototype = {

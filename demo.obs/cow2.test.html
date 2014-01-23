@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+  <title>Concurrent Online Webgis</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+<!--  <link href='http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css' rel='stylesheet' type='text/css'>
+-->  <link href='http://fonts.googleapis.com/css?family=Dosis:300,500' rel='stylesheet' type='text/css'>
+
+
+  <script src="../lib/underscore/underscore-min.js" type="text/javascript"></script>
+  <script src="../lib/jquery-2.0.3/jquery-2.0.3.js" type="text/javascript"></script>	
+  <script src="../lib/jquery-ui-1.10.2/jquery-ui.js" type="text/javascript"></script>  
+  <script src="../lib/jquery.indexeddb/jquery.indexeddb.min.js" type="text/javascript"></script>
+  
+  <!-- PouchDB -->
+  <script src="../lib/pouchdb/pouchdb-nightly.min.js"></script>
+<!--  
+  <script src="http://openlayers.org/api/OpenLayers.js" type="text/javascript"></script>    
+  <script src="http://maps.stamen.com/js/tile.stamen.js?v1.1.3"></script>
+-->
+  <!-- Adding leaflet and D3 libs, possible replacement for OL -->
+
+  <script src="../lib/d3/d3.v3.min.js" charset="utf-8"></script>
+  <script src="../lib/d3/topojson.v1.min.js"></script>
+  
+  <!--[if lte IE 8]>
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6/leaflet.ie.css" />
+  <![endif]-->
+
+  <script src="./scripts/d3.jsonp.js" type="text/javascript"></script>
+  <script src="./scripts/d3layer.js" type="text/javascript"></script>
+  <script src="./scripts/d3layer_utils.js" type="text/javascript"></script>
+  
+  <!-- Peerjs -->
+  <script type="text/javascript" src="../lib/peerjs-0.3/peer.min.js"></script>
+
+  <script src="../src/cow2.utils.js" type="text/javascript"></script>
+  <script src="../src/cow2.record.js" type="text/javascript"></script>
+  <script src="../src/cow2.syncstore.js" type="text/javascript"></script>
+  <script src="../src/cow2.peer.js" type="text/javascript"></script>
+  <script src="../src/cow2.user.js" type="text/javascript"></script>
+  <script src="../src/cow2.group.js" type="text/javascript"></script>
+  <script src="../src/cow2.item.js" type="text/javascript"></script>
+  <script src="../src/cow2.project.js" type="text/javascript"></script>
+  <script src="../src/cow2.websocket.js" type="text/javascript"></script>
+  <script src="../src/cow2.core.js" type="text/javascript"></script>
+  <script src="../src/cow2.js" type="text/javascript"></script>
+  
+  <script src="scripts/cookies.js" type="text/javascript"></script>
+<style>
+HTML {
+	font-family: 'Dosis', Arial, sans-serif; 
+	font-weight: 300; 
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	color: #555753;
+	overflow: hidden;
+}
+h1{
+	font-family: 'Dosis', Arial, sans-serif;
+	font-weight: 500; 
+	font-size: 28pt;
+	color: #555753;
+	margin-top: 0.6em;
+}
+h3 {
+	font-family: 'Dosis', Arial, sans-serif;
+	font-weight: 500; 
+	font-size: 14pt;
+	color: #555753;
+}
+</style>
+<script type="text/javascript">
+
+var updateLists = function(){
+  var data = core.peers();
+  var peer = d3.select('#peerlist').selectAll('.peer')
+    .data(data, function(d){return 'peer'+d._id.toString();});
+   peer.enter().append('div')
+    .attr('id', function(d){return 'peer'+d._id.toString();})
+    .classed('peer', true);
+    peer.html(function(d){
+        var user = core.users(d.getUserId());
+        var username = user._id;
+        var since = new Date(d.timestamp()).toLocaleString();
+        return '<h3> ' + d._id + ' ('+ username+ ') <small> Since ' + since + ' </h3>'});
+    peer.exit().remove();
+  
+  core.userStore().initpromise.done(function(x){
+    var data = core.users();
+      var user = d3.select('#userlist').selectAll('.user')
+        .data(data, function(d){return 'user'+ d._id.toString();});
+       user.enter().append('div')
+        //.attr('id', function(d){return 'user'+d._id.toString();})
+        .classed('user', true);
+       user.html(function(d){return '<h3>' + d._id + (d.data('name')||"") + '</h3>'})
+       user.exit().remove();
+        
+  });
+  core.projectStore().initpromise.done(function(x){
+
+      var expand_project = function(d){
+        var self = this;
+        d.itemStore().initpromise.done(function(x){
+            var data = d.items();
+            d3.select(self).append('h4').html('Items: ');
+            var item = d3.select(self).selectAll('.item').data(data, function(e){return 'item'+e._id.toString()});
+            item.enter().append('span')
+                .classed('item', true)
+                .attr('id', function(d){return 'item'+d._id.toString();});
+            item.html(function(d){
+                var name = d.data('type');
+                return d._id + ' ' + name + ','});
+            item.exit().remove();
+        });
+        d.groupStore().initpromise.done(function(x){
+            var data = d.groups();
+            d3.select(self).append('h4').html('Groups: ');
+            var group = d3.select(self).selectAll('.group').data(data, function(e){return 'group'+e._id.toString()});
+            group.enter().append('span')
+                .classed('group', true)
+                .attr('id', function(d){return 'group'+d._id.toString();});
+            group.html(function(e){
+                var name = e.data('name');
+                return e._id + ' '+ name+','});
+            group.exit().remove();
+        });
+        
+        
+      }
+      
+      var data = core.projects();
+      var project = d3.select('#projectlist').selectAll('.project')
+        .data(data, function(d){return 'project'+d._id.toString();});
+       project.enter().append('div')
+        .attr('id', function(d){return 'project'+d._id.toString();})
+        .classed('project', true)
+       project.html(function(d){return '<h3>' + d._id + ' '+ d.data('name') + '</h3>'})
+        .append('div')
+        .each(expand_project);
+       project.exit().remove();
+   });
+}
+
+
+var core;
+var defaultproject;
+var defualtgroup;
+
+$(document).ready(function(){
+  
+  core = new Cow.core({
+     wsUrl: 'wss://websocket.geodan.nl:443/new'
+  });
+  
+  //TODO: move username admin to other place
+  //Some username administration with cookies
+  var username=getCookie("username");
+  var logon = function(username){
+    $('#myname').val(username);
+    core.users({_id:username}).sync();
+    core.user(username);
+  }
+  if (username!=null && username!="")
+  {
+    logon(username);
+  }
+  else 
+  {
+    username=prompt("Please enter your name:","");
+    if (username!=null && username!="")
+    {
+        logon(username);
+        setCookie("username",username,1);
+    }
+  }
+  
+  
+  //Default init settings
+  
+  core.projectStore().initpromise.done(function(x){
+      if (!core.projects(1)){
+        defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
+      } else {
+        defaultproject = core.projects(1);
+      }
+      defaultproject.groupStore().initpromise.done(function(x){
+        if (!defaultproject.groups(1)){
+            defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
+        } else {
+            defaultgroup = defaultproject.groups(1);
+        }
+        defaultgroup.members(core.user().id()); //make me a member
+      });
+  });
+  
+  
+  //
+  //var firstitem = defaultproject.items({_id:1}) //create a new item (overwrite old)
+  //  .data('type','msg') //type is msg
+  //  .data('creator',core.user().id()) //creator is me
+  //  .permissions('edit', 1) //give group 1 the 'edit' permission
+  //  .sync();
+  
+  
+  window.setInterval(updateLists, 2000);
+  
+   
+   
+  
+  //What to do when a user changes name
+  $('#myname').on('blur', function(e, ui) {
+    var username = $(this).val();
+    logon(username);
+    setCookie("username",username,1);
+  });
+});
+ 
+
+</script>
+  </head>
+  <body>
+  <div id="top">
+    <span id="connect" title="click to change connection status"></span>
+    <span class="welcome"><span data-i18n="txt_welcome" id="txt_welcome">Welcome</span> <input id="myname"/ name="myname" title="click to change your name" value="anonymous" size="13"/></span>
+  </div>
+  <div id="content">
+  <div id="peerlist"><h1>Peers</h1></div>
+  <div id="userlist"><h1>Users:</h1></div>
+  <div id="projectlist"><h1>Projects:</h1></div>
+  </div>
+  <div id="cow"></div>	
+  <div id="help" ></div>
+ 
+  </body>
+</html>
+
+

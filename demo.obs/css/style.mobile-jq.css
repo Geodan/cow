@@ -1,0 +1,62 @@
+
+
+.ui-header {
+    text-align: center;
+    padding: 0px 0;
+}
+
+.ui-content {
+    padding: 0;
+}
+.ui-footer {
+    text-align: center;
+    padding: 5px 0;
+}
+.portrait, .portrait #mappage {
+    min-height: 0;
+}
+/*.portrait, .portrait .ui-page{*/
+    /*min-height: 0;*/
+/*}*/
+#mappage, #mappage .ui-content {
+    width: 100%;
+    padding: 0px !important;
+}
+
+#mappage .ui-header .ui-btn {
+    background: none;
+    border: none;
+    top: 0px;
+}
+
+.olControlAttribution {
+    font-size: 10px;
+    bottom: 5px;
+    right: 5px;
+}
+
+#title, #tags, #shortdesc {
+    display: none;
+}
+.ui-icon-check {
+    opacity: 0.3;
+}
+.checked .ui-icon-check {
+    opacity: 1;
+}
+.ui-content .ui-listview-inset, #search_results {
+    margin: 1em;
+}
+.ui-content .ui-listview {
+    margin: 0;
+}
+#details-list li{
+	padding:15px 10px;
+}
+
+#top {
+    z-index: 100;
+    display: none;
+    background-color: #aaaaaa;
+    padding: 10px;
+}

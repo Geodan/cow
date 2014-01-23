@@ -1,0 +1,289 @@
+HTML {
+	font-family: 'Dosis', Arial, sans-serif; 
+	font-weight: 300; 
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	color: #555753;
+	overflow: hidden;
+}
+h1{
+	font-family: 'Dosis', Arial, sans-serif;
+	font-weight: 500; 
+	font-size: 28pt;
+	color: #555753;
+	margin-top: 0.6em;
+}
+h3 {
+	font-family: 'Dosis', Arial, sans-serif;
+	font-weight: 500; 
+	font-size: 14pt;
+	color: #555753;
+}
+.header {
+	font-weight: 500;
+	font-size: 14pt;
+	padding-bottom: 4px;
+	border-bottom: solid 1px #555753;
+}
+.olImageLoadError {
+	display: none !important;
+}
+.connected {
+	margin-left: 5px;
+	margin-top: 5px;
+	margin-right: 10px;
+	color: green;
+	cursor:pointer;
+	font-size: 12pt;
+}
+.disconnected {
+	color:red;
+	margin-left: 5px;
+	margin-top: 5px;
+	margin-right: 10px;
+	cursor:pointer;
+	font-size: 12pt;
+}
+.copyright {
+margin-top: 2px;
+}
+.me {
+	font-weight: 500;
+	color: #f57900;
+}
+
+.location {
+    cursor: pointer;
+}
+
+.extent {
+    cursor: pointer;
+}
+
+.videoconnection {
+    cursor: pointer;
+}
+
+.project {
+	cursor: pointer;
+    font-size: 120%;
+}
+.removeproject {
+    color: red;
+    font-size: 70%;
+    float: right;
+    cursor: pointer;
+}
+.yesremove, .addProject {
+padding-left: 0.4em;
+padding-right: 0.4em;
+cursor: pointer;
+border: solid 1px #f57900;
+background: #eeeeec;
+}
+.notremove {
+padding-left: 0.4em;
+padding-right: 0.4em;
+cursor: pointer;
+border: solid 1px #333;
+margin-left: 0.4em;
+background: #eeeeec;
+}
+.removeprojectconfirm {
+    text-align: right;
+}
+.verborgen {
+    display:none;
+}
+.licht {
+    opacity: 0.1;
+}
+.peer {
+
+    padding-left: 1em;
+}
+#newProject {
+    border: solid 1px #eeeeec;
+    color: #eeeeec;
+}
+#newProject:hover {
+    border: solid 1px #999;
+    color: #999;
+}
+#newProject.newProjectActive {
+    color: #555753;
+}
+.key {
+	cursor: pointer;
+}
+.newpoint {
+	cursor: pointer;
+}
+.linediv, .polydiv {
+	clear: both;
+}	
+.newline {
+	cursor: pointer;
+	
+	}
+.newline hr{	
+height: 4px;
+width: 28px;
+float: left;
+margin: 10px;
+}
+.newpoly {
+	cursor: pointer;
+	
+}
+.newpoly div {
+min-width: 50px;
+margin: 10px;
+float: left;
+padding: 2px;
+}
+path {
+    cursor: pointer;
+}
+
+.map {
+	border: solid 1px #555753;
+	background: white;
+	position: absolute;
+	bottom: 0px;
+	top: 20px;
+	left: 0px;
+	right: 0px;
+}
+#top {
+	position: absolute;
+	width: 100%;
+	right: 0px;
+	height:20px;
+	top: 0px;
+	left: 0px;
+	background: #eeeeec;
+	float: right;
+	font-size: 10pt;
+}
+.welcome {
+	float: right;
+	margin-right: 5px;
+}
+
+.welcome input {
+	background: none;
+	border: none;
+	font-family: 'Dosis', Arial, sans-serif; 
+	font-weight: 500; 
+	color: #f57900;
+	font-size: 10pt;
+}
+
+.olControlAttribution  {
+	background: white;
+	padding: 2px;
+	bottom: 20px !important;
+}
+.olControlPermalink {
+	background: white;
+	bottom: 5px !important;
+}
+
+.olControlLayerSwitcher .layersDiv {
+background: rgba(0, 60, 136, 0.7) !important;
+border-radius: 4px 0 0 4px;
+font-family: 'Dosis', Arial, sans-serif;
+font-weight: 300; 
+
+}
+
+.namearrow{
+	width: 100px;
+	height: 150px;
+	opacity: 0.8;
+	float: right;
+	position: absolute;
+	top: 20px;
+	right: 0px;
+}
+.disconnectarrow{
+	width: 100px;
+	height: 150px;
+	opacity: 0.8;
+	float: right;
+	position: absolute;
+	top: 20px;
+	left: 5px;
+}
+.disconnectarrow img {
+	margin-left: 5px;
+}
+.popuptext {
+
+    max-width: 150px;
+
+}
+.text {
+background: white;}
+#popup {
+border: solid 1px #2e3436 !important;
+}
+.popupbutton {
+	font-family: 'Dosis', Arial, sans-serif;
+	width: 120px;
+	height: 28px;
+	font-size: 12pt;
+	color: #f57900;
+	background: #eeeeec;
+	margin: 5px;
+	border: solid 1px #2e3436;
+	cursor: pointer;
+	
+}
+.title {
+	cursor: pointer;
+}
+.deleted {
+	text-decoration: line-through;
+}
+
+
+.videobig {
+    position: absolute;
+    left: 50px;
+    top: 50px;
+    height: 200px;
+    width: 200px;
+    padding: 10px;
+}
+#videopanel {
+    position: relative;
+    display: none;
+    /*left: 50px;
+    top: 50px;
+    height: 200px;
+    width: 200px;*/
+    padding: 10px;
+}
+/* D3 Layer */
+
+.link {
+  stroke: steelBlue;
+  stroke-width: 1.5px;
+  z-index: 10001;
+}
+.nodeimg {
+    cursor: pointer;
+    stroke: red;
+    fill: red;
+}
+.nodetext {
+  fill: none;
+  stroke: steelBlue;
+  stroke-width: 0.5px;
+}
+
+/* End of D3 Layer */
