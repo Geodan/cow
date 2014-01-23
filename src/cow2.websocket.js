@@ -284,13 +284,13 @@ Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
     var returnval = null;
     //First only get alpha peers
     var alphaPeers = _.sortBy(
-        _.filter(this.core.peers(),function(d){
+        _.filter(this._core.peers(),function(d){
             return d.data('family') == 'alpha';
         }),
      function(d){return d.id();});
     //If we are the oldest of alpha peers
     var oldestpeer = alphaPeers[0];
-    var me = this.core.peer();
+    var me = this._core.peer();
     if (me.id() == oldestpeer.id()) {//yes, I certainly am (the oldest) 
         returnval =  true;
     }
