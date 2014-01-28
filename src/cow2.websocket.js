@@ -132,7 +132,8 @@ Cow.websocket.prototype._onMessage = function(message){
         //a new peer has arrived and sends everybody the records that are requested in the *wantedList*
         case 'requestedRecords':
             if(sender != PEERID) {
-                this.obj._onRequestedRecords(payload);
+                this.obj._onMissingRecords(payload);
+                //OBS: this.obj._onRequestedRecords(payload);
             }
         break;
     /**
@@ -188,7 +189,7 @@ Cow.websocket.prototype._onConnect = function(payload){
     
     var startsync = function(synctype, store){
         //TODO: when there's no _db object, syncing should start immediately (like peers store)
-        store.initpromise.then(function(d){
+        store.loaded.then(function(d){
             var message = {};
             message.syncType = synctype;
             message.project = store._projectid;
@@ -207,7 +208,7 @@ Cow.websocket.prototype._onConnect = function(payload){
     startsync('users', store2);
     
     //wait for projectstore to load
-    store1.initpromise.then(function(d){
+    store1.loaded.then(function(d){
         var projects = self._core.projects();
         for (var i=0;i<projects.length;i++){
             var project = projects[i];
@@ -317,11 +318,23 @@ Cow.websocket.prototype._onMissingRecords = function(payload) {
     var list = payload.list;
     for (var i=0;i<list.length;i++){
         var data = list[i];
-        store._addRecord({source: 'WS', data: data});
+        //var record = store._addRecord({source: 'WS', data: data});
+        var record = store._addRecord({source: 'WS', data: data});
+        //Do the syncing for the deltas
+        if (data.deltas && record.deltas()){
+            var localarr = _.pluck(record.deltas(),'timestamp');
+            var remotearr = _.pluck(data.deltas,'timestamp');
+            var diff = _.difference(localarr, remotearr);
+            //TODO: nice solution for future, when dealing more with deltas
+            //For now we just respond with a forced sync our own record so the delta's get synced anyway
+            if (diff.length > 0){
+                store.syncRecord(record);
+            }
+        }
     }
     //TODO this.core.trigger('ws-missingRecords',payload); 
 };
-    
+/*OBS: same as _onMissingRecords    
 Cow.websocket.prototype._onRequestedRecords = function(payload) {
     var store = this._getStore(payload);
     var list = payload.list;
@@ -331,7 +344,7 @@ Cow.websocket.prototype._onRequestedRecords = function(payload) {
     }
     //TODO this.core.trigger('ws-onRequestedRecords',payload); 
 };
-    
+*/    
 Cow.websocket.prototype._onUpdatedRecords = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
