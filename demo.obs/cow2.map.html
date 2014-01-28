@@ -19,7 +19,8 @@
   <script src="./lib/jquery-mentionsInput/jquery.mentionsInput.js" type="text/javascript"></script>
   <link href='./lib/jquery-mentionsInput/jquery.mentionsInput.css' rel='stylesheet' type='text/css'>
   <!-- PouchDB -->
-  <script src="../lib/pouchdb/pouchdb-nightly.min.js"></script>
+  <script src="../lib/pouchdb/pouchdb-1.1.0.min.js"></script>
+  <script src="../lib/dbjs/db.js"></script>
 
   <!-- Adding leaflet and D3 libs -->
   
@@ -249,7 +250,7 @@ var updateLists = function(){
   //      return '<h3> ' + d._id + ' ('+ username+ ') <small> Since ' + since + ' </h3>'});
   //peer.exit().remove();
   
-  core.userStore().initpromise.then(function(x){
+  core.userStore().loaded.then(function(x){
     //USERS
     var data = icm.users();
     var user = d3.select('#userlist').selectAll('.user')
@@ -271,10 +272,10 @@ var updateLists = function(){
   });
   
   
-  core.projectStore().initpromise.then(function(x){
+  core.projectStore().loaded.then(function(x){
         var self = this;
         //ITEMS
-        core.project().itemStore().initpromise.then(function(x){
+        core.project().itemStore().loaded.then(function(x){
         
             var processMsg = function(item, msgbox){
                 msgbox.classed('selected',false);
@@ -385,7 +386,7 @@ var updateLists = function(){
             
         });
       //GROUPS  
-      core.project().groupStore().initpromise.then(function(x){
+      core.project().groupStore().loaded.then(function(x){
             var data = icm.groups();
             var item = d3.select('#grouplist').selectAll('.group')
                 .data(data, function(d){return 'group'+ d.id().toString();});
@@ -507,8 +508,10 @@ var init = function(){
   var username=getCookie("username");
   var logon = function(username){
     document.getElementById('myname').value = username;
-    core.users({_id:username}).sync();
-    core.user(username);
+    core.userStore().loaded.then(function(){
+        core.users({_id:username}).sync();
+        core.user(username);
+    });
   }
   if (username!=null && username!="")
   {
@@ -528,13 +531,13 @@ var init = function(){
   
   //Default init settings
   
-  core.projectStore().initpromise.then(function(x){
+  core.projectStore().loaded.then(function(x){
       if (!core.projects(1)){
         defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
       } else {
         defaultproject = core.projects(1);
       }
-      defaultproject.groupStore().initpromise.then(function(x){
+      defaultproject.groupStore().loaded.then(function(x){
         if (!defaultproject.groups(1)){
             defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
         } else {

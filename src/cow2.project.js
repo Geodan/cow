@@ -33,36 +33,6 @@ Cow.project = function(config){
         dbname:  function(name){
             this._dbname =  name;
         }
-        
-        /**
-            features() - get only items with type==feature
-        **/
-/*OBS
-        features: function(){
-            var items = this._records;
-            var returnarr = [];
-            for (var i = 0;i<items.length;i++){
-                if (items[i].data('type') == 'feature'){
-                    returnarr.push(items[i]);
-                }
-            }
-            return returnarr;
-        },
-*/        /**
-            messages() - get only items with type==msg
-        **/
-/*OBS
-        messages: function(){
-            var items = this._records;
-            var returnarr = [];
-            for (var i = 0;i<items.length;i++){
-                if (items[i].data('type') == 'msg'){
-                    returnarr.push(items[i]);
-                }
-            }
-            return returnarr;
-        }
-*/
     });
 };
 Cow.project.prototype = 
@@ -96,36 +66,6 @@ Cow.project.prototype =
     items: function(data){
         return this._itemStore.records(data);
     },
-    /* OBS
-    getMembers: function(){
-        return this.data('members') || [];
-    },
-    addMember: function(id){
-        var existing = false;
-        var curmembers = this.getMembers();
-        for (var i=0;i<curmembers.length;i++){
-            if (curmembers[i] == id) {
-                existing = true; //Already a member
-                return false;
-            }
-        }
-        if (!existing){
-            curmembers.push(id); //Adding to the list
-            this.data('members', curmembers);
-        }
-        return id;
-    },
-    removeMember: function(id){
-        var curmembers = this.getMembers();
-        for (var i=0;i<curmembers.length;i++){
-            if (curmembers[i] == id) {
-                curmembers.splice(i,1); //Remove from list
-                this.data('members', curmembers);
-                return true;
-            }
-        }
-    },
-    */
     /**
         myGroups() - return the group objects that I am member of
     **/

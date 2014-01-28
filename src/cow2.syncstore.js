@@ -1,12 +1,58 @@
 window.Cow = window.Cow || {};
 //Synstore keeps track of records
 Cow.syncstore =  function(config){
+    var self = this;
     this._dbname = config.dbname;
     this._core = config.core;
-    if (!config.noIDB){
-        this._db = new Pouch(config.dbname);
-        this.initpromise = this._initRecords();
-    }
+    this.loaded = new Promise(function(resolve, reject){
+        if (config.noIDB){
+            resolve();
+        }
+        else {
+            /**
+                See for indexeddb wrapper:
+                    https://github.com/aaronpowell/db.js
+            **/
+            db.open( {
+                server: self._dbname,
+                version: 1,
+                schema: {
+                    main: {                                          
+                        key: { keyPath: '_id' , autoIncrement: false },
+                        // Optionally add indexes
+                        indexes: {
+                            updated: { },
+                            _id: { unique: true }
+                        }
+                    }
+                }
+            } ).done( function ( s ) {
+                self._db = s;
+                self._db_getRecords().then(function(rows){
+                    rows.forEach(function(d){
+                         //console.log(d);
+                         var record = self._recordproto(d._id);
+                         record.inflate(d);
+                         var existing = false; 
+                         //Not likely to exist in the _records at this time but better safe then sorry..
+                         for (var i=0;i<self._records.length;i++){
+                            if (self._records[i]._id == record._id) {
+                                //existing = true; //Already in list
+                                //record = -1;
+                            }
+                         }
+                         if (!existing){
+                             self._records.push(record); //Adding to the list
+                         }
+                     });
+                     self.trigger('datachange');
+                     resolve();
+                }).catch(function(e){
+                    console.warn(e.message);
+                });
+            });
+        }
+    });
 }; 
 /**
     See for use of promises: 
@@ -15,143 +61,69 @@ Cow.syncstore =  function(config){
 **/
 
 Cow.syncstore.prototype =  
-{ //pouchdb object
+{ //db object
     //All these calls will be asynchronous and thus returning a promise instead of data
-    _db_addRecord: function(config){
+   
+    //_db_addRecord: function(config){
+    _db_write: function(config){
         var data = config.data;
         var source = config.source;
         data._id = data._id.toString();
         var self = this;
-        //var deferred = new jQuery.Deferred(); //TODO, remove jquery dependency
+        var db = this._db;
         return new Promise(function(resolve, reject){
-            switch (source){
-                case 'UI': //New for sure, so we can use put
-                    self._db.put(data, function(err, out){
-                        if (err){
-                            //deferred.reject(err);
-                            reject(err);
-                        }
-                        else{
-                            //deferred.resolve(out);
-                            resolve(out);
-                        }
-                    });
-                    break;
-                case 'WS': //Unsure wether new, so we use post
-                    //TODO: include the _rev here
-                    self._db.post(data,function(err, out){
-                        if (err){
-                            //deferred.reject(err);
-                            reject(err);
-                        }
-                        else{
-                            //deferred.resolve(out);
-                            resolve(out);
-                        }
-                    });
-                    break;
-            }
-            //return deferred.promise();
-        });
-    }, 
-    _db_updateRecord: function(config){
-        var data = config.data;
-        var self = this;
-        if (!data._id){
-            console.warn('No _id given. Old version client connected?');
-            return(null);
-        }
-        var source = config.source;
-        data._id = data._id.toString();
-        //var deferred = new jQuery.Deferred(); //TODO, remove jquery dependency
-        return new Promise(function(resolve, reject){
-            //TODO: the way I try to get a promise is not right here....
-            //as a result I'm not getting a promise from _updateRecord or at least not in time
-            self._db.get(data._id, function(err,doc){
-                if (err) {
-                    if (err.reason == 'missing'){ //not really an error, just a notice that the record would be new
-                        return self._db_addRecord({source: source, data: data});
-                    }
-                    else{
-                        console.warn('Dbase error: ' , err);
-                        //deferred.reject(err);
-                        reject(err);
-                        //return deferred.promise();
-                        return promise;
-                    }
-                }
-                else { //overwrite existing
-                    data._rev = doc._rev;
-                    return self._db_addRecord({source: source, data: data});
-                }
+            db.main.remove(data._id).done(function(){
+                db.main.add(data).done(function(d){
+                    resolve(d);
+                }).fail(function(d,e){
+                    console.warn(e);
+                    reject(e);
+                });
+            }).fail(function(e){
+                console.warn(e);
+                reject(e);
             });
         });
     },
     _db_getRecords: function(){
-        //var deferred = new jQuery.Deferred();
         var self = this;
         return new Promise(function(resolve, reject){
-            self._db.allDocs({include_docs:true,descending: true}, function(err,doc){
-                if (err) {
-                    console.warn('Dbase error: ' , err);
-                    //deferred.reject(err);
-                    reject(err);
-                }
-                else {
-                    //deferred.resolve(doc);
-                    resolve(doc);
-                }
-            });
-            //return deferred.promise();
+           self._db.main.query().filter().execute().done(function(doc){
+                resolve(doc);
+           }).fail(function(e){
+                reject(e);
+           });
         });
     },  //returns promise
     _db_getRecord: function(id){
-        //var deferred = new jQuery.Deferred();
         var self = this;
         return new Promise(function(resolve, reject){
-            self._db.get(id, function(err,doc){
-                if (err) {
-                    console.warn('Dbase error: ' , err);
-                    //deferred.reject(err);
-                    reject(err);
-                }
-                else {
-                    //deferred.resolve(doc);
-                    resolve(doc);
-                }
+            self._db.main.query().filter('_id',id).execute().done(function(doc){
+                resolve(doc);
+            }).fail(function(doc){
+                reject(doc);
             });
         });
-        //return deferred.promise();
     }, //returns promise
     _db_removeRecord: function(id){
         var self = this;
-        //var deferred = new jQuery.Deferred();
         return new Promise(function(resolve, reject){
-            self._db.get(id, function(err,doc){
-                if (err) {
-                    //console.warn('Dbase error: ' , err);
-                    //deferred.reject(err);
-                    reject(err);
-                }
-                else {
-                    db.remove(doc, function(err, response) {
-                            //deferred.resolve(response);
-                            resolve(response);
-                    });
-                }
-            });
+             db.main.remove(data._id).done(function(){
+                 resolve();
+             }).fail(function(){
+                 reject();
+             });
         });
-        //return deferred.promise();
-    }, //returns promise
+      }, //returns promise
     _initRecords: function(){ //This will start the process of getting records from pouchdb (returns promise)
         var promise = this._db_getRecords();
         var self = this;
         promise.then(function(r){
              
-             r.rows.forEach(function(d){
+             r.forEach(function(d){
                  //console.log(d.doc);
-                 var record = self._recordproto(d.doc._id);
-                 record.inflate(d.doc);
+                 var record = self._recordproto(d._id);
+                 record.inflate(d);
                  var existing = false; //Not likely to exist in the _records at this time but better safe then sorry..
                  for (var i=0;i<self._records.length;i++){
                     if (self._records[i]._id == record._id) {
@@ -209,8 +181,11 @@ Cow.syncstore.prototype =
         for (var i=0;i<this._records.length;i++){
             if (this._records[i]._id == data._id) {
                 if (this._db && source == 'WS'){ //update the db
-                    promise = this._db_updateRecord({source:source, data: record.deflate()});
-                    //TODO: get _rev id from promise and add to record
+                    //promise = this._db_updateRecord({source:source, data: record.deflate()});
+                    promise = this._db_write({source:source, data: record.deflate()});
+                    promise.then(function(result){
+                            console.log('updated',result);
+                    });
                 }
                 existing = true; //Already in list
                 //replace the record with the newly created one
@@ -219,8 +194,7 @@ Cow.syncstore.prototype =
         }
         if (!existing){
             if (this._db && source == 'WS'){
-                promise = this._db_addRecord({source:source,data:record.deflate()});
-                //TODO: get _rev id from promise and add to record
+                promise = this._db_write({source:source,data:record.deflate()});
             }
             this._records.push(record); //Adding to the list
         }
@@ -233,6 +207,7 @@ Cow.syncstore.prototype =
    
         records() - returns array of all records
         records(id) - returns record with id (or null)
+        records([id]) - returns array of records from id array
         records({config}) - creates and returns record
     **/
 
@@ -279,21 +254,33 @@ Cow.syncstore.prototype =
         return this;
     },
     /**
-    syncRecord() - sync 1 record
+    syncRecord() - sync 1 record, returns record
     **/
     syncRecord: function(record){
+        var self = this;
         var message = {};
         message.syncType = this._type;
         record.status('clean');
-        message.record = record.deflate();
+        
         if (this._projectid){ //parent store
             message.project = this._projectid;
         }
         if (this._db){
-            var promise = this._db_updateRecord({source:'UI', data: record.deflate()});
-        }
-        this.trigger('datachange');
-        this._core.websocket().sendData(message, 'updatedRecord');
+            //var promise = this._db_updateRecord({source:'UI', data: record.deflate()});
+            var promise = this._db_write({source:'UI', data: record.deflate()});
+            promise.then(function(d){ //wait for db
+                message.record = record.deflate();
+                self.trigger('datachange');
+                self._core.websocket().sendData(message, 'updatedRecord');
+            },function(err){
+                console.warn(err);
+            });
+        } else { //No db, proceed immediately
+            message.record = record.deflate();
+            self.trigger('datachange');
+            self._core.websocket().sendData(message, 'updatedRecord');
+        }//TODO: remove this double code, but keep promise/non-promise intact
+        return record;
     },
     
     /**
@@ -308,6 +295,18 @@ Cow.syncstore.prototype =
         }
     },
     
+    /**
+    deltaList() - needed to sync the delta's
+    **/
+    deltaList: function(){
+        
+    },
+    
+    /**
+    **/
+    compareDeltas: function(){
+        
+    },
     
     /**
     idList() - needed to start the syncing with other peers
