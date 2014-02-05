@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+  <title>COW tests</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <link href='http://fonts.googleapis.com/css?family=Dosis:300,500' rel='stylesheet' type='text/css'>
+  <script src="../lib/underscore/underscore-min.js" type="text/javascript"></script>
+  <script src="../lib/polyfill-promise/promise-0.1.1.min.js" type="text/javascript"></script>
+  <!-- IndexedDB -->
+  <script src="../lib/dbjs/db.js"></script>
+  
+  <script src="../src/cow2.utils.js" type="text/javascript"></script>
+  <script src="../src/cow2.record.js" type="text/javascript"></script>
+  <script src="../src/cow2.syncstore.js" type="text/javascript"></script>
+  <script src="../src/cow2.peer.js" type="text/javascript"></script>
+  <script src="../src/cow2.user.js" type="text/javascript"></script>
+  <script src="../src/cow2.group.js" type="text/javascript"></script>
+  <script src="../src/cow2.item.js" type="text/javascript"></script>
+  <script src="../src/cow2.project.js" type="text/javascript"></script>
+  <script src="../src/cow2.websocket.js" type="text/javascript"></script>
+  <script src="../src/cow2.core.js" type="text/javascript"></script>
+  <script src="../src/cow2.js" type="text/javascript"></script>
+  <script src="../test/cow.testsuite.js" type="text/javascript"></script>
+  <style>
+  </style>
+  </head>
+  <body>
+   <div id="console"></div>
+  
+  
+  <script type="text/javascript">
+  
+  var core = new Cow.core({
+       wsUrl: 'wss://websocket.geodan.nl:443/new'
+  });
+  var tests = new Cow.testsuite(core);
+  tests.analyzeStore();
+  tests.lifecycle();
+  
+  
+  </script>
+  </body>
+  </html>

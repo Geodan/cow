@@ -50,8 +50,14 @@ Cow.core.prototype =
         peerid(id) -- set the current peerid
     **/
     peerid: function(id){
-        this._peerid = id || this._peerid;
-        return this._peerid;
+        if (id){
+            this._peerid = id.toString();
+            return this._peerid;
+        }
+        else if (this._peerid){
+            return this._peerid.toString();
+        }
+        return null;
     },
    
     /**
@@ -63,6 +69,7 @@ Cow.core.prototype =
     **/
     project: function(id){
         if (id){
+            id = id.toString();
             this.projects(id); //creates project if not existing
             this._projectid = id;
             if (this.peer()){
@@ -85,6 +92,7 @@ Cow.core.prototype =
     **/
     user: function(id){
         if (id){
+            id = id.toString();
             this._userid = id;
             //Add user to peer object
             if (this.peerid()){

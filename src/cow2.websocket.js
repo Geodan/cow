@@ -82,7 +82,7 @@ Cow.websocket.prototype._onMessage = function(message){
     var action = data.action;        
     var payload = data.payload;    
     var target = data.target;
-    console.log('COW2 :',data.action);
+    //console.log('COW2 :',data.action);
     switch (action) {
     /**
         Commands 
@@ -223,8 +223,10 @@ Cow.websocket.prototype._onConnect = function(payload){
     
     //A peer has disconnected, remove it from your peerList
 Cow.websocket.prototype._onPeerGone = function(payload) {
-    var peerGone = payload.gonePeerID;
-    this._core.peers(peerGone).deleted(true).sync();
+    var peerGone = payload.gonePeerID.toString();
+    if (this._core.peers(peerGone)){
+        this._core.peers(peerGone).deleted(true).sync();
+    }
     //this._core.peerStore().removePeer(peerGone);        
     //TODO this.core.trigger('ws-peerGone',payload); 
 };

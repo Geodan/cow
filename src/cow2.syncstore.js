@@ -182,10 +182,7 @@ Cow.syncstore.prototype =
             if (this._records[i]._id == data._id) {
                 if (this._db && source == 'WS'){ //update the db
                     //promise = this._db_updateRecord({source:source, data: record.deflate()});
-                    promise = this._db_write({source:source, data: record.deflate()});
-                    promise.then(function(result){
-                            console.log('updated',result);
-                    });
+                    this._db_write({source:source, data: record.deflate()});
                 }
                 existing = true; //Already in list
                 //replace the record with the newly created one
@@ -201,11 +198,28 @@ Cow.syncstore.prototype =
         this.trigger('datachange');
         return record;
     },
-    
+    _getRecordsOn: function(timestamp){
+        var returnarr = [];
+        _.each(this._records, function(d){
+            //If request is older than feature itself, disregard
+            if (timestamp < d._created){
+                //don't add
+            }
+            //If request is younger than last feature update, return normal data
+            else if (timestamp > d._updated){
+                returnarr.push(d);
+            }
+            else if (d.data(timestamp)){
+                returnarr.push(d); //TODO: hier gebleven
+            }
+        });
+        return returnarr;
+    },
    /**
         Only to be used from client API
    
         records() - returns array of all records
+        records(timestamp) - returns array of records created before timestamp
         records(id) - returns record with id (or null)
         records([id]) - returns array of records from id array
         records({config}) - creates and returns record
@@ -218,8 +232,11 @@ Cow.syncstore.prototype =
         else if (config && typeof(config) == 'object'){
             return this._addRecord({source: 'UI', data: config}).status('dirty');
         }
-        else if (config && (typeof(config) == 'number') || typeof(config) == 'string'){
+        else if (config && typeof(config) == 'string'){
             return this._getRecord(config);
+        }
+        else if (config && typeof(config) == 'number'){
+            return this._getRecordsOn(config);
         }
         else{
             return this._records;
