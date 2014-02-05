@@ -94,7 +94,7 @@ Cow.websocket.prototype._onMessage = function(message){
     **/
         case 'command':
             if (sender != PEERID){
-                this.obj._onCommand(payload);
+                this.obj._onCommand(message);
             }
         break;
     /**
@@ -251,11 +251,21 @@ Cow.websocket.prototype._getStore = function(payload){
             return this._core.userStore();
         case 'items':
             if (!projectid) {throw('No project id given');}
-            project = this._core.projects(projectid);
+            if (this._core.projects(projectid)){
+                project = this._core.projects(projectid);
+            }
+            else {
+                project = this._core.projects({_id:projectid});
+            }
             return project.itemStore();
         case 'groups':
             if (!projectid) {throw('No project id given');}
-            project = this._core.projects(projectid);
+            if (this._core.projects(projectid)){
+                project = this._core.projects(projectid);
+            }
+            else {
+                project = this._core.projects({_id:projectid});
+            }
             return project.groupStore();
     }
 };
@@ -343,30 +353,18 @@ Cow.websocket.prototype._onMissingRecords = function(payload) {
     for (i=0;i<synclist.length;i++){
         store.syncRecord(synclist[i]);
     }
-    //console.log(store._records.length); //UP TO HERE this._records.length IS FINE
-    //TODO this.core.trigger('ws-missingRecords',payload); 
 };
-/*OBS: same as _onMissingRecords    
-Cow.websocket.prototype._onRequestedRecords = function(payload) {
-    var store = this._getStore(payload);
-    var list = payload.list;
-    for (var i=0;i<list.length;i++){
-        var data = list[i];
-        store._addRecord({source: 'WS', data: data});
-    }
-    //TODO this.core.trigger('ws-onRequestedRecords',payload); 
-};
-*/    
+  
 Cow.websocket.prototype._onUpdatedRecords = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
-    //TODO this.core.trigger('ws-onRequestedRecords',payload); 
 };
     // END Syncing messages
     
     //Command messages:
-Cow.websocket.prototype._onCommand = function(payload) {
+Cow.websocket.prototype._onCommand = function(message) {
+    var payload = message.data;
     var command = payload.command;
     var targetuser = payload.targetuser;
     console.log('Command received: ',command);
@@ -381,6 +379,13 @@ Cow.websocket.prototype._onCommand = function(payload) {
             window.open('', '_self', ''); 
             window.close();
         }
+    }
+    if (command == 'ping'){
+        var target = message.sender;
+        this.sendData({command: 'pong'},'command',target);
+    }
+    if (command == 'pong'){
+        console.log('Pong from ' + message.sender);
     }
 };
 

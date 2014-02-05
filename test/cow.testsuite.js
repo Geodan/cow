@@ -62,6 +62,8 @@ Cow.testsuite.prototype.lifecycle = function(){
 };
 
 Cow.testsuite.prototype.pingtest = function(){
+    var ws = core.websocket();
+    ws.sendData({command: 'ping'},'command');
 };
 
 Cow.testsuite.prototype.syncrecords = function(){
