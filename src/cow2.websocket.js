@@ -70,11 +70,14 @@ Cow.websocket.prototype.sendData = function(data, action, target){
         console.error(e, message);
     }
     if (this._connection && this._connection.readyState == 1){
+        console.log('Sending ',message);
         this._connection.send(JSON.stringify(message));
+    }
+    else{
+        console.warn('Could not send, socket not connected?');
     }
 };
 Cow.websocket.prototype._onMessage = function(message){
-        
     var core = this.obj._core;
     var data = JSON.parse(message.data); //TODO: catch parse errors
     var sender = data.sender;
@@ -82,7 +85,9 @@ Cow.websocket.prototype._onMessage = function(message){
     var action = data.action;        
     var payload = data.payload;    
     var target = data.target;
-    //console.log('COW2 :',data.action);
+    if (sender != PEERID){
+        console.log('Receiving ',data);
+    }
     switch (action) {
     /**
         Commands 
@@ -318,6 +323,7 @@ Cow.websocket.prototype._onWantedList = function(payload) {
 Cow.websocket.prototype._onMissingRecords = function(payload) {
     var store = this._getStore(payload);
     var list = payload.list;
+    var synclist = [];
     for (var i=0;i<list.length;i++){
         var data = list[i];
         //var record = store._addRecord({source: 'WS', data: data});
@@ -330,10 +336,14 @@ Cow.websocket.prototype._onMissingRecords = function(payload) {
             //TODO: nice solution for future, when dealing more with deltas
             //For now we just respond with a forced sync our own record so the delta's get synced anyway
             if (diff.length > 0){
-                store.syncRecord(record);
+                synclist.push(record);
             }
         }
     }
+    for (i=0;i<synclist.length;i++){
+        store.syncRecord(synclist[i]);
+    }
+    //console.log(store._records.length); //UP TO HERE this._records.length IS FINE
     //TODO this.core.trigger('ws-missingRecords',payload); 
 };
 /*OBS: same as _onMissingRecords    

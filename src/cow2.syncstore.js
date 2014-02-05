@@ -4,7 +4,9 @@ Cow.syncstore =  function(config){
     var self = this;
     this._dbname = config.dbname;
     this._core = config.core;
+    console.log('new store',this._dbname);
     this.loaded = new Promise(function(resolve, reject){
+        console.log('reading db ',self._dbname);
         if (config.noIDB){
             resolve();
         }
@@ -29,6 +31,7 @@ Cow.syncstore =  function(config){
             } ).done( function ( s ) {
                 self._db = s;
                 self._db_getRecords().then(function(rows){
+                    console.log('Got records from db ',self._dbname);
                     rows.forEach(function(d){
                          //console.log(d);
                          var record = self._recordproto(d._id);
@@ -115,7 +118,7 @@ Cow.syncstore.prototype =
              });
         });
       }, //returns promise
-    _initRecords: function(){ //This will start the process of getting records from pouchdb (returns promise)
+    _initRecords: function(){ //This will start the process of getting records from db (returns promise)
         var promise = this._db_getRecords();
         var self = this;
         promise.then(function(r){
@@ -158,8 +161,10 @@ Cow.syncstore.prototype =
                 return record;
             }
         }
-        var config = {_id: id};
-        return this._addRecord({source: 'UI', data: config}).status('dirty');
+        //var config = {_id: id};
+        //return this._addRecord({source: 'UI', data: config}).status('dirty');
+        //TODO: rethink this strategy: should we make a new record on non-existing or just return null
+        return null;
     },
     /**
     _addRecord - creates a new record and replaces an existing one with the same _id
@@ -174,26 +179,28 @@ Cow.syncstore.prototype =
         var source = config.source;
         var data = config.data;
         var existing = false;
-        //Create a new record and inflate with the data we got
-        var record = this._recordproto(data._id);
-        record.inflate(data);
+        var record;
         //Check to see if the record is existing or new
         for (var i=0;i<this._records.length;i++){
             if (this._records[i]._id == data._id) {
+                existing = true; //Already in list
+                record = this._records[i];
+                record.inflate(data);
                 if (this._db && source == 'WS'){ //update the db
                     //promise = this._db_updateRecord({source:source, data: record.deflate()});
                     this._db_write({source:source, data: record.deflate()});
                 }
-                existing = true; //Already in list
-                //replace the record with the newly created one
-                this._records.splice(i,1,record);
             }
         }
         if (!existing){
+            //Create a new record and inflate with the data we got
+            record = this._recordproto(data._id);
+            record.inflate(data);
             if (this._db && source == 'WS'){
                 promise = this._db_write({source:source,data:record.deflate()});
             }
             this._records.push(record); //Adding to the list
+            //console.log(this._records.length); 
         }
         this.trigger('datachange');
         return record;
@@ -274,6 +281,7 @@ Cow.syncstore.prototype =
     syncRecord() - sync 1 record, returns record
     **/
     syncRecord: function(record){
+        
         var self = this;
         var message = {};
         message.syncType = this._type;
@@ -301,15 +309,24 @@ Cow.syncstore.prototype =
     },
     
     /**
-    syncRecords() - looks for dirty records and starts syncing them
+    syncRecords() - looks for dirty records and returns them all at once for syncing them
     **/
     syncRecords: function(){
+        var pushlist = [];
         for (var i=0;i<this._records.length;i++){
             var record = this._records[i];
             if (record._status == 'dirty') {
-                this.syncRecord(record);
+                //this.syncRecord(record);
+                record.status('clean');
+                pushlist.push(record.deflate());
             }
         }
+        var data =  {
+            "syncType" : this._type,
+            "project" : this._projectid,
+            "list" : pushlist
+        };
+        this._core.websocket().sendData(data, 'requestedRecords');
     },
     
     /**

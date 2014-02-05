@@ -41,7 +41,7 @@ Cow.testsuite.prototype.analyzeStore = function(){
 
 
 /**
-    
+    Create project, create 100 records, sync them, delete project 
 **/
 Cow.testsuite.prototype.lifecycle = function(){
     var core = this.core;
@@ -51,14 +51,17 @@ Cow.testsuite.prototype.lifecycle = function(){
         var project = core.projects('test').data('name', 'TEST');
         project.deleted(false).sync();
         for (var i = 0;i<100;i++){
-            var item = project.items(i.toString());
+            var item = project.items({_id: i.toString()});
             item.data('tmp',(Math.random()*100).toString());
         }
-        project.itemStore().syncRecords();
+        var syncpromise = project.itemStore().syncRecords();
         project.itemStore().clear();
         project.deleted(true).sync();
         console.log(self.laptime(starttime) + ' lifecycletest finished');
     });
+};
+
+Cow.testsuite.prototype.pingtest = function(){
 };
 
 Cow.testsuite.prototype.syncrecords = function(){
