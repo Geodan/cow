@@ -4,7 +4,7 @@ Cow.websocket = function(config){
     this._core = config.core;
     //socket connection object
     this._url = config.url;
-    this._connection = this.connect(this._url);
+    this._connection = this.connect();
 };
 
 
@@ -24,19 +24,19 @@ Cow.websocket.prototype.disconnect = function() {
     /**
         connect(url) - connect to websocket server on url, returns connection
     **/
-Cow.websocket.prototype.connect = function(url) {
+Cow.websocket.prototype.connect = function() {
     var core = this.core;
     if (!this._connection || this._connection.readyState != 1) //if no connection
     {
-        if(url.indexOf('ws') === 0) {
+        //if(url.indexOf('ws') === 0) {
             var connection = new WebSocket(this._url, 'connect');
             connection.onopen=this._onOpen;
             connection.onmessage = this._onMessage;
             connection.onclose = this._onClose;    
             connection.onerror = this._onError;
             connection.obj = this;
-        }
-        else {throw('Incorrect URL: ' + url);}
+        //}
+        //else {throw('Incorrect URL: ' + url);}
     }
     else {
         connection = this._connection;
@@ -183,7 +183,7 @@ Cow.websocket.prototype._onConnect = function(payload){
         mypeer.data('userid',core.user()._id);
     }
     mypeer.sync();
-    //TODO this.core.trigger('ws-connected',payload);
+    this.trigger('connected',payload);
     
     //initiate peer-sync
     var message = {};
@@ -200,6 +200,9 @@ Cow.websocket.prototype._onConnect = function(payload){
             message.project = store._projectid;
             message.list = store.idList();
             self.sendData(message, 'newList');
+        });
+        store.loaded.catch(function(e){
+                console.error(e.message);
         });
     };
     
@@ -353,37 +356,70 @@ Cow.websocket.prototype._onMissingRecords = function(payload) {
     for (i=0;i<synclist.length;i++){
         store.syncRecord(synclist[i]);
     }
+    store.trigger('datachange');
 };
   
 Cow.websocket.prototype._onUpdatedRecords = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
+    store.trigger('datachange');
 };
     // END Syncing messages
     
-    //Command messages:
+    
+    /**
+        Command messages:
+            commands are ways to control peer behaviour.
+            Commands can be targeted or non-targeted. Some commands are handled here (all purpose) but all commands
+            will send a trigger with the command including the message data.
+    **/
 Cow.websocket.prototype._onCommand = function(data) {
+    var core = this._core;
     var payload = data.payload;
     var command = payload.command;
     var targetuser = payload.targetuser;
     var params = payload.params;
     this.trigger('command',data);
+    //TODO: move to icm
     if (command == 'zoomTo'){
-        if (targetuser && targetuser == this._core.user().id()){
+        if (targetuser && targetuser == core.user().id()){
             this.trigger(command, payload.location);
         }
     }
-    if (command == 'killPeer'){
-        if (targetuser && targetuser == this._core.peerid()){
+    //Closes a (misbehaving or stale) peer
+    if (command == 'kickPeer'){
+        if (targetuser && targetuser == core.peerid()){
             //TODO: make this more gentle, possibly with a trigger
             window.open('', '_self', ''); 
             window.close();
         }
     }
+    //Remove all data from a peer
+    if (command == 'purgePeer'){
+        if (targetuser && targetuser == this._core.peerid()){
+            _.each(core.projects(), function(d){
+                d.itemStore().clear();
+                d.groupStore().clear();
+            });
+            core.projectStore().clear();
+            core.userStore().clear();
+        }
+    }
+    //Close project and flush the items and groups in the project (use with utter caution!) 
+    if (command == 'flushProject'){
+        var projectid = payload.projectid;
+        var project;
+        if (core.projects(projectid)){
+            project = core.projects(projectid);
+            project.itemStore().clear(); //remove objects from store
+            project.itemStore()._db.main.clear(); //remove records from db
+        }
+    }
+    //Answer a ping with a pong
     if (command == 'ping'){
         var target = data.sender;
-        this.sendData({command: 'pong', params: 'test'},'command',parseInt(target)); //FIXME: should work with strings as well, fix in ws server
+        this.sendData({command: 'pong'},'command',target);
     }
 };
 

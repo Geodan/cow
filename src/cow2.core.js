@@ -63,14 +63,18 @@ Cow.core.prototype =
     /**
         project() -- get current project object
         project(id) -- set current project based on id from projectStore
-        
+        TODO:
         to discuss: with the current code it is not needed to have only 1 project active
             in theory the UI part can deal with that while the core can deal with multiple projects at the same time
     **/
     project: function(id){
         if (id){
             id = id.toString();
-            this.projects(id); //creates project if not existing
+            var project = this.projects(id); //creates project if not existing
+            if (!project){
+                console.warn('Trying to select a non existing project');
+                return false;
+            }
             this._projectid = id;
             if (this.peer()){
                 this.peer().data('activeproject',id).sync();

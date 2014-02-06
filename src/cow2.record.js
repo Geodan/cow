@@ -3,7 +3,7 @@ Cow.record = function(){
     //FIXME: 'this' object is being overwritten by its children 
     this._id    = null;
     this._status= 'dirty';
-    this._deleted= 'false';
+    this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
     this._data  = {};

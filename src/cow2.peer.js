@@ -7,6 +7,17 @@ Cow.peer = function(config){
         userid:null, 
         family: 'alpha' //default is alpha
     };
+    
+    //FIXME: this might be inherited from cow.record 
+    this._status= 'dirty';
+    this._deleted= false;
+    this._created= new Date().getTime();
+    this._updated= new Date().getTime();
+    this._deltaq = {}; //delta values to be synced
+    this._deltas = []; //all deltas
+    this._deltasforupload = []; //deltas we still need to give to other peers
+    //END OF FIXME
+    
 };
 
 Cow.peer.prototype = {

@@ -4,9 +4,9 @@ Cow.syncstore =  function(config){
     var self = this;
     this._dbname = config.dbname;
     this._core = config.core;
-    console.log('new store',this._dbname);
+    //console.log('new store',this._dbname);
     this.loaded = new Promise(function(resolve, reject){
-        console.log('reading db ',self._dbname);
+        //console.log('reading db ',self._dbname);
         if (config.noIDB){
             resolve();
         }
@@ -31,7 +31,7 @@ Cow.syncstore =  function(config){
             } ).done( function ( s ) {
                 self._db = s;
                 self._db_getRecords().then(function(rows){
-                    console.log('Got records from db ',self._dbname);
+                    //console.log('Got records from db ',self._dbname);
                     rows.forEach(function(d){
                          //console.log(d);
                          var record = self._recordproto(d._id);
@@ -202,9 +202,12 @@ Cow.syncstore.prototype =
             this._records.push(record); //Adding to the list
             //console.log(this._records.length); 
         }
-        this.trigger('datachange');
+        
         return record;
     },
+    /**
+        _getRecordsOn(timestamp) - 
+    **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
         _.each(this._records, function(d){
@@ -243,7 +246,7 @@ Cow.syncstore.prototype =
             return this._getRecord(config);
         }
         else if (config && typeof(config) == 'number'){
-            return this._getRecordsOn(config);
+            //TODO return this._getRecordsOn(config);
         }
         else{
             return this._records;
@@ -264,7 +267,18 @@ Cow.syncstore.prototype =
         clear() - remove all records, generally not useful since other peers will resent the data
     **/
     clear: function(){
-        this._records = [];
+        var self = this;
+        return new Promise(function(resolve, reject){
+            self._records = [];
+            if (self._db){
+                self._db.main.clear().then(function(){
+                        resolve(); //empty dbase from items
+                });
+            }
+            else {
+                resolve();
+            }
+        });
     },
     /**
         deleteAll() - sets all records to deleted=true
@@ -379,6 +393,9 @@ Cow.syncstore.prototype =
 					generates 2 lists: requestlist and pushlist
 	**/
     compareRecords: function(config){
+        if (this._dbname == 'items_test'){
+            console.log('break here');
+        }
         var uid = config.uid;   //id of peer that sends syncrequest
         var fidlist = config.list;
 		var returndata = {};
