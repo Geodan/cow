@@ -1,5 +1,15 @@
 window.Cow = window.Cow || {};
 
+
+function log(text){
+    var textarea = d3.select('#console');
+    textarea.append('span').html(text + '<br>');
+}
+function clearlog(){
+    var textarea = d3.select('#console');
+    textarea.html('');
+}
+
 Cow.testsuite = function(core){
     this.core = core;
 };
@@ -22,20 +32,20 @@ Cow.testsuite.prototype.analyzeStore = function(){
     var starttime = new Date();
     core.projectStore().loaded.then(function(foo){
             var laptime = new Date() - starttime + 'ms ';
-            console.log(self.laptime(starttime) + 'Num projects: ',core.projects().length);
+            log(self.laptime(starttime) + 'Num projects: ',core.projects().length);
             core.projects().forEach(function(d){
                 d.itemStore().loaded.then(function(foo){
                     var numitems = d.items().length;
-                    console.log(self.laptime(starttime) + 'Project ',d.data('name') + ' (' + numitems + ' items)');
+                    log(self.laptime(starttime) + 'Project ' + d.data('name') + ' (' + numitems + ' items)');
                 });
                 d.groupStore().loaded.then(function(foo){
                     var numitems = d.groups().length;
-                    console.log(self.laptime(starttime) + 'Project ',d.data('name') + ' (' + numitems + ' groups)');
+                    log(self.laptime(starttime) + 'Project ' + d.data('name') + ' (' + numitems + ' groups)');
                 });
             });
     });
     core.userStore().loaded.then(function(foo){
-        console.log(self.laptime(starttime) + 'Num users: ',core.users().length);
+        log(self.laptime(starttime) + 'Num users: ' + core.users().length);
     });
 };
 
@@ -47,24 +57,38 @@ Cow.testsuite.prototype.lifecycle = function(){
     var core = this.core;
     var self = this;
     var starttime = new Date();
-    console.log('Starting lifecycle test. Creating and syncing 100 items');
+    
+    log('Starting lifecycle test. Creating and syncing 100 items');
     core.projectStore().loaded.then(function(foo){
         var project = core.projects({_id: 'test'});
         project.data('name', 'TEST');
         project.itemStore().clear(); //remove existing items from store
-        project.itemStore()._db.main.clear(); //empty dbase from items
         project.deleted(false).sync();
         for (var i = 0;i<100;i++){
             var item = project.items({_id: i.toString()});
             item.data('tmp',(Math.random()*100).toString());
         }
         var syncpromise = project.itemStore().syncRecords();
-        project.itemStore().clear(); //remove items from store
-        project.deleted(true).sync();//set project to deleted
-        window.setTimeout(function(){//flush remote itemstores 
-                core.websocket().sendData({command: 'flushProject',projectid: 'test'}, 'command');
-        },2000); //FIXME
-        console.log(self.laptime(starttime) + ' lifecycletest finished');
+        log('Waiting 3 secs to settle the syncing...');
+        window.setTimeout(function(){
+            log('Clearing itemstore');
+            log('Reconnecting websocket to initiate full sync');
+            project.itemStore().clear(); //remove items from store
+            core.websocket().disconnect();
+            core.websocket().off('connected');
+            core.websocket().on('connected', function(){
+                log('Reconnected! Waiting 3 secs to sync back the 100 items');
+                window.setTimeout(function(){
+                    log('We now have ' + core.projects('test').items().length + ' items');
+                    log('Clearing itemstore');
+                    project.itemStore().clear(); //remove items from store
+                    log('Sending flushing command to peers');
+                    core.websocket().sendData({command: 'flushProject',projectid: 'test'}, 'command');
+                    project.deleted(true).sync();//set project to deleted
+                    log(self.laptime(starttime) + ' lifecycletest finished');
+                },3000);
+            });
+        },3000);
     });
 };
 /**
@@ -79,7 +103,7 @@ Cow.testsuite.prototype.pingtest = function(){
         var returntime = new Date().getTime();
         var triptime = returntime - self.starttime;
         var sender = data.sender;
-        console.log('PONG from ' + sender + ' in ' + triptime + 'ms');
+        log('PONG from ' + sender + ' in ' + triptime + 'ms');
     });
     var ws = core.websocket();
     this.starttime = new Date().getTime();

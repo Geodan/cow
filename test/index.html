@@ -7,6 +7,8 @@
   <link href='http://fonts.googleapis.com/css?family=Dosis:300,500' rel='stylesheet' type='text/css'>
   <script src="../lib/underscore/underscore-min.js" type="text/javascript"></script>
   <script src="../lib/polyfill-promise/promise-0.1.1.min.js" type="text/javascript"></script>
+  
+  <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
   <!-- IndexedDB -->
   <script src="../lib/dbjs/db.js"></script>
   
@@ -26,6 +28,11 @@
   </style>
   </head>
   <body>
+   <button onclick="clearlog()">Clear</button>
+   <button onclick="tests.analyzeStore()">Analyze</button>
+   <button onclick="tests.pingtest()">Pingtest</button>
+   <button onclick="tests.lifecycle()">Lifecycle</button>
+   
    <div id="console"></div>
   
   

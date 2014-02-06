@@ -183,7 +183,7 @@ Cow.websocket.prototype._onConnect = function(payload){
         mypeer.data('userid',core.user()._id);
     }
     mypeer.sync();
-    //TODO this.core.trigger('ws-connected',payload);
+    this.trigger('connected',payload);
     
     //initiate peer-sync
     var message = {};
@@ -200,6 +200,9 @@ Cow.websocket.prototype._onConnect = function(payload){
             message.project = store._projectid;
             message.list = store.idList();
             self.sendData(message, 'newList');
+        });
+        store.loaded.catch(function(e){
+                console.error(e.message);
         });
     };
     

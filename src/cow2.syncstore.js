@@ -202,7 +202,7 @@ Cow.syncstore.prototype =
             this._records.push(record); //Adding to the list
             //console.log(this._records.length); 
         }
-        this.trigger('datachange');
+        
         return record;
     },
     _getRecordsOn: function(timestamp){
@@ -237,7 +237,9 @@ Cow.syncstore.prototype =
             return this._getRecords(config);
         }
         else if (config && typeof(config) == 'object'){
-            return this._addRecord({source: 'UI', data: config}).status('dirty');
+            var record = this._addRecord({source: 'UI', data: config}).status('dirty');
+            this.trigger('datachange');
+            return record;
         }
         else if (config && typeof(config) == 'string'){
             return this._getRecord(config);
@@ -264,7 +266,18 @@ Cow.syncstore.prototype =
         clear() - remove all records, generally not useful since other peers will resent the data
     **/
     clear: function(){
-        this._records = [];
+        var self = this;
+        return new Promise(function(resolve, reject){
+            self._records = [];
+            if (self._db){
+                self._db.main.clear().then(function(){
+                        resolve(); //empty dbase from items
+                });
+            }
+            else {
+                resolve();
+            }
+        });
     },
     /**
         deleteAll() - sets all records to deleted=true
