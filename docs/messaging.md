@@ -32,6 +32,21 @@ This message is send by the websocket server to peers once a connection is lost 
 }
 ```
 
+*command* (optional targeted)
+
+Peers can be given commands. Some core commands are processed directly by core (see below) but most will trigger an event that can be hooked on by the client.
+
+```
+{
+    "action" : "command",
+    "payload": { 
+        "command" : WHATEVER
+        "more"  : OPTIONALDATA
+        "params" : MOREDATA
+    }
+}
+```
+
 **syncing**
 
 *newList*
