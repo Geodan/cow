@@ -4,9 +4,9 @@ Cow.syncstore =  function(config){
     var self = this;
     this._dbname = config.dbname;
     this._core = config.core;
-    console.log('new store',this._dbname);
+    //console.log('new store',this._dbname);
     this.loaded = new Promise(function(resolve, reject){
-        console.log('reading db ',self._dbname);
+        //console.log('reading db ',self._dbname);
         if (config.noIDB){
             resolve();
         }
@@ -31,7 +31,7 @@ Cow.syncstore =  function(config){
             } ).done( function ( s ) {
                 self._db = s;
                 self._db_getRecords().then(function(rows){
-                    console.log('Got records from db ',self._dbname);
+                    //console.log('Got records from db ',self._dbname);
                     rows.forEach(function(d){
                          //console.log(d);
                          var record = self._recordproto(d._id);
@@ -379,6 +379,9 @@ Cow.syncstore.prototype =
 					generates 2 lists: requestlist and pushlist
 	**/
     compareRecords: function(config){
+        if (this._dbname == 'items_test'){
+            console.log('break here');
+        }
         var uid = config.uid;   //id of peer that sends syncrequest
         var fidlist = config.list;
 		var returndata = {};

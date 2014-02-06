@@ -47,16 +47,23 @@ Cow.testsuite.prototype.lifecycle = function(){
     var core = this.core;
     var self = this;
     var starttime = new Date();
+    console.log('Starting lifecycle test. Creating and syncing 100 items');
     core.projectStore().loaded.then(function(foo){
-        var project = core.projects('test').data('name', 'TEST');
+        var project = core.projects({_id: 'test'});
+        project.data('name', 'TEST');
+        project.itemStore().clear(); //remove existing items from store
+        project.itemStore()._db.main.clear(); //empty dbase from items
         project.deleted(false).sync();
         for (var i = 0;i<100;i++){
             var item = project.items({_id: i.toString()});
             item.data('tmp',(Math.random()*100).toString());
         }
         var syncpromise = project.itemStore().syncRecords();
-        project.itemStore().clear();
-        project.deleted(true).sync();
+        project.itemStore().clear(); //remove items from store
+        project.deleted(true).sync();//set project to deleted
+        window.setTimeout(function(){//flush remote itemstores 
+                core.websocket().sendData({command: 'flushProject',projectid: 'test'}, 'command');
+        },2000); //FIXME
         console.log(self.laptime(starttime) + ' lifecycletest finished');
     });
 };

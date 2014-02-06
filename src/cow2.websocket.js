@@ -4,7 +4,7 @@ Cow.websocket = function(config){
     this._core = config.core;
     //socket connection object
     this._url = config.url;
-    this._connection = this.connect(this._url);
+    this._connection = this.connect();
 };
 
 
@@ -24,19 +24,19 @@ Cow.websocket.prototype.disconnect = function() {
     /**
         connect(url) - connect to websocket server on url, returns connection
     **/
-Cow.websocket.prototype.connect = function(url) {
+Cow.websocket.prototype.connect = function() {
     var core = this.core;
     if (!this._connection || this._connection.readyState != 1) //if no connection
     {
-        if(url.indexOf('ws') === 0) {
+        //if(url.indexOf('ws') === 0) {
             var connection = new WebSocket(this._url, 'connect');
             connection.onopen=this._onOpen;
             connection.onmessage = this._onMessage;
             connection.onclose = this._onClose;    
             connection.onerror = this._onError;
             connection.obj = this;
-        }
-        else {throw('Incorrect URL: ' + url);}
+        //}
+        //else {throw('Incorrect URL: ' + url);}
     }
     else {
         connection = this._connection;
@@ -362,18 +362,26 @@ Cow.websocket.prototype._onUpdatedRecords = function(payload) {
 };
     // END Syncing messages
     
-    //Command messages:
+    
+    /**
+        Command messages:
+            commands are ways to control peer behaviour.
+            Commands can be targeted or non-targeted. Some commands are handled here (all purpose) but all commands
+            will send a trigger with the command including the message data.
+    **/
 Cow.websocket.prototype._onCommand = function(data) {
     var payload = data.payload;
     var command = payload.command;
     var targetuser = payload.targetuser;
     var params = payload.params;
     this.trigger('command',data);
+    //TODO: move to icm
     if (command == 'zoomTo'){
         if (targetuser && targetuser == this._core.user().id()){
             this.trigger(command, payload.location);
         }
     }
+    //Closes a (misbehaving or stale) peer
     if (command == 'killPeer'){
         if (targetuser && targetuser == this._core.peerid()){
             //TODO: make this more gentle, possibly with a trigger
@@ -381,9 +389,24 @@ Cow.websocket.prototype._onCommand = function(data) {
             window.close();
         }
     }
+    //Kill all peers
+    if (command == 'killSwitch'){
+        
+    }
+    //Close project and flush the items and groups in the project (use with caution) 
+    if (command == 'flushProject'){
+        var projectid = payload.projectid;
+        var project;
+        if (core.projects(projectid)){
+            project = core.projects(projectid);
+            project.itemStore().clear(); //remove objects from store
+            project.itemStore()._db.main.clear(); //remove records from db
+        }
+    }
+    //Answer a ping with a pong
     if (command == 'ping'){
         var target = data.sender;
-        this.sendData({command: 'pong', params: 'test'},'command',parseInt(target)); //FIXME: should work with strings as well, fix in ws server
+        this.sendData({command: 'pong'},'command',target);
     }
 };
 
