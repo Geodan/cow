@@ -70,11 +70,14 @@ Cow.websocket.prototype.sendData = function(data, action, target){
         console.error(e, message);
     }
     if (this._connection && this._connection.readyState == 1){
+        console.log('Sending ',message);
         this._connection.send(JSON.stringify(message));
+    }
+    else{
+        console.warn('Could not send, socket not connected?');
     }
 };
 Cow.websocket.prototype._onMessage = function(message){
-        
     var core = this.obj._core;
     var data = JSON.parse(message.data); //TODO: catch parse errors
     var sender = data.sender;
@@ -82,14 +85,16 @@ Cow.websocket.prototype._onMessage = function(message){
     var action = data.action;        
     var payload = data.payload;    
     var target = data.target;
-    console.log('COW2 :',data.action);
+    if (sender != PEERID){
+        console.log('Receiving ',data);
+    }
     switch (action) {
     /**
         Commands 
     **/
         case 'command':
             if (sender != PEERID){
-                this.obj._onCommand(payload);
+                this.obj._onCommand(data);
             }
         break;
     /**
@@ -223,8 +228,10 @@ Cow.websocket.prototype._onConnect = function(payload){
     
     //A peer has disconnected, remove it from your peerList
 Cow.websocket.prototype._onPeerGone = function(payload) {
-    var peerGone = payload.gonePeerID;
-    this._core.peers(peerGone).deleted(true).sync();
+    var peerGone = payload.gonePeerID.toString();
+    if (this._core.peers(peerGone)){
+        this._core.peers(peerGone).deleted(true).sync();
+    }
     //this._core.peerStore().removePeer(peerGone);        
     //TODO this.core.trigger('ws-peerGone',payload); 
 };
@@ -244,11 +251,21 @@ Cow.websocket.prototype._getStore = function(payload){
             return this._core.userStore();
         case 'items':
             if (!projectid) {throw('No project id given');}
-            project = this._core.projects(projectid);
+            if (this._core.projects(projectid)){
+                project = this._core.projects(projectid);
+            }
+            else {
+                project = this._core.projects({_id:projectid});
+            }
             return project.itemStore();
         case 'groups':
             if (!projectid) {throw('No project id given');}
-            project = this._core.projects(projectid);
+            if (this._core.projects(projectid)){
+                project = this._core.projects(projectid);
+            }
+            else {
+                project = this._core.projects({_id:projectid});
+            }
             return project.groupStore();
     }
 };
@@ -316,6 +333,7 @@ Cow.websocket.prototype._onWantedList = function(payload) {
 Cow.websocket.prototype._onMissingRecords = function(payload) {
     var store = this._getStore(payload);
     var list = payload.list;
+    var synclist = [];
     for (var i=0;i<list.length;i++){
         var data = list[i];
         //var record = store._addRecord({source: 'WS', data: data});
@@ -328,36 +346,29 @@ Cow.websocket.prototype._onMissingRecords = function(payload) {
             //TODO: nice solution for future, when dealing more with deltas
             //For now we just respond with a forced sync our own record so the delta's get synced anyway
             if (diff.length > 0){
-                store.syncRecord(record);
+                synclist.push(record);
             }
         }
     }
-    //TODO this.core.trigger('ws-missingRecords',payload); 
-};
-/*OBS: same as _onMissingRecords    
-Cow.websocket.prototype._onRequestedRecords = function(payload) {
-    var store = this._getStore(payload);
-    var list = payload.list;
-    for (var i=0;i<list.length;i++){
-        var data = list[i];
-        store._addRecord({source: 'WS', data: data});
+    for (i=0;i<synclist.length;i++){
+        store.syncRecord(synclist[i]);
     }
-    //TODO this.core.trigger('ws-onRequestedRecords',payload); 
 };
-*/    
+  
 Cow.websocket.prototype._onUpdatedRecords = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
-    //TODO this.core.trigger('ws-onRequestedRecords',payload); 
 };
     // END Syncing messages
     
     //Command messages:
-Cow.websocket.prototype._onCommand = function(payload) {
+Cow.websocket.prototype._onCommand = function(data) {
+    var payload = data.payload;
     var command = payload.command;
     var targetuser = payload.targetuser;
-    console.log('Command received: ',command);
+    var params = payload.params;
+    this.trigger('command',data);
     if (command == 'zoomTo'){
         if (targetuser && targetuser == this._core.user().id()){
             this.trigger(command, payload.location);
@@ -369,6 +380,10 @@ Cow.websocket.prototype._onCommand = function(payload) {
             window.open('', '_self', ''); 
             window.close();
         }
+    }
+    if (command == 'ping'){
+        var target = data.sender;
+        this.sendData({command: 'pong', params: 'test'},'command',parseInt(target)); //FIXME: should work with strings as well, fix in ws server
     }
 };
 

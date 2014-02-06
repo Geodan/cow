@@ -57,6 +57,7 @@ Cow.record.prototype =
         Only to be used from client API
         
         data() - returns data object
+        data(timestamp) - returns data object on specific time
         data(param) - returns value of data param (only 1 deep)
         data(param, value) - sets value of data param and returns record (only 1 deep)
         data(object) - sets data to object and returns record
@@ -70,14 +71,41 @@ Cow.record.prototype =
             this.status('dirty');
             return this;
         }
-        else if (param && !value){
+        else if (param && typeof(param) == 'string' && !value){
             return this._data[param];
+        }
+        else if (param && typeof(param) == 'number' && !value){
+            return this.data_on(param);
         }
         else if (param && value){
             this._data[param] = value;
             this._deltaq[param] = value;
             this.status('dirty');
             return this; 
+        }
+    },
+    /**
+        data_on(timestamp) - same as data(timestamp)
+    **/
+    data_on: function(timestamp){
+        //If request is older than feature itself, disregard
+        if (timestamp < this._created){
+            return null; //nodata
+        }
+        //If request is younger than last feature update, return normal data
+        else if (timestamp > this._updated){
+            return this.data();
+        }
+        else {
+            //Recreate the data based on deltas
+            var returnval = {};
+            var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
+            _.each(deltas, function(d){
+                if (d.timestamp <= timestamp){
+                    _.extend(returnval, d.data);
+                }
+            });
+            return returnval;
         }
     },
     /**
