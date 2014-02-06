@@ -6,6 +6,17 @@ Cow.project = function(config){
     this._store = config.store;
     this._core = this._store._core;
     
+    //FIXME: this might be inherited from cow.record 
+    this._status= 'dirty';
+    this._deleted= false;
+    this._created= new Date().getTime();
+    this._updated= new Date().getTime();
+    this._data  = {};
+    this._deltaq = {}; //delta values to be synced
+    this._deltas = []; //all deltas
+    this._deltasforupload = []; //deltas we still need to give to other peers
+    //END OF FIXME
+    
     var dbname = 'groups_' + config._id;
     this._groupStore = _.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{

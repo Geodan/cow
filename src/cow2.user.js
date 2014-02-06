@@ -3,6 +3,18 @@ Cow.user = function(config){
     if (!config._id) {throw 'No _id given for user';}
     this._id = config._id;
     this._store = config.store;
+    
+    //FIXME: this might be inherited from cow.record 
+    this._status= 'dirty';
+    this._deleted= false;
+    this._created= new Date().getTime();
+    this._updated= new Date().getTime();
+    this._data  = {};
+    this._deltaq = {}; //delta values to be synced
+    this._deltas = []; //all deltas
+    this._deltasforupload = []; //deltas we still need to give to other peers
+    //END OF FIXME
+    
 };
 Cow.user.prototype = 
 {

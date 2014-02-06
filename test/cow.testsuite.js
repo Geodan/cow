@@ -31,7 +31,6 @@ Cow.testsuite.prototype.analyzeStore = function(){
     var self = this;
     var starttime = new Date();
     core.projectStore().loaded.then(function(foo){
-            var laptime = new Date() - starttime + 'ms ';
             log(self.laptime(starttime) + 'Num projects: ',core.projects().length);
             core.projects().forEach(function(d){
                 d.itemStore().loaded.then(function(foo){
@@ -67,13 +66,15 @@ Cow.testsuite.prototype.lifecycle = function(){
         for (var i = 0;i<100;i++){
             var item = project.items({_id: i.toString()});
             item.data('tmp',(Math.random()*100).toString());
+            item.data('text','Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit...');
         }
         var syncpromise = project.itemStore().syncRecords();
         log('Waiting 3 secs to settle the syncing...');
         window.setTimeout(function(){
             log('Clearing itemstore');
-            log('Reconnecting websocket to initiate full sync');
             project.itemStore().clear(); //remove items from store
+            log('We now have ' + core.projects('test').items().length + ' items');
+            log('Reconnecting websocket to initiate full sync');
             core.websocket().disconnect();
             core.websocket().off('connected');
             core.websocket().on('connected', function(){
@@ -108,16 +109,6 @@ Cow.testsuite.prototype.pingtest = function(){
     var ws = core.websocket();
     this.starttime = new Date().getTime();
     ws.sendData({command: 'ping'},'command');
-};
-
-Cow.testsuite.prototype.syncrecords = function(){
-};
-
-
-Cow.testsuite.prototype.removerecords = function(){
-};
-
-Cow.testsuite.prototype.purge = function(){
 };
 
 

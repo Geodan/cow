@@ -205,6 +205,9 @@ Cow.syncstore.prototype =
         
         return record;
     },
+    /**
+        _getRecordsOn(timestamp) - 
+    **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
         _.each(this._records, function(d){
@@ -237,15 +240,13 @@ Cow.syncstore.prototype =
             return this._getRecords(config);
         }
         else if (config && typeof(config) == 'object'){
-            var record = this._addRecord({source: 'UI', data: config}).status('dirty');
-            this.trigger('datachange');
-            return record;
+            return this._addRecord({source: 'UI', data: config}).status('dirty');
         }
         else if (config && typeof(config) == 'string'){
             return this._getRecord(config);
         }
         else if (config && typeof(config) == 'number'){
-            return this._getRecordsOn(config);
+            //TODO return this._getRecordsOn(config);
         }
         else{
             return this._records;
