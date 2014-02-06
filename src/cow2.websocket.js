@@ -94,7 +94,7 @@ Cow.websocket.prototype._onMessage = function(message){
     **/
         case 'command':
             if (sender != PEERID){
-                this.obj._onCommand(message);
+                this.obj._onCommand(data);
             }
         break;
     /**
@@ -363,11 +363,12 @@ Cow.websocket.prototype._onUpdatedRecords = function(payload) {
     // END Syncing messages
     
     //Command messages:
-Cow.websocket.prototype._onCommand = function(message) {
-    var payload = message.data;
+Cow.websocket.prototype._onCommand = function(data) {
+    var payload = data.payload;
     var command = payload.command;
     var targetuser = payload.targetuser;
-    console.log('Command received: ',command);
+    var params = payload.params;
+    this.trigger('command',data);
     if (command == 'zoomTo'){
         if (targetuser && targetuser == this._core.user().id()){
             this.trigger(command, payload.location);
@@ -381,11 +382,8 @@ Cow.websocket.prototype._onCommand = function(message) {
         }
     }
     if (command == 'ping'){
-        var target = message.sender;
-        this.sendData({command: 'pong'},'command',target);
-    }
-    if (command == 'pong'){
-        console.log('Pong from ' + message.sender);
+        var target = data.sender;
+        this.sendData({command: 'pong', params: 'test'},'command',parseInt(target)); //FIXME: should work with strings as well, fix in ws server
     }
 };
 

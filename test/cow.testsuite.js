@@ -60,9 +60,22 @@ Cow.testsuite.prototype.lifecycle = function(){
         console.log(self.laptime(starttime) + ' lifecycletest finished');
     });
 };
+/**
+    pingtest() - logs pingtimes to all connected peers in ms
+**/
 
 Cow.testsuite.prototype.pingtest = function(){
+    var self = this;
+    this.core.websocket().off('command');
+    this.core.websocket().on('command', function(data){
+        var payload = data.payload;
+        var returntime = new Date().getTime();
+        var triptime = returntime - self.starttime;
+        var sender = data.sender;
+        console.log('PONG from ' + sender + ' in ' + triptime + 'ms');
+    });
     var ws = core.websocket();
+    this.starttime = new Date().getTime();
     ws.sendData({command: 'ping'},'command');
 };
 
