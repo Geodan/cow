@@ -62,33 +62,35 @@ Cow.testsuite.prototype.lifecycle = function(){
         var project = core.projects({_id: 'test'});
         project.data('name', 'TEST');
         project.itemStore().clear(); //remove existing items from store
-        project.deleted(false).sync();
-        for (var i = 0;i<100;i++){
+        project.deleted(false).sync(); //set project undeleted
+        for (var i = 0;i<100;i++){ //Add 100 records
             var item = project.items({_id: i.toString()});
             item.data('tmp',(Math.random()*100).toString());
             item.data('text','Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit...');
         }
-        var syncpromise = project.itemStore().syncRecords();
-        log('Waiting 3 secs to settle the syncing...');
+        log('changing items');
+        var syncpromise = project.itemStore().syncRecords(); //sync the records
+        for (i = 0;i<100;i++){//Update the records 
+            item = project.items(i.toString());
+            item.data('tmp',(Math.random()*100).toString());
+        }
+        syncpromise = project.itemStore().syncRecords(); //sync the records
+        
+        
+        
+        log('Clearing itemstore');
+        project.itemStore().clear(); //remove items from store
+        log('We now have ' + core.projects('test').items().length + ' items'); //should be 0 items
+        project.itemStore().sync(); //full sync on itemstore
+        log('Sync it back! Waiting 3 secs to sync back the 100 items');
         window.setTimeout(function(){
+            log('We now have ' + core.projects('test').items().length + ' items');
             log('Clearing itemstore');
             project.itemStore().clear(); //remove items from store
-            log('We now have ' + core.projects('test').items().length + ' items');
-            log('Reconnecting websocket to initiate full sync');
-            core.websocket().disconnect();
-            core.websocket().off('connected');
-            core.websocket().on('connected', function(){
-                log('Reconnected! Waiting 3 secs to sync back the 100 items');
-                window.setTimeout(function(){
-                    log('We now have ' + core.projects('test').items().length + ' items');
-                    log('Clearing itemstore');
-                    project.itemStore().clear(); //remove items from store
-                    log('Sending flushing command to peers');
-                    core.websocket().sendData({command: 'flushProject',projectid: 'test'}, 'command');
-                    project.deleted(true).sync();//set project to deleted
-                    log(self.laptime(starttime) + ' lifecycletest finished');
-                },3000);
-            });
+            log('Sending flushing command to peers');
+            core.websocket().sendData({command: 'flushProject',projectid: 'test'}, 'command');
+            project.deleted(true).sync();//set project to deleted
+            log(self.laptime(starttime) + ' lifecycletest finished');
         },3000);
     });
 };

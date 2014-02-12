@@ -185,49 +185,23 @@ Cow.websocket.prototype._onConnect = function(payload){
     mypeer.sync();
     this.trigger('connected',payload);
     
-    //initiate peer-sync
-    var message = {};
-    message.syncType = 'peers';
-    //We can immediately use the peerStore here because it's not depending on a slow loading indexeddb
-    message.list = this._core.peerStore().idList();
-    this.sendData(message, 'newList');
-    /*OBS
-    var startsync = function(synctype, store){
-        //TODO: when there's no _db object, syncing should start immediately (like peers store)
-        store.loaded.then(function(d){
-            var message = {};
-            message.syncType = synctype;
-            message.project = store._projectid;
-            message.list = store.idList();
-            self.sendData(message, 'newList');
-        });
-        store.loaded.catch(function(e){
-                console.error(e.message);
-        });
-    };
-    */
+    //initiate peer sync
+    this._core.peerStore().sync();
 
-    //initiate project sync
-    var store1 = this._core.projectStore();
-    //startsync('projects', store1);
-    store1.sync();
-    
     //initiate user sync
-    var store2 = this._core.userStore();
-    //startsync('users', store2);
-    store2.sync();
+    this._core.userStore().sync();
+    
+    //initiate project sync
+    var projectstore = this._core.projectStore();
+    projectstore.sync();
     
     //wait for projectstore to load
-    store1.loaded.then(function(d){
+    projectstore.loaded.then(function(d){
         var projects = self._core.projects();
         for (var i=0;i<projects.length;i++){
             var project = projects[i];
-            store = self._core.projects(project._id).itemStore(); 
-            //startsync('items', store);
-            store.sync();
-            store = self._core.projects(project._id).groupStore(); 
-            //startsync('groups', store);
-            store.sync();
+            self._core.projects(project._id).itemStore().sync();
+            self._core.projects(project._id).groupStore().sync();
         }
     });
 };
