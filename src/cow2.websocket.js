@@ -191,7 +191,7 @@ Cow.websocket.prototype._onConnect = function(payload){
     //We can immediately use the peerStore here because it's not depending on a slow loading indexeddb
     message.list = this._core.peerStore().idList();
     this.sendData(message, 'newList');
-    
+    /*OBS
     var startsync = function(synctype, store){
         //TODO: when there's no _db object, syncing should start immediately (like peers store)
         store.loaded.then(function(d){
@@ -205,15 +205,17 @@ Cow.websocket.prototype._onConnect = function(payload){
                 console.error(e.message);
         });
     };
-    
+    */
 
     //initiate project sync
     var store1 = this._core.projectStore();
-    startsync('projects', store1);
+    //startsync('projects', store1);
+    store1.sync();
     
     //initiate user sync
     var store2 = this._core.userStore();
-    startsync('users', store2);
+    //startsync('users', store2);
+    store2.sync();
     
     //wait for projectstore to load
     store1.loaded.then(function(d){
@@ -221,9 +223,11 @@ Cow.websocket.prototype._onConnect = function(payload){
         for (var i=0;i<projects.length;i++){
             var project = projects[i];
             store = self._core.projects(project._id).itemStore(); 
-            startsync('items', store);
+            //startsync('items', store);
+            store.sync();
             store = self._core.projects(project._id).groupStore(); 
-            startsync('groups', store);
+            //startsync('groups', store);
+            store.sync();
         }
     });
 };
@@ -341,6 +345,11 @@ Cow.websocket.prototype._onMissingRecords = function(payload) {
         var data = list[i];
         //var record = store._addRecord({source: 'WS', data: data});
         var record = store._addRecord({source: 'WS', data: data});
+        //if we receive a new project, we also have to get the items and groups in it
+        if (store._type == 'projects'){
+            record.groupStore().sync();
+            record.itemStore().sync();
+        }
         //Do the syncing for the deltas
         if (data.deltas && record.deltas()){
             var localarr = _.pluck(record.deltas(),'timestamp');

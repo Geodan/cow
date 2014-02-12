@@ -357,6 +357,23 @@ Cow.syncstore.prototype =
     },
     
     /**
+    sync() - sync the whole store, not only dirty records
+    **/
+    sync: function(){
+        var self = this;
+        this.loaded.then(function(d){
+            var message = {};
+            message.syncType = self._type;
+            message.project = self._projectid;
+            message.list = self.idList();
+            self.core.websocket().sendData(message, 'newList');
+        });
+        self.loaded.catch(function(e){
+                console.error(e.message);
+        });
+    },
+    
+    /**
     idList() - needed to start the syncing with other peers
                 only makes sense after fully loading the indexeddb 
     **/
