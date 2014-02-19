@@ -179,8 +179,8 @@ Cow.websocket.prototype._onConnect = function(payload){
     this._core.peerid(payload.peerID);
     var mypeer = this._core.peers({_id: payload.peerID});
     //add userid to peer object
-    if (core.user()){
-        mypeer.data('userid',core.user()._id);
+    if (this._core.user()){
+        mypeer.data('userid',this._core.user()._id);
     }
     mypeer.sync();
     this.trigger('connected',payload);
