@@ -43,8 +43,9 @@ All the stores behave the same* and as follows (userStore as example):
 All *record objects* behave the same* and as follows (user object as example):
 `````javascript
     user.id() -> returns the id of the record
-    user.status() -> returns the status of the record (being one of  'clean', 'dirty', 'deleted')
+    user.status() -> returns the status of the record (being one of  'clean', 'dirty')
     user.status(<string>) -> sets the status of the record, returns record
+    user.isDeleted() -> returns a boolean (true, false) indicating wether the record has been deleted
     user.timestamp() -> returns the timestamp (last edit) of the record
     user.timestamp(<timestamp>) -> sets the timestamp of the record, returns record
     user.data() -> returns the data (object) of the record
