@@ -366,13 +366,7 @@ Cow.syncstore.prototype =
             message.syncType = self._type;
             message.project = self._projectid;
             message.list = self.idList();
-            //if it is not a project or it is a non-closed project, start syncing
-            if (!self._projectid || !self._core.projects(self._projectid).closed()){
-                    self._core.websocket().sendData(message, 'newList');
-            }
-            else {
-                console.log('Closed project ' + self._projectid);
-            }
+            self._core.websocket().sendData(message, 'newList');
         });
         self.loaded.catch(function(e){
                 console.error(e.message);
@@ -416,9 +410,6 @@ Cow.syncstore.prototype =
 					generates 2 lists: requestlist and pushlist
 	**/
     compareRecords: function(config){
-        if (this._dbname == 'items_test'){
-            console.log('break here');
-        }
         var uid = config.uid;   //id of peer that sends syncrequest
         var fidlist = config.list;
 		var returndata = {};

@@ -17,7 +17,7 @@ Cow.group = function(config){
 };
 Cow.group.prototype = 
 {
-    __proto__: Cow.record.prototype,
+    //__proto__: Cow.record.prototype,
     /**
         members() - return array of member ids
         members(id) - add id to member array, return group object
@@ -177,3 +177,4 @@ Cow.group.prototype =
         return hasmember;
     }
 };
+_.extend(Cow.group.prototype, Cow.record.prototype);

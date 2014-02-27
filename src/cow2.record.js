@@ -153,7 +153,6 @@ Cow.record.prototype =
             updated: this._updated,
             data: this._data,
             deltas: this._deltas
-            //Note: this._closed is never deflated but written to the db seperately to keep it local
         }; 
     },
     inflate: function(config){
@@ -174,7 +173,6 @@ Cow.record.prototype =
                 this.deltas(time, data);
             }
         }
-        this._closed = config.closed || this._closed;
         return this;
     }
 
