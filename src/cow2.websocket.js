@@ -315,7 +315,8 @@ Cow.websocket.prototype._onMissingRecords = function(payload) {
     var store = this._getStore(payload);
     var list = payload.list;
     var synclist = [];
-    for (var i=0;i<list.length;i++){
+    var i;
+    for (i=0;i<list.length;i++){
         var data = list[i];
         //var record = store._addRecord({source: 'WS', data: data});
         var record = store._addRecord({source: 'WS', data: data});
