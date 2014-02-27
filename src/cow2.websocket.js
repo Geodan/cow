@@ -253,7 +253,7 @@ Cow.websocket.prototype._getStore = function(payload){
     
 //A peer initiates a sync
 Cow.websocket.prototype._onNewList = function(payload,sender) {
-    //Only answer if we are ths alpha peer
+    //Only answer if we are the alpha peer
     if (this._amIAlpha()){
         var store = this._getStore(payload);
         var project = store._projectid;
