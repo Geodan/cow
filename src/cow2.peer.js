@@ -21,7 +21,6 @@ Cow.peer = function(config){
 };
 
 Cow.peer.prototype = { 
-        //__proto__: Cow.record.prototype,
         /**
             user() - return id of currently connected user
             user(id) - sets id of currently connected user, returns peer object

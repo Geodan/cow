@@ -48,7 +48,6 @@ Cow.project = function(config){
 };
 Cow.project.prototype = 
 {
-    //__proto__: Cow.record.prototype,
     /**
         close(bool) - closes the project locally
             Since we don't want to sync the closed status it is written seperately to the database.

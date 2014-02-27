@@ -18,7 +18,6 @@ Cow.item = function(config){
 };
 Cow.item.prototype = 
 {
-    //__proto__: Cow.record.prototype,
     /**
         Function to get or set the permissions:
         permissions() will return an array with all permissions set on this item

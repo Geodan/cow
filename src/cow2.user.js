@@ -18,7 +18,6 @@ Cow.user = function(config){
 };
 Cow.user.prototype = 
 {
-    __proto__: Cow.record.prototype,
     name: function(name){
         if (name){
             return this.data('name', name);

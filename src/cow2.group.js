@@ -17,7 +17,6 @@ Cow.group = function(config){
 };
 Cow.group.prototype = 
 {
-    //__proto__: Cow.record.prototype,
     /**
         members() - return array of member ids
         members(id) - add id to member array, return group object
