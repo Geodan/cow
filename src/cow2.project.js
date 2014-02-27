@@ -48,7 +48,22 @@ Cow.project = function(config){
 };
 Cow.project.prototype = 
 {
-    __proto__: Cow.record.prototype,
+    /**
+        close(bool) - closes the project locally
+            Since we don't want to sync the closed status it is written seperately to the database.
+    **/
+    closed: function(truefalse){
+        if (truefalse != null){ //TODO, this is not the recommended way, but !== gives always true
+            this._closed = truefalse;
+            var data = this.deflate();
+            data.closed = this._closed;
+            this._store._db_write({source: 'UI', data: data});
+            return this;
+        }
+        else {
+            return this._closed;
+        }
+    },
     /**
         groupStore() - return groupStore object
     **/
@@ -93,3 +108,4 @@ Cow.project.prototype =
         return mygroups;
     }
 };
+_.extend(Cow.project.prototype, Cow.record.prototype);

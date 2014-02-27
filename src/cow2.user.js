@@ -18,7 +18,6 @@ Cow.user = function(config){
 };
 Cow.user.prototype = 
 {
-    __proto__: Cow.record.prototype,
     name: function(name){
         if (name){
             return this.data('name', name);
@@ -50,6 +49,10 @@ Cow.user.prototype =
     groups: function(){
         var core = this._store._core;
         var returnArr = [];
+        if (!core.project()){
+            console.warn('No active project');
+            return null;
+        }
         var groups = core.project().groups();
         for (var i = 0;groups.length;i++){
             if (groups[i].hasMember(core.user().id())){
@@ -96,3 +99,4 @@ Cow.user.prototype =
     }
     
 };
+_.extend(Cow.user.prototype, Cow.record.prototype);

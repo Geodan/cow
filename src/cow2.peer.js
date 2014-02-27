@@ -20,8 +20,7 @@ Cow.peer = function(config){
     
 };
 
-Cow.peer.prototype = {
-        __proto__: Cow.record.prototype,
+Cow.peer.prototype = { 
         /**
             user() - return id of currently connected user
             user(id) - sets id of currently connected user, returns peer object
@@ -33,3 +32,4 @@ Cow.peer.prototype = {
             return this.data('userid');
         }
 };
+_.extend(Cow.peer.prototype,Cow.record.prototype);

@@ -410,9 +410,6 @@ Cow.syncstore.prototype =
 					generates 2 lists: requestlist and pushlist
 	**/
     compareRecords: function(config){
-        if (this._dbname == 'items_test'){
-            console.log('break here');
-        }
         var uid = config.uid;   //id of peer that sends syncrequest
         var fidlist = config.list;
 		var returndata = {};
