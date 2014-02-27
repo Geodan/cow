@@ -99,7 +99,7 @@ Cow.project.prototype =
         var groups = this.groups();
         var myid = this._core.user().id();
         var mygroups = [];
-        for (i=0;i<groups.length;i++){
+        for (var i=0;i<groups.length;i++){
             var group = groups[i];
             if (group.hasMember(myid)){
                 mygroups.push(group.id());
