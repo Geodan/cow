@@ -53,7 +53,7 @@ Cow.project.prototype =
             Since we don't want to sync the closed status it is written seperately to the database.
     **/
     closed: function(truefalse){
-        if (truefalse != null){ //TODO, this is not the recommended way, but !== gives always true
+        if (truefalse !== undefined){
             this._closed = truefalse;
             var data = this.deflate();
             data.closed = this._closed;
