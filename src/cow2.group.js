@@ -165,7 +165,7 @@ Cow.group.prototype =
         var groupList = this.groups();
         var core = this._store._core;
         var projectid = this._store._projectid;
-        for (i=0;i<groupList.length;i++){
+        for (var i=0;i<groupList.length;i++){
             var groupId = groupList[i].id;
             if (groupsChecked.indexOf(groupId) < 0){// avoid looping
                 groupsChecked.push(groupId);

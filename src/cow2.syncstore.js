@@ -394,7 +394,7 @@ Cow.syncstore.prototype =
     **/
     requestRecords: function(fidlist){
 		var pushlist = [];
-		for (i=0;i<this._records.length;i++){
+		for (var i=0;i<this._records.length;i++){
 		    var localrecord =  this._records[i];
 		    for (j=0;j<fidlist.length;j++){
                 var rem_val = fidlist[j];

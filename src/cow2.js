@@ -38,7 +38,7 @@ var stresstest = function(){
     //Add N items to project
     var item;
     var N = 101;
-    for (i=1;i<N; i++){
+    for (var i=1;i<N; i++){
         project.items({_id: i})
             .data('type', 'msg')
             .data('json', {'topic':'topic','text': 'blabla'});

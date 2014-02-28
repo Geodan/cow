@@ -24,6 +24,10 @@ Cow.record.prototype =
         return this._id;
         //You can't set an id afterwards, that only happens when object is created
     },
+    created: function(){
+        return this._created;
+        //You can't set creation date afterwards
+    },
     timestamp: function(timestamp){
         if (timestamp) {
             this._updated = timestamp;
@@ -34,7 +38,7 @@ Cow.record.prototype =
         }
     },
     deleted: function(truefalse){
-        if (truefalse != null){ //TODO, this is not the recommended way, but !== gives always true
+        if (truefalse !== undefined){
             this._deleted = truefalse;
             this._status = 'dirty';
             return this;
