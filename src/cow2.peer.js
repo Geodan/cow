@@ -3,6 +3,7 @@ Cow.peer = function(config){
      if (!config._id) {throw 'No _id given for peer';}
     this._id = config._id;
     this._store = config.store;
+    this._core = this._store._core;
     this._data = {
         userid:null, 
         family: 'alpha' //default is alpha
@@ -25,11 +26,31 @@ Cow.peer.prototype = {
             user() - return id of currently connected user
             user(id) - sets id of currently connected user, returns peer object
         **/
+        //user: function(id){
+        //    if (id) {
+        //        return this.data('userid',id);
+        //    }
+        //    return this.data('userid');
+        //},
         user: function(id){
-            if (id) {
-                return this.data('userid',id);
+            if (id){
+                return this.data('userid',id).sync();
             }
-            return this.data('userid');
+            if (this.data('userid')){
+              var userid = this.data('userid');
+              return this._core.users(userid);
+            }
+            console.warn('No user connected to this peer');
+            return null;
+        },
+        username: function(){
+            if (this.user()){
+                return this.user().data('name');
+            }
+            else {
+                return 'Anon';
+            }
         }
+            
 };
 _.extend(Cow.peer.prototype,Cow.record.prototype);
