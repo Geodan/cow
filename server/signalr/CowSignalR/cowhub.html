@@ -1,0 +1,48 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="Scripts/jquery-1.6.4.js"></script>
+    <script src="Scripts/json2.min.js"></script>
+    <script src="Scripts/jquery.signalR-2.0.2.js"></script>
+    <script src="signalr/hubs"></script>
+
+    <script type="text/javascript">
+        $(function () {
+            var hub = $.connection.cowHub;
+            $.connection.hub.start().done(function () {
+                $("#chatWindow").val("Connected\n");
+                $("#chatWindow").val($("#chatWindow").val() + "my connection id: " + $.connection.hub.id + "\n");
+                $("#sendButton").click(function () {
+                    hub.server.send($("#messageTextBox").val());
+                    $("#messageTextBox").val("");
+                });
+            });
+
+            hub.client.broadcastMessage = function(message) {
+                $("#chatWindow").val($("#chatWindow").val() + message + "\n");
+            };
+
+            hub.client.userConnected = function (connectionId) {
+                $("#chatWindow").val($("#chatWindow").val() + "user connected: " + connectionId + "\n");
+            };
+
+            hub.client.userDisconnected = function (connectionId) {
+                $("#chatWindow").val($("#chatWindow").val() + "user disconnected: " + connectionId + "\n");
+            };
+
+            hub.client.userReconnected = function (connectionId) {
+                $("#chatWindow").val($("#chatWindow").val() + "user reconnected: " + connectionId + "\n");
+            };
+        });
+    </script>
+</head>
+<body>
+    <textarea id="chatWindow" style="width:400px; height:200px;"></textarea>
+    <div>
+        <label>Message</label>
+        <input id="messageTextBox" type="text" />
+        <button id="sendButton">Send</button>
+    </div>
+</body>
+</html>
