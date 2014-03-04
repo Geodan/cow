@@ -41,7 +41,7 @@ Cow.websocket.prototype.connect = function() {
         
         var hub = $.connection.cowHub;
         this._hub = hub;
-        $.connection.hub.url = '/service/cowhub/signalr';
+        $.connection.hub.url = 'http://wingis/cow/signalr';
         $.connection.hub.start().done(function () {
             var payload = {
                 "peerID" : $.connection.hub.id
@@ -60,7 +60,7 @@ Cow.websocket.prototype.connect = function() {
             };
             self._onPeerGone(payload);
         };
-        hub.client.broadcastMessage = function(name, message) {
+        hub.client.broadcastMessage = function(message) {
             console.log(message);
             self._onMessage(message);
         };
@@ -101,7 +101,8 @@ Cow.websocket.prototype.sendData = function(data, action, target){
     if (1 == 1 || (this._connection && this._connection.readyState == 1)){
         //console.log('Sending ',message);
         //this._connection.send(JSON.stringify(message));
-        this._hub.server.send("bert",JSON.stringify(message));
+        var string = JSON.stringify(message);
+        this._hub.server.send(string);
     }
     else{
         console.warn('Could not send, socket not connected?');
