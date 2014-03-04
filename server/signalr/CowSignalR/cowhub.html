@@ -10,6 +10,7 @@
     <script type="text/javascript">
         $(function () {
             var hub = $.connection.cowHub;
+            // $.connection.hub.url = 'http://wingis/cow/signalr';
             $.connection.hub.start().done(function () {
                 $("#chatWindow").val("Connected\n");
                 $("#chatWindow").val($("#chatWindow").val() + "my connection id: " + $.connection.hub.id + "\n");

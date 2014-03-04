@@ -1,4 +1,5 @@
 ﻿using CowSignalR;
+using Microsoft.AspNet.SignalR;
 using Microsoft.Owin;
 using Microsoft.Owin.Cors;
 using Owin;
@@ -11,7 +12,7 @@ namespace CowSignalR
         public void Configuration(IAppBuilder app)
         {
             app.UseCors(CorsOptions.AllowAll);
-            app.MapSignalR();
+            app.MapSignalR(new HubConfiguration{EnableJSONP = true});
         }
     }
 }
