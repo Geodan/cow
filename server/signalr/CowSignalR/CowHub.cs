@@ -1,7 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using CowSignalR.Models;
 using Microsoft.AspNet.SignalR;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace CowSignalR
 {
@@ -27,14 +29,14 @@ namespace CowSignalR
 
         public void Send(string message)
         {
-            if (!message.Contains("target"))
-            {
+            dynamic d = JObject.Parse(message);
+            string target = d.target;
+            if(String.IsNullOrEmpty(target)){
                 Clients.All.broadcastMessage(message);
             }
             else
             {
-                var cowMessage=JsonConvert.DeserializeObject<CowMessage>(message);
-                Clients.Client(cowMessage.target).broadcastMessage(message);
+                Clients.Client(target).broadcastMessage(message);
             }
         }
     }
