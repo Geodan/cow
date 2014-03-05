@@ -80,9 +80,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CowSignalR\CowSignalR.csproj">
+    <ProjectReference Include="..\CowSignalR\CowSignalR.Web.csproj">
       <Project>{310010f5-9ccb-4a98-bcf3-06c66def691d}</Project>
-      <Name>CowSignalR</Name>
+      <Name>CowSignalR.Web</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

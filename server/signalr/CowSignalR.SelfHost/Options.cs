@@ -11,8 +11,6 @@ namespace CowSignalR.SelfHost
         [HelpOption]
         public string GetUsage()
         {
-            // this without using CommandLine.Text
-            //  or using HelpText.AutoBuild
             var usage = new StringBuilder();
             usage.AppendLine("");
             usage.AppendLine("Usage: CowServer [-p port]");
