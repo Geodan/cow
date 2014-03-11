@@ -70,7 +70,7 @@ Cow.record.prototype =
         if (!param){
             return this._data;
         }
-        else if (param && typeof(param) == 'object'){
+        else if (param && typeof(param) == 'object' && !value){
             this._data = param;
             this.status('dirty');
             return this;
@@ -82,6 +82,9 @@ Cow.record.prototype =
             return this.data_on(param);
         }
         else if (param && value){
+            if (typeof(value) == 'object'){
+                value = JSON.parse(JSON.stringify(value));
+            }
             this._data[param] = value;
             this._deltaq[param] = value;
             this.status('dirty');
@@ -165,7 +168,9 @@ Cow.record.prototype =
         this._id = config._id || this._id;
         this._status = config.status || this._status;
         this._created = config.created || this._created;
-        this._deleted = config.deleted || this._deleted;
+        if (config.deleted !== undefined){
+            this._deleted = config.deleted;
+        }
         this._updated = config.updated || this._updated;
         this._data = config.data || this._data || {};
         //deltas gets special treatment since it's an array that can be enlarged instead of overwritten
