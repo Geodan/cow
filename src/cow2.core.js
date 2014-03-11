@@ -70,7 +70,7 @@ Cow.core.prototype =
     project: function(id){
         if (id){
             id = id.toString();
-            var project = this.projects(id); //creates project if not existing
+            var project = this.projects(id); 
             if (!project){
                 console.warn('Trying to select a non existing project');
                 return false;
