@@ -8,42 +8,58 @@
     <script src="signalr/hubs"></script>
 
     <script type="text/javascript">
+        function getDate() {
+            return new Date().toUTCString() + ": ";
+        }
+
+        function addlog(message) {
+            $("#chatWindow").val($("#chatWindow").val() + getDate() + message + "\n");
+        }
+
+
         $(function () {
+            function connectionStateChanged(state) {
+                var stateConversion = { 0: 'connecting', 1: 'connected', 2: 'reconnecting', 4: 'disconnected' };
+                addlog('SignalR state changed from: ' + stateConversion[state.oldState] + ' to: ' + stateConversion[state.newState]);
+            }
+
             var hub = $.connection.cowHub;
+            $.connection.hub.logging = true;
+            // enbale for remote connections:
             // $.connection.hub.url = 'http://wingis/cow/signalr';
+
+            $.connection.hub.stateChanged(connectionStateChanged);
             $.connection.hub.start().done(function () {
-                $("#chatWindow").val("Connected\n");
-                $("#chatWindow").val($("#chatWindow").val() + "my connection id: " + $.connection.hub.id + "\n");
+                addlog("SignalR transport mode: " + $.connection.hub.transport.name);
+                addlog ("SignalR connection id: " + $.connection.hub.id);
                 $("#sendButton").click(function () {
                     hub.server.send($("#messageTextBox").val());
                     $("#messageTextBox").val("");
                 });
             });
 
-            hub.client.broadcastMessage = function(message) {
-                $("#chatWindow").val($("#chatWindow").val() + message + "\n");
+            hub.client.broadcastMessage = function (message) {
+                addlog("SignalR message: " + message);
             };
 
-            hub.client.userConnected = function (connectionId) {
-                $("#chatWindow").val($("#chatWindow").val() + "user connected: " + connectionId + "\n");
-            };
+            // for restarting connection in case of disconnect
+            $.connection.hub.disconnected(function () {
+                setTimeout(function () {
+                    addlog("SignalR disconnected, trying to reconnect...");
+                    $.connection.hub.start();
+                }, 5000); // Restart connection after 5 seconds.
+            });
 
-            hub.client.userDisconnected = function (connectionId) {
-                $("#chatWindow").val($("#chatWindow").val() + "user disconnected: " + connectionId + "\n");
-            };
-
-            hub.client.userReconnected = function (connectionId) {
-                $("#chatWindow").val($("#chatWindow").val() + "user reconnected: " + connectionId + "\n");
-            };
         });
     </script>
 </head>
-<body>
-    <textarea id="chatWindow" style="width:400px; height:200px;"></textarea>
-    <div>
-        <label>Message</label>
-        <input id="messageTextBox" type="text" />
-        <button id="sendButton">Send</button>
-    </div>
-</body>
+    <body>
+        <h3>SignalR Monitor</h3>
+        <textarea id="chatWindow" style="width:1024px; height:600px;"></textarea>
+        <div>
+            <label>Message</label>
+            <input id="messageTextBox" type="text" />
+            <button id="sendButton">Send</button>
+        </div>
+    </body>
 </html>
