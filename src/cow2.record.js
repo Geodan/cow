@@ -68,6 +68,9 @@ Cow.record.prototype =
     **/
     data: function(param, value){
         if (!param){
+            if (typeof(this._data) == 'object'){
+                return JSON.parse(JSON.stringify(this._data));
+            }
             return this._data;
         }
         else if (param && typeof(param) == 'object' && !value){

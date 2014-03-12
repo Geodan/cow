@@ -41,19 +41,24 @@ Cow.websocket.prototype.connect = function() {
         
         var hub = $.connection.cowHub;
         this._hub = hub;
-        $.connection.hub.url = 'http://wingis/cow/signalr';
-        $.connection.hub.start().done(function () {
-            var payload = {
-                "peerID" : $.connection.hub.id
-            };
-            self._onConnect(payload);
-            //$("#chatWindow").val("Connected\n");
-            //$("#chatWindow").val($("#chatWindow").val() + "my connection id: " + $.connection.hub.id + "\n");
-            //$("#sendButton").click(function () {
-            //    hub.server.send("bert", $("#messageTextBox").val());
-            //    $("#messageTextBox").val("");
-            //});
-        });
+        //$.connection.hub.url = 'http://wingis/cow/signalr';
+        $.connection.hub.url = this._url;
+        $.connection.hub.start()
+            .done(function () {
+                var payload = {
+                    "peerID" : $.connection.hub.id
+                };
+                self._onConnect(payload);
+                //$("#chatWindow").val("Connected\n");
+                //$("#chatWindow").val($("#chatWindow").val() + "my connection id: " + $.connection.hub.id + "\n");
+                //$("#sendButton").click(function () {
+                //    hub.server.send("bert", $("#messageTextBox").val());
+                //    $("#messageTextBox").val("");
+                //});
+            })
+            .fail(function(e,d){
+                console.error('Fail: ',e);
+            });
         hub.client.userDisconnected = function (connectionId) {
             var payload = { 
                 "gonePeerID" : connectionId
