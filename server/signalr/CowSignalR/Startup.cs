@@ -11,8 +11,9 @@ namespace CowSignalR
     {
         public void Configuration(IAppBuilder app)
         {
+            app.UseFileServer(false);
             app.UseCors(CorsOptions.AllowAll);
-            app.MapSignalR(new HubConfiguration{EnableJSONP = true});
+            app.MapSignalR(new HubConfiguration{EnableJSONP = true,EnableDetailedErrors = true});
         }
     }
 }
