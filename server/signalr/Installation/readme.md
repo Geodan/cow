@@ -30,15 +30,20 @@ Go to ‘default web site’ -> right click -> Deploy -> Import Application
 ![webdeploy](images/web_deploy.png)
 
 ![import](images/import.png)
+
 next
 
 ![import](images/import2.png)
+
 next
 
 ![import](images/import3.png)
+
 next
 
+
 ![import](images/import4.png)
+
 finish
 
 The files are installed under: C:\inetpub\wwwroot\cow
