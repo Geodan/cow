@@ -29,7 +29,7 @@ The files are installed under: C:\inetpub\wwwroot\cow
 
 2] Test
 
-Go to http://localhost:8089/cowhub.html
+Go to http://localhost/cow/cowhub.html
 
 
 ## Running on Self Host ##
