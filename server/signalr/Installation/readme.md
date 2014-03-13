@@ -76,6 +76,7 @@ Cowserver.exe --help : show help
 
 Cowserver.exe -p --port : running on different port
 
+![import](images/selfhost.png)
 
 3] Test
 
