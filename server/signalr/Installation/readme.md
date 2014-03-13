@@ -17,6 +17,8 @@ Prerequisites:
 
 . Optional for IIS 8/Windows Server 2012: Web sockets role is enabled (http://www.iis.net/learn/get-started/whats-new-in-iis-8/iis-80-websocket-protocol-support
 
+![websockets](images/iis_websockets.png)
+
 Input: File cowserver_0.1_iis.zip
 
 Installation:
@@ -25,11 +27,33 @@ Installation:
 
 Go to ‘default web site’ -> right click -> Deploy -> Import Application
 
+![webdeploy](images/web_deploy.png)
+
+![import](images/import.png)
+
+next
+
+![import](images/import2.png)
+
+next
+
+![import](images/import3.png)
+
+next
+
+
+![import](images/import4.png)
+
+finish
+
 The files are installed under: C:\inetpub\wwwroot\cow
 
 2] Test
 
 Go to http://localhost/cow/cowhub.html
+
+
+![import](images/iis_test.png)
 
 
 ## Running on Self Host ##
