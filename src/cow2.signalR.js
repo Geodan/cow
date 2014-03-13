@@ -124,7 +124,7 @@ Cow.websocket.prototype._onMessage = function(message){
     var payload = data.payload;    
     var target = data.target;
     if (sender != PEERID){
-        console.log('Receiving ',data);
+        //console.log('Receiving ',data);
     }
     switch (action) {
     /**
