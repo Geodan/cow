@@ -17,7 +17,7 @@ Prerequisites:
 
 . Optional for IIS 8/Windows Server 2012: Web sockets role is enabled (http://www.iis.net/learn/get-started/whats-new-in-iis-8/iis-80-websocket-protocol-support
 
-![ScreenShot](images/iis_websockets.png)
+(images/iis_websockets.png)
 
 Input: File cowserver_0.1_iis.zip
 
