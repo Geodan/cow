@@ -53,6 +53,9 @@ The files are installed under: C:\inetpub\wwwroot\cow
 Go to http://localhost/cow/cowhub.html
 
 
+![import](images/iis_test.png)
+
+
 ## Running on Self Host ##
 
 Prerequisites:
