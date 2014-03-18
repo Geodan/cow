@@ -66,7 +66,7 @@ Cow.websocket.prototype.connect = function() {
             self._onPeerGone(payload);
         };
         hub.client.broadcastMessage = function(message) {
-            console.log(message);
+            //console.log(message);
             self._onMessage(message);
         };
     }
