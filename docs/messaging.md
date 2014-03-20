@@ -59,7 +59,7 @@ Peers can be given commands. Some core commands are processed directly by core (
     "action" : "newList",
     "sender" : PEERID,
     "payload" : {
-        "syncType" : ITEMTYPE,
+        "syncType" : ITEMTYPE, //One of 'peers','users', 'projects', 'items', 'groups'
         "list" : MYLIST,
         "project": PROJECTID //optional
     }
