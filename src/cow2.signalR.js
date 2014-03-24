@@ -49,15 +49,16 @@ Cow.websocket.prototype.connect = function() {
                     "peerID" : $.connection.hub.id
                 };
                 self._onConnect(payload);
-                //$("#chatWindow").val("Connected\n");
-                //$("#chatWindow").val($("#chatWindow").val() + "my connection id: " + $.connection.hub.id + "\n");
-                //$("#sendButton").click(function () {
-                //    hub.server.send("bert", $("#messageTextBox").val());
-                //    $("#messageTextBox").val("");
-                //});
             })
-            .fail(function(e,d){
+            .fail(function(e){
                 console.error('Fail: ',e);
+            });
+         $.connection.hub.disconnected(function () {
+                console.warn('Disconnected! Reconnecting in 5');
+                setTimeout(function () {
+                    //addlog("SignalR disconnected, trying to reconnect...");
+                    $.connection.hub.start();
+                }, 5000); // Restart connection after 5 seconds.
             });
         hub.client.userDisconnected = function (connectionId) {
             var payload = { 
@@ -325,11 +326,11 @@ Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
         _.filter(this._core.peers(),function(d){
             return (d.data('family') == 'alpha' && !d.deleted());
         }),
-     function(d){return d.id();});
+     function(d){return d.created();});
     //If we are the oldest of alpha peers
     var oldestpeer = alphaPeers[0];
     var me = this._core.peer();
-    if (me.id() == oldestpeer.id()) {//yes, I certainly am (the oldest) 
+    if (me.created() == oldestpeer.created()) {//yes, I certainly am (the oldest) 
         returnval =  true;
     }
     else { 

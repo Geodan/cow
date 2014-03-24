@@ -16,7 +16,7 @@
   <!-- signalR ready-->
   <script type="text/javascript" src="../lib/jquery-1.6.4/jquery-1.6.4.js"></script>
   <script type="text/javascript" src="../lib/jquery.signalR/jquery.signalR-2.0.2.js"></script>
-  <script type="text/javascript" src="http://wingis/cow/signalr/hubs"></script>
+  <script type="text/javascript" src="/Cow/signalr/hubs"></script>
   <!-- -->
   <script type="text/javascript" src="../src/cow2.utils.js"></script>
   <script type="text/javascript" src="../src/cow2.record.js"></script>
@@ -46,7 +46,8 @@
   <script type="text/javascript">
   
   var core = new Cow.core({
-       wsUrl: 'wss://websocket.geodan.nl:443/'
+       //wsUrl: 'wss://websocket.geodan.nl:443/'
+       wsUrl: '/Cow/signalr'
   });
   var tests = new Cow.testsuite(core);
   //tests.analyzeStore();
