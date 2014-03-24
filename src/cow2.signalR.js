@@ -318,7 +318,7 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
                     "project" : project,
                     "record" : d
                 };
-                self.sendData(d, 'updatedRecord', sender);
+                self.sendData(payload, 'updatedRecord', sender);
         });
         //this.sendData(data, 'missingRecords', sender);
         //TODO this.core.trigger('ws-newList',message);
