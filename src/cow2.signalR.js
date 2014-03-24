@@ -316,12 +316,12 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable **/
         _(data.list).each(function(d){
-            payload = {
+            msg = {
                 "syncType" : payload.syncType,
                 "project" : project,
                 "record" : d
             };
-            self.sendData(payload, 'updatedRecord', sender);
+            self.sendData(msg, 'updatedRecord', sender);
         });
         //this.sendData(data, 'missingRecords', sender);
     }
