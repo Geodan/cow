@@ -221,7 +221,7 @@ Cow.websocket.prototype._onConnect = function(payload){
     if (this._core.user()){
         mypeer.data('userid',this._core.user()._id);
     }
-    mypeer.sync();
+    mypeer.deleted(false).sync();
     this.trigger('connected',payload);
     
     //initiate peer sync
@@ -312,16 +312,18 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
             "project" : project,
             "list" : syncobject.pushlist
         };
+        /** TT: IIS/signalR can't handle large chunks in websocket.
+        Therefore we sent the records one by one. This slows down the total but should be 
+        more stable **/
         _(data.list).each(function(d){
-                payload = {
-                    "syncType" : payload.syncType,
-                    "project" : project,
-                    "record" : d
-                };
-                self.sendData(payload, 'updatedRecord', sender);
+            payload = {
+                "syncType" : payload.syncType,
+                "project" : project,
+                "record" : d
+            };
+            self.sendData(payload, 'updatedRecord', sender);
         });
         //this.sendData(data, 'missingRecords', sender);
-        //TODO this.core.trigger('ws-newList',message);
     }
 };
 Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
