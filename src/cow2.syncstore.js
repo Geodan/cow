@@ -4,6 +4,12 @@ Cow.syncstore =  function(config){
     var self = this;
     this._dbname = config.dbname;
     this._core = config.core;
+    this.syncinfo = {
+        toReceive: [],
+        toSent: [],
+        received: 0, 
+        send: 0
+    };
     //console.log('new store',this._dbname);
     this.loaded = new Promise(function(resolve, reject){
         //console.log('reading db ',self._dbname);
@@ -79,7 +85,7 @@ Cow.syncstore.prototype =
                 db.main.add(data).done(function(d){
                     resolve(d);
                 }).fail(function(d,e){
-                    console.warn(e);
+                    console.warn(e.srcElement.error.message);
                     reject(e);
                 });
             }).fail(function(e){
