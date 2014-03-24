@@ -158,7 +158,12 @@ Cow.websocket.prototype._onMessage = function(message){
                 this.obj._onNewList(payload,sender);
             }
         break;
-        
+        //you just joined and you receive info from the alpha peer on how much will be synced
+        case 'syncinfo':
+            if(sender != PEERID) {
+                this.obj._onSyncinfo(payload,sender);
+            }
+        break;
         //you just joined and you receive a list of records the others want (targeted)
         case 'wantedList':
             if(target == PEERID) {
@@ -299,6 +304,18 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
         var project = store._projectid;
         var syncobject = store.compareRecords({uid:sender, list: payload.list});
         var data;
+        //Give the peer information on what will be synced
+        var syncinfo = {
+            IWillSent: _.pluck(syncobject.pushlist,"_id"),
+            IShallReceive: _.pluck(syncobject.requestlist,"_id") 
+        };
+        data = {
+            "syncType" : payload.syncType,
+            "project" : project,
+            "syncinfo" : syncinfo
+        };
+            
+        this.sendData(data, 'syncinfo',sender);
         
         data =  {
             "syncType" : payload.syncType,
@@ -347,9 +364,18 @@ Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
     else { 
         returnval = false; //Not the oldest in the project
     }
+    //return true;
     return returnval;
 };
+
+Cow.websocket.prototype._onSyncinfo = function(payload) {
+    var store = this._getStore(payload);
+    store.syncinfo.toReceive = payload.syncinfo.IWillSent;
+    store.syncinfo.toSent = payload.syncinfo.IShallReceive;
+};
+
 Cow.websocket.prototype._onWantedList = function(payload) {
+    var self = this;
     var store = this._getStore(payload);
     var returnlist = store.requestRecords(payload.list);
     var data =  {
@@ -357,7 +383,18 @@ Cow.websocket.prototype._onWantedList = function(payload) {
         "project" : store._projectid,
         "list" : returnlist
     };
-    this.sendData(data, 'requestedRecords');
+    /** TT: IIS/signalR can't handle large chunks in websocket.
+        Therefore we sent the records one by one. This slows down the total but should be 
+        more stable **/
+    _(data.list).each(function(d){
+        msg = {
+            "syncType" : payload.syncType,
+            "project" : store._projectid,
+            "record" : d
+        };
+        self.sendData(msg, 'updatedRecord');
+    });
+    //this.sendData(data, 'requestedRecords');
     //TODO this.core.trigger('ws-wantedList',payload); 
 };
     
@@ -397,6 +434,8 @@ Cow.websocket.prototype._onUpdatedRecords = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
+    //TODO: _.without might not be most effective way to purge an array
+    store.syncinfo.toReceive = _.without(store.syncinfo.toReceive,data._id); 
     store.trigger('datachange');
 };
     // END Syncing messages
