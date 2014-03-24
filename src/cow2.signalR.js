@@ -311,7 +311,15 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
             "project" : project,
             "list" : syncobject.pushlist
         };
-        this.sendData(data, 'missingRecords', sender);
+        _(data.list).each(function(d){
+                payload = {
+                    "syncType" : payload.syncType,
+                    "project" : project,
+                    "record" : d
+                };
+                this.sendData(d, 'updatedRecord', sender);
+        });
+        //this.sendData(data, 'missingRecords', sender);
         //TODO this.core.trigger('ws-newList',message);
     }
 };
