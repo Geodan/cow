@@ -292,6 +292,7 @@ Cow.websocket.prototype._getStore = function(payload){
     
 //A peer initiates a sync
 Cow.websocket.prototype._onNewList = function(payload,sender) {
+    var self = this;
     //Only answer if we are the alpha peer
     if (this._amIAlpha()){
         var store = this._getStore(payload);
@@ -317,7 +318,7 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
                     "project" : project,
                     "record" : d
                 };
-                this.sendData(d, 'updatedRecord', sender);
+                self.sendData(d, 'updatedRecord', sender);
         });
         //this.sendData(data, 'missingRecords', sender);
         //TODO this.core.trigger('ws-newList',message);
