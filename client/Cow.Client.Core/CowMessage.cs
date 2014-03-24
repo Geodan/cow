@@ -21,6 +21,5 @@ namespace Cow.Client
         public Guid Sender { get; set; }
         [JsonProperty(PropertyName = "target")]
         public Guid? Target { get; set; }
-
     }
 }

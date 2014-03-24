@@ -6,10 +6,11 @@ namespace Cow.Client
 {
     public class Payload
     {
-        public Payload(EnumItemType syncType, List<string> list)
+        public Payload(EnumItemType syncType, List<string> list,string project =null)
         {
             SyncType = syncType;
             List = list;
+            Project = project;
         }
         [JsonProperty(PropertyName = "syncType")]
         public EnumItemType SyncType { get; set; }

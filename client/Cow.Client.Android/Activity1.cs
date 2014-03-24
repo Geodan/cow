@@ -1,12 +1,12 @@
 ﻿using Android.App;
 using Android.Widget;
 using Android.OS;
-
 namespace Cow.Client.Android
 {
     [Activity(Label = "Cow", MainLauncher = true, Icon = "@drawable/cow")]
     public class Activity1 : Activity
     {
+
         int count = 1;
 
         protected override void OnCreate(Bundle bundle)

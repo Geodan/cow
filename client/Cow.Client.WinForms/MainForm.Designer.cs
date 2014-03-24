@@ -35,11 +35,12 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.lblMessagesCounter = new System.Windows.Forms.Label();
-            this.btnSyncUsers = new System.Windows.Forms.Button();
+            this.btnUsers = new System.Windows.Forms.Button();
             this.btnPeers = new System.Windows.Forms.Button();
             this.btnProjects = new System.Windows.Forms.Button();
             this.btnGroups = new System.Windows.Forms.Button();
-            this.items = new System.Windows.Forms.Button();
+            this.btnItems = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // tbMessages
@@ -105,15 +106,15 @@
             this.lblMessagesCounter.Size = new System.Drawing.Size(0, 17);
             this.lblMessagesCounter.TabIndex = 6;
             // 
-            // btnSyncUsers
+            // btnUsers
             // 
-            this.btnSyncUsers.Location = new System.Drawing.Point(61, 99);
-            this.btnSyncUsers.Name = "btnSyncUsers";
-            this.btnSyncUsers.Size = new System.Drawing.Size(146, 23);
-            this.btnSyncUsers.TabIndex = 7;
-            this.btnSyncUsers.Text = "users";
-            this.btnSyncUsers.UseVisualStyleBackColor = true;
-            this.btnSyncUsers.Click += new System.EventHandler(this.btnSyncUsers_Click);
+            this.btnUsers.Location = new System.Drawing.Point(61, 99);
+            this.btnUsers.Name = "btnUsers";
+            this.btnUsers.Size = new System.Drawing.Size(146, 23);
+            this.btnUsers.TabIndex = 7;
+            this.btnUsers.Text = "users";
+            this.btnUsers.UseVisualStyleBackColor = true;
+            this.btnUsers.Click += new System.EventHandler(this.btnSyncUsers_Click);
             // 
             // btnPeers
             // 
@@ -143,28 +144,39 @@
             this.btnGroups.TabIndex = 10;
             this.btnGroups.Text = "groups";
             this.btnGroups.UseVisualStyleBackColor = true;
-            this.btnGroups.Click += new System.EventHandler(this.button1_Click);
+            this.btnGroups.Click += new System.EventHandler(this.groups_Click);
             // 
-            // items
+            // btnItems
             // 
-            this.items.Location = new System.Drawing.Point(460, 98);
-            this.items.Name = "items";
-            this.items.Size = new System.Drawing.Size(75, 23);
-            this.items.TabIndex = 11;
-            this.items.Text = "items";
-            this.items.UseVisualStyleBackColor = true;
-            this.items.Click += new System.EventHandler(this.items_Click);
+            this.btnItems.Location = new System.Drawing.Point(460, 98);
+            this.btnItems.Name = "btnItems";
+            this.btnItems.Size = new System.Drawing.Size(75, 23);
+            this.btnItems.TabIndex = 11;
+            this.btnItems.Text = "items";
+            this.btnItems.UseVisualStyleBackColor = true;
+            this.btnItems.Click += new System.EventHandler(this.items_Click);
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(632, 99);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 12;
+            this.button1.Text = "ChatApp";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1189, 565);
-            this.Controls.Add(this.items);
+            this.Controls.Add(this.button1);
+            this.Controls.Add(this.btnItems);
             this.Controls.Add(this.btnGroups);
             this.Controls.Add(this.btnProjects);
             this.Controls.Add(this.btnPeers);
-            this.Controls.Add(this.btnSyncUsers);
+            this.Controls.Add(this.btnUsers);
             this.Controls.Add(this.lblMessagesCounter);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
@@ -174,6 +186,7 @@
             this.Controls.Add(this.tbMessages);
             this.Name = "MainForm";
             this.Text = "Cow";
+            this.Load += new System.EventHandler(this.MainForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -188,11 +201,12 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label lblMessagesCounter;
-        private System.Windows.Forms.Button btnSyncUsers;
+        private System.Windows.Forms.Button btnUsers;
         private System.Windows.Forms.Button btnPeers;
         private System.Windows.Forms.Button btnProjects;
         private System.Windows.Forms.Button btnGroups;
-        private System.Windows.Forms.Button items;
+        private System.Windows.Forms.Button btnItems;
+        private System.Windows.Forms.Button button1;
     }
 }
 

@@ -36,7 +36,6 @@
     <Compile Include="Config.cs" />
     <Compile Include="CowHub.cs" />
     <Compile Include="CowMessage.cs" />
-    <Compile Include="CowMessageSender.cs" />
     <Compile Include="EnumStatus.cs" />
     <Compile Include="IncidentLocation.cs" />
     <Compile Include="Jsonlayer.cs" />
@@ -45,11 +44,10 @@
     <Compile Include="Status.cs" />
     <Compile Include="Tilelayer.cs" />
     <Compile Include="Type.cs" />
-    <Compile Include="User.cs" />
     <Compile Include="Delta.cs" />
     <Compile Include="EnumAction.cs" />
     <Compile Include="EnumItemType.cs" />
-    <Compile Include="List.cs" />
+    <Compile Include="Record.cs" />
     <Compile Include="Payload.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

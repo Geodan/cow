@@ -2,6 +2,6 @@
 {
     public enum EnumAction
     {
-        newList, wantedList,missingItems,updatedRecord
+        newList, wantedList,missingItems,updatedRecord, syncinfo
     }
 }

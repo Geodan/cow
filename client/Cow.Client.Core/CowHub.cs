@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.SignalR.Client;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 
 namespace Cow.Client
 {
@@ -18,6 +20,11 @@ namespace Cow.Client
         public event Action<String> UserDisconnected;
         public event Action<String> UserReconnected;
         public event Action<String> BroadcastMessage;
+        public event Action<List<Record>>  UsersResponse;
+        public event Action<List<Record>> ProjectsResponse;
+        public event Action<List<Record>> PeersResponse;
+        public event Action<List<Record>> GroupsResponse;
+        public event Action<List<Record>> ItemsResponse;
 
         public CowHub(string url)
         {
@@ -35,6 +42,37 @@ namespace Cow.Client
             {
                 if (BroadcastMessage != null)
                     BroadcastMessage(message);
+
+                var json = JsonConvert.DeserializeObject<dynamic>(message);
+                // todo: use var action = (EnumAction) json.action;
+                var payload = json.payload;
+                var listArray = (JArray)payload.list;
+                if (listArray!=null && listArray.Count > 0)
+                {
+                    var records = listArray.ToObject<List<Record>>();
+                    var notDeletedRecords = (from p in records where p.deleted == false select p).ToList();
+
+                    var syncType = (string)payload["syncType"];
+                    switch (syncType)
+                    {
+                        case "users":
+                            UsersResponse(notDeletedRecords);
+                            break;
+                        case "projects":
+                            ProjectsResponse(notDeletedRecords);
+                            break;
+                        case "peers":
+                            PeersResponse(notDeletedRecords);
+                            break;
+                        case "items":
+                            ItemsResponse(notDeletedRecords);
+                            break;
+                        case "groups":
+                            GroupsResponse(notDeletedRecords);
+                            break;
+                    }
+                }
+
             });
             _proxy.On("userConnected", (string connectionId) =>
             {
@@ -57,9 +95,9 @@ namespace Cow.Client
             return _clientGuid;
         }
 
-        public void SendItemType(EnumItemType type)
+        public void SendItemType(EnumItemType type,string projectid=null)
         {
-            var payload = new Payload(type, new List<string>());
+            var payload = new Payload(type, new List<string>(),projectid);
             var cowMessage = new CowMessage(EnumAction.newList,_clientGuid, payload);
             Send(cowMessage);
         }
