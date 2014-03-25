@@ -53,6 +53,7 @@ Peers can be given commands. Some core commands are processed directly by core (
 **syncing**
 
 *newList*
+
 When you want to sync (ie after connecting) you sent a 'newlist' with the ids, timestamp and status of each record
 
 ```
@@ -68,6 +69,7 @@ When you want to sync (ie after connecting) you sent a 'newlist' with the ids, t
 ```
 
 *syncinfo*
+
 The alphapeer will sent you information on what is going to sync
 
 ```
@@ -86,6 +88,7 @@ The alphapeer will sent you information on what is going to sync
 ```
 
 *wantedList*
+
 The alphapeer sents a list of record ids that it wants you to broadcast
 ```
 {
@@ -101,6 +104,7 @@ The alphapeer sents a list of record ids that it wants you to broadcast
 ```
 
 *missingItems*
+
 The alphapeer sents a list of records that you are missing. Add them to your store.
 ```
 {
@@ -116,6 +120,7 @@ The alphapeer sents a list of records that you are missing. Add them to your sto
 ```
 
 *updatedRecord*
+
 A new or updated record is broadcasted. Add it to your store.
 ```
 {
