@@ -45,6 +45,7 @@ Cow.websocket.prototype.connect = function() {
         $.connection.hub.url = this._url;
         $.connection.hub.start()
             .done(function () {
+                console.log('connected');
                 var payload = {
                     "peerID" : $.connection.hub.id
                 };
@@ -54,10 +55,22 @@ Cow.websocket.prototype.connect = function() {
                 console.error('Fail: ',e);
             });
          $.connection.hub.disconnected(function () {
+         //TODO: logica om icm-ui te vertellen dat hij offline is
+           self._core.peerStore().clear();
                 console.warn('Disconnected! Reconnecting in 5');
                 setTimeout(function () {
                     //addlog("SignalR disconnected, trying to reconnect...");
-                    $.connection.hub.start();
+                    $.connection.hub.start()
+                    .done(function () {
+                        console.log('connected');
+                        var payload = {
+                            "peerID" : $.connection.hub.id
+                        };
+                        self._onConnect(payload);
+                    })
+                    .fail(function(e){
+                        console.error('Fail: ',e);
+                    });
                 }, 5000); // Restart connection after 5 seconds.
             });
         hub.client.userDisconnected = function (connectionId) {
@@ -105,7 +118,7 @@ Cow.websocket.prototype.sendData = function(data, action, target){
         console.error(e, message);
     }
     if (1 == 1 || (this._connection && this._connection.readyState == 1)){
-        //console.log('Sending ',message);
+        console.log('Sending ',message);
         //this._connection.send(JSON.stringify(message));
         var string = JSON.stringify(message);
         this._hub.server.send(string);
@@ -125,7 +138,7 @@ Cow.websocket.prototype._onMessage = function(message){
     var payload = data.payload;    
     var target = data.target;
     if (sender != PEERID){
-        //console.log('Receiving ',data);
+        console.log('Receiving ',data);
     }
     switch (action) {
     /**
@@ -218,7 +231,17 @@ Cow.websocket.prototype._onClose = function(event){
     };
     setTimeout(restart,5000);
 };
-Cow.websocket.prototype.syncAll = function(){
+Cow.websocket.prototype._onConnect = function(payload){
+    var self = this;
+    this._core.peerid(payload.peerID);
+    var mypeer = this._core.peers({_id: payload.peerID});
+    //add userid to peer object
+    if (this._core.user()){
+        mypeer.data('userid',this._core.user()._id);
+    }
+    mypeer.deleted(false).sync();
+    this.trigger('connected',payload);
+    
     //initiate peer sync
     this._core.peerStore().sync();
 
@@ -238,19 +261,6 @@ Cow.websocket.prototype.syncAll = function(){
             self._core.projects(project._id).groupStore().sync();
         }
     });
-}
-
-Cow.websocket.prototype._onConnect = function(payload){
-    var self = this;
-    this._core.peerid(payload.peerID);
-    var mypeer = this._core.peers({_id: payload.peerID});
-    //add userid to peer object
-    if (this._core.user()){
-        mypeer.data('userid',this._core.user()._id);
-    }
-    mypeer.deleted(false).sync();
-    this.trigger('connected',payload);
-    this.syncAll();
 };
     
     
@@ -259,11 +269,6 @@ Cow.websocket.prototype._onPeerGone = function(payload) {
     var peerGone = payload.gonePeerID.toString();
     if (this._core.peers(peerGone)){
         this._core.peers(peerGone).deleted(true).sync();
-    }
-    //There may have been a delay in peerGone resulting in an alphaless timewindow
-    //therefore we force alpha to sync
-    if (this._amIAlpha()){
-        this.syncAll();
     }
     //this._core.peerStore().removePeer(peerGone);        
     //TODO this.core.trigger('ws-peerGone',payload); 
@@ -379,9 +384,7 @@ Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
 Cow.websocket.prototype._onSyncinfo = function(payload) {
     var store = this._getStore(payload);
     store.syncinfo.toReceive = payload.syncinfo.IWillSent;
-    store.syncinfo.numToReceive = payload.syncinfo.IWillSent.length;
     store.syncinfo.toSent = payload.syncinfo.IShallReceive;
-    store.syncinfo.numToSent = payload.syncinfo.IShallReceive.length;
 };
 
 Cow.websocket.prototype._onWantedList = function(payload) {
