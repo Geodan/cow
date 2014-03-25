@@ -8,8 +8,8 @@ Cow.syncstore =  function(config){
     this.syncinfo = {
         toReceive: [],
         toSent: [],
-        numToReceive: 0, 
-        numToSent: 0
+        received: 0, 
+        send: 0
     };
     //console.log('new store',this._dbname);
     this.loaded = new Promise(function(resolve, reject){
@@ -277,6 +277,7 @@ Cow.syncstore.prototype =
         var self = this;
         return new Promise(function(resolve, reject){
             self._records = [];
+            self.trigger('datachange');
             if (self._db){
                 self._db.main.clear().then(function(){
                         resolve(); //empty dbase from items

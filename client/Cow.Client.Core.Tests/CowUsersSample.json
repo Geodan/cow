@@ -1,0 +1,50 @@
+﻿{
+  "sender": "cbec51c2-d58e-464a-bd5e-aab2d07ea64a",
+  "target": "d8853a29-c19e-4fe2-aeb1-f48b56efba3e",
+  "action": "missingRecords",
+  "payload": {
+    "syncType": "users",
+    "list": [
+      {
+        "_id": "1",
+        "status": "dirty",
+        "created": 1392743536920,
+        "deleted": true,
+        "updated": 1395650812560,
+        "data": {
+          "name": "1"
+        },
+        "deltas": [
+          {
+            "timestamp": 1392743722688,
+            "data": {
+              "name": "Anonymous"
+            }
+          },
+          {
+            "timestamp": 1392746830177,
+            "data": {
+              "name": "Anonymous"
+            }
+          }
+        ]
+      },
+      {
+        "_id": "Bert",
+        "status": "dirty",
+        "created": 1395258675859,
+        "deleted": false,
+        "updated": 1395315265557,
+        "data": {
+          "name": "Bert"
+        },
+        "deltas": [
+          {
+            "timestamp": 1395258679819,
+            "data": {}
+          }
+        ]
+      }
+    ]
+  }
+}
