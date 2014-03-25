@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Cow.Client
+﻿namespace Cow.Client
 {
     public class Jsonlayer
     {

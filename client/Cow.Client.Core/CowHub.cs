@@ -56,19 +56,19 @@ namespace Cow.Client
                     switch (syncType)
                     {
                         case "users":
-                            UsersResponse(notDeletedRecords);
+                            if(UsersResponse!=null) UsersResponse(notDeletedRecords);
                             break;
                         case "projects":
-                            ProjectsResponse(notDeletedRecords);
+                            if(ProjectsResponse!=null) ProjectsResponse(notDeletedRecords);
                             break;
                         case "peers":
-                            PeersResponse(notDeletedRecords);
+                            if(PeersResponse!=null) PeersResponse(notDeletedRecords);
                             break;
                         case "items":
-                            ItemsResponse(notDeletedRecords);
+                            if(ItemsResponse!=null) ItemsResponse(notDeletedRecords);
                             break;
                         case "groups":
-                            GroupsResponse(notDeletedRecords);
+                            if(GroupsResponse!=null) GroupsResponse(notDeletedRecords);
                             break;
                     }
                 }

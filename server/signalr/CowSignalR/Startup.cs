@@ -1,4 +1,5 @@
-﻿using CowSignalR;
+﻿using System;
+using CowSignalR;
 using Microsoft.AspNet.SignalR;
 using Microsoft.Owin;
 using Microsoft.Owin.Cors;
@@ -14,6 +15,7 @@ namespace CowSignalR
             app.UseFileServer(false);
             app.UseCors(CorsOptions.AllowAll);
             app.MapSignalR(new HubConfiguration{EnableJSONP = true,EnableDetailedErrors = true});
+            GlobalHost.Configuration.DisconnectTimeout = TimeSpan.FromSeconds(6);
         }
     }
 }

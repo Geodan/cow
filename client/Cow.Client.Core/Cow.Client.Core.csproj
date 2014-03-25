@@ -36,7 +36,6 @@
     <Compile Include="Config.cs" />
     <Compile Include="CowHub.cs" />
     <Compile Include="CowMessage.cs" />
-    <Compile Include="EnumStatus.cs" />
     <Compile Include="IncidentLocation.cs" />
     <Compile Include="Jsonlayer.cs" />
     <Compile Include="Options.cs" />
