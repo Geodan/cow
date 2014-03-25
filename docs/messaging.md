@@ -53,6 +53,7 @@ Peers can be given commands. Some core commands are processed directly by core (
 **syncing**
 
 *newList*
+When you want to sync (ie after connecting) you sent a 'newlist' with the ids, timestamp and status of each record
 
 ```
 {
@@ -66,8 +67,26 @@ Peers can be given commands. Some core commands are processed directly by core (
 }
 ```
 
-*wantedList*
+*syncinfo*
+The alphapeer will sent you information on what is going to sync
 
+```
+{
+    "action" : "syncinfo",
+    "sender" : PEERID,
+    "payload" : {
+        "syncType" : ITEMTYPE, //One of 'peers','users', 'projects', 'items', 'groups'
+        "syncinfo" : {
+            "IWillSent": IDLIST,
+            "IShallReceive": IDLIST
+        },
+        "project": PROJECTID //optional
+    }
+}
+```
+
+*wantedList*
+The alphapeer sents a list of record ids that it wants you to broadcast
 ```
 {
     "action" : "wantedList",
@@ -82,7 +101,7 @@ Peers can be given commands. Some core commands are processed directly by core (
 ```
 
 *missingItems*
-
+The alphapeer sents a list of records that you are missing. Add them to your store.
 ```
 {
     "action" : "missingItems",
@@ -97,7 +116,7 @@ Peers can be given commands. Some core commands are processed directly by core (
 ```
 
 *updatedRecord*
-
+A new or updated record is broadcasted. Add it to your store.
 ```
 {
     "action" : "updatedRecord",
