@@ -7,8 +7,8 @@ Cow.syncstore =  function(config){
     this.syncinfo = {
         toReceive: [],
         toSent: [],
-        received: 0, 
-        send: 0
+        numToReceive: 0, 
+        numToSent: 0
     };
     //console.log('new store',this._dbname);
     this.loaded = new Promise(function(resolve, reject){
