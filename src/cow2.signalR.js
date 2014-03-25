@@ -371,7 +371,9 @@ Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
 Cow.websocket.prototype._onSyncinfo = function(payload) {
     var store = this._getStore(payload);
     store.syncinfo.toReceive = payload.syncinfo.IWillSent;
+    store.syncinfo.numToReceive = payload.syncinfo.IWillSent.length;
     store.syncinfo.toSent = payload.syncinfo.IShallReceive;
+    store.syncinfo.numToSent = payload.syncinfo.IShallReceive.length;
 };
 
 Cow.websocket.prototype._onWantedList = function(payload) {
