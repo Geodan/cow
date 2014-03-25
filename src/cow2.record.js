@@ -15,7 +15,9 @@ Cow.record.prototype =
 {
     sync: function(){
         var now = new Date().getTime();
-        this.deltas(now, this._deltaq); //add deltas from queue
+        if ( _(this.deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
+            this.deltas(now, this._deltaq); //add deltas from queue
+        }
         this._deltaq = {}; //reset deltaq
         return this._store.syncRecord(this);
     },
@@ -166,8 +168,6 @@ Cow.record.prototype =
         }; 
     },
     inflate: function(config){
-        this._deltaq = this._deltaq || {}; //FIXME: workaround for non working prototype (see top)
-        this._deltasforupload = this._deltasforupload || {}; //FIXME: same here
         this._id = config._id || this._id;
         this._status = config.status || this._status;
         this._created = config.created || this._created;
@@ -176,13 +176,17 @@ Cow.record.prototype =
         }
         this._updated = config.updated || this._updated;
         this._data = config.data || this._data || {};
-        //deltas gets special treatment since it's an array that can be enlarged instead of overwritten
-        this._deltas = this._deltas || [];
-        if (config.deltas){
-            for (var i = 0; i < config.deltas.length;i++){
-                var time = config.deltas[i].timestamp;
-                var data = config.deltas[i].data;
-                this.deltas(time, data);
+        if (!this._store.noDeltas){ //only inflate deltas when enabled
+            this._deltaq = this._deltaq || {}; //FIXME: workaround for non working prototype (see top)
+            this._deltasforupload = this._deltasforupload || {}; //FIXME: same here
+            //deltas gets special treatment since it's an array that can be enlarged instead of overwritten
+            this._deltas = this._deltas || [];
+            if (config.deltas){
+                for (var i = 0; i < config.deltas.length;i++){
+                    var time = config.deltas[i].timestamp;
+                    var data = config.deltas[i].data;
+                    this.deltas(time, data);
+                }
             }
         }
         return this;
