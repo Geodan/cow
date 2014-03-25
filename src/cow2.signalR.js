@@ -270,6 +270,11 @@ Cow.websocket.prototype._onPeerGone = function(payload) {
     if (this._core.peers(peerGone)){
         this._core.peers(peerGone).deleted(true).sync();
     }
+
+    //There may have been a delay in peerGone resulting in an alphaless timewindow
+    //therefore we force every peer to sync as if the're new
+    this.syncAll();
+
     //this._core.peerStore().removePeer(peerGone);        
     //TODO this.core.trigger('ws-peerGone',payload); 
 };

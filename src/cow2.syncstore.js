@@ -4,6 +4,7 @@ Cow.syncstore =  function(config){
     var self = this;
     this._dbname = config.dbname;
     this._core = config.core;
+    this.noDeltas = config.noDeltas || false;
     this.syncinfo = {
         toReceive: [],
         toSent: [],

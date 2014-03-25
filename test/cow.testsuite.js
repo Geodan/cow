@@ -84,9 +84,9 @@ Cow.testsuite.prototype.lifecycle = function(){
         project.itemStore().sync(); //full sync on itemstore
         log('Sync it back! Waiting 5 secs to sync back the 100 items');
         window.setTimeout(function(){
-            log('We now have ' + core.projects('test').items().length + ' items');
+            log('We now have ' + core.projects('test').items().length + ' items'); //should be 100
             log('Clearing itemstore');
-            project.itemStore().clear(); //remove items from store
+            //project.itemStore().clear(); //remove items from store
             log('Sending flushing command to peers');
             core.websocket().sendData({command: 'flushProject',projectid: 'test'}, 'command');
             project.deleted(true).sync();//set project to deleted

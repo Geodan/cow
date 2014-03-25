@@ -11,7 +11,7 @@ Cow.core = function(config){
     
     /*PROJECTS*/
     this._projectStore =  _.extend(
-        new Cow.syncstore({dbname: 'projects', core: self}),{
+        new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
         _dbname:        'projects',
@@ -20,7 +20,7 @@ Cow.core = function(config){
     
     /*PEERS*/
     this._peerStore =  _.extend(
-        new Cow.syncstore({dbname: 'peers', noIDB: true, core: this}), {
+        new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
          _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.peer({_id: _id, store: this});}, 
@@ -34,7 +34,7 @@ Cow.core = function(config){
     
     /*USERS*/
     this._userStore =  _.extend(
-        new Cow.syncstore({dbname: 'users', core: this}), {
+        new Cow.syncstore({dbname: 'users', noDeltas: true, core: this}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
