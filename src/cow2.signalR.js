@@ -118,7 +118,7 @@ Cow.websocket.prototype.sendData = function(data, action, target){
         console.error(e, message);
     }
     if (1 == 1 || (this._connection && this._connection.readyState == 1)){
-        console.log('Sending ',message);
+        //console.log('Sending ',message);
         //this._connection.send(JSON.stringify(message));
         var string = JSON.stringify(message);
         this._hub.server.send(string);
@@ -138,7 +138,7 @@ Cow.websocket.prototype._onMessage = function(message){
     var payload = data.payload;    
     var target = data.target;
     if (sender != PEERID){
-        console.log('Receiving ',data);
+        //console.log('Receiving ',data);
     }
     switch (action) {
     /**
@@ -270,11 +270,6 @@ Cow.websocket.prototype._onPeerGone = function(payload) {
     if (this._core.peers(peerGone)){
         this._core.peers(peerGone).deleted(true).sync();
     }
-
-    //There may have been a delay in peerGone resulting in an alphaless timewindow
-    //therefore we force every peer to sync as if the're new
-    this.syncAll();
-
     //this._core.peerStore().removePeer(peerGone);        
     //TODO this.core.trigger('ws-peerGone',payload); 
 };
