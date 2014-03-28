@@ -15,7 +15,7 @@ Cow.record.prototype =
 {
     sync: function(){
         var now = new Date().getTime();
-        if ( _(this.deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
+        if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
             this.deltas(now, this._deltaq); //add deltas from queue
         }
         this._deltaq = {}; //reset deltaq
