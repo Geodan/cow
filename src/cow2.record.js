@@ -23,7 +23,7 @@ Cow.record.prototype =
     },
     
     id: function(){
-        return this._id;
+        return this._id.toString();
         //You can't set an id afterwards, that only happens when object is created
     },
     created: function(){
