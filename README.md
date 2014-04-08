@@ -7,6 +7,12 @@ Currently the server is a normal websocket node.js server behind a haproxy which
 
 The core has been tested with jQuery versions 1.8.2 and 1.9.1. The demo client has been tested with jQuery-UI versions 1.9.1 & 1.10.2
 
+COW works on the following browsers:
+* OSX Safari 7
+* Chrome 31 +
+* Firefox 26 +
+* Internet Explorer (IE) 10 +
+
 API
 ===
 COW is a workspace to concurrently share data with peers over a webscoket. Peers represent the people who connected to the same websocket. It is build around a core object that binds together the syncStores, records and messaging components.
