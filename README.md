@@ -21,17 +21,21 @@ Schematically, it looks like:
 -----------
 * core
    * websocket
-   * peerStore              <- Store  (not in IndexedDB)
-       * peers              <- Record (not in IndexedDB)
-   * userStore              <- Store
-       * users              <- Record
-   * projectStore           <- Store
-       * projects           <- Record
-           * groupStore     <- Store
-               * groups     <- Record
-           * itemStore      <- Store
-               * items      <- Record
+   * peerStore (1)
+       * peers (2)
+   * userStore (1)
+       * users (2)
+   * projectStore (1)
+       * projects (2)
+           * groupStore (1)
+               * groups (2)
+           * itemStore (1)
+               * items (2)
                
+
+1 = Store
+2 = Record
+
 -----------
 
 All the stores behave the same* and as follows (userStore as example):
