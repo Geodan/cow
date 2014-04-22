@@ -33,10 +33,12 @@ Schematically, it looks like:
                * items (2)
                
 
-1 = Store
-2 = Record
+(1) = Store
+(2) = Record
+
 
 -----------
+
 
 All the stores behave the same* and as follows (userStore as example):
 `````javascript
