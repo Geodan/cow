@@ -16,7 +16,7 @@ namespace CowSignalR
             app.UseFileServer(false);
             app.UseCors(CorsOptions.AllowAll);
 
-            var projects = ConfigurationManager.AppSettings["projects"];
+            var projects = ConfigurationManager.AppSettings["sockets"];
             foreach(var project in projects.Split(','))
             {
                 var resolver= new DefaultDependencyResolver();
