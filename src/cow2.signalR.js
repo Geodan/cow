@@ -121,7 +121,13 @@ Cow.websocket.prototype.sendData = function(data, action, target){
         //console.log('Sending ',message);
         //this._connection.send(JSON.stringify(message));
         var string = JSON.stringify(message);
-        this._hub.server.send(string);
+		//TT: split methods due to server refactoring
+		if (target) {
+			this._hub.server.sendToTarget(target,string);
+		}
+		else {
+			this._hub.server.sendToAll(string);
+		}
     }
     else{
         console.warn('Could not send, socket not connected?');
