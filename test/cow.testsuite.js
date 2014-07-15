@@ -112,5 +112,3 @@ Cow.testsuite.prototype.pingtest = function(){
     this.starttime = new Date().getTime();
     ws.sendData({command: 'ping'},'command');
 };
-
-
