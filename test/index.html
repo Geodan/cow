@@ -13,22 +13,17 @@
   <!-- IndexedDB -->
   <script type="text/javascript" src="../lib/IndexedDBShim/IndexedDBShim.min.js"></script>
   <script type="text/javascript" src="../lib/dbjs/db.js"></script>
-  <!-- signalR ready-->
-  <!--<script type="text/javascript" src="../lib/jquery-1.6.4/jquery-1.6.4.js"></script>-->
-  <script type="text/javascript" src="../lib/jquery-2.0.3/jquery-2.0.3.js"></script>
-  <script type="text/javascript" src="../lib/jquery.signalR/jquery.signalR-2.0.2.js"></script>
-  <script type="text/javascript" src="/Cow/signalr/hubs"></script>
-  <!-- -->
+  
   <script type="text/javascript" src="../src/cow2.utils.js"></script>
   <script type="text/javascript" src="../src/cow2.record.js"></script>
   <script type="text/javascript" src="../src/cow2.syncstore.js"></script>
   <script type="text/javascript" src="../src/cow2.peer.js"></script>
+  <script type="text/javascript" src="../src/cow2.socketserver.js"></script>
   <script type="text/javascript" src="../src/cow2.user.js"></script>
   <script type="text/javascript" src="../src/cow2.group.js"></script>
   <script type="text/javascript" src="../src/cow2.item.js"></script>
   <script type="text/javascript" src="../src/cow2.project.js"></script>
-  <!--<script type="text/javascript" src="../src/cow2.websocket.js"></script>-->
-  <script type="text/javascript" src="../src/cow2.signalR.js"></script>
+  <script type="text/javascript" src="../src/cow2.websocket.js"></script>
   <script type="text/javascript" src="../src/cow2.core.js"></script>
   <script type="text/javascript" src="../src/cow2.js"></script>
   <script type="text/javascript" src="../test/cow.testsuite.js"></script>
@@ -40,17 +35,40 @@
    <button onclick="tests.analyzeStore()">Analyze</button>
    <button onclick="tests.pingtest()">Pingtest</button>
    <button onclick="tests.lifecycle()">Lifecycle</button>
-   
+   <button onclick="tests.socketservers()">Socketservers</button>
+   <div id='socketservers'>
+   </div>
    <div id="console"></div>
    
   
   <script type="text/javascript">
   
-  var core = new Cow.core({
-       //wsUrl: 'wss://websocket.geodan.nl:443/'
-       wsUrl: '/Cow/signalr'
+  var core = new Cow.core();
+  //add a default socketserver
+  core.socketservers({
+    _id:'wss://websocket.geodan.nl:443/', 
+    data: {url:'wss://websocket.geodan.nl:443/'}
   });
+  
+  function reload_serverlist(){
+      var serverlist = _.filter(core.socketservers(), function(d){return !d.deleted()});
+          var servers = d3.select('#socketservers').selectAll('div')
+            .data(serverlist, function(d){return d.id();});
+          servers.enter().append('div')
+            .html(function(d){return d.id();})
+            .on('click', function(d){
+                    var ws = core.websocket();
+                    ws.disconnect();
+                    ws.connect(d.data('url'));
+            });
+          servers.exit().remove();
+  }
+  
+  var connection = core.connect('wss://websocket.geodan.nl:443/');
+  core.socketserverStore().loaded.then(reload_serverlist);
+  core.socketserverStore().on('datachange', reload_serverlist);
   var tests = new Cow.testsuite(core);
+  
   //tests.analyzeStore();
   //tests.lifecycle();
   

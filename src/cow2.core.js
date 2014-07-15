@@ -1,9 +1,10 @@
 Cow.core = function(config){
     var self = this;
-    if (!config.wsUrl){throw('No wsURL given');}
+    //if (!config.wsUrl){throw('No wsURL given');}
     this._userid = null;
+    this._socketserverid = null;
     this._projectid = null;
-    this._wsUrl = config.wsUrl || 'wss://localhost:443';
+    this._wsUrl = null;
     this._peerid = null;
     
     /*WEBSOCKET*/
@@ -40,6 +41,16 @@ Cow.core = function(config){
         _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
         _dbname:        'users',
         _type:          'users'
+    });
+    
+    /*SOCKETSERVERS*/
+    this._socketserverStore =  _.extend(
+        new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this}), {
+        _records: [],
+        //prototype for record
+        _recordproto:   function(_id){return new Cow.socketserver({_id: _id, store: this});},     
+        _dbname:        'socketservers',
+        _type:          'socketservers'
     });
     
 };
@@ -113,6 +124,23 @@ Cow.core.prototype =
         }
     },
     /**
+        socketserver() - return my socketserver object
+    **/
+     socketserver: function(id){
+        if (id){
+            id = id.toString();
+            this._socketserverid = id;
+            return this.socketservers(id);
+        }
+        else {
+            if (!this._socketserverid) {
+                return false;
+            }
+            return this.socketservers(this._socketserverid); 
+        } 
+     },
+    
+    /**
         peer() - return my peer object
     **/
     peer: function(){
@@ -170,6 +198,20 @@ Cow.core.prototype =
         return this._peerStore.records(config);
     },
     /**
+        socketserverStore() - returns the _socketserverstore object
+    **/
+    socketserverStore:  function(){
+        return this._socketserverStore;
+    },
+    /**
+        socketservers() - returns array of all socketservers
+        socketservers(id) - returns socketserver with id (or null)
+        socketservers({config}) - creates and returns socketserver
+    **/
+    socketservers:      function(config){
+        return this._socketserverStore.records(config);
+    },
+    /**
         userStore() - returns the _userstore object
     **/
     userStore:      function(){
@@ -201,7 +243,13 @@ Cow.core.prototype =
     **/
     websocket: function(){
         return this._websocket;
-    } 
+    },
+    /**
+        connect(id) - starts the websocket connection, returns connection
+    **/
+    connect: function(id){
+        return this._websocket.connect(id);
+    }
 };
 //Adding some Backbone event binding functionality to the store
 _.extend(Cow.core.prototype, Events);

@@ -4,7 +4,7 @@ Cow.websocket = function(config){
     this._core = config.core;
     //socket connection object
     this._url = config.url;
-    this._connection = this.connect();
+    this._connection = null; //obs this.connect();
 };
 
 
@@ -24,19 +24,22 @@ Cow.websocket.prototype.disconnect = function() {
     /**
         connect(url) - connect to websocket server on url, returns connection
     **/
-Cow.websocket.prototype.connect = function() {
-    var core = this.core;
+Cow.websocket.prototype.connect = function(id) {
+    var core = this._core;
+    this._url = core.socketservers(id).data('url'); //get url from list of socketservers
+    if (!this._url) {throw('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');}
     if (!this._connection || this._connection.readyState != 1) //if no connection
     {
-        //if(url.indexOf('ws') === 0) {
+        if(this._url.indexOf('ws') === 0) {
             var connection = new WebSocket(this._url, 'connect');
             connection.onopen=this._onOpen;
             connection.onmessage = this._onMessage;
             connection.onclose = this._onClose;    
             connection.onerror = this._onError;
             connection.obj = this;
-        //}
-        //else {throw('Incorrect URL: ' + url);}
+            this._connection = connection;
+        }
+        else {throw('Incorrect URL: ' + this._url);}
     }
     else {
         connection = this._connection;
@@ -177,7 +180,7 @@ Cow.websocket.prototype._onClose = function(event){
         var url = self.obj._url;
         self.obj._connection = self.obj._core.websocket().connect(url);
     };
-    setTimeout(restart,5000);
+    //setTimeout(restart,5000);
 };
 Cow.websocket.prototype._onConnect = function(payload){
     var self = this;
@@ -189,6 +192,9 @@ Cow.websocket.prototype._onConnect = function(payload){
     }
     mypeer.deleted(false).sync();
     this.trigger('connected',payload);
+    
+    //initiate socketserver sync
+    this._core.socketserverStore().sync();
     
     //initiate peer sync
     this._core.peerStore().sync();
@@ -231,6 +237,8 @@ Cow.websocket.prototype._getStore = function(payload){
     switch (storetype) {
         case 'peers':
             return this._core.peerStore();
+        case 'socketservers':
+            return this._core.socketserverStore();
         case 'projects':
             return this._core.projectStore();
         case 'users':
