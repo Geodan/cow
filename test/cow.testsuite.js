@@ -112,3 +112,42 @@ Cow.testsuite.prototype.pingtest = function(){
     this.starttime = new Date().getTime();
     ws.sendData({command: 'ping'},'command');
 };
+
+Cow.testsuite.prototype.socketsearch = function(){
+    var self=this;
+    var currip = '';
+    var subnet = '192.168.24.';
+    var onopen = function(i){
+        return function(d){
+              var url = d.target.URL;
+              console.log('Connection with ' + url);
+              setTimeout(function(){d.target.close();}, 1000); //d.target.close();
+          };
+    };
+    var onmessage = function(i){
+        return function(d){
+            var url = d.origin;
+            var data = null;
+            if (d.data && typeof d.data == 'string') {
+                try{
+                    
+                    data = JSON.parse(d.data);
+                }catch(e){
+                    console.warn('Error parsing JSON: ' + e);
+                }
+            }
+            if (data && data.action == 'connected'){
+                core.socketservers({_id: url, data:{protocol: 'ws', ip: (subnet+i), port:8081}}).sync();
+            }
+          };
+    };
+    
+    
+    for (var i = 0;i<256;i++){
+          var c = new WebSocket('ws://'+subnet+i+':8081', 'connect');
+          c.onopen = onopen(i); 
+          c.onerror = null;
+          c.onmessage = onmessage(i); 
+    }
+    
+}

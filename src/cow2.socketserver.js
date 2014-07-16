@@ -5,7 +5,10 @@ Cow.socketserver = function(config){
     this._store = config.store;
     this._core = this._store._core;
     this._data = {
-        serverurl: null
+        protocol: null,
+        ip: null,
+        port: null,
+        dir: null
     };
     
     //FIXME: this might be inherited from cow.record 
@@ -21,7 +24,12 @@ Cow.socketserver = function(config){
 };
 
 Cow.socketserver.prototype = { 
-        
-            
+        url: function(){
+            var protocol = this.data('protocol');
+            var ip = this.data('ip');
+            var port = this.data('port');
+            var dir = this.data('dir') || '' ;
+            return protocol + '://' + ip + ':' + port + '/' + dir;  
+        }
 };
 _.extend(Cow.socketserver.prototype,Cow.record.prototype);

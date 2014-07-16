@@ -193,6 +193,7 @@ Cow.syncstore.prototype =
                 existing = true; //Already in list
                 record = this._records[i];
                 record.inflate(data);
+                record.deleted(false); //set undeleted
                 if (this._db && source == 'WS'){ //update the db
                     //promise = this._db_updateRecord({source:source, data: record.deflate()});
                     this._db_write({source:source, data: record.deflate()});
