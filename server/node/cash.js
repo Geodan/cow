@@ -7,6 +7,31 @@ var fs = require('fs');
 var WebSocketServer = require('websocket').server;
 var http = require('http');
 var app_loaded=false;
+var port = 8081;
+var version = 0.1;
+
+/** TT:
+Added function to get ip-address so we can sent that back to the clients
+**/
+var
+    // Local ip address that we're trying to calculate
+    address
+    // Provides a few basic operating-system related utility functions (built-in)
+    ,os = require('os')
+    // Network interfaces
+    ,ifaces = os.networkInterfaces();
+
+
+// Iterate over interfaces ...
+for (var dev in ifaces) {
+
+    // ... and find the one that matches the criteria
+    var iface = ifaces[dev].filter(function(details) {
+        return details.family === 'IPv4' && details.internal === false;
+    });
+
+    if(iface.length > 0) address = iface[0].address;
+}
 
 var server = http.createServer(function(request, response) {
   console.log((new Date()) + ' Received request for ' + request.url);
@@ -28,8 +53,8 @@ var server = http.createServer(function(request, response) {
    console.log(e.stack);
   }
 });
-server.listen(8081, function() {
-    console.log((new Date()) + ' Server is listening on port 8081');
+server.listen(port, function() {
+    console.log((new Date()) + ' Server is listening on port ' + port);
 });
 
 wsServer = new WebSocketServer({
@@ -67,7 +92,7 @@ wsServer.on('request', function(request) {
   connections.push(connection);
   var ci = connections.indexOf(connection);
   peers[ci] = new Date().getTime();
-  connection.sendUTF('{"action":"connected","payload":{"peerID":'+peers[ci]+'}}');
+  connection.sendUTF('{"action":"connected","payload":{"peerID":'+peers[ci]+', "server_ip":'+address+', "server_version"'+ version + '}}');
   
   /*
    Once a connection is established messages can be received, these

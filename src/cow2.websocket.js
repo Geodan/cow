@@ -18,7 +18,7 @@ Cow.websocket.prototype.disconnect = function() {
         this._connection = null;
     }
     else { 
-        throw('No websocket active');
+        console.log('No websocket active');
     }
 };
     /**
@@ -26,13 +26,13 @@ Cow.websocket.prototype.disconnect = function() {
     **/
 Cow.websocket.prototype.connect = function(id) {
     var core = this._core;
-    this._url = core.socketservers(id).data('url'); //get url from list of socketservers
+    this._url = core.socketservers(id).url(); //get url from list of socketservers
     if (!this._url) {throw('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');}
     if (!this._connection || this._connection.readyState != 1) //if no connection
     {
         if(this._url.indexOf('ws') === 0) {
             var connection = new WebSocket(this._url, 'connect');
-            connection.onopen=this._onOpen;
+            connection.onopen = this._onOpen;
             connection.onmessage = this._onMessage;
             connection.onclose = this._onClose;    
             connection.onerror = this._onError;
