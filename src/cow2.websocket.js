@@ -27,6 +27,7 @@ Cow.websocket.prototype.disconnect = function() {
 Cow.websocket.prototype.connect = function(id) {
     var core = this._core;
     this._url = core.socketservers(id).url(); //get url from list of socketservers
+    core._socketserverid = id;
     if (!this._url) {throw('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');}
     if (!this._connection || this._connection.readyState != 1) //if no connection
     {
@@ -186,6 +187,8 @@ Cow.websocket.prototype._onConnect = function(payload){
     var self = this;
     this._core.peerid(payload.peerID);
     var mypeer = this._core.peers({_id: payload.peerID});
+    var version = payload.server_version;
+    var ip = payload.server_ip;
     //add userid to peer object
     if (this._core.user()){
         mypeer.data('userid',this._core.user()._id);
