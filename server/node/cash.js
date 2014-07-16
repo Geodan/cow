@@ -8,7 +8,8 @@ var WebSocketServer = require('websocket').server;
 var http = require('http');
 var app_loaded=false;
 var port = 8081;
-var version = 0.1;
+var version = 0.1; //Version number can avoid incompatibilities with data from  older cash servers
+var key = 'test'; //A client can decide wether to connect based on the key, to avoid flooding from other sockets 
 
 /** TT:
 Added function to get ip-address so we can sent that back to the clients
@@ -92,7 +93,7 @@ wsServer.on('request', function(request) {
   connections.push(connection);
   var ci = connections.indexOf(connection);
   peers[ci] = new Date().getTime();
-  connection.sendUTF('{"action":"connected","payload":{"peerID":'+peers[ci]+', "server_ip":"'+address+'", "server_version":"'+ version + '"}}');
+  connection.sendUTF('{"action":"connected","payload":{"peerID":'+peers[ci]+', "server_ip":"'+address+'", "server_key":"'+key+'", "server_version":"'+version+'"}}');
   
   /*
    Once a connection is established messages can be received, these

@@ -115,8 +115,7 @@ Cow.testsuite.prototype.pingtest = function(){
 
 Cow.testsuite.prototype.socketsearch = function(){
     var self=this;
-    var currip = '';
-    var subnet = '192.168.24.';
+    var subnet = core.socketserver().data('ip').split('.').splice(3).join('.');
     var onopen = function(i){
         return function(d){
               var url = d.target.URL;
@@ -136,7 +135,7 @@ Cow.testsuite.prototype.socketsearch = function(){
                     console.warn('Error parsing JSON: ' + e);
                 }
             }
-            if (data && data.action == 'connected'){
+            if (data && data.action == 'connected' && data.payload.key == 'test'){
                 core.socketservers({_id: url, data:{protocol: 'ws', ip: (subnet+i), port:8081}}).sync();
             }
           };
@@ -144,7 +143,7 @@ Cow.testsuite.prototype.socketsearch = function(){
     
     
     for (var i = 0;i<256;i++){
-          var c = new WebSocket('ws://'+subnet+i+':8081', 'connect');
+          var c = new WebSocket('ws://'+subnet+'.'+i+':8081', 'connect');
           c.onopen = onopen(i); 
           c.onerror = null;
           c.onmessage = onmessage(i); 
