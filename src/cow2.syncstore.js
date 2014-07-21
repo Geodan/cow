@@ -5,6 +5,7 @@ Cow.syncstore =  function(config){
     this._dbname = config.dbname;
     this._core = config.core;
     this.noDeltas = config.noDeltas || false;
+    this.maxStaleness = config.maxAge || null;
     this.syncinfo = {
         toReceive: [],
         toSent: [],
@@ -43,6 +44,9 @@ Cow.syncstore =  function(config){
                          //console.log(d);
                          var record = self._recordproto(d._id);
                          record.inflate(d);
+                         var lastupdate = record.timestamp();
+                         var now = new Date().getTime();
+                         var staleness = now - lastupdate;
                          var existing = false; 
                          //Not likely to exist in the _records at this time but better safe then sorry..
                          for (var i=0;i<self._records.length;i++){
@@ -50,8 +54,8 @@ Cow.syncstore =  function(config){
                                 //existing = true; //Already in list
                                 //record = -1;
                             }
-                         }
-                         if (!existing){
+                         }//Object should be non existing yet and not older than some max setting
+                         if (!existing && (staleness < self.maxStaleness || self.maxStaleness === null)){
                              self._records.push(record); //Adding to the list
                          }
                      });
@@ -86,7 +90,7 @@ Cow.syncstore.prototype =
                 db.main.add(data).done(function(d){
                     resolve(d);
                 }).fail(function(d,e){
-                    console.warn(e.srcElement.error.message);
+                    //console.warn(e.srcElement.error.message);
                     reject(e);
                 });
             }).fail(function(e){
@@ -105,6 +109,8 @@ Cow.syncstore.prototype =
            });
         });
     },  //returns promise
+    /** NOT USED AT THE MOMENT **/
+    /*
     _db_getRecord: function(id){
         var self = this;
         return new Promise(function(resolve, reject){
@@ -115,6 +121,9 @@ Cow.syncstore.prototype =
             });
         });
     }, //returns promise
+    */
+    /** NOT USED AT THE MOMENT **/
+    /*
     _db_removeRecord: function(id){
         var self = this;
         return new Promise(function(resolve, reject){
@@ -125,6 +134,9 @@ Cow.syncstore.prototype =
              });
         });
       }, //returns promise
+      */
+      /** NOT USED AT THE MOMENT, replaced by function in creating syncstore **/
+      /*
     _initRecords: function(){ //This will start the process of getting records from db (returns promise)
         var promise = this._db_getRecords();
         var self = this;
@@ -149,6 +161,7 @@ Cow.syncstore.prototype =
         });
         return promise;
      },
+     */
     //_getRecords([<string>]) - return all records, if ID array is filled, only return that records
     _getRecords: function(idarray){
         var returnArray = [];
@@ -321,7 +334,7 @@ Cow.syncstore.prototype =
                 self.trigger('datachange');
                 self._core.websocket().sendData(message, 'updatedRecord');
             },function(err){
-                console.warn(err);
+                //console.warn(err);
             });
         } else { //No db, proceed immediately
             message.record = record.deflate();
