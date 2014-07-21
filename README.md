@@ -12,6 +12,28 @@ COW works on the following browsers:
 * Firefox 26 +
 * Internet Explorer (IE) 10 +
 
+
+Setting up a new cow:
+-----------
+`````javascript
+//Create core object
+var core = new Cow.core();
+
+//Add a default socketserver
+core.socketservers({
+    _id: 'default', 
+    data: {
+        protocol:'wss',
+        ip:'80.113.1.156', 
+        port:443
+    }
+});
+//Create a connection
+var connection = core.connect('default');
+`````
+
+From here on you are set to work with the workspace according to the API.
+
 API
 ===
 COW is a workspace to concurrently share data with peers over a webscoket. Peers represent the clients who connected to the same websocket. It is build around a core object that binds together the syncStores, records and messaging components.
@@ -217,9 +239,6 @@ http://underscorejs.org/underscore-min.js
 
 ### polyfill-promise ###
 https://github.com/jakearchibald/es6-promise
-
-### D3js ###
-http://d3js.org/d3.v3.min.js
 
 ### DB.js ###
 https://github.com/aaronpowell/db.js/releases/tag/0.9.0
