@@ -78,7 +78,7 @@ Cow.websocket.prototype.sendData = function(data, action, target){
         this._connection.send(JSON.stringify(message));
     }
     else{
-        console.warn('Could not send, socket not connected?');
+        //console.warn('Could not send, socket not connected?');
     }
 };
 Cow.websocket.prototype._onMessage = function(message){
@@ -188,19 +188,12 @@ Cow.websocket.prototype._onConnect = function(payload){
     this._core.peerid(payload.peerID);
     var mypeer = this._core.peers({_id: payload.peerID});
     var version = payload.server_version;
-    //Rebrand the socketserver to the IP it returns
-    var server = this._core.socketserver(); 
-    var ip = payload.server_ip;
     var serverkey = payload.server_key;
+    
     if (serverkey != 'test'){ //TODO: key must become variable
-        this.disconnect();
-        throw 'Not the correct key';
+        self.disconnect();
+        return;
     }
-    var newid = server.data('protocol') + '://' + ip + ':' + server.data('port');
-    var data = server.data();
-    data.ip = ip;
-    server.deleted(true);
-    this._core.socketserver({_id: newid, data: data}).sync();
         
     //add userid to peer object
     if (this._core.user()){

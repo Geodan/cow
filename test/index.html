@@ -119,7 +119,7 @@
   var core = new Cow.core();
   //add a default socketserver
   core.socketservers({
-    _id:'wss://websocket.geodan.nl:443/', 
+    _id: 'default', 
     data: {protocol:'wss',ip:'websocket.geodan.nl', port:443}
   });
   
@@ -127,43 +127,116 @@
       var protocol = d3.select('#newserverprot')[0][0].value;
       var ip = d3.select('#newserverip')[0][0].value;
       var port = d3.select('#newserverport')[0][0].value;
-      var url = protocol + '://' + ip + ':' + port + '/';
-      core.socketservers({_id: url, data: {protocol: protocol, ip: ip, port: port}}).sync();
+      var ipparts = ip.split('.');
+      //IP must be valid and not local
+      if (_.every(ipparts, function(d){
+              return typeof parseInt(d) == 'number';
+      }) && ipparts[0] != 127) {
+        var url = protocol + '://' + ip + ':' + port + '/';
+        core.socketservers({_id: url, data: {protocol: protocol, ip: ip, port: port}}).sync();
+      } else {
+          console.warn('IP not valid');
+      }
+      
   }
   
+  /** 
+    upgrade_ip() - see if the server we're using now broadcasts a different IP than what we added 
+  **/
+  function upgrade_ip(){
+      var server = core.socketserver(); 
+      var url = server.url();
+      var c = new WebSocket(url, 'connect');
+      c.onopen = onopen();
+      c.onmessage = onmessage(); 
+      c.onerror = onerror();
+  }
+  
+  /** 
+    reload_serverlist() - 
+  **/
   function reload_serverlist(){
+      //Get all known servers
       var serverlist = _.filter(core.socketservers(), function(d){return !d.deleted()});
-          var servers = d3.select('#socketservers').selectAll('li')
+      var servers = d3.select('#socketservers').selectAll('li')
             .data(serverlist, function(d){return d.id();});
-          var newservers = servers.enter().append('li').classed("list-group-item",true);
-          newservers.append('span').html(function(d){return d.url();})
+      var newservers = servers.enter().append('li').classed("list-group-item",true);
+      newservers.append('span').html(function(d){return d.url();})
             .on('click', function(d){
                     var ws = core.websocket();
                     ws.disconnect();
-                    ws.connect(d.url());
+                    ws.connect(d.id());
                     reload_serverlist();
             });
-          newservers.append('span').classed('input-group-btn',true)
+      newservers.append('span').classed('glyphicon glyphicon-eye-close',true)
             .on('click', function(d){console.log(d)});
-          servers.exit().remove();
-          servers.classed('active', function(d){
+          
+      servers.exit().remove();
+      servers.classed('active', function(d){
                 if (d.url() == core.websocket()._url){
                     return true;
                 }
                 else {return false;}
-          });
-          servers.each(function(d){
+      });
+      //See if the servers are (still) online and sharing our key 
+      servers.each(function(d){
                   var self = this;
                   var c = new WebSocket(d.url(), 'connect');
-                  c.onopen = function(d){
-                      d3.select(self).classed('list-group-item-success',true);
-                      d3.select(self).classed('list-group-item-danger',false);
-                      d.target.close();
+                  
+                  var onopen = function(){
+                      //Yep, it is online. Make it green.
+                      return function(d){
+                          d3.select(self).classed('list-group-item-success',true);
+                          d3.select(self).classed('list-group-item-danger',false);
+                          c.target = d.target;
+                      }
                   }
-                  c.onerror = function(d){
-                      d3.select(self).classed('list-group-item-danger',true);;
-                      d3.select(self).classed('list-group-item-success',false);
+                  
+                  var onmessage = function(){
+                      return function(d){
+                          c.target.close();
+                          var data = JSON.parse(d.data);
+                          var payload = data.payload;
+                          if (data.action = 'connect'){
+                            //TODO: this doesn't work yet
+                            //Rebrand the socketserver to the IP it returns
+                            //var server = core.socketserver(); 
+                            //var ip = payload.server_ip;
+                            //var serverkey = payload.server_key;
+                            //
+                            //var newid = server.data('protocol') + '://' + ip + ':' + server.data('port');
+                            //var data = server.data();
+                            //data.ip = ip;
+                            //server.deleted(true);
+                            //core.socketservers({_id: newid, data: data}).sync();
+                              
+                              
+                              var serverkey = payload.server_key;
+                              if (serverkey == 'test') { //TODO make key variable
+                                  d3.select(self).select('.glyphicon')
+                                    .classed('glyphicon-eye-close', false)
+                                    .classed('glyphicon-eye-open', true);
+                              }
+                              else{
+                                  d3.select(self).select('.glyphicon')
+                                    .classed('glyphicon-eye-close', true)
+                                    .classed('glyphicon-eye-open', false);
+                              }
+                          }
+                      }
                   }
+                  
+                  var onerror = function(){
+                      //Nope, not online. Make it red.
+                      return function(d){
+                          d3.select(self).classed('list-group-item-danger',true);;
+                          d3.select(self).classed('list-group-item-success',false);
+                      }
+                  }
+                  
+                  c.onopen = onopen();
+                  c.onmessage = onmessage(); 
+                  c.onerror = onerror(); 
           });
   }
   function reload_peerlist(){
@@ -181,7 +254,7 @@
           });
   }
   
-  var connection = core.connect('wss://websocket.geodan.nl:443/');
+  var connection = core.connect('default');
   core.socketserverStore().loaded.then(reload_serverlist);
   core.socketserverStore().on('datachange', reload_serverlist);
   

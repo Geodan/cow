@@ -6,7 +6,7 @@ Cow.core = function(config){
     this._projectid = null;
     this._wsUrl = null;
     this._peerid = null;
-    
+    this._maxAge = 1000 * 60 * 60 * 24 * 30; //30 days in mseconds
     /*WEBSOCKET*/
     this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     
@@ -45,7 +45,7 @@ Cow.core = function(config){
     
     /*SOCKETSERVERS*/
     this._socketserverStore =  _.extend(
-        new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this}), {
+        new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this.maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.socketserver({_id: _id, store: this});},     

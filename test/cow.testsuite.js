@@ -149,4 +149,4 @@ Cow.testsuite.prototype.socketsearch = function(){
           c.onmessage = onmessage(i); 
     }
     
-}
+};
