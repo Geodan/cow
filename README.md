@@ -1,11 +1,10 @@
-Concurrent Online WebGIS
+Concurrent Online Workspace
 ========================
 
-COW is a real time multi-user geo-editing application for the browser. The application is based on OpenLayers and jQuery. It uses secure websockets to send changes to its peers and indexeddb to store features in the browser for offline usage.
+COW is a real time multi-user data sharing library for the browser. 
+It uses (secure) websockets to send changes to its peers and indexeddb to store features in the browser for offline usage.
 
 Currently the server is a normal websocket node.js server behind a haproxy which handles the secure bit.
-
-The core has been tested with jQuery versions 1.8.2 and 1.9.1. The demo client has been tested with jQuery-UI versions 1.9.1 & 1.10.2
 
 COW works on the following browsers:
 * OSX Safari 7
@@ -15,12 +14,14 @@ COW works on the following browsers:
 
 API
 ===
-COW is a workspace to concurrently share data with peers over a webscoket. Peers represent the people who connected to the same websocket. It is build around a core object that binds together the syncStores, records and messaging components.
+COW is a workspace to concurrently share data with peers over a webscoket. Peers represent the clients who connected to the same websocket. It is build around a core object that binds together the syncStores, records and messaging components.
 
 Schematically, it looks like:
 -----------
 * core
    * websocket
+   * socketserverStore (1)
+        * socketservers (2)
    * peerStore (1)
        * peers (2)
    * userStore (1)
@@ -40,7 +41,7 @@ Schematically, it looks like:
 -----------
 
 
-All the stores behave the same* and as follows (userStore as example):
+All the stores share the same basemethods as follows (userStore as example):
 `````javascript
     core.users({_id:<string>}) -> adds a record with id, returns record object
     core.users(<string>) -> returns record object with id = <string>
@@ -49,8 +50,10 @@ All the stores behave the same* and as follows (userStore as example):
     core.userStore() -> returns the userstore object
     core.userStore().syncRecords() -> syncs all records with status 'dirty'
 `````
-*: with an exeption of the peerStore that doesn't use an indexedDb 
-
+Some store's are configured differently:
+* peerStore doesn't use local storage (indexeddb) since peers are unique in every session
+* stores can have a maximum lifetime for the records. When a record isn't updated for x time then the record is not used anymore. It is still kept in the localstorage however.
+* only the itemstores keep a history of delta's. Other stores have disabled that option for the sake of data reduction
 
 All *record objects* behave the same* and as follows (user object as example):
 `````javascript
@@ -74,6 +77,7 @@ All *record objects* behave the same* and as follows (user object as example):
     core.peerid(<string>) -> sets our own peerd
     core.user() -> returns the user object of currently logged on user (false when no user logged on)
     core.user(<string>) -> sets the current users id to the core and to the current peer, returns user object
+    core.socketserver() -> returns the current socketserver configuration in use
     core.websocket() -> returns the websocket object
     core.webscoket().disconnect() -> disconnects websocket (auto reconnect in 5 secs)
 `````
@@ -86,7 +90,7 @@ Since most methods return their own object, the methods are chainable. So you ca
         .data('creator',core.user().id())
         .sync();
 `````
-The timestamp and status are automatically updated when invoking the data(<whatever>) method so you don't need to worry about that.
+The timestamp and status are automatically updated when invoking the data(<whatever>) or deleted(true/false) method so you don't need to worry about that.
 
 
 #### Core
@@ -103,12 +107,17 @@ The timestamp and status are automatically updated when invoking the data(<whate
 * user() - get current user object
 * user(id) - set current user based on id from userStore
 * peer() - return my peer object
+* socketserver() - get the current socketserver configuration
 * location() - get the last known location
 * location(location) - set the current location
 * projectStore() - returns the _projectstore object
 * projects() - returns array of all projects
 * projects(id) - returns project with id (or null)
 * projects({config}) - creates and returns project
+* socketserverStore() - returns the _socketserverstore object
+* socketservers() - returns array of all socketservers
+* socketservers(id) - returns socketserver with id (or null)
+* socketservers({config}) - creates and returns socketserver object
 * peerStore() - returns the _peerstore object
 * peers() - returns array of all peers
 * peers(id) - returns peer with id (or null)
@@ -158,8 +167,18 @@ creating a project: core.projects(newid)
 * removePermission('type') removes the entire permission type from the item
 * removePermission('type',[groups]) removes the groups from the permission type
 
+### Socketserver
+>cow.socketserver()
+
+**description** The socketserver obejct. It is constructed with the socketserver options object in cow.socketservers([options]). The socketserver object is refered to as *socketserver* in the documentation. A socketserver contains the configuration on all known websocket servers.
+
+core: the cow object
+
+* url() - return the url to the socketserver, built up from the data elements: protocol, ip, port and directory
+
+
 #### Peer
->cow.Peer(core, [options])
+>cow.peer(core, [options])
 
 **description** The Peer object. It is constructed with the peer options object in cow.peers([options]). The Peer object is refered to as *peer* in the documentation. A Peer is another cow connected to the same websocket server (this can be someone else or the same user, using a different browser)
 
@@ -170,7 +189,7 @@ core: the cow object
 
 
 #### Websocket
->cow.Websocket(core, [options])
+>cow.websocket(core, [options])
 
 **description** The Websocket object. It is constructed with the websocket options object in cow.websocket([options]). The Websocket object is refered to as *ws* in the documentation. The Websocket object contains all the relevant info to make a websocket connection and manages the actual connection.
 
@@ -193,24 +212,24 @@ See  <a href='./docs/messaging.md'>messaging.md</a> and <a href='./docs/messagin
 Dependencies Core
 =================
 
-### jQuery ###
-jQuery version 1.10.2
+### Underscore 1.6 ###
+http://underscorejs.org/underscore-min.js
 
-### OpenLayers ###
-OpenLayers version 2.12
-
-### jquery.indexeddb.js ###
-https://github.com/axemclion/jquery-indexeddb
+### polyfill-promise ###
+https://github.com/jakearchibald/es6-promise
 
 ### D3js ###
-D3js version 3
+http://d3js.org/d3.v3.min.js
+
+### DB.js ###
+https://github.com/aaronpowell/db.js/releases/tag/0.9.0
 
 
-Dependencies Client
+Dependencies Server
 ===================
 
-### jQuery-UI ###
-jQuery-UI version 1.10.2
+### TODO ###
+
 
 
 Known Issues

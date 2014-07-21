@@ -126,18 +126,11 @@ Cow.core.prototype =
     /**
         socketserver() - return my socketserver object
     **/
-     socketserver: function(id){
-        if (id){
-            id = id.toString();
-            this._socketserverid = id;
-            return this.socketservers(id);
+     socketserver: function(){
+        if (!this._socketserverid) {
+            return false;
         }
-        else {
-            if (!this._socketserverid) {
-                return false;
-            }
-            return this.socketservers(this._socketserverid); 
-        } 
+        return this.socketservers(this._socketserverid); 
      },
     
     /**
