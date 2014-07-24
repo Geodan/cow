@@ -19,6 +19,7 @@ Cow.core = function(config){
         _type:          'projects'
     });
     
+    
     /*PEERS*/
     this._peerStore =  _.extend(
         new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
@@ -31,6 +32,10 @@ Cow.core = function(config){
         removePeer:         function(id){
             return this._removeRecord(id);
         }
+    });
+    Object.observe(this._peerStore._records, function(d){
+            console.log('peerchange');
+            this.trigger('datachange');
     });
     
     /*USERS*/

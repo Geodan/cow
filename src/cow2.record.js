@@ -42,6 +42,7 @@ Cow.record.prototype =
     deleted: function(truefalse){
         if (truefalse !== undefined){
             this._deleted = truefalse;
+            this.timestamp(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
             this._status = 'dirty';
             return this;
         }
