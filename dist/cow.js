@@ -717,13 +717,6 @@ Cow.syncstore.prototype =
         },function(err){
             //console.warn(err);
         });
-        /*Obs
-        } else { //No db, proceed immediately
-            message.record = record.deflate();
-            self.trigger('datachange'); 
-            self._core.websocket().sendData(message, 'updatedRecord');
-        }//TODO: remove this double code, but keep promise/non-promise intact
-        */
         return record;
     },
     
@@ -1629,6 +1622,7 @@ Cow.websocket = function(config){
     //socket connection object
     this._url = config.url;
     this._connection = null; //obs this.connect();
+    this._connected = false;
 };
 
 
@@ -1648,10 +1642,10 @@ Cow.websocket.prototype.disconnect = function() {
     /**
         connect(url) - connect to websocket server on url, returns connection
     **/
-Cow.websocket.prototype.connect = function(id) {
+Cow.websocket.prototype.connect = function() {
     var core = this._core;
-    this._url = core.socketservers(id).url(); //get url from list of socketservers
-    core._socketserverid = id;
+    this._url = core.socketserver().url(); //get url from list of socketservers
+    
     if (!this._url) {throw('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');}
     if (!this._connection || this._connection.readyState != 1) //if no connection
     {
@@ -1663,6 +1657,7 @@ Cow.websocket.prototype.connect = function(id) {
             connection.onerror = this._onError;
             connection.obj = this;
             this._connection = connection;
+            
         }
         else {throw('Incorrect URL: ' + this._url);}
     }
@@ -1794,6 +1789,7 @@ Cow.websocket.prototype._onClose = function(event){
     var self = this;
     //this.close(); //FIME: TT: why was this needed?
     this.obj._core.peerStore().clear();
+    this.obj._connected = false;
     //TODO this.obj._core.trigger('ws-disconnected');    
     var restart = function(){
         try{
@@ -1802,12 +1798,12 @@ Cow.websocket.prototype._onClose = function(event){
         catch(err){
             console.warn(err);
         }
-        var url = self.obj._url;
-        self.obj._connection = self.obj._core.websocket().connect(url);
+        self.obj._connection = self.obj._core.websocket().connect();
     };
-    //setTimeout(restart,5000);
+    setTimeout(restart,5000);
 };
 Cow.websocket.prototype._onConnect = function(payload){
+    this._connected = true;
     var self = this;
     this._core.peerid(payload.peerID);
     var mypeer = this._core.peers({_id: payload.peerID});
@@ -1861,6 +1857,8 @@ Cow.websocket.prototype._onPeerGone = function(payload) {
     //TODO this.core.trigger('ws-peerGone',payload); 
 };
 Cow.websocket.prototype._onError = function(e){
+    this.obj._core.peerStore().clear();
+    this.obj._connected = false;
     console.warn('error in websocket connection: ' + e.type);
 };
 Cow.websocket.prototype._getStore = function(payload){
@@ -2134,10 +2132,6 @@ _.extend(Cow.websocket.prototype, Events);
             return this._removeRecord(id);
         }
     });
-    Object.observe(this._peerStore._records, function(d){
-            console.log('peerchange');
-            this.trigger('datachange');
-    });
     
     /*USERS*/
     this._userStore =  _.extend(
@@ -2209,18 +2203,17 @@ Cow.core.prototype =
     
     /**
         user() - get current user object
-        user(id) - set current user based on id from userStore
+        user(id) - set current user based on id from userStore, return user object
     **/
     user: function(id){
         if (id){
             id = id.toString();
             this._userid = id;
             //Add user to peer object
-            if (this.peerid()){
-                //TODO: separate name and id 
-                this.peers(this.peerid()).data('userid',id).sync();
+            if (this.peer() && this.peers(this.peerid())){
+                this.peer().data('userid',id).sync();
             }
-            return this.users(id).data('name', id);
+            return this.users(id);
         }
         else {
             if (!this._userid) {
@@ -2232,11 +2225,18 @@ Cow.core.prototype =
     /**
         socketserver() - return my socketserver object
     **/
-     socketserver: function(){
-        if (!this._socketserverid) {
-            return false;
+     socketserver: function(id){
+        if (id){
+            id = id.toString();
+            this._socketserverid = id;
+            return this.socketservers(id);
         }
-        return this.socketservers(this._socketserverid); 
+        else {
+            if (!this._socketserverid) {
+                return false;
+            }
+            return this.socketservers(this._socketserverid);
+        }
      },
     
     /**

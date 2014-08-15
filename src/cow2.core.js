@@ -33,10 +33,6 @@ Cow.core = function(config){
             return this._removeRecord(id);
         }
     });
-    Object.observe(this._peerStore._records, function(d){
-            console.log('peerchange');
-            this.trigger('datachange');
-    });
     
     /*USERS*/
     this._userStore =  _.extend(
@@ -108,18 +104,17 @@ Cow.core.prototype =
     
     /**
         user() - get current user object
-        user(id) - set current user based on id from userStore
+        user(id) - set current user based on id from userStore, return user object
     **/
     user: function(id){
         if (id){
             id = id.toString();
             this._userid = id;
             //Add user to peer object
-            if (this.peerid()){
-                //TODO: separate name and id 
-                this.peers(this.peerid()).data('userid',id).sync();
+            if (this.peer() && this.peers(this.peerid())){
+                this.peer().data('userid',id).sync();
             }
-            return this.users(id).data('name', id);
+            return this.users(id);
         }
         else {
             if (!this._userid) {
@@ -131,11 +126,18 @@ Cow.core.prototype =
     /**
         socketserver() - return my socketserver object
     **/
-     socketserver: function(){
-        if (!this._socketserverid) {
-            return false;
+     socketserver: function(id){
+        if (id){
+            id = id.toString();
+            this._socketserverid = id;
+            return this.socketservers(id);
         }
-        return this.socketservers(this._socketserverid); 
+        else {
+            if (!this._socketserverid) {
+                return false;
+            }
+            return this.socketservers(this._socketserverid);
+        }
      },
     
     /**
