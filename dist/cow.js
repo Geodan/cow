@@ -223,6 +223,7 @@ Cow.record.prototype =
     deleted: function(truefalse){
         if (truefalse !== undefined){
             this._deleted = truefalse;
+            this.timestamp(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
             this._status = 'dirty';
             return this;
         }
@@ -435,7 +436,7 @@ Cow.syncstore =  function(config){
                              self._records.push(record); //Adding to the list
                          }
                      });
-                     self.trigger('datachange');
+                     //self.trigger('datachange'); //TT: not needed?
                      resolve();
                 }).catch(function(e){
                     console.warn(e.message);
@@ -582,7 +583,7 @@ Cow.syncstore.prototype =
                 existing = true; //Already in list
                 record = this._records[i];
                 record.inflate(data);
-                record.deleted(false); //set undeleted
+                //record.deleted(false); //set undeleted //TT: disabled, since this gives a problem when a record from WS comes in as deleted
                 if (this._db && source == 'WS'){ //update the db
                     //promise = this._db_updateRecord({source:source, data: record.deflate()});
                     this._db_write({source:source, data: record.deflate()});
@@ -654,7 +655,7 @@ Cow.syncstore.prototype =
         for (var i=0;i<this._records.length;i++){
             if (this._records[i]._id == id) {
                     this._records.splice(i,1);
-                    this.trigger('datachange');
+                    //this.trigger('datachange');
                     return true;
             }
         }
@@ -693,7 +694,7 @@ Cow.syncstore.prototype =
     syncRecord() - sync 1 record, returns record
     **/
     syncRecord: function(record){
-        
+        var promise;
         var self = this;
         var message = {};
         message.syncType = this._type;
@@ -704,19 +705,18 @@ Cow.syncstore.prototype =
         }
         if (this._db){
             //var promise = this._db_updateRecord({source:'UI', data: record.deflate()});
-            var promise = this._db_write({source:'UI', data: record.deflate()});
-            promise.then(function(d){ //wait for db
-                message.record = record.deflate();
-                self.trigger('datachange');
-                self._core.websocket().sendData(message, 'updatedRecord');
-            },function(err){
-                //console.warn(err);
-            });
-        } else { //No db, proceed immediately
+            promise = this._db_write({source:'UI', data: record.deflate()});
+        }
+        else { //Immediately resolve promise
+            promise = new Promise(function(resolve, reject){resolve();});
+        }
+        promise.then(function(d){ //wait for db
             message.record = record.deflate();
             self.trigger('datachange');
             self._core.websocket().sendData(message, 'updatedRecord');
-        }//TODO: remove this double code, but keep promise/non-promise intact
+        },function(err){
+            //console.warn(err);
+        });
         return record;
     },
     
@@ -818,9 +818,9 @@ Cow.syncstore.prototype =
 		//Prepare copy of remote fids as un-ticklist, but only for non-deleted items
 		if (fidlist){
 			for (i=0;i<fidlist.length;i++){
-				if (fidlist[i].deleted != 'true'){
+				//if (fidlist[i].deleted != 'true'){
 					copyof_rem_list.push(fidlist[i]._id);
-				}
+				//}
 			}
 			for (i=0;i<this._records.length;i++){
 					var local_item = this._records[i];
@@ -1622,6 +1622,7 @@ Cow.websocket = function(config){
     //socket connection object
     this._url = config.url;
     this._connection = null; //obs this.connect();
+    this._connected = false;
 };
 
 
@@ -1641,10 +1642,10 @@ Cow.websocket.prototype.disconnect = function() {
     /**
         connect(url) - connect to websocket server on url, returns connection
     **/
-Cow.websocket.prototype.connect = function(id) {
+Cow.websocket.prototype.connect = function() {
     var core = this._core;
-    this._url = core.socketservers(id).url(); //get url from list of socketservers
-    core._socketserverid = id;
+    this._url = core.socketserver().url(); //get url from list of socketservers
+    
     if (!this._url) {throw('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');}
     if (!this._connection || this._connection.readyState != 1) //if no connection
     {
@@ -1656,6 +1657,7 @@ Cow.websocket.prototype.connect = function(id) {
             connection.onerror = this._onError;
             connection.obj = this;
             this._connection = connection;
+            
         }
         else {throw('Incorrect URL: ' + this._url);}
     }
@@ -1787,6 +1789,7 @@ Cow.websocket.prototype._onClose = function(event){
     var self = this;
     //this.close(); //FIME: TT: why was this needed?
     this.obj._core.peerStore().clear();
+    this.obj._connected = false;
     //TODO this.obj._core.trigger('ws-disconnected');    
     var restart = function(){
         try{
@@ -1795,12 +1798,12 @@ Cow.websocket.prototype._onClose = function(event){
         catch(err){
             console.warn(err);
         }
-        var url = self.obj._url;
-        self.obj._connection = self.obj._core.websocket().connect(url);
+        self.obj._connection = self.obj._core.websocket().connect();
     };
-    //setTimeout(restart,5000);
+    setTimeout(restart,5000);
 };
 Cow.websocket.prototype._onConnect = function(payload){
+    this._connected = true;
     var self = this;
     this._core.peerid(payload.peerID);
     var mypeer = this._core.peers({_id: payload.peerID});
@@ -1854,6 +1857,8 @@ Cow.websocket.prototype._onPeerGone = function(payload) {
     //TODO this.core.trigger('ws-peerGone',payload); 
 };
 Cow.websocket.prototype._onError = function(e){
+    this.obj._core.peerStore().clear();
+    this.obj._connected = false;
     console.warn('error in websocket connection: ' + e.type);
 };
 Cow.websocket.prototype._getStore = function(payload){
@@ -2113,6 +2118,7 @@ _.extend(Cow.websocket.prototype, Events);
         _type:          'projects'
     });
     
+    
     /*PEERS*/
     this._peerStore =  _.extend(
         new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
@@ -2197,18 +2203,17 @@ Cow.core.prototype =
     
     /**
         user() - get current user object
-        user(id) - set current user based on id from userStore
+        user(id) - set current user based on id from userStore, return user object
     **/
     user: function(id){
         if (id){
             id = id.toString();
             this._userid = id;
             //Add user to peer object
-            if (this.peerid()){
-                //TODO: separate name and id 
-                this.peers(this.peerid()).data('userid',id).sync();
+            if (this.peer() && this.peers(this.peerid())){
+                this.peer().data('userid',id).sync();
             }
-            return this.users(id).data('name', id);
+            return this.users(id);
         }
         else {
             if (!this._userid) {
@@ -2220,11 +2225,18 @@ Cow.core.prototype =
     /**
         socketserver() - return my socketserver object
     **/
-     socketserver: function(){
-        if (!this._socketserverid) {
-            return false;
+     socketserver: function(id){
+        if (id){
+            id = id.toString();
+            this._socketserverid = id;
+            return this.socketservers(id);
         }
-        return this.socketservers(this._socketserverid); 
+        else {
+            if (!this._socketserverid) {
+                return false;
+            }
+            return this.socketservers(this._socketserverid);
+        }
      },
     
     /**

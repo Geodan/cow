@@ -72,9 +72,9 @@ Cow.testsuite.prototype.lifecycle = function(){
         var syncpromise = project.itemStore().syncRecords(); //sync the records
         for (i = 0;i<100;i++){//Update the records 
             item = project.items(i.toString());
-            item.data('tmp',(Math.random()*100).toString());
+            item.data('tmp',(Math.random()*100).toString()).sync();
         }
-        syncpromise = project.itemStore().syncRecords(); //sync the records
+        //syncpromise = project.itemStore().syncRecords(); //sync the records
         
         
         
@@ -87,6 +87,7 @@ Cow.testsuite.prototype.lifecycle = function(){
             log('We now have ' + core.projects('test').items().length + ' items'); //should be 100
             log('Clearing itemstore');
             //project.itemStore().clear(); //remove items from store
+            log('Back to ' + core.projects('test').items().length + ' items'); //should be 0
             log('Sending flushing command to peers');
             core.websocket().sendData({command: 'flushProject',projectid: 'test'}, 'command');
             project.deleted(true).sync();//set project to deleted

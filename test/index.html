@@ -17,7 +17,8 @@
   <!--<script type="text/javascript" src="../lib/IndexedDBShim/IndexedDBShim.min.js"></script>-->
   <script type="text/javascript" src="../lib/dbjs/db.js"></script>
   
-  <script type="text/javascript" src="../dist/cow.min.js"></script>
+  <script type="text/javascript" src="../dist/cow.js"></script>
+  <script type="text/javascript" src="../test/cow.data.js"></script>
   <script type="text/javascript" src="../test/cow.testsuite.js"></script>
   <style>
   </style>
@@ -69,10 +70,11 @@
         <h2>Peers</h2>
         <ul id='peerlist' class="list-group"></ul>
     </div>
-    <div class="col-lg-6">
-        <h2>Console</h2>
-        <div id="console" class="well"></div>
-   </div>
+    <div class="col-lg-2">
+        <h2>Projects</h2>
+        <ul id='projectlist' class="list-group"></ul>
+    </div>
+    
    </div>
    </div><!-- /container -->
    
@@ -100,7 +102,11 @@
        </div>
     </div>
    </div>
-   
+   <div class="col-lg-6">
+        <h2>Console</h2>
+        <div id="console" class="well"></div>
+   </div>
+   </div>
    
   
   <script type="text/javascript">
@@ -111,6 +117,7 @@
     _id: 'default', 
     data: {protocol:'wss',ip:'websocket.geodan.nl', port:443}
   });
+  var data = new Cow.data(core);
   
   function addserver(){
       var protocol = d3.select('#newserverprot')[0][0].value;
@@ -146,7 +153,7 @@
   **/
   function reload_serverlist(){
       //Get all known servers
-      var serverlist = _.filter(core.socketservers(), function(d){return !d.deleted()});
+      var serverlist = data.socketservers();
       var servers = d3.select('#socketservers').selectAll('li')
             .data(serverlist, function(d){return d.id();});
       var newservers = servers.enter().append('li').classed("list-group-item",true);
@@ -229,7 +236,7 @@
           });
   }
   function reload_peerlist(){
-      var list = _.filter(core.peers(), function(d){return !d.deleted()});
+      var list = data.peers();
       var items = d3.select('#peerlist').selectAll('li')
             .data(list, function(d){return d.id();});
           items.enter().append('li').classed("list-group-item",true)
@@ -243,12 +250,37 @@
           });
   }
   
+  
+  function reload_projectlist(){
+      var list = data.projects();//_.filter(core.projects(), function(d){return !d.deleted()});
+      var items = d3.select('#projectlist').selectAll('li')
+            .data(list, function(d){return d.id();});
+          items.enter().append('li').classed("list-group-item",true)
+            .html(function(d){return d.data('name') || d.id();}).append('span').classed('badge', true);
+          items.exit().remove();
+          items.each(function(d){
+                  var self = this;
+                  d.itemStore().loaded.then(function(x){
+                      var numitems = d.items().length;
+                      d3.select(self).select('.badge').html(numitems);
+                  });
+                  d.itemStore().on('datachange', function(x){
+                      var numitems = d.items().length;
+                      d3.select(self).select('.badge').html(numitems);
+                  });
+                  
+          });
+  }
+  
   var connection = core.connect('default');
   core.socketserverStore().loaded.then(reload_serverlist);
   core.socketserverStore().on('datachange', reload_serverlist);
   
   core.peerStore().loaded.then(reload_peerlist);
   core.peerStore().on('datachange', reload_peerlist);
+  
+  core.projectStore().loaded.then(reload_projectlist);
+  core.projectStore().on('datachange', reload_projectlist);
   
   var tests = new Cow.testsuite(core);
   

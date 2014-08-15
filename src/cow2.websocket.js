@@ -5,6 +5,7 @@ Cow.websocket = function(config){
     //socket connection object
     this._url = config.url;
     this._connection = null; //obs this.connect();
+    this._connected = false;
 };
 
 
@@ -24,10 +25,10 @@ Cow.websocket.prototype.disconnect = function() {
     /**
         connect(url) - connect to websocket server on url, returns connection
     **/
-Cow.websocket.prototype.connect = function(id) {
+Cow.websocket.prototype.connect = function() {
     var core = this._core;
-    this._url = core.socketservers(id).url(); //get url from list of socketservers
-    core._socketserverid = id;
+    this._url = core.socketserver().url(); //get url from list of socketservers
+    
     if (!this._url) {throw('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');}
     if (!this._connection || this._connection.readyState != 1) //if no connection
     {
@@ -39,6 +40,7 @@ Cow.websocket.prototype.connect = function(id) {
             connection.onerror = this._onError;
             connection.obj = this;
             this._connection = connection;
+            
         }
         else {throw('Incorrect URL: ' + this._url);}
     }
@@ -170,6 +172,7 @@ Cow.websocket.prototype._onClose = function(event){
     var self = this;
     //this.close(); //FIME: TT: why was this needed?
     this.obj._core.peerStore().clear();
+    this.obj._connected = false;
     //TODO this.obj._core.trigger('ws-disconnected');    
     var restart = function(){
         try{
@@ -178,19 +181,19 @@ Cow.websocket.prototype._onClose = function(event){
         catch(err){
             console.warn(err);
         }
-        var url = self.obj._url;
-        self.obj._connection = self.obj._core.websocket().connect(url);
+        self.obj._connection = self.obj._core.websocket().connect();
     };
-    //setTimeout(restart,5000);
+    setTimeout(restart,5000);
 };
 Cow.websocket.prototype._onConnect = function(payload){
+    this._connected = true;
     var self = this;
     this._core.peerid(payload.peerID);
     var mypeer = this._core.peers({_id: payload.peerID});
     var version = payload.server_version;
     var serverkey = payload.server_key;
     
-    if (serverkey != 'test'){ //TODO: key must become variable
+    if (serverkey !== undefined && serverkey != 'test'){ //TODO: key must become variable
         self.disconnect();
         return;
     }
@@ -237,6 +240,8 @@ Cow.websocket.prototype._onPeerGone = function(payload) {
     //TODO this.core.trigger('ws-peerGone',payload); 
 };
 Cow.websocket.prototype._onError = function(e){
+    this.obj._core.peerStore().clear();
+    this.obj._connected = false;
     console.warn('error in websocket connection: ' + e.type);
 };
 Cow.websocket.prototype._getStore = function(payload){
