@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+  <title>COW COP</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+  
+  <!-- Underscore is needed for cow -->
+  <script type="text/javascript" src="../lib/underscore/underscore-min.js" type="text/javascript"></script>
+  
+  <!-- IndexedDB  is needed for Cow -->
+  <!--<script type="text/javascript" src="../lib/IndexedDBShim/IndexedDBShim.min.js"></script>-->
+  <script type="text/javascript" src="../lib/dbjs/db.js"></script>
+  
+  <!-- Promise polyfill, will become obsolete in future browsers -->
+  <script type="text/javascript" src="../lib/polyfill-promise/promise-0.1.1.min.js" type="text/javascript"></script>
+
+  <!-- D3 used for data-DOM coupling -->
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script src="http://d3js.org/d3.geo.tile.v0.min.js"></script>
+    <script src="http://d3js.org/topojson.v1.min.js"></script>
+  
+  <!-- COW, COW, COW -->
+  <script type="text/javascript" src="../dist/cow.js"></script>
+  <script type="text/javascript" src="../test/cow.data.js"></script>
+  <script type="text/javascript" src="../test/cop.layer.js"></script>
+  <script type="text/javascript" src="../test/cop.map.js"></script>
+  <link rel="stylesheet" href="../test/cop.css">
+  
+  <style type="">
+    circle{
+        fill: red;
+    }
+  </style>
+  
+  </head>
+  <body>
+  
+  
+  
+  <div id='map'></div>
+  
+  <script type="text/javascript">
+       //Instantiate COW
+      var core = new Cow.core();
+      core.socketservers({
+        _id: 'default', 
+        data: {protocol:'ws',ip:'192.168.25.230', port:8081}
+      });
+      core.socketserver('default');
+      var connection = core.connect('default');
+      var data = new Cow.data(core);
+      var project, itemstore = null;
+      core.projectStore().loaded.then(function(d){
+          core.project('1');
+          project = core.projects('1');
+          itemstore = project.itemStore();
+          itemstore.on('datachange', function(){
+              var feats = data.featureCollection().features;
+              cowlayer.data(feats);
+          });
+      });
+      
+      
+      //Set up a map
+      var map = new Cop.map('map', {center: [4.740008,52.892394]});
+      var cowlayer = map.layers('cowlayer',{
+        type: 'point',
+        labels: false,
+        labelconfig: {
+            field: 'label'
+        },
+        style: {
+            fill: 'yellow'
+        }});
+      map.redraw();
+      
+      //Get access to socket
+      var ws = core.websocket();
+      //Handle io for mouse events 
+      d3.select('#map').on('mousemove', function(){
+        var coords = map.projection.invert(d3.mouse(this))
+        var data = {command: 'mouseloc', coords: coords};
+        ws.sendData(data, 'command');
+      });
+      d3.select('#map').on('click', function(){
+        var coords = map.projection.invert(d3.mouse(this))
+        var data = {command: 'mouseclick', coords: coords};
+        ws.sendData(data, 'command');
+        
+        if (core.project()){
+            var id = new Date().getTime();
+            var feature = {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                    type: 'Point',
+                    coordinates: coords
+                }
+            };
+            core.project().items({
+                    _id: id, 
+                    data: {
+                        type: 'feature',
+                        geojson: feature
+                    }
+            }).sync();
+        }
+        
+      });
+      ws.on('command', function(d){
+        var command = d.payload.command;
+        if (command == 'mouseloc'){
+            var coords = map.projection(d.payload.coords);
+            var svg = d3.select('#map').select('svg');
+            var pointer = svg.selectAll('#id' + d.sender).remove();
+            svg.append('circle').attr('id', 'id'+d.sender)
+                .attr('cx', coords[0])
+                .attr('cy', coords[1])
+                .attr('r', 10);
+        };
+        if (command == 'mouseclick'){
+            var coords = map.projection(d.payload.coords);
+            var svg = d3.select('#map').select('svg');
+            svg.append('circle')
+                .attr('cx', coords[0])
+                .attr('cy', coords[1])
+                .attr('r', 30)
+                .transition()
+                .attr('r', 0)
+                .transition()
+                .remove();
+                ;
+             
+        }
+      });
+      
+      
+  </script>
+  </body>
+</html>

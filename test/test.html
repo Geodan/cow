@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+  <head>
+  <script>
+ 
+  var Store = function(){
+      this.data = [];
+  }
+  
+  var Record = function(name){
+      this.id = name;
+  }
+  
+  Store.prototype = {
+      add: function(data) {
+          var self = this;
+          self.data.push(data);
+      },
+      sync: function(){
+      }
+  }
+  
+  Record.prototype = {
+      setid: function(id){
+          this.id = id;
+      }
+  }
+  
+  var callback = function(changes){
+      console.log('CB rec: ', d);
+  }
+  
+  var callback2 = function(d){
+      console.log('CB store: ', d);
+  }
+  
+  var store = new Store();
+  Array.observe(store.data, callback2);
+  
+  
+  var record1 = new Record('test1');
+  Object.observe(record1, callback);
+  store.add(record1);
+  
+  var record2 = new Record('test3');
+  Object.observe(record2, callback);
+  store.add(record2);
+  
+  store.data[1].setid('test2');
+  console.log(store.data);
+  
+
+</script>
+</head>
+</html>
