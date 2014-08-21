@@ -1,4 +1,15 @@
-window.Cow = window.Cow || {};
+(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.record = function(){
     //FIXME: 'this' object is being overwritten by its children 
     this._id    = null;
@@ -15,7 +26,7 @@ Cow.record.prototype =
 {
     sync: function(){
         var now = new Date().getTime();
-        if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
+        if ( __(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
             this.deltas(now, this._deltaq); //add deltas from queue
         }
         this._deltaq = {}; //reset deltaq
@@ -112,10 +123,10 @@ Cow.record.prototype =
         else {
             //Recreate the data based on deltas
             var returnval = {};
-            var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
-            _.each(deltas, function(d){
+            var deltas = __.sortBy(this.deltas(), function(d){return d.timestamp;});
+            __.each(deltas, function(d){
                 if (d.timestamp <= timestamp){
-                    _.extend(returnval, d.data);
+                    __.extend(returnval, d.data);
                 }
             });
             return returnval;
@@ -194,3 +205,4 @@ Cow.record.prototype =
     }
 
 };
+}.call(this));

@@ -1,4 +1,15 @@
-window.Cow = window.Cow || {};
+(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.project = function(config){
     var self = this;
     if (!config._id) {throw 'No _id given for project';}
@@ -18,7 +29,7 @@ Cow.project = function(config){
     //END OF FIXME
     
     var dbname = 'groups_' + config._id;
-    this._groupStore = _.extend(
+    this._groupStore = __.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{
         _records: [],
         _recordproto: function(_id){return new Cow.group({_id: _id, store: this});},
@@ -31,7 +42,7 @@ Cow.project = function(config){
     });
     
     dbname = 'items_' + config._id;
-    this._itemStore = _.extend(
+    this._itemStore = __.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{
         _recordproto:   function(_id){return new Cow.item({_id: _id, store: this});},
         _projectid: this._id,
@@ -108,4 +119,5 @@ Cow.project.prototype =
         return mygroups;
     }
 };
-_.extend(Cow.project.prototype, Cow.record.prototype);
+__.extend(Cow.project.prototype, Cow.record.prototype);
+}.call(this));

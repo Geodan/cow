@@ -1,3 +1,15 @@
+(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.core = function(config){
     var self = this;
     //if (!config.wsUrl){throw('No wsURL given');}
@@ -11,7 +23,7 @@ Cow.core = function(config){
     this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     
     /*PROJECTS*/
-    this._projectStore =  _.extend(
+    this._projectStore =  __.extend(
         new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
@@ -21,7 +33,7 @@ Cow.core = function(config){
     
     
     /*PEERS*/
-    this._peerStore =  _.extend(
+    this._peerStore =  __.extend(
         new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
          _records: [],
         //prototype for record
@@ -35,7 +47,7 @@ Cow.core = function(config){
     });
     
     /*USERS*/
-    this._userStore =  _.extend(
+    this._userStore =  __.extend(
         new Cow.syncstore({dbname: 'users', noDeltas: true, core: this}), {
         _records: [],
         //prototype for record
@@ -45,7 +57,7 @@ Cow.core = function(config){
     });
     
     /*SOCKETSERVERS*/
-    this._socketserverStore =  _.extend(
+    this._socketserverStore =  __.extend(
         new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this.maxAge}), {
         _records: [],
         //prototype for record
@@ -252,4 +264,6 @@ Cow.core.prototype =
     }
 };
 //Adding some Backbone event binding functionality to the store
-_.extend(Cow.core.prototype, Events);
+__.extend(Cow.core.prototype, Events);
+
+}.call(this));

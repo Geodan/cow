@@ -1,11 +1,5 @@
-window.Cow = window.Cow || {};
-Cow.utils = {
-    //Generate a unique id
-    idgen: function(){
-        //TODO: add some randomness
-        return new Date().getTime().toString();
-    }
-};
+var __ = _;
+(function(){
 
 // Create local references to array methods we'll want to use later.
 var array = [];
@@ -22,7 +16,7 @@ var splice = array.splice;
   // succession.
   //
   //     var object = {};
-  //     _.extend(object, Backbone.Events);
+  //     __.extend(object, Backbone.Events);
   //     object.on('expand', function(){ alert('expanded'); });
   //     object.trigger('expand');
   //
@@ -43,7 +37,7 @@ var splice = array.splice;
     once: function(name, callback, context) {
       if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
       var self = this;
-      var once = _.once(function() {
+      var once = __.once(function() {
         self.off(name, once);
         callback.apply(this, arguments);
       });
@@ -62,7 +56,7 @@ var splice = array.splice;
         this._events = void 0;
         return this;
       }
-      names = name ? [name] : _.keys(this._events);
+      names = name ? [name] : __.keys(this._events);
       for (i = 0, l = names.length; i < l; i++) {
         name = names[i];
         if (events = this._events[name]) {
@@ -110,7 +104,7 @@ var splice = array.splice;
       for (var id in listeningTo) {
         obj = listeningTo[id];
         obj.off(name, callback, this);
-        if (remove || _.isEmpty(obj._events)) delete this._listeningTo[id];
+        if (remove || __.isEmpty(obj._events)) delete this._listeningTo[id];
       }
       return this;
     }
@@ -165,10 +159,10 @@ var splice = array.splice;
   // Inversion-of-control versions of `on` and `once`. Tell *this* object to
   // listen to an event in another object ... keeping track of what it's
   // listening to.
-  _.each(listenMethods, function(implementation, method) {
+  __.each(listenMethods, function(implementation, method) {
     Events[method] = function(obj, name, callback) {
       var listeningTo = this._listeningTo || (this._listeningTo = {});
-      var id = obj._listenId || (obj._listenId = _.uniqueId('l'));
+      var id = obj._listenId || (obj._listenId = __.uniqueId('l'));
       listeningTo[id] = obj;
       if (!callback && typeof name === 'object') callback = this;
       obj[implementation](name, callback, this);
@@ -179,7 +173,49 @@ var splice = array.splice;
   // Aliases for backwards compatibility.
   Events.bind   = Events.on;
   Events.unbind = Events.off;
-;window.Cow = window.Cow || {};
+  
+    var root = this;
+    if (typeof exports !== 'undefined') {
+        if (typeof module !== 'undefined' && module.exports) {
+          exports = module.exports = Events;
+        }
+        exports.Events = Events;
+    } else {
+        root.Events = Events;
+    }
+  
+}.call(this));;var Cow = {};
+(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
+Cow.utils = {
+    //Generate a unique id
+    idgen: function(){
+        //TODO: add some randomness
+        return new Date().getTime().toString();
+    }
+};
+}.call(this));;(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.record = function(){
     //FIXME: 'this' object is being overwritten by its children 
     this._id    = null;
@@ -196,7 +232,7 @@ Cow.record.prototype =
 {
     sync: function(){
         var now = new Date().getTime();
-        if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
+        if ( __(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
             this.deltas(now, this._deltaq); //add deltas from queue
         }
         this._deltaq = {}; //reset deltaq
@@ -293,10 +329,10 @@ Cow.record.prototype =
         else {
             //Recreate the data based on deltas
             var returnval = {};
-            var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
-            _.each(deltas, function(d){
+            var deltas = __.sortBy(this.deltas(), function(d){return d.timestamp;});
+            __.each(deltas, function(d){
                 if (d.timestamp <= timestamp){
-                    _.extend(returnval, d.data);
+                    __.extend(returnval, d.data);
                 }
             });
             return returnval;
@@ -375,7 +411,18 @@ Cow.record.prototype =
     }
 
 };
-;window.Cow = window.Cow || {};
+}.call(this));;(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 //Synstore keeps track of records
 Cow.syncstore =  function(config){
     var self = this;
@@ -608,7 +655,7 @@ Cow.syncstore.prototype =
     **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
-        _.each(this._records, function(d){
+        __.each(this._records, function(d){
             //If request is older than feature itself, disregard
             if (timestamp < d._created){
                 //don't add
@@ -890,8 +937,19 @@ Cow.syncstore.prototype =
     } 
 };
 //Adding some Backbone event binding functionality to the store
-_.extend(Cow.syncstore.prototype, Events);
-;window.Cow = window.Cow || {};
+__.extend(Cow.syncstore.prototype, Events);
+}.call(this));;(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.peer = function(config){
      if (!config._id) {throw 'No _id given for peer';}
     this._id = config._id;
@@ -946,8 +1004,19 @@ Cow.peer.prototype = {
         }
             
 };
-_.extend(Cow.peer.prototype,Cow.record.prototype);
-;window.Cow = window.Cow || {};
+__.extend(Cow.peer.prototype,Cow.record.prototype);
+}.call(this));;(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.socketserver = function(config){
      if (!config._id) {throw 'No _id given for socketserver';}
     this._id = config._id;
@@ -981,8 +1050,19 @@ Cow.socketserver.prototype = {
             return protocol + '://' + ip + ':' + port + '/' + dir;  
         }
 };
-_.extend(Cow.socketserver.prototype,Cow.record.prototype);
-;window.Cow = window.Cow || {};
+__.extend(Cow.socketserver.prototype,Cow.record.prototype);
+}.call(this));;(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.user = function(config){
     if (!config._id) {throw 'No _id given for user';}
     this._id = config._id;
@@ -1083,8 +1163,20 @@ Cow.user.prototype =
     }
     
 };
-_.extend(Cow.user.prototype, Cow.record.prototype);
-;window.Cow = window.Cow || {};
+__.extend(Cow.user.prototype, Cow.record.prototype);
+}.call(this));;(function(){
+
+var root = this;
+
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.group = function(config){
     if (!config._id) {throw 'No _id given for group';}
     this._id = config._id;
@@ -1262,8 +1354,19 @@ Cow.group.prototype =
         return hasmember;
     }
 };
-_.extend(Cow.group.prototype, Cow.record.prototype);
-;window.Cow = window.Cow || {};
+__.extend(Cow.group.prototype, Cow.record.prototype);
+}.call(this));;(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.item = function(config){
     if (!config || !config._id) {throw 'No _id given for item';}
     this._id = config._id;
@@ -1503,8 +1606,20 @@ Cow.item.prototype =
         }
     }
 };
-_.extend(Cow.item.prototype, Cow.record.prototype);
-;window.Cow = window.Cow || {};
+__.extend(Cow.item.prototype, Cow.record.prototype);
+
+}.call(this));;(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.project = function(config){
     var self = this;
     if (!config._id) {throw 'No _id given for project';}
@@ -1524,7 +1639,7 @@ Cow.project = function(config){
     //END OF FIXME
     
     var dbname = 'groups_' + config._id;
-    this._groupStore = _.extend(
+    this._groupStore = __.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{
         _records: [],
         _recordproto: function(_id){return new Cow.group({_id: _id, store: this});},
@@ -1537,7 +1652,7 @@ Cow.project = function(config){
     });
     
     dbname = 'items_' + config._id;
-    this._itemStore = _.extend(
+    this._itemStore = __.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{
         _recordproto:   function(_id){return new Cow.item({_id: _id, store: this});},
         _projectid: this._id,
@@ -1614,8 +1729,18 @@ Cow.project.prototype =
         return mygroups;
     }
 };
-_.extend(Cow.project.prototype, Cow.record.prototype);
-;window.Cow = window.Cow || {};
+__.extend(Cow.project.prototype, Cow.record.prototype);
+}.call(this));;(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
 
 Cow.websocket = function(config){
     this._core = config.core;
@@ -1650,14 +1775,39 @@ Cow.websocket.prototype.connect = function() {
     if (!this._connection || this._connection.readyState != 1) //if no connection
     {
         if(this._url.indexOf('ws') === 0) {
-            var connection = new WebSocket(this._url, 'connect');
-            connection.onopen = this._onOpen;
-            connection.onmessage = this._onMessage;
-            connection.onclose = this._onClose;    
-            connection.onerror = this._onError;
-            connection.obj = this;
-            this._connection = connection;
-            
+            var connection = null;
+            //In case of nodejs....
+            if (typeof exports !== 'undefined') {
+                connection = new WebSocket();
+                connection.on('connectFailed', function(error) {
+                    console.log('Connect Error: ' + error.toString());
+                });
+                client.on('connect', function(connection) {
+                    console.log('WebSocket client connected');
+                    connection.on('error', function(error) {
+                        console.log("Connection Error: " + error.toString());
+                    });
+                    connection.on('close', function() {
+                        console.log('echo-protocol Connection Closed');
+                    });
+                    connection.on('message', function(message) {
+                        if (message.type === 'utf8') {
+                            console.log("Received: '" + message.utf8Data + "'");
+                        }
+                    });
+                });
+                connection.connect(this._url, 'connect');
+                
+            }
+            else {
+                connection = new WebSocket(this._url, 'connect');
+                //connection.onopen = this._onOpen;
+                connection.onmessage = this._onMessage;
+                connection.onclose = this._onClose;    
+                connection.onerror = this._onError;
+                connection.obj = this;
+                this._connection = connection;
+            }
         }
         else {throw('Incorrect URL: ' + this._url);}
     }
@@ -1810,7 +1960,7 @@ Cow.websocket.prototype._onConnect = function(payload){
     var version = payload.server_version;
     var serverkey = payload.server_key;
     
-    if (serverkey != 'test'){ //TODO: key must become variable
+    if (serverkey !== undefined && serverkey != 'test'){ //TODO: key must become variable
         self.disconnect();
         return;
     }
@@ -1906,8 +2056,8 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
         var data;
         //Give the peer information on what will be synced
         var syncinfo = {
-            IWillSent: _.pluck(syncobject.pushlist,"_id"),
-            IShallReceive: _.pluck(syncobject.requestlist,"_id") 
+            IWillSent: __.pluck(syncobject.pushlist,"_id"),
+            IShallReceive: __.pluck(syncobject.requestlist,"_id") 
         };
         data = {
             "syncType" : payload.syncType,
@@ -1932,7 +2082,7 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
         /** TT: IIS/signalR can't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable **/
-        _(data.list).each(function(d){
+        __(data.list).each(function(d){
             msg = {
                 "syncType" : payload.syncType,
                 "project" : project,
@@ -1950,8 +2100,8 @@ Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
     **/
     var returnval = null;
     //First only get alpha peers
-    var alphaPeers = _.sortBy(
-        _.filter(this._core.peers(),function(d){
+    var alphaPeers = __.sortBy(
+        __.filter(this._core.peers(),function(d){
             return (d.data('family') == 'alpha' && !d.deleted());
         }),
      function(d){return d.created();});
@@ -1985,7 +2135,7 @@ Cow.websocket.prototype._onWantedList = function(payload) {
     /** TT: IIS/signalR can't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable **/
-    _(data.list).each(function(d){
+    __(data.list).each(function(d){
         msg = {
             "syncType" : payload.syncType,
             "project" : store._projectid,
@@ -2013,9 +2163,9 @@ Cow.websocket.prototype._onMissingRecords = function(payload) {
         }
         //Do the syncing for the deltas
         if (data.deltas && record.deltas()){
-            var localarr = _.pluck(record.deltas(),'timestamp');
-            var remotearr = _.pluck(data.deltas,'timestamp');
-            var diff = _.difference(localarr, remotearr);
+            var localarr = __.pluck(record.deltas(),'timestamp');
+            var remotearr = __.pluck(data.deltas,'timestamp');
+            var diff = __.difference(localarr, remotearr);
             //TODO: nice solution for future, when dealing more with deltas
             //For now we just respond with a forced sync our own record so the delta's get synced anyway
             if (diff.length > 0){
@@ -2033,8 +2183,8 @@ Cow.websocket.prototype._onUpdatedRecords = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
-    //TODO: _.without might not be most effective way to purge an array
-    store.syncinfo.toReceive = _.without(store.syncinfo.toReceive,data._id); 
+    //TODO: __.without might not be most effective way to purge an array
+    store.syncinfo.toReceive = __.without(store.syncinfo.toReceive,data._id); 
     store.trigger('datachange');
 };
     // END Syncing messages
@@ -2070,7 +2220,7 @@ Cow.websocket.prototype._onCommand = function(data) {
     //Remove all data from a peer
     if (command == 'purgePeer'){
         if (targetuser && targetuser == this._core.peerid()){
-            _.each(core.projects(), function(d){
+            __.each(core.projects(), function(d){
                 d.itemStore().clear();
                 d.groupStore().clear();
             });
@@ -2096,8 +2246,20 @@ Cow.websocket.prototype._onCommand = function(data) {
 };
 
 //Adding some Backbone event binding functionality to the store
-_.extend(Cow.websocket.prototype, Events);
-;Cow.core = function(config){
+__.extend(Cow.websocket.prototype, Events);
+}.call(this));;(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
+Cow.core = function(config){
     var self = this;
     //if (!config.wsUrl){throw('No wsURL given');}
     this._userid = null;
@@ -2110,7 +2272,7 @@ _.extend(Cow.websocket.prototype, Events);
     this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     
     /*PROJECTS*/
-    this._projectStore =  _.extend(
+    this._projectStore =  __.extend(
         new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
@@ -2120,7 +2282,7 @@ _.extend(Cow.websocket.prototype, Events);
     
     
     /*PEERS*/
-    this._peerStore =  _.extend(
+    this._peerStore =  __.extend(
         new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
          _records: [],
         //prototype for record
@@ -2134,7 +2296,7 @@ _.extend(Cow.websocket.prototype, Events);
     });
     
     /*USERS*/
-    this._userStore =  _.extend(
+    this._userStore =  __.extend(
         new Cow.syncstore({dbname: 'users', noDeltas: true, core: this}), {
         _records: [],
         //prototype for record
@@ -2144,7 +2306,7 @@ _.extend(Cow.websocket.prototype, Events);
     });
     
     /*SOCKETSERVERS*/
-    this._socketserverStore =  _.extend(
+    this._socketserverStore =  __.extend(
         new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this.maxAge}), {
         _records: [],
         //prototype for record
@@ -2351,4 +2513,6 @@ Cow.core.prototype =
     }
 };
 //Adding some Backbone event binding functionality to the store
-_.extend(Cow.core.prototype, Events);
+__.extend(Cow.core.prototype, Events);
+
+}.call(this));

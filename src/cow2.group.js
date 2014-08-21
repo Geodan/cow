@@ -1,4 +1,16 @@
-window.Cow = window.Cow || {};
+(function(){
+
+var root = this;
+
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.group = function(config){
     if (!config._id) {throw 'No _id given for group';}
     this._id = config._id;
@@ -176,4 +188,5 @@ Cow.group.prototype =
         return hasmember;
     }
 };
-_.extend(Cow.group.prototype, Cow.record.prototype);
+__.extend(Cow.group.prototype, Cow.record.prototype);
+}.call(this));
