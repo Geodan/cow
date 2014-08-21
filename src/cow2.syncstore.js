@@ -1,4 +1,15 @@
-window.Cow = window.Cow || {};
+(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 //Synstore keeps track of records
 Cow.syncstore =  function(config){
     var self = this;
@@ -231,7 +242,7 @@ Cow.syncstore.prototype =
     **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
-        _.each(this._records, function(d){
+        __.each(this._records, function(d){
             //If request is older than feature itself, disregard
             if (timestamp < d._created){
                 //don't add
@@ -513,4 +524,5 @@ Cow.syncstore.prototype =
     } 
 };
 //Adding some Backbone event binding functionality to the store
-_.extend(Cow.syncstore.prototype, Events);
+__.extend(Cow.syncstore.prototype, Events);
+}.call(this));

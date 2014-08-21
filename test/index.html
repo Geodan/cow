@@ -110,13 +110,14 @@
    
   
   <script type="text/javascript">
-  
+  var us = _;
   var core = new Cow.core();
   //add a default socketserver
   core.socketservers({
     _id: 'default', 
     data: {protocol:'wss',ip:'websocket.geodan.nl', port:443}
   });
+  core.socketserver('default');
   var data = new Cow.data(core);
   
   function addserver(){
@@ -272,7 +273,7 @@
           });
   }
   
-  var connection = core.connect('default');
+  var connection = core.connect();
   core.socketserverStore().loaded.then(reload_serverlist);
   core.socketserverStore().on('datachange', reload_serverlist);
   

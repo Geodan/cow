@@ -1,4 +1,15 @@
-window.Cow = window.Cow || {};
+(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.peer = function(config){
      if (!config._id) {throw 'No _id given for peer';}
     this._id = config._id;
@@ -53,4 +64,5 @@ Cow.peer.prototype = {
         }
             
 };
-_.extend(Cow.peer.prototype,Cow.record.prototype);
+__.extend(Cow.peer.prototype,Cow.record.prototype);
+}.call(this));

@@ -1,4 +1,15 @@
-window.Cow = window.Cow || {};
+(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
 Cow.socketserver = function(config){
      if (!config._id) {throw 'No _id given for socketserver';}
     this._id = config._id;
@@ -32,4 +43,5 @@ Cow.socketserver.prototype = {
             return protocol + '://' + ip + ':' + port + '/' + dir;  
         }
 };
-_.extend(Cow.socketserver.prototype,Cow.record.prototype);
+__.extend(Cow.socketserver.prototype,Cow.record.prototype);
+}.call(this));
