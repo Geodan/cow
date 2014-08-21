@@ -28,8 +28,10 @@ core.socketservers({
         port:443
     }
 });
+//Set current socket server
+core.socketserver('default');
 //Create a connection
-var connection = core.connect('default');
+var connection = core.connect();
 `````
 
 From here on you are set to work with the workspace according to the API.
