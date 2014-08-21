@@ -1,4 +1,5 @@
 var Cow = {};
+
 (function(){
 
 var root = this;
@@ -9,6 +10,7 @@ if (typeof exports !== 'undefined') {
     exports.Cow = Cow || {}; 
 } else {
     root.Cow = Cow || {};
+    root.__ = _;
 }
 
 Cow.utils = {

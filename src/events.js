@@ -5,7 +5,7 @@ var array = [];
 var push = array.push;
 var slice = array.slice;
 var splice = array.splice;
-
+var __ = __ || _;
 // Backbone.Events
   // ---------------
 

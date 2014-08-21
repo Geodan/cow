@@ -1,5 +1,5 @@
-us = require('../../node_modules/underscore/underscore.js')._
-_ = us;
+__ = require('../../node_modules/underscore/underscore.js')._
+_ = __;
 Promise = require('../../node_modules/es6-promise').Promise;
 Events = require('../../src/events.js');
 WebSocket = require('websocket').client;

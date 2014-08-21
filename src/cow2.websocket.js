@@ -36,6 +36,7 @@ Cow.websocket.prototype.disconnect = function() {
         connect(url) - connect to websocket server on url, returns connection
     **/
 Cow.websocket.prototype.connect = function() {
+    var self = this;
     var core = this._core;
     this._url = core.socketserver().url(); //get url from list of socketservers
     
@@ -50,30 +51,29 @@ Cow.websocket.prototype.connect = function() {
                 connection.on('connectFailed', function(error) {
                     console.log('Connect Error: ' + error.toString());
                 });
-                client.on('connect', function(connection) {
+                connection.on('connect', function(conn) {
                     console.log('WebSocket client connected');
-                    connection.on('error', function(error) {
-                        console.log("Connection Error: " + error.toString());
-                    });
-                    connection.on('close', function() {
-                        console.log('echo-protocol Connection Closed');
-                    });
-                    connection.on('message', function(message) {
+                    conn.on('error', self._onError);
+                    conn.on('close', self._onClose);
+                    conn.on('message', function(message) {
                         if (message.type === 'utf8') {
                             console.log("Received: '" + message.utf8Data + "'");
+                            self._onMessage({data:message.utf8Data});
                         }
                     });
+                    conn.obj = self;
+                    self._connection = conn;
                 });
                 connection.connect(this._url, 'connect');
-                
             }
+            //Just in-browser websocket
             else {
                 connection = new WebSocket(this._url, 'connect');
                 //connection.onopen = this._onOpen;
                 connection.onmessage = this._onMessage;
                 connection.onclose = this._onClose;    
                 connection.onerror = this._onError;
-                connection.obj = this;
+                connection._core = this._core;
                 this._connection = connection;
             }
         }
@@ -119,7 +119,7 @@ Cow.websocket.prototype.sendData = function(data, action, target){
     }
 };
 Cow.websocket.prototype._onMessage = function(message){
-    var core = this.obj._core;
+    var core = this._core;
     var data = JSON.parse(message.data); //TODO: catch parse errors
     var sender = data.sender;
     var PEERID = core.peerid(); 
@@ -135,7 +135,7 @@ Cow.websocket.prototype._onMessage = function(message){
     **/
         case 'command':
             if (sender != PEERID){
-                this.obj._onCommand(data);
+                this._core.websocket()._onCommand(data);
             }
         break;
     /**
@@ -143,12 +143,12 @@ Cow.websocket.prototype._onMessage = function(message){
     **/
         //websocket confirms connection by returning the unique peerID (targeted)
         case 'connected':
-            this.obj._onConnect(payload);
+            this._core.websocket()._onConnect(payload);
         break;
         
         //websocket tells everybody a peer has gone, with ID: peerID
         case 'peerGone':
-            this.obj._onPeerGone(payload);
+            this._core.websocket()._onPeerGone(payload);
         break;      
     
     /**
@@ -157,34 +157,34 @@ Cow.websocket.prototype._onMessage = function(message){
         //a new peer has arrived and gives a list of its records
         case 'newList':
             if(sender != PEERID) {
-                this.obj._onNewList(payload,sender);
+                this._core.websocket()._onNewList(payload,sender);
             }
         break;
         //you just joined and you receive info from the alpha peer on how much will be synced
         case 'syncinfo':
             if(sender != PEERID) {
-                this.obj._onSyncinfo(payload,sender);
+                this._core.websocket()._onSyncinfo(payload,sender);
             }
         break;
         //you just joined and you receive a list of records the others want (targeted)
         case 'wantedList':
             if(target == PEERID) {
-                this.obj._onWantedList(payload);
+                this._core.websocket()._onWantedList(payload);
             }
         break;
         
         //you just joined and receive the records you are missing (targeted)
         case 'missingRecords':
             if(target == PEERID) {
-                this.obj._onMissingRecords(payload);
+                this._core.websocket()._onMissingRecords(payload);
             }   
         break;
         
         //a new peer has arrived and sends everybody the records that are requested in the *wantedList*
         case 'requestedRecords':
             if(sender != PEERID) {
-                this.obj._onMissingRecords(payload);
-                //OBS: this.obj._onRequestedRecords(payload);
+                this._core.websocket()._onMissingRecords(payload);
+                //OBS: this._onRequestedRecords(payload);
             }
         break;
     /**
@@ -193,7 +193,7 @@ Cow.websocket.prototype._onMessage = function(message){
         //a peer sends a new or updated record
         case 'updatedRecord':
             if(sender != PEERID) {
-                this.obj._onUpdatedRecords(payload);
+                this._core.websocket()._onUpdatedRecords(payload);
             }
         break;
         
@@ -206,17 +206,17 @@ Cow.websocket.prototype._onClose = function(event){
     var wasClean = event.wasClean;
     var self = this;
     //this.close(); //FIME: TT: why was this needed?
-    this.obj._core.peerStore().clear();
-    this.obj._connected = false;
-    //TODO this.obj._core.trigger('ws-disconnected');    
+    this._core.peerStore().clear();
+    this._connected = false;
+    //TODO this._core.trigger('ws-disconnected');    
     var restart = function(){
         try{
-            self.obj._core.websocket().disconnect();
+            self._core.websocket().disconnect();
         }
         catch(err){
             console.warn(err);
         }
-        self.obj._connection = self.obj._core.websocket().connect();
+        self._connection = self._core.websocket().connect();
     };
     setTimeout(restart,5000);
 };
@@ -275,8 +275,8 @@ Cow.websocket.prototype._onPeerGone = function(payload) {
     //TODO this.core.trigger('ws-peerGone',payload); 
 };
 Cow.websocket.prototype._onError = function(e){
-    this.obj._core.peerStore().clear();
-    this.obj._connected = false;
+    this._core.peerStore().clear();
+    this._connected = false;
     console.warn('error in websocket connection: ' + e.type);
 };
 Cow.websocket.prototype._getStore = function(payload){
