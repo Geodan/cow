@@ -83,6 +83,18 @@ wsServer.on('request', function(request) {
     console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
     return;
   }
+  //Check which protocols are requested and make sure that the 'connect' protocol is included.
+  var protocols = request.requestedProtocols;
+  var reject = true;
+  for (var i=0; i< protocols.length; i++) {
+	if(protocols[i]=="connect") reject = false;
+  }
+  //If there is no 'connect' protocol requested reject the connection to prevent server crashes
+  if(reject) {
+	console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected due to incompatible protocol.');
+	request.reject(501,"Only the 'connect' protocol is supported, sorry!");
+	return;
+  }
   
   /*
    Accepting a new connection and add the connection to the internal
@@ -133,7 +145,8 @@ wsServer.on('request', function(request) {
       peers.splice(index, 1);
     }
   });
-});
+	
+  });
 
 // exit if any js file or template file is changed.
 // it is ok because this script encapsualated in a batch while(true);
