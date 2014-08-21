@@ -257,10 +257,16 @@ Cow.core.prototype =
         return this._websocket;
     },
     /**
-        connect(id) - starts the websocket connection, returns connection
+        connect() - starts the websocket connection, returns connection
     **/
-    connect: function(id){
-        return this._websocket.connect(id);
+    connect: function(){
+        return this._websocket.connect();
+    },
+    /**
+        connect() - starts the websocket connection, returns connection
+    **/
+    disconnect: function(){
+        return this._websocket.disconnect();
     }
 };
 //Adding some Backbone event binding functionality to the store
