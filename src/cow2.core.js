@@ -23,7 +23,7 @@ Cow.core = function(config){
     this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     
     /*PROJECTS*/
-    this._projectStore =  __.extend(
+    this._projectStore =  _.extend(
         new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
@@ -33,7 +33,7 @@ Cow.core = function(config){
     
     
     /*PEERS*/
-    this._peerStore =  __.extend(
+    this._peerStore =  _.extend(
         new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
          _records: [],
         //prototype for record
@@ -47,7 +47,7 @@ Cow.core = function(config){
     });
     
     /*USERS*/
-    this._userStore =  __.extend(
+    this._userStore =  _.extend(
         new Cow.syncstore({dbname: 'users', noDeltas: true, core: this}), {
         _records: [],
         //prototype for record
@@ -57,7 +57,7 @@ Cow.core = function(config){
     });
     
     /*SOCKETSERVERS*/
-    this._socketserverStore =  __.extend(
+    this._socketserverStore =  _.extend(
         new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this.maxAge}), {
         _records: [],
         //prototype for record
@@ -270,6 +270,6 @@ Cow.core.prototype =
     }
 };
 //Adding some Backbone event binding functionality to the store
-__.extend(Cow.core.prototype, Events);
+_.extend(Cow.core.prototype, Events);
 
 }.call(this));

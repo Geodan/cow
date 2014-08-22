@@ -249,6 +249,6 @@ Cow.item.prototype =
         }
     }
 };
-__.extend(Cow.item.prototype, Cow.record.prototype);
+_.extend(Cow.item.prototype, Cow.record.prototype);
 
 }.call(this));

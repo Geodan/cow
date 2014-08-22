@@ -5,7 +5,7 @@ var array = [];
 var push = array.push;
 var slice = array.slice;
 var splice = array.splice;
-var __ = __ || _;
+
 // Backbone.Events
   // ---------------
 
@@ -15,7 +15,7 @@ var __ = __ || _;
   // succession.
   //
   //     var object = {};
-  //     __.extend(object, Backbone.Events);
+  //     _.extend(object, Backbone.Events);
   //     object.on('expand', function(){ alert('expanded'); });
   //     object.trigger('expand');
   //
@@ -36,7 +36,7 @@ var __ = __ || _;
     once: function(name, callback, context) {
       if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
       var self = this;
-      var once = __.once(function() {
+      var once = _.once(function() {
         self.off(name, once);
         callback.apply(this, arguments);
       });
@@ -55,7 +55,7 @@ var __ = __ || _;
         this._events = void 0;
         return this;
       }
-      names = name ? [name] : __.keys(this._events);
+      names = name ? [name] : _.keys(this._events);
       for (i = 0, l = names.length; i < l; i++) {
         name = names[i];
         if (events = this._events[name]) {
@@ -103,7 +103,7 @@ var __ = __ || _;
       for (var id in listeningTo) {
         obj = listeningTo[id];
         obj.off(name, callback, this);
-        if (remove || __.isEmpty(obj._events)) delete this._listeningTo[id];
+        if (remove || _.isEmpty(obj._events)) delete this._listeningTo[id];
       }
       return this;
     }
@@ -158,10 +158,10 @@ var __ = __ || _;
   // Inversion-of-control versions of `on` and `once`. Tell *this* object to
   // listen to an event in another object ... keeping track of what it's
   // listening to.
-  __.each(listenMethods, function(implementation, method) {
+  _.each(listenMethods, function(implementation, method) {
     Events[method] = function(obj, name, callback) {
       var listeningTo = this._listeningTo || (this._listeningTo = {});
-      var id = obj._listenId || (obj._listenId = __.uniqueId('l'));
+      var id = obj._listenId || (obj._listenId = _.uniqueId('l'));
       listeningTo[id] = obj;
       if (!callback && typeof name === 'object') callback = this;
       obj[implementation](name, callback, this);

@@ -242,7 +242,7 @@ Cow.syncstore.prototype =
     **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
-        __.each(this._records, function(d){
+        _.each(this._records, function(d){
             //If request is older than feature itself, disregard
             if (timestamp < d._created){
                 //don't add
@@ -524,5 +524,5 @@ Cow.syncstore.prototype =
     } 
 };
 //Adding some Backbone event binding functionality to the store
-__.extend(Cow.syncstore.prototype, Events);
+_.extend(Cow.syncstore.prototype, Events);
 }.call(this));

@@ -10,7 +10,7 @@ if (typeof exports !== 'undefined') {
     exports.Cow = Cow || {}; 
 } else {
     root.Cow = Cow || {};
-    root.__ = _;
+    root._ = _;
 }
 
 Cow.utils = {

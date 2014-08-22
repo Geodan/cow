@@ -5,7 +5,7 @@ var array = [];
 var push = array.push;
 var slice = array.slice;
 var splice = array.splice;
-var __ = __ || _;
+
 // Backbone.Events
   // ---------------
 
@@ -15,7 +15,7 @@ var __ = __ || _;
   // succession.
   //
   //     var object = {};
-  //     __.extend(object, Backbone.Events);
+  //     _.extend(object, Backbone.Events);
   //     object.on('expand', function(){ alert('expanded'); });
   //     object.trigger('expand');
   //
@@ -36,7 +36,7 @@ var __ = __ || _;
     once: function(name, callback, context) {
       if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
       var self = this;
-      var once = __.once(function() {
+      var once = _.once(function() {
         self.off(name, once);
         callback.apply(this, arguments);
       });
@@ -55,7 +55,7 @@ var __ = __ || _;
         this._events = void 0;
         return this;
       }
-      names = name ? [name] : __.keys(this._events);
+      names = name ? [name] : _.keys(this._events);
       for (i = 0, l = names.length; i < l; i++) {
         name = names[i];
         if (events = this._events[name]) {
@@ -103,7 +103,7 @@ var __ = __ || _;
       for (var id in listeningTo) {
         obj = listeningTo[id];
         obj.off(name, callback, this);
-        if (remove || __.isEmpty(obj._events)) delete this._listeningTo[id];
+        if (remove || _.isEmpty(obj._events)) delete this._listeningTo[id];
       }
       return this;
     }
@@ -158,10 +158,10 @@ var __ = __ || _;
   // Inversion-of-control versions of `on` and `once`. Tell *this* object to
   // listen to an event in another object ... keeping track of what it's
   // listening to.
-  __.each(listenMethods, function(implementation, method) {
+  _.each(listenMethods, function(implementation, method) {
     Events[method] = function(obj, name, callback) {
       var listeningTo = this._listeningTo || (this._listeningTo = {});
-      var id = obj._listenId || (obj._listenId = __.uniqueId('l'));
+      var id = obj._listenId || (obj._listenId = _.uniqueId('l'));
       listeningTo[id] = obj;
       if (!callback && typeof name === 'object') callback = this;
       obj[implementation](name, callback, this);
@@ -196,7 +196,7 @@ if (typeof exports !== 'undefined') {
     exports.Cow = Cow || {}; 
 } else {
     root.Cow = Cow || {};
-    root.__ = _;
+    root._ = _;
 }
 
 Cow.utils = {
@@ -235,7 +235,7 @@ Cow.record.prototype =
 {
     sync: function(){
         var now = new Date().getTime();
-        if ( __(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
+        if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
             this.deltas(now, this._deltaq); //add deltas from queue
         }
         this._deltaq = {}; //reset deltaq
@@ -332,10 +332,10 @@ Cow.record.prototype =
         else {
             //Recreate the data based on deltas
             var returnval = {};
-            var deltas = __.sortBy(this.deltas(), function(d){return d.timestamp;});
-            __.each(deltas, function(d){
+            var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
+            _.each(deltas, function(d){
                 if (d.timestamp <= timestamp){
-                    __.extend(returnval, d.data);
+                    _.extend(returnval, d.data);
                 }
             });
             return returnval;
@@ -659,7 +659,7 @@ Cow.syncstore.prototype =
     **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
-        __.each(this._records, function(d){
+        _.each(this._records, function(d){
             //If request is older than feature itself, disregard
             if (timestamp < d._created){
                 //don't add
@@ -941,7 +941,7 @@ Cow.syncstore.prototype =
     } 
 };
 //Adding some Backbone event binding functionality to the store
-__.extend(Cow.syncstore.prototype, Events);
+_.extend(Cow.syncstore.prototype, Events);
 }.call(this));
 (function(){
 
@@ -1009,7 +1009,7 @@ Cow.peer.prototype = {
         }
             
 };
-__.extend(Cow.peer.prototype,Cow.record.prototype);
+_.extend(Cow.peer.prototype,Cow.record.prototype);
 }.call(this));
 (function(){
 
@@ -1056,7 +1056,7 @@ Cow.socketserver.prototype = {
             return protocol + '://' + ip + ':' + port + '/' + dir;  
         }
 };
-__.extend(Cow.socketserver.prototype,Cow.record.prototype);
+_.extend(Cow.socketserver.prototype,Cow.record.prototype);
 }.call(this));
 (function(){
 
@@ -1170,7 +1170,7 @@ Cow.user.prototype =
     }
     
 };
-__.extend(Cow.user.prototype, Cow.record.prototype);
+_.extend(Cow.user.prototype, Cow.record.prototype);
 }.call(this));
 (function(){
 
@@ -1362,7 +1362,7 @@ Cow.group.prototype =
         return hasmember;
     }
 };
-__.extend(Cow.group.prototype, Cow.record.prototype);
+_.extend(Cow.group.prototype, Cow.record.prototype);
 }.call(this));
 (function(){
 
@@ -1615,7 +1615,7 @@ Cow.item.prototype =
         }
     }
 };
-__.extend(Cow.item.prototype, Cow.record.prototype);
+_.extend(Cow.item.prototype, Cow.record.prototype);
 
 }.call(this));
 (function(){
@@ -1649,7 +1649,7 @@ Cow.project = function(config){
     //END OF FIXME
     
     var dbname = 'groups_' + config._id;
-    this._groupStore = __.extend(
+    this._groupStore = _.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{
         _records: [],
         _recordproto: function(_id){return new Cow.group({_id: _id, store: this});},
@@ -1662,7 +1662,7 @@ Cow.project = function(config){
     });
     
     dbname = 'items_' + config._id;
-    this._itemStore = __.extend(
+    this._itemStore = _.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{
         _recordproto:   function(_id){return new Cow.item({_id: _id, store: this});},
         _projectid: this._id,
@@ -1739,7 +1739,7 @@ Cow.project.prototype =
         return mygroups;
     }
 };
-__.extend(Cow.project.prototype, Cow.record.prototype);
+_.extend(Cow.project.prototype, Cow.record.prototype);
 }.call(this));
 (function(){
 
@@ -2073,8 +2073,8 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
         var data;
         //Give the peer information on what will be synced
         var syncinfo = {
-            IWillSent: __.pluck(syncobject.pushlist,"_id"),
-            IShallReceive: __.pluck(syncobject.requestlist,"_id") 
+            IWillSent: _.pluck(syncobject.pushlist,"_id"),
+            IShallReceive: _.pluck(syncobject.requestlist,"_id") 
         };
         data = {
             "syncType" : payload.syncType,
@@ -2099,7 +2099,7 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
         /** TT: IIS/signalR can't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable **/
-        __(data.list).each(function(d){
+        _(data.list).each(function(d){
             msg = {
                 "syncType" : payload.syncType,
                 "project" : project,
@@ -2117,8 +2117,8 @@ Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
     **/
     var returnval = null;
     //First only get alpha peers
-    var alphaPeers = __.sortBy(
-        __.filter(this._core.peers(),function(d){
+    var alphaPeers = _.sortBy(
+        _.filter(this._core.peers(),function(d){
             return (d.data('family') == 'alpha' && !d.deleted());
         }),
      function(d){return d.created();});
@@ -2152,7 +2152,7 @@ Cow.websocket.prototype._onWantedList = function(payload) {
     /** TT: IIS/signalR can't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable **/
-    __(data.list).each(function(d){
+    _(data.list).each(function(d){
         msg = {
             "syncType" : payload.syncType,
             "project" : store._projectid,
@@ -2180,9 +2180,9 @@ Cow.websocket.prototype._onMissingRecords = function(payload) {
         }
         //Do the syncing for the deltas
         if (data.deltas && record.deltas()){
-            var localarr = __.pluck(record.deltas(),'timestamp');
-            var remotearr = __.pluck(data.deltas,'timestamp');
-            var diff = __.difference(localarr, remotearr);
+            var localarr = _.pluck(record.deltas(),'timestamp');
+            var remotearr = _.pluck(data.deltas,'timestamp');
+            var diff = _.difference(localarr, remotearr);
             //TODO: nice solution for future, when dealing more with deltas
             //For now we just respond with a forced sync our own record so the delta's get synced anyway
             if (diff.length > 0){
@@ -2200,8 +2200,8 @@ Cow.websocket.prototype._onUpdatedRecords = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
-    //TODO: __.without might not be most effective way to purge an array
-    store.syncinfo.toReceive = __.without(store.syncinfo.toReceive,data._id); 
+    //TODO: _.without might not be most effective way to purge an array
+    store.syncinfo.toReceive = _.without(store.syncinfo.toReceive,data._id); 
     store.trigger('datachange');
 };
     // END Syncing messages
@@ -2237,7 +2237,7 @@ Cow.websocket.prototype._onCommand = function(data) {
     //Remove all data from a peer
     if (command == 'purgePeer'){
         if (targetuser && targetuser == this._core.peerid()){
-            __.each(core.projects(), function(d){
+            _.each(core.projects(), function(d){
                 d.itemStore().clear();
                 d.groupStore().clear();
             });
@@ -2263,7 +2263,7 @@ Cow.websocket.prototype._onCommand = function(data) {
 };
 
 //Adding some Backbone event binding functionality to the store
-__.extend(Cow.websocket.prototype, Events);
+_.extend(Cow.websocket.prototype, Events);
 }.call(this));
 (function(){
 
@@ -2290,7 +2290,7 @@ Cow.core = function(config){
     this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     
     /*PROJECTS*/
-    this._projectStore =  __.extend(
+    this._projectStore =  _.extend(
         new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
@@ -2300,7 +2300,7 @@ Cow.core = function(config){
     
     
     /*PEERS*/
-    this._peerStore =  __.extend(
+    this._peerStore =  _.extend(
         new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
          _records: [],
         //prototype for record
@@ -2314,7 +2314,7 @@ Cow.core = function(config){
     });
     
     /*USERS*/
-    this._userStore =  __.extend(
+    this._userStore =  _.extend(
         new Cow.syncstore({dbname: 'users', noDeltas: true, core: this}), {
         _records: [],
         //prototype for record
@@ -2324,7 +2324,7 @@ Cow.core = function(config){
     });
     
     /*SOCKETSERVERS*/
-    this._socketserverStore =  __.extend(
+    this._socketserverStore =  _.extend(
         new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this.maxAge}), {
         _records: [],
         //prototype for record
@@ -2537,6 +2537,6 @@ Cow.core.prototype =
     }
 };
 //Adding some Backbone event binding functionality to the store
-__.extend(Cow.core.prototype, Events);
+_.extend(Cow.core.prototype, Events);
 
 }.call(this));
