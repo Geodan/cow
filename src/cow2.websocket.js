@@ -38,9 +38,15 @@ Cow.websocket.prototype.disconnect = function() {
 Cow.websocket.prototype.connect = function() {
     var self = this;
     var core = this._core;
-    this._url = core.socketserver().url(); //get url from list of socketservers
+    if (core.socketserver()){
+        this._url = core.socketserver().url(); //get url from list of socketservers
+    }
     
-    if (!this._url) {throw('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');}
+    if (!this._url) {
+        console.warn('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');
+        return false;
+    }
+
     if (!this._connection || this._connection.readyState != 1) //if no connection
     {
         if(this._url.indexOf('ws') === 0) {
