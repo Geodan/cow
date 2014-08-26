@@ -67,14 +67,14 @@ Schematically, it looks like:
 
 All the stores share the same basemethods as follows (userStore as example):
 `````javascript
-    core.users({_id:<string>}) -> adds a record with id, returns record object
+    core.users({}) -> adds an empty record, returns record object
     core.users(<string>) -> returns record object with id = <string>
     core.users([<string>]) -> returns array of record objects with matching ids
     core.users()   -> returns array of all record objects
     core.userStore() -> returns the userstore object
     core.userStore().syncRecords() -> syncs all records with status 'dirty'
 `````
-<b>Please note that id's should be UNIQUE:</b> since items from different projects end up in the same database they need a unique identifier. Having redundant id's results in unwanted overwriting of records.
+When adding a new record, the _id paramter is optional. If you don't give it, a new id will be automatically assigned to the record. This is the recommended way of adding a record.
 
 Some store's are configured differently:
 * peerStore doesn't use local storage (indexeddb) since peers are unique in every session
@@ -116,9 +116,9 @@ All *record objects* behave the same* and as follows (user object as example):
 `````
 Since most methods return their own object, the methods are chainable. So you can write rather condensed code:
 `````javascript
-    var defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
-    var defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
-    var firstitem = defaultproject.items({_id:1})
+    var defaultproject = core.projects({}).data('name',"Sketch").sync();
+    var defaultgroup = defaultproject.groups({}).data('name','Public').sync();
+    var firstitem = defaultproject.items({})
         .data('type','msg')
         .data('creator',core.user().id())
         .sync();
