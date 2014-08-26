@@ -74,6 +74,8 @@ All the stores share the same basemethods as follows (userStore as example):
     core.userStore() -> returns the userstore object
     core.userStore().syncRecords() -> syncs all records with status 'dirty'
 `````
+<b>Please note that id's should be UNIQUE:</b> since items from different projects end up in the same database they need a unique identifier. Having redundant id's results in unwanted overwriting of records.
+
 Some store's are configured differently:
 * peerStore doesn't use local storage (indexeddb) since peers are unique in every session
 * stores can have a maximum lifetime for the records. When a record isn't updated for x time then the record is not used anymore. It is still kept in the localstorage however.
