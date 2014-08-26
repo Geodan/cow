@@ -11,7 +11,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.user = function(config){
-    if (!config._id) {throw 'No _id given for user';}
+    //if (!config._id) {throw 'No _id given for user';}
     this._id = config._id;
     this._store = config.store;
     

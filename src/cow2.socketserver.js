@@ -11,7 +11,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.socketserver = function(config){
-     if (!config._id) {throw 'No _id given for socketserver';}
+     //if (!config._id) {throw 'No _id given for socketserver';}
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;

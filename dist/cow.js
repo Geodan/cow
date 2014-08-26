@@ -389,7 +389,7 @@ Cow.record.prototype =
         }; 
     },
     inflate: function(config){
-        this._id = config._id || this._id;
+        this._id = config._id || this._id || new Date().getTime().toString();
         this._status = config.status || this._status;
         this._created = config.created || this._created;
         if (config.deleted !== undefined){
@@ -476,8 +476,9 @@ Cow.localdb.prototype.open  = function(){
 Cow.localdb.prototype.write = function(config){
     var storename = config.storename;
     var record = config.data;
+    var projectid = config.projectid;
     record._id = record._id.toString();
-    
+    record.projectid = projectid;
     var trans = this._db.transaction([storename], "readwrite");
     var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
@@ -512,9 +513,11 @@ Cow.localdb.prototype.getRecord = function(config){
 };
 
 Cow.localdb.prototype.getRecords = function(config){
+    var now = new Date();
+    
     var storename = config.storename;
     var projectid = config.projectid;
-    
+    console.log(now.toLocaleTimeString(), now.getMilliseconds(),'Getting records from ' + storename + ' proj. ' + projectid);
     var key,index = undefined;
     var trans = this._db.transaction([storename]);
     var store = trans.objectStore(storename);
@@ -535,6 +538,8 @@ Cow.localdb.prototype.getRecords = function(config){
             cursor.continue();
           }
           else{
+              var now = new Date();
+              console.log(now.toLocaleTimeString(), now.getMilliseconds(),'Got ' + result.length + ' records from ' + storename + ' proj. ' + projectid);
               resolve(result);
           }
         };
@@ -726,7 +731,8 @@ Cow.syncstore.prototype =
                 //record.deleted(false); //set undeleted //TT: disabled, since this gives a problem when a record from WS comes in as deleted
                 if (this.localdb && source == 'WS'){ //update the db
                     this.localdb.write({
-                        storename:this._storename, 
+                        storename:this._storename,
+                        projectid: this._projectid,
                         data: record.deflate()
                     });
                 }
@@ -739,6 +745,7 @@ Cow.syncstore.prototype =
             if (this.localdb && source == 'WS'){
                 promise = this.localdb.write({
                     storename:this._storename,
+                    projectid: this._projectid,
                     data:record.deflate()
                 });
             }
@@ -850,7 +857,8 @@ Cow.syncstore.prototype =
         }
         if (this.localdb){
             promise = this.localdb.write({
-                storename:self._storename, 
+                storename:this._storename,
+                projectid: this._projectid,
                 data: record.deflate()
             });
         }
@@ -1052,7 +1060,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.peer = function(config){
-     if (!config._id) {throw 'No _id given for peer';}
+     //if (!config._id) {throw 'No _id given for peer';}
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;
@@ -1120,7 +1128,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.socketserver = function(config){
-     if (!config._id) {throw 'No _id given for socketserver';}
+     //if (!config._id) {throw 'No _id given for socketserver';}
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;
@@ -1167,7 +1175,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.user = function(config){
-    if (!config._id) {throw 'No _id given for user';}
+    //if (!config._id) {throw 'No _id given for user';}
     this._id = config._id;
     this._store = config.store;
     
@@ -1282,7 +1290,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.group = function(config){
-    if (!config._id) {throw 'No _id given for group';}
+    //if (!config._id) {throw 'No _id given for group';}
     this._id = config._id;
     this._store = config.store;
     
@@ -1473,7 +1481,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.item = function(config){
-    if (!config || !config._id) {throw 'No _id given for item';}
+    //if (!config || !config._id) {throw 'No _id given for item';}
     this._id = config._id;
     this._store = config.store;
     

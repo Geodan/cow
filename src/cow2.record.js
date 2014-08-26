@@ -180,7 +180,7 @@ Cow.record.prototype =
         }; 
     },
     inflate: function(config){
-        this._id = config._id || this._id;
+        this._id = config._id || this._id || new Date().getTime().toString();
         this._status = config.status || this._status;
         this._created = config.created || this._created;
         if (config.deleted !== undefined){

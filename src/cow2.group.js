@@ -12,7 +12,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.group = function(config){
-    if (!config._id) {throw 'No _id given for group';}
+    //if (!config._id) {throw 'No _id given for group';}
     this._id = config._id;
     this._store = config.store;
     
