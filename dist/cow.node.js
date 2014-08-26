@@ -438,8 +438,36 @@ Cow.localdb = function(config){
     this._dbname = config.dbname;
     this._core = config.core;
     this._db = null;
+    var version = 2;
+    this._openpromise = new Promise(function(resolve, reject){    
+        var request = indexedDB.open(self._dbname,version);
+        request.onerror = function(event) {
+          reject(event.target.error);
+        };
+        request.onupgradeneeded = function(event) {
+          var db = event.target.result;
+          db
+            .createObjectStore("users", { keyPath: "_id" })
+            .createIndex("name", "name", { unique: false });
+          db
+            .createObjectStore("projects", { keyPath: "_id" })
+            .createIndex("name", "name", { unique: false });
+          db
+            .createObjectStore("socketservers", { keyPath: "_id" });
+          db
+            .createObjectStore("items", { keyPath: "_id" })
+            .createIndex("projectid", "projectid", { unique: false });
+          db
+            .createObjectStore("groups", { keyPath: "_id" })
+            .createIndex("projectid", "projectid", { unique: false });
+        };
+        request.onsuccess = function(event) {
+            self._db = event.target.result;
+            resolve(); //We're not sending back the result since we handle the db as private
+        };
+    });
 };
-
+/*
 Cow.localdb.prototype.open  = function(){
     var self = this;
     var version = 2;
@@ -472,7 +500,7 @@ Cow.localdb.prototype.open  = function(){
     });
     return promise;
 };
-
+*/
 Cow.localdb.prototype.write = function(config){
     var storename = config.storename;
     var record = config.data;
@@ -582,12 +610,14 @@ Cow.syncstore =  function(config){
     }
     this.loaded = new Promise(function(resolve, reject){
         if (self.localdb){
-            self.localdb.open().then(function(){
+            self._core.dbopen()
+              .then(function(){
                 self.localdb.getRecords({
                         storename: self._storename, 
                         projectid: self._projectid
-                    }).then(function(rows){
-                    //console.log('Got records from db ',self._dbname);
+                    })
+                  .then(function(rows){
+                    
                     rows.forEach(function(d){
                          var record = self._recordproto(d._id);
                          record.inflate(d);
@@ -606,6 +636,7 @@ Cow.syncstore =  function(config){
                              self._records.push(record); //Adding to the list
                          }
                      });
+                    console.log('Loaded '+rows.length+' records from', self._storename, self._projectid);
                     resolve();
                 },function(d){ //DB Fail
                     reject(d);
@@ -911,13 +942,14 @@ Cow.syncstore.prototype =
     sync: function(){
         var self = this;
         this.loaded.then(function(d){
+            console.log('Start sync ', self._type, self._projectid);
             var message = {};
             message.syncType = self._type;
             message.project = self._projectid;
             message.list = self.idList();
             self._core.websocket().sendData(message, 'newList');
         });
-        self.loaded.catch(function(e){
+        this.loaded.catch(function(e){
                 console.error(e.message);
         });
     },
@@ -2625,6 +2657,12 @@ Cow.core.prototype =
             }
         }
         return returnArr;
+    },
+    /**
+        localdbase() - return the open promise of the localdbase
+    **/
+    dbopen: function(){
+        return this._localdb._openpromise;
     },
     /**
         websocket() - return the _websocket object

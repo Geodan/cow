@@ -258,6 +258,12 @@ Cow.core.prototype =
         return returnArr;
     },
     /**
+        localdbase() - return the open promise of the localdbase
+    **/
+    dbopen: function(){
+        return this._localdb._openpromise;
+    },
+    /**
         websocket() - return the _websocket object
     **/
     websocket: function(){

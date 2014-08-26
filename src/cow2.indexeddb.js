@@ -21,8 +21,36 @@ Cow.localdb = function(config){
     this._dbname = config.dbname;
     this._core = config.core;
     this._db = null;
+    var version = 2;
+    this._openpromise = new Promise(function(resolve, reject){    
+        var request = indexedDB.open(self._dbname,version);
+        request.onerror = function(event) {
+          reject(event.target.error);
+        };
+        request.onupgradeneeded = function(event) {
+          var db = event.target.result;
+          db
+            .createObjectStore("users", { keyPath: "_id" })
+            .createIndex("name", "name", { unique: false });
+          db
+            .createObjectStore("projects", { keyPath: "_id" })
+            .createIndex("name", "name", { unique: false });
+          db
+            .createObjectStore("socketservers", { keyPath: "_id" });
+          db
+            .createObjectStore("items", { keyPath: "_id" })
+            .createIndex("projectid", "projectid", { unique: false });
+          db
+            .createObjectStore("groups", { keyPath: "_id" })
+            .createIndex("projectid", "projectid", { unique: false });
+        };
+        request.onsuccess = function(event) {
+            self._db = event.target.result;
+            resolve(); //We're not sending back the result since we handle the db as private
+        };
+    });
 };
-
+/*
 Cow.localdb.prototype.open  = function(){
     var self = this;
     var version = 2;
@@ -55,7 +83,7 @@ Cow.localdb.prototype.open  = function(){
     });
     return promise;
 };
-
+*/
 Cow.localdb.prototype.write = function(config){
     var storename = config.storename;
     var record = config.data;

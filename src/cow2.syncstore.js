@@ -29,12 +29,14 @@ Cow.syncstore =  function(config){
     }
     this.loaded = new Promise(function(resolve, reject){
         if (self.localdb){
-            self.localdb.open().then(function(){
+            self._core.dbopen()
+              .then(function(){
                 self.localdb.getRecords({
                         storename: self._storename, 
                         projectid: self._projectid
-                    }).then(function(rows){
-                    //console.log('Got records from db ',self._dbname);
+                    })
+                  .then(function(rows){
+                    
                     rows.forEach(function(d){
                          var record = self._recordproto(d._id);
                          record.inflate(d);
@@ -53,6 +55,7 @@ Cow.syncstore =  function(config){
                              self._records.push(record); //Adding to the list
                          }
                      });
+                    console.log('Loaded '+rows.length+' records from', self._storename, self._projectid);
                     resolve();
                 },function(d){ //DB Fail
                     reject(d);
@@ -358,13 +361,14 @@ Cow.syncstore.prototype =
     sync: function(){
         var self = this;
         this.loaded.then(function(d){
+            console.log('Start sync ', self._type, self._projectid);
             var message = {};
             message.syncType = self._type;
             message.project = self._projectid;
             message.list = self.idList();
             self._core.websocket().sendData(message, 'newList');
         });
-        self.loaded.catch(function(e){
+        this.loaded.catch(function(e){
                 console.error(e.message);
         });
     },
