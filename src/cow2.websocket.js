@@ -330,8 +330,8 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
         var data;
         //Give the peer information on what will be synced
         var syncinfo = {
-            IWillSent: __.pluck(syncobject.pushlist,"_id"),
-            IShallReceive: __.pluck(syncobject.requestlist,"_id") 
+            IWillSent: _.pluck(syncobject.pushlist,"_id"),
+            IShallReceive: _.pluck(syncobject.requestlist,"_id") 
         };
         data = {
             "syncType" : payload.syncType,
@@ -356,7 +356,7 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
         /** TT: IIS/signalR can't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable **/
-        __(data.list).each(function(d){
+        _(data.list).each(function(d){
             msg = {
                 "syncType" : payload.syncType,
                 "project" : project,
@@ -374,8 +374,8 @@ Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
     **/
     var returnval = null;
     //First only get alpha peers
-    var alphaPeers = __.sortBy(
-        __.filter(this._core.peers(),function(d){
+    var alphaPeers = _.sortBy(
+        _.filter(this._core.peers(),function(d){
             return (d.data('family') == 'alpha' && !d.deleted());
         }),
      function(d){return d.created();});
@@ -409,7 +409,7 @@ Cow.websocket.prototype._onWantedList = function(payload) {
     /** TT: IIS/signalR can't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable **/
-    __(data.list).each(function(d){
+    _(data.list).each(function(d){
         msg = {
             "syncType" : payload.syncType,
             "project" : store._projectid,
@@ -437,9 +437,9 @@ Cow.websocket.prototype._onMissingRecords = function(payload) {
         }
         //Do the syncing for the deltas
         if (data.deltas && record.deltas()){
-            var localarr = __.pluck(record.deltas(),'timestamp');
-            var remotearr = __.pluck(data.deltas,'timestamp');
-            var diff = __.difference(localarr, remotearr);
+            var localarr = _.pluck(record.deltas(),'timestamp');
+            var remotearr = _.pluck(data.deltas,'timestamp');
+            var diff = _.difference(localarr, remotearr);
             //TODO: nice solution for future, when dealing more with deltas
             //For now we just respond with a forced sync our own record so the delta's get synced anyway
             if (diff.length > 0){
@@ -457,8 +457,8 @@ Cow.websocket.prototype._onUpdatedRecords = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
-    //TODO: __.without might not be most effective way to purge an array
-    store.syncinfo.toReceive = __.without(store.syncinfo.toReceive,data._id); 
+    //TODO: _.without might not be most effective way to purge an array
+    store.syncinfo.toReceive = _.without(store.syncinfo.toReceive,data._id); 
     store.trigger('datachange');
 };
     // END Syncing messages
@@ -494,7 +494,7 @@ Cow.websocket.prototype._onCommand = function(data) {
     //Remove all data from a peer
     if (command == 'purgePeer'){
         if (targetuser && targetuser == this._core.peerid()){
-            __.each(core.projects(), function(d){
+            _.each(core.projects(), function(d){
                 d.itemStore().clear();
                 d.groupStore().clear();
             });
@@ -520,5 +520,5 @@ Cow.websocket.prototype._onCommand = function(data) {
 };
 
 //Adding some Backbone event binding functionality to the store
-__.extend(Cow.websocket.prototype, Events);
+_.extend(Cow.websocket.prototype, Events);
 }.call(this));

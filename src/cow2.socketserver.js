@@ -43,5 +43,5 @@ Cow.socketserver.prototype = {
             return protocol + '://' + ip + ':' + port + '/' + dir;  
         }
 };
-__.extend(Cow.socketserver.prototype,Cow.record.prototype);
+_.extend(Cow.socketserver.prototype,Cow.record.prototype);
 }.call(this));

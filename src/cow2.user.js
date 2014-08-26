@@ -110,5 +110,5 @@ Cow.user.prototype =
     }
     
 };
-__.extend(Cow.user.prototype, Cow.record.prototype);
+_.extend(Cow.user.prototype, Cow.record.prototype);
 }.call(this));

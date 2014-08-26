@@ -12,7 +12,11 @@ if (typeof exports !== 'undefined') {
 
 Cow.core = function(config){
     var self = this;
-    //if (!config.wsUrl){throw('No wsURL given');}
+    if (typeof(config) == 'undefined' ) {
+        config = {};
+    }
+    
+    this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
     this._projectid = null;
@@ -22,8 +26,11 @@ Cow.core = function(config){
     /*WEBSOCKET*/
     this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     
+    /*LOCALDB*/
+    this._localdb = new Cow.localdb({dbname: this._herdname});
+    
     /*PROJECTS*/
-    this._projectStore =  __.extend(
+    this._projectStore =  _.extend(
         new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
@@ -33,7 +40,7 @@ Cow.core = function(config){
     
     
     /*PEERS*/
-    this._peerStore =  __.extend(
+    this._peerStore =  _.extend(
         new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
          _records: [],
         //prototype for record
@@ -47,7 +54,7 @@ Cow.core = function(config){
     });
     
     /*USERS*/
-    this._userStore =  __.extend(
+    this._userStore =  _.extend(
         new Cow.syncstore({dbname: 'users', noDeltas: true, core: this}), {
         _records: [],
         //prototype for record
@@ -57,7 +64,7 @@ Cow.core = function(config){
     });
     
     /*SOCKETSERVERS*/
-    this._socketserverStore =  __.extend(
+    this._socketserverStore =  _.extend(
         new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this.maxAge}), {
         _records: [],
         //prototype for record
@@ -257,6 +264,12 @@ Cow.core.prototype =
         return this._websocket;
     },
     /**
+        localdb() - return the _localdb object
+    **/
+    localdb: function(){
+        return this._localdb;
+    },
+    /**
         connect() - starts the websocket connection, returns connection
     **/
     connect: function(){
@@ -270,6 +283,6 @@ Cow.core.prototype =
     }
 };
 //Adding some Backbone event binding functionality to the store
-__.extend(Cow.core.prototype, Events);
+_.extend(Cow.core.prototype, Events);
 
 }.call(this));

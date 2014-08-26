@@ -188,5 +188,5 @@ Cow.group.prototype =
         return hasmember;
     }
 };
-__.extend(Cow.group.prototype, Cow.record.prototype);
+_.extend(Cow.group.prototype, Cow.record.prototype);
 }.call(this));

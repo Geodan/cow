@@ -28,8 +28,9 @@ Cow.project = function(config){
     this._deltasforupload = []; //deltas we still need to give to other peers
     //END OF FIXME
     
-    var dbname = 'groups_' + config._id;
-    this._groupStore = __.extend(
+    //var dbname = 'groups_' + config._id;
+    var dbname = 'groups';
+    this._groupStore = _.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{
         _records: [],
         _recordproto: function(_id){return new Cow.group({_id: _id, store: this});},
@@ -41,8 +42,9 @@ Cow.project = function(config){
         }
     });
     
-    dbname = 'items_' + config._id;
-    this._itemStore = __.extend(
+    //dbname = 'items_' + config._id;
+    dbname = 'items';
+    this._itemStore = _.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{
         _recordproto:   function(_id){return new Cow.item({_id: _id, store: this});},
         _projectid: this._id,
@@ -119,5 +121,5 @@ Cow.project.prototype =
         return mygroups;
     }
 };
-__.extend(Cow.project.prototype, Cow.record.prototype);
+_.extend(Cow.project.prototype, Cow.record.prototype);
 }.call(this));

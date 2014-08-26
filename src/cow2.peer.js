@@ -64,5 +64,5 @@ Cow.peer.prototype = {
         }
             
 };
-__.extend(Cow.peer.prototype,Cow.record.prototype);
+_.extend(Cow.peer.prototype,Cow.record.prototype);
 }.call(this));

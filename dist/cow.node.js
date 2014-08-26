@@ -5,7 +5,7 @@ var array = [];
 var push = array.push;
 var slice = array.slice;
 var splice = array.splice;
-var __ = __ || _;
+
 // Backbone.Events
   // ---------------
 
@@ -15,7 +15,7 @@ var __ = __ || _;
   // succession.
   //
   //     var object = {};
-  //     __.extend(object, Backbone.Events);
+  //     _.extend(object, Backbone.Events);
   //     object.on('expand', function(){ alert('expanded'); });
   //     object.trigger('expand');
   //
@@ -36,7 +36,7 @@ var __ = __ || _;
     once: function(name, callback, context) {
       if (!eventsApi(this, 'once', name, [callback, context]) || !callback) return this;
       var self = this;
-      var once = __.once(function() {
+      var once = _.once(function() {
         self.off(name, once);
         callback.apply(this, arguments);
       });
@@ -55,7 +55,7 @@ var __ = __ || _;
         this._events = void 0;
         return this;
       }
-      names = name ? [name] : __.keys(this._events);
+      names = name ? [name] : _.keys(this._events);
       for (i = 0, l = names.length; i < l; i++) {
         name = names[i];
         if (events = this._events[name]) {
@@ -103,7 +103,7 @@ var __ = __ || _;
       for (var id in listeningTo) {
         obj = listeningTo[id];
         obj.off(name, callback, this);
-        if (remove || __.isEmpty(obj._events)) delete this._listeningTo[id];
+        if (remove || _.isEmpty(obj._events)) delete this._listeningTo[id];
       }
       return this;
     }
@@ -158,10 +158,10 @@ var __ = __ || _;
   // Inversion-of-control versions of `on` and `once`. Tell *this* object to
   // listen to an event in another object ... keeping track of what it's
   // listening to.
-  __.each(listenMethods, function(implementation, method) {
+  _.each(listenMethods, function(implementation, method) {
     Events[method] = function(obj, name, callback) {
       var listeningTo = this._listeningTo || (this._listeningTo = {});
-      var id = obj._listenId || (obj._listenId = __.uniqueId('l'));
+      var id = obj._listenId || (obj._listenId = _.uniqueId('l'));
       listeningTo[id] = obj;
       if (!callback && typeof name === 'object') callback = this;
       obj[implementation](name, callback, this);
@@ -196,7 +196,7 @@ if (typeof exports !== 'undefined') {
     exports.Cow = Cow || {}; 
 } else {
     root.Cow = Cow || {};
-    root.__ = _;
+    root._ = _;
 }
 
 Cow.utils = {
@@ -235,7 +235,7 @@ Cow.record.prototype =
 {
     sync: function(){
         var now = new Date().getTime();
-        if ( __(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
+        if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
             this.deltas(now, this._deltaq); //add deltas from queue
         }
         this._deltaq = {}; //reset deltaq
@@ -332,10 +332,10 @@ Cow.record.prototype =
         else {
             //Recreate the data based on deltas
             var returnval = {};
-            var deltas = __.sortBy(this.deltas(), function(d){return d.timestamp;});
-            __.each(deltas, function(d){
+            var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
+            _.each(deltas, function(d){
                 if (d.timestamp <= timestamp){
-                    __.extend(returnval, d.data);
+                    _.extend(returnval, d.data);
                 }
             });
             return returnval;
@@ -424,15 +424,151 @@ if (typeof exports !== 'undefined') {
     }
     exports.Cow = Cow || {}; 
 } else {
+    if (typeof(Cow) == 'undefined') {
+        root.Cow = {};
+    }
+    else {
+        root.Cow = Cow;
+    }
+}
+
+
+Cow.localdb = function(config){
+    var self = this;
+    this._dbname = config.dbname;
+    this._core = config.core;
+    this._db = null;
+};
+
+Cow.localdb.prototype.open  = function(){
+    var self = this;
+    var version = 2;
+    var promise = new Promise(function(resolve, reject){    
+        var request = indexedDB.open(self._dbname,version);
+        request.onerror = function(event) {
+          reject(event.target.error);
+        };
+        request.onupgradeneeded = function(event) {
+          var db = event.target.result;
+          db
+            .createObjectStore("users", { keyPath: "_id" })
+            .createIndex("name", "name", { unique: false });
+          db
+            .createObjectStore("projects", { keyPath: "_id" })
+            .createIndex("name", "name", { unique: false });
+          db
+            .createObjectStore("socketservers", { keyPath: "_id" });
+          db
+            .createObjectStore("items", { keyPath: "_id" })
+            .createIndex("projectid", "projectid", { unique: false });
+          db
+            .createObjectStore("groups", { keyPath: "_id" })
+            .createIndex("projectid", "projectid", { unique: false });
+        };
+        request.onsuccess = function(event) {
+            self._db = event.target.result;
+            resolve(); //We're not sending back the result since we handle the db as private
+        };
+    });
+    return promise;
+};
+
+Cow.localdb.prototype.write = function(config){
+    var storename = config.storename;
+    var record = config.data;
+    record._id = record._id.toString();
+    
+    var trans = this._db.transaction([storename], "readwrite");
+    var store = trans.objectStore(storename);
+    var promise = new Promise(function(resolve, reject){
+        var request = store.put(record);
+        request.onsuccess = function(e) {
+            resolve(request.result);
+        };
+        request.onerror = function(e) {
+            console.log(e.value);
+            reject("Couldn't add the passed item");
+        };
+    });
+    return promise;
+};
+
+Cow.localdb.prototype.getRecord = function(config){
+    var storename = config.storename;
+    var id = config.id;
+    
+    var trans = this._db.transaction([storename]);
+    var store = trans.objectStore(storename);
+    var promise = new Promise(function(resolve, reject){
+            var request = store.get(id);
+            request.onsuccess = function(){
+                resolve(request.result);
+            };
+            request.onerror = function(d){
+                reject(d);
+            };
+    });
+    return promise;
+};
+
+Cow.localdb.prototype.getRecords = function(config){
+    var storename = config.storename;
+    var projectid = config.projectid;
+    
+    var key,index = undefined;
+    var trans = this._db.transaction([storename]);
+    var store = trans.objectStore(storename);
+    if (projectid){
+        key = IDBKeyRange.only(projectid);
+        index = store.index("projectid");
+    }
+    else {
+        index = store;
+    }
+    var promise = new Promise(function(resolve, reject){
+        var result = [];
+        var request = index.openCursor(key);
+        request.onsuccess = function(event) {
+          var cursor = event.target.result;
+          if (cursor) {
+            result.push(cursor.value);
+            cursor.continue();
+          }
+          else{
+              resolve(result);
+          }
+        };
+        request.onerror = function(e){
+            reject(e);
+        };
+    });
+    return promise;
+};
+
+Cow.localdb.prototype.clear = function(config,projectid){
+    //TODO, returns promise
+};
+
+}).call(this);
+(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
     root.Cow = Cow || {};
 }
 
 //Synstore keeps track of records
 Cow.syncstore =  function(config){
     var self = this;
-    this._dbname = config.dbname;
+    this._storename = config.dbname;
     this._core = config.core;
     this.noDeltas = config.noDeltas || false;
+    this.noIDB = config.noIDB || false;
     this.maxStaleness = config.maxAge || null;
     this.syncinfo = {
         toReceive: [],
@@ -440,36 +576,18 @@ Cow.syncstore =  function(config){
         received: 0, 
         send: 0
     };
-    //console.log('new store',this._dbname);
+    if (!this.noIDB){
+        this.localdb = this._core.localdb();//new Cow.localdb(config, this);
+    }
     this.loaded = new Promise(function(resolve, reject){
-        //console.log('reading db ',self._dbname);
-        if (config.noIDB){
-            resolve();
-        }
-        else {
-            /**
-                See for indexeddb wrapper:
-                    https://github.com/aaronpowell/db.js
-            **/
-            db.open( {
-                server: self._dbname,
-                version: 1,
-                schema: {
-                    main: {                                          
-                        key: { keyPath: '_id' , autoIncrement: false },
-                        // Optionally add indexes
-                        indexes: {
-                            updated: { },
-                            _id: { unique: true }
-                        }
-                    }
-                }
-            } ).done( function ( s ) {
-                self._db = s;
-                self._db_getRecords().then(function(rows){
+        if (self.localdb){
+            self.localdb.open().then(function(){
+                self.localdb.getRecords({
+                        storename: self._storename, 
+                        projectid: self._projectid
+                    }).then(function(rows){
                     //console.log('Got records from db ',self._dbname);
                     rows.forEach(function(d){
-                         //console.log(d);
                          var record = self._recordproto(d._id);
                          record.inflate(d);
                          var lastupdate = record.timestamp();
@@ -487,12 +605,16 @@ Cow.syncstore =  function(config){
                              self._records.push(record); //Adding to the list
                          }
                      });
-                     //self.trigger('datachange'); //TT: not needed?
-                     resolve();
-                }).catch(function(e){
-                    console.warn(e.message);
+                    resolve();
+                },function(d){ //DB Fail
+                    reject(d);
                 });
+            }, function(d){
+                reject(d);
             });
+        }
+        else { //NO localdb, so nothing to load and we're done immediately
+            resolve();
         }
     });
 }; 
@@ -503,40 +625,7 @@ Cow.syncstore =  function(config){
 **/
 
 Cow.syncstore.prototype =  
-{ //db object
-    //All these calls will be asynchronous and thus returning a promise instead of data
-   
-    //_db_addRecord: function(config){
-    _db_write: function(config){
-        var data = config.data;
-        var source = config.source;
-        data._id = data._id.toString();
-        var self = this;
-        var db = this._db;
-        return new Promise(function(resolve, reject){
-            db.main.remove(data._id).done(function(){
-                db.main.add(data).done(function(d){
-                    resolve(d);
-                }).fail(function(d,e){
-                    //console.warn(e.srcElement.error.message);
-                    reject(e);
-                });
-            }).fail(function(e){
-                console.warn(e);
-                reject(e);
-            });
-        });
-    },
-    _db_getRecords: function(){
-        var self = this;
-        return new Promise(function(resolve, reject){
-           self._db.main.query().filter().execute().done(function(doc){
-                resolve(doc);
-           }).fail(function(e){
-                reject(e);
-           });
-        });
-    },  //returns promise
+{
     /** NOT USED AT THE MOMENT **/
     /*
     _db_getRecord: function(id){
@@ -616,7 +705,7 @@ Cow.syncstore.prototype =
     },
     /**
     _addRecord - creates a new record and replaces an existing one with the same _id
-        when the source is 'WS' it immidiately sends to the _db, if not the record needs a manual record.sync()
+        when the source is 'WS' it immidiately sends to the local, if not the record needs a manual record.sync()
     **/
     _addRecord: function(config){
         if (!config.source || !config.data){
@@ -635,9 +724,11 @@ Cow.syncstore.prototype =
                 record = this._records[i];
                 record.inflate(data);
                 //record.deleted(false); //set undeleted //TT: disabled, since this gives a problem when a record from WS comes in as deleted
-                if (this._db && source == 'WS'){ //update the db
-                    //promise = this._db_updateRecord({source:source, data: record.deflate()});
-                    this._db_write({source:source, data: record.deflate()});
+                if (this.localdb && source == 'WS'){ //update the db
+                    this.localdb.write({
+                        storename:this._storename, 
+                        data: record.deflate()
+                    });
                 }
             }
         }
@@ -645,8 +736,11 @@ Cow.syncstore.prototype =
             //Create a new record and inflate with the data we got
             record = this._recordproto(data._id);
             record.inflate(data);
-            if (this._db && source == 'WS'){
-                promise = this._db_write({source:source,data:record.deflate()});
+            if (this.localdb && source == 'WS'){
+                promise = this.localdb.write({
+                    storename:this._storename,
+                    data:record.deflate()
+                });
             }
             this._records.push(record); //Adding to the list
             //console.log(this._records.length); 
@@ -659,7 +753,7 @@ Cow.syncstore.prototype =
     **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
-        __.each(this._records, function(d){
+        _.each(this._records, function(d){
             //If request is older than feature itself, disregard
             if (timestamp < d._created){
                 //don't add
@@ -720,8 +814,8 @@ Cow.syncstore.prototype =
         return new Promise(function(resolve, reject){
             self._records = [];
             self.trigger('datachange');
-            if (self._db){
-                self._db.main.clear().then(function(){
+            if (self.localdb){
+                self.localdb.clear().then(function(){
                         resolve(); //empty dbase from items
                 });
             }
@@ -754,9 +848,11 @@ Cow.syncstore.prototype =
         if (this._projectid){ //parent store
             message.project = this._projectid;
         }
-        if (this._db){
-            //var promise = this._db_updateRecord({source:'UI', data: record.deflate()});
-            promise = this._db_write({source:'UI', data: record.deflate()});
+        if (this.localdb){
+            promise = this.localdb.write({
+                storename:self._storename, 
+                data: record.deflate()
+            });
         }
         else { //Immediately resolve promise
             promise = new Promise(function(resolve, reject){resolve();});
@@ -766,7 +862,7 @@ Cow.syncstore.prototype =
             self.trigger('datachange');
             self._core.websocket().sendData(message, 'updatedRecord');
         },function(err){
-            //console.warn(err);
+            console.warn(err);
         });
         return record;
     },
@@ -941,7 +1037,7 @@ Cow.syncstore.prototype =
     } 
 };
 //Adding some Backbone event binding functionality to the store
-__.extend(Cow.syncstore.prototype, Events);
+_.extend(Cow.syncstore.prototype, Events);
 }.call(this));
 (function(){
 
@@ -1009,7 +1105,7 @@ Cow.peer.prototype = {
         }
             
 };
-__.extend(Cow.peer.prototype,Cow.record.prototype);
+_.extend(Cow.peer.prototype,Cow.record.prototype);
 }.call(this));
 (function(){
 
@@ -1056,7 +1152,7 @@ Cow.socketserver.prototype = {
             return protocol + '://' + ip + ':' + port + '/' + dir;  
         }
 };
-__.extend(Cow.socketserver.prototype,Cow.record.prototype);
+_.extend(Cow.socketserver.prototype,Cow.record.prototype);
 }.call(this));
 (function(){
 
@@ -1170,7 +1266,7 @@ Cow.user.prototype =
     }
     
 };
-__.extend(Cow.user.prototype, Cow.record.prototype);
+_.extend(Cow.user.prototype, Cow.record.prototype);
 }.call(this));
 (function(){
 
@@ -1362,7 +1458,7 @@ Cow.group.prototype =
         return hasmember;
     }
 };
-__.extend(Cow.group.prototype, Cow.record.prototype);
+_.extend(Cow.group.prototype, Cow.record.prototype);
 }.call(this));
 (function(){
 
@@ -1615,7 +1711,7 @@ Cow.item.prototype =
         }
     }
 };
-__.extend(Cow.item.prototype, Cow.record.prototype);
+_.extend(Cow.item.prototype, Cow.record.prototype);
 
 }.call(this));
 (function(){
@@ -1648,8 +1744,9 @@ Cow.project = function(config){
     this._deltasforupload = []; //deltas we still need to give to other peers
     //END OF FIXME
     
-    var dbname = 'groups_' + config._id;
-    this._groupStore = __.extend(
+    //var dbname = 'groups_' + config._id;
+    var dbname = 'groups';
+    this._groupStore = _.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{
         _records: [],
         _recordproto: function(_id){return new Cow.group({_id: _id, store: this});},
@@ -1661,8 +1758,9 @@ Cow.project = function(config){
         }
     });
     
-    dbname = 'items_' + config._id;
-    this._itemStore = __.extend(
+    //dbname = 'items_' + config._id;
+    dbname = 'items';
+    this._itemStore = _.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{
         _recordproto:   function(_id){return new Cow.item({_id: _id, store: this});},
         _projectid: this._id,
@@ -1739,7 +1837,7 @@ Cow.project.prototype =
         return mygroups;
     }
 };
-__.extend(Cow.project.prototype, Cow.record.prototype);
+_.extend(Cow.project.prototype, Cow.record.prototype);
 }.call(this));
 (function(){
 
@@ -2073,8 +2171,8 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
         var data;
         //Give the peer information on what will be synced
         var syncinfo = {
-            IWillSent: __.pluck(syncobject.pushlist,"_id"),
-            IShallReceive: __.pluck(syncobject.requestlist,"_id") 
+            IWillSent: _.pluck(syncobject.pushlist,"_id"),
+            IShallReceive: _.pluck(syncobject.requestlist,"_id") 
         };
         data = {
             "syncType" : payload.syncType,
@@ -2099,7 +2197,7 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
         /** TT: IIS/signalR can't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable **/
-        __(data.list).each(function(d){
+        _(data.list).each(function(d){
             msg = {
                 "syncType" : payload.syncType,
                 "project" : project,
@@ -2117,8 +2215,8 @@ Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
     **/
     var returnval = null;
     //First only get alpha peers
-    var alphaPeers = __.sortBy(
-        __.filter(this._core.peers(),function(d){
+    var alphaPeers = _.sortBy(
+        _.filter(this._core.peers(),function(d){
             return (d.data('family') == 'alpha' && !d.deleted());
         }),
      function(d){return d.created();});
@@ -2152,7 +2250,7 @@ Cow.websocket.prototype._onWantedList = function(payload) {
     /** TT: IIS/signalR can't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable **/
-    __(data.list).each(function(d){
+    _(data.list).each(function(d){
         msg = {
             "syncType" : payload.syncType,
             "project" : store._projectid,
@@ -2180,9 +2278,9 @@ Cow.websocket.prototype._onMissingRecords = function(payload) {
         }
         //Do the syncing for the deltas
         if (data.deltas && record.deltas()){
-            var localarr = __.pluck(record.deltas(),'timestamp');
-            var remotearr = __.pluck(data.deltas,'timestamp');
-            var diff = __.difference(localarr, remotearr);
+            var localarr = _.pluck(record.deltas(),'timestamp');
+            var remotearr = _.pluck(data.deltas,'timestamp');
+            var diff = _.difference(localarr, remotearr);
             //TODO: nice solution for future, when dealing more with deltas
             //For now we just respond with a forced sync our own record so the delta's get synced anyway
             if (diff.length > 0){
@@ -2200,8 +2298,8 @@ Cow.websocket.prototype._onUpdatedRecords = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
-    //TODO: __.without might not be most effective way to purge an array
-    store.syncinfo.toReceive = __.without(store.syncinfo.toReceive,data._id); 
+    //TODO: _.without might not be most effective way to purge an array
+    store.syncinfo.toReceive = _.without(store.syncinfo.toReceive,data._id); 
     store.trigger('datachange');
 };
     // END Syncing messages
@@ -2237,7 +2335,7 @@ Cow.websocket.prototype._onCommand = function(data) {
     //Remove all data from a peer
     if (command == 'purgePeer'){
         if (targetuser && targetuser == this._core.peerid()){
-            __.each(core.projects(), function(d){
+            _.each(core.projects(), function(d){
                 d.itemStore().clear();
                 d.groupStore().clear();
             });
@@ -2263,7 +2361,7 @@ Cow.websocket.prototype._onCommand = function(data) {
 };
 
 //Adding some Backbone event binding functionality to the store
-__.extend(Cow.websocket.prototype, Events);
+_.extend(Cow.websocket.prototype, Events);
 }.call(this));
 (function(){
 
@@ -2279,7 +2377,11 @@ if (typeof exports !== 'undefined') {
 
 Cow.core = function(config){
     var self = this;
-    //if (!config.wsUrl){throw('No wsURL given');}
+    if (typeof(config) == 'undefined' ) {
+        config = {};
+    }
+    
+    this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
     this._projectid = null;
@@ -2289,8 +2391,11 @@ Cow.core = function(config){
     /*WEBSOCKET*/
     this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     
+    /*LOCALDB*/
+    this._localdb = new Cow.localdb({dbname: this._herdname});
+    
     /*PROJECTS*/
-    this._projectStore =  __.extend(
+    this._projectStore =  _.extend(
         new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
@@ -2300,7 +2405,7 @@ Cow.core = function(config){
     
     
     /*PEERS*/
-    this._peerStore =  __.extend(
+    this._peerStore =  _.extend(
         new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
          _records: [],
         //prototype for record
@@ -2314,7 +2419,7 @@ Cow.core = function(config){
     });
     
     /*USERS*/
-    this._userStore =  __.extend(
+    this._userStore =  _.extend(
         new Cow.syncstore({dbname: 'users', noDeltas: true, core: this}), {
         _records: [],
         //prototype for record
@@ -2324,7 +2429,7 @@ Cow.core = function(config){
     });
     
     /*SOCKETSERVERS*/
-    this._socketserverStore =  __.extend(
+    this._socketserverStore =  _.extend(
         new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this.maxAge}), {
         _records: [],
         //prototype for record
@@ -2524,6 +2629,12 @@ Cow.core.prototype =
         return this._websocket;
     },
     /**
+        localdb() - return the _localdb object
+    **/
+    localdb: function(){
+        return this._localdb;
+    },
+    /**
         connect() - starts the websocket connection, returns connection
     **/
     connect: function(){
@@ -2537,6 +2648,6 @@ Cow.core.prototype =
     }
 };
 //Adding some Backbone event binding functionality to the store
-__.extend(Cow.core.prototype, Events);
+_.extend(Cow.core.prototype, Events);
 
 }.call(this));

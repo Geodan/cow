@@ -13,9 +13,10 @@ if (typeof exports !== 'undefined') {
 //Synstore keeps track of records
 Cow.syncstore =  function(config){
     var self = this;
-    this._dbname = config.dbname;
+    this._storename = config.dbname;
     this._core = config.core;
     this.noDeltas = config.noDeltas || false;
+    this.noIDB = config.noIDB || false;
     this.maxStaleness = config.maxAge || null;
     this.syncinfo = {
         toReceive: [],
@@ -23,36 +24,18 @@ Cow.syncstore =  function(config){
         received: 0, 
         send: 0
     };
-    //console.log('new store',this._dbname);
+    if (!this.noIDB){
+        this.localdb = this._core.localdb();//new Cow.localdb(config, this);
+    }
     this.loaded = new Promise(function(resolve, reject){
-        //console.log('reading db ',self._dbname);
-        if (config.noIDB){
-            resolve();
-        }
-        else {
-            /**
-                See for indexeddb wrapper:
-                    https://github.com/aaronpowell/db.js
-            **/
-            db.open( {
-                server: self._dbname,
-                version: 1,
-                schema: {
-                    main: {                                          
-                        key: { keyPath: '_id' , autoIncrement: false },
-                        // Optionally add indexes
-                        indexes: {
-                            updated: { },
-                            _id: { unique: true }
-                        }
-                    }
-                }
-            } ).done( function ( s ) {
-                self._db = s;
-                self._db_getRecords().then(function(rows){
+        if (self.localdb){
+            self.localdb.open().then(function(){
+                self.localdb.getRecords({
+                        storename: self._storename, 
+                        projectid: self._projectid
+                    }).then(function(rows){
                     //console.log('Got records from db ',self._dbname);
                     rows.forEach(function(d){
-                         //console.log(d);
                          var record = self._recordproto(d._id);
                          record.inflate(d);
                          var lastupdate = record.timestamp();
@@ -70,12 +53,16 @@ Cow.syncstore =  function(config){
                              self._records.push(record); //Adding to the list
                          }
                      });
-                     //self.trigger('datachange'); //TT: not needed?
-                     resolve();
-                }).catch(function(e){
-                    console.warn(e.message);
+                    resolve();
+                },function(d){ //DB Fail
+                    reject(d);
                 });
+            }, function(d){
+                reject(d);
             });
+        }
+        else { //NO localdb, so nothing to load and we're done immediately
+            resolve();
         }
     });
 }; 
@@ -86,40 +73,7 @@ Cow.syncstore =  function(config){
 **/
 
 Cow.syncstore.prototype =  
-{ //db object
-    //All these calls will be asynchronous and thus returning a promise instead of data
-   
-    //_db_addRecord: function(config){
-    _db_write: function(config){
-        var data = config.data;
-        var source = config.source;
-        data._id = data._id.toString();
-        var self = this;
-        var db = this._db;
-        return new Promise(function(resolve, reject){
-            db.main.remove(data._id).done(function(){
-                db.main.add(data).done(function(d){
-                    resolve(d);
-                }).fail(function(d,e){
-                    //console.warn(e.srcElement.error.message);
-                    reject(e);
-                });
-            }).fail(function(e){
-                console.warn(e);
-                reject(e);
-            });
-        });
-    },
-    _db_getRecords: function(){
-        var self = this;
-        return new Promise(function(resolve, reject){
-           self._db.main.query().filter().execute().done(function(doc){
-                resolve(doc);
-           }).fail(function(e){
-                reject(e);
-           });
-        });
-    },  //returns promise
+{
     /** NOT USED AT THE MOMENT **/
     /*
     _db_getRecord: function(id){
@@ -199,7 +153,7 @@ Cow.syncstore.prototype =
     },
     /**
     _addRecord - creates a new record and replaces an existing one with the same _id
-        when the source is 'WS' it immidiately sends to the _db, if not the record needs a manual record.sync()
+        when the source is 'WS' it immidiately sends to the local, if not the record needs a manual record.sync()
     **/
     _addRecord: function(config){
         if (!config.source || !config.data){
@@ -218,9 +172,11 @@ Cow.syncstore.prototype =
                 record = this._records[i];
                 record.inflate(data);
                 //record.deleted(false); //set undeleted //TT: disabled, since this gives a problem when a record from WS comes in as deleted
-                if (this._db && source == 'WS'){ //update the db
-                    //promise = this._db_updateRecord({source:source, data: record.deflate()});
-                    this._db_write({source:source, data: record.deflate()});
+                if (this.localdb && source == 'WS'){ //update the db
+                    this.localdb.write({
+                        storename:this._storename, 
+                        data: record.deflate()
+                    });
                 }
             }
         }
@@ -228,8 +184,11 @@ Cow.syncstore.prototype =
             //Create a new record and inflate with the data we got
             record = this._recordproto(data._id);
             record.inflate(data);
-            if (this._db && source == 'WS'){
-                promise = this._db_write({source:source,data:record.deflate()});
+            if (this.localdb && source == 'WS'){
+                promise = this.localdb.write({
+                    storename:this._storename,
+                    data:record.deflate()
+                });
             }
             this._records.push(record); //Adding to the list
             //console.log(this._records.length); 
@@ -242,7 +201,7 @@ Cow.syncstore.prototype =
     **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
-        __.each(this._records, function(d){
+        _.each(this._records, function(d){
             //If request is older than feature itself, disregard
             if (timestamp < d._created){
                 //don't add
@@ -303,8 +262,8 @@ Cow.syncstore.prototype =
         return new Promise(function(resolve, reject){
             self._records = [];
             self.trigger('datachange');
-            if (self._db){
-                self._db.main.clear().then(function(){
+            if (self.localdb){
+                self.localdb.clear().then(function(){
                         resolve(); //empty dbase from items
                 });
             }
@@ -337,9 +296,11 @@ Cow.syncstore.prototype =
         if (this._projectid){ //parent store
             message.project = this._projectid;
         }
-        if (this._db){
-            //var promise = this._db_updateRecord({source:'UI', data: record.deflate()});
-            promise = this._db_write({source:'UI', data: record.deflate()});
+        if (this.localdb){
+            promise = this.localdb.write({
+                storename:self._storename, 
+                data: record.deflate()
+            });
         }
         else { //Immediately resolve promise
             promise = new Promise(function(resolve, reject){resolve();});
@@ -349,7 +310,7 @@ Cow.syncstore.prototype =
             self.trigger('datachange');
             self._core.websocket().sendData(message, 'updatedRecord');
         },function(err){
-            //console.warn(err);
+            console.warn(err);
         });
         return record;
     },
@@ -524,5 +485,5 @@ Cow.syncstore.prototype =
     } 
 };
 //Adding some Backbone event binding functionality to the store
-__.extend(Cow.syncstore.prototype, Events);
+_.extend(Cow.syncstore.prototype, Events);
 }.call(this));
