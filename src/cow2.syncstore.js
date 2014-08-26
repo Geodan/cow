@@ -174,7 +174,8 @@ Cow.syncstore.prototype =
                 //record.deleted(false); //set undeleted //TT: disabled, since this gives a problem when a record from WS comes in as deleted
                 if (this.localdb && source == 'WS'){ //update the db
                     this.localdb.write({
-                        storename:this._storename, 
+                        storename:this._storename,
+                        projectid: this._projectid,
                         data: record.deflate()
                     });
                 }
@@ -187,6 +188,7 @@ Cow.syncstore.prototype =
             if (this.localdb && source == 'WS'){
                 promise = this.localdb.write({
                     storename:this._storename,
+                    projectid: this._projectid,
                     data:record.deflate()
                 });
             }
@@ -298,7 +300,8 @@ Cow.syncstore.prototype =
         }
         if (this.localdb){
             promise = this.localdb.write({
-                storename:self._storename, 
+                storename:this._storename,
+                projectid: this._projectid,
                 data: record.deflate()
             });
         }
