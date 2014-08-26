@@ -55,7 +55,6 @@ Cow.syncstore =  function(config){
                              self._records.push(record); //Adding to the list
                          }
                      });
-                    console.log('Loaded '+rows.length+' records from', self._storename, self._projectid);
                     resolve();
                 },function(d){ //DB Fail
                     reject(d);
@@ -361,7 +360,6 @@ Cow.syncstore.prototype =
     sync: function(){
         var self = this;
         this.loaded.then(function(d){
-            console.log('Start sync ', self._type, self._projectid);
             var message = {};
             message.syncType = self._type;
             message.project = self._projectid;
