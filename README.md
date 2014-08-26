@@ -74,7 +74,7 @@ All the stores share the same basemethods as follows (userStore as example):
     core.userStore() -> returns the userstore object
     core.userStore().syncRecords() -> syncs all records with status 'dirty'
 `````
-When adding a new record, it is possible to include data in the object like: cow.users({_id: 1, data: {name: 'myname'}}). The _id paramter is optional. If you don't give it, a new id will be automatically assigned to the record by COW. We recommend to let COW assign the id for you to avoid the risk of having doublings.
+When adding a new record, it is possible to include data in the object like: cow.users({_id: 1, data: {name: 'myname'}}). The _id parameter is optional. If you don't give it, a new id will be automatically assigned to the record by COW. We recommend to let COW assign the id for you to avoid the risk of having doublings.
 
 Some store's are configured differently:
 * peerStore doesn't use local storage (indexeddb) since peers are unique in every session
