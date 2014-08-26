@@ -389,7 +389,7 @@ Cow.record.prototype =
         }; 
     },
     inflate: function(config){
-        this._id = config._id || this._id;
+        this._id = config._id || this._id || new Date().getTime().toString();
         this._status = config.status || this._status;
         this._created = config.created || this._created;
         if (config.deleted !== undefined){
@@ -1060,7 +1060,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.peer = function(config){
-     if (!config._id) {throw 'No _id given for peer';}
+     //if (!config._id) {throw 'No _id given for peer';}
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;
@@ -1128,7 +1128,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.socketserver = function(config){
-     if (!config._id) {throw 'No _id given for socketserver';}
+     //if (!config._id) {throw 'No _id given for socketserver';}
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;
@@ -1175,7 +1175,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.user = function(config){
-    if (!config._id) {throw 'No _id given for user';}
+    //if (!config._id) {throw 'No _id given for user';}
     this._id = config._id;
     this._store = config.store;
     
@@ -1290,7 +1290,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.group = function(config){
-    if (!config._id) {throw 'No _id given for group';}
+    //if (!config._id) {throw 'No _id given for group';}
     this._id = config._id;
     this._store = config.store;
     
@@ -1481,7 +1481,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.item = function(config){
-    if (!config || !config._id) {throw 'No _id given for item';}
+    //if (!config || !config._id) {throw 'No _id given for item';}
     this._id = config._id;
     this._store = config.store;
     
