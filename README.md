@@ -97,13 +97,20 @@ All *record objects* behave the same* and as follows (user object as example):
 `````
 **core specific:**
 `````javascript
+    core.peer() -> returns our own peer object
     core.peerid()    -> returns our own peerid
     core.peerid(<string>) -> sets our own peerd
     core.user() -> returns the user object of currently logged on user (false when no user logged on)
     core.user(<string>) -> sets the current users id to the core and to the current peer, returns user object
     core.socketserver() -> returns the current socketserver configuration in use
+    core.socketserver(<string>) -> sets the current socketserver
     core.websocket() -> returns the websocket object
-    core.webscoket().disconnect() -> disconnects websocket (auto reconnect in 5 secs)
+    core.connect() -> start websocket connection
+    core.disconnect() -> closes the websocket connection (auto reconnect in 5 secs)
+    core.location() -> returns location object of current peer
+    core.location(obj) -> set location object of current peer, returns locations object
+    core.activeUsers() -> returns array with userobjects that are currently active
+    
 `````
 Since most methods return their own object, the methods are chainable. So you can write rather condensed code:
 `````javascript
