@@ -1,0 +1,42 @@
+<html>
+<head>
+<script src="../src/cow2.indexeddb.js"></script>
+</head>
+<body>
+
+<script>
+
+var db = new Cow.indexeddb({dbname: 'cow'});
+
+var dbopen = db.open();
+
+dbopen.then(function(d){
+    db.getAll('items', '456').then(function(d){
+        console.log(d);
+    },function(d){
+        console.log(d);
+    });
+});
+/*
+dbopen.then(function(d){
+    db = d;
+    for (var i in items) {
+      db.add('items',items[i]).then(function(d){
+          console.log(d);
+      },function(d){
+          console.log(d);
+      });
+    }
+    for (var i in projects) {
+        db.add('projects',projects[i]);
+    }
+},function(d){
+    console.log(d);
+});
+  */ 
+
+
+</script>
+
+</body>
+</html>

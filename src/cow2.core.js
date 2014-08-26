@@ -12,7 +12,11 @@ if (typeof exports !== 'undefined') {
 
 Cow.core = function(config){
     var self = this;
-    //if (!config.wsUrl){throw('No wsURL given');}
+    if (typeof(config) == 'undefined' ) {
+        config = {};
+    }
+    
+    this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
     this._projectid = null;
@@ -21,6 +25,9 @@ Cow.core = function(config){
     this._maxAge = 1000 * 60 * 60 * 24 * 30; //30 days in mseconds
     /*WEBSOCKET*/
     this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
+    
+    /*LOCALDB*/
+    this._localdb = new Cow.localdb({dbname: this._herdname});
     
     /*PROJECTS*/
     this._projectStore =  _.extend(
@@ -255,6 +262,12 @@ Cow.core.prototype =
     **/
     websocket: function(){
         return this._websocket;
+    },
+    /**
+        localdb() - return the _localdb object
+    **/
+    localdb: function(){
+        return this._localdb;
     },
     /**
         connect() - starts the websocket connection, returns connection

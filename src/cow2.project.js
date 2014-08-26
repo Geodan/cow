@@ -28,7 +28,8 @@ Cow.project = function(config){
     this._deltasforupload = []; //deltas we still need to give to other peers
     //END OF FIXME
     
-    var dbname = 'groups_' + config._id;
+    //var dbname = 'groups_' + config._id;
+    var dbname = 'groups';
     this._groupStore = _.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{
         _records: [],
@@ -41,7 +42,8 @@ Cow.project = function(config){
         }
     });
     
-    dbname = 'items_' + config._id;
+    //dbname = 'items_' + config._id;
+    dbname = 'items';
     this._itemStore = _.extend(
         new Cow.syncstore({dbname: dbname, core: self._core}),{
         _recordproto:   function(_id){return new Cow.item({_id: _id, store: this});},
