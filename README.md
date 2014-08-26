@@ -67,13 +67,15 @@ Schematically, it looks like:
 
 All the stores share the same basemethods as follows (userStore as example):
 `````javascript
-    core.users({_id:<string>}) -> adds a record with id, returns record object
+    core.users({}) -> adds an empty record, returns record object
     core.users(<string>) -> returns record object with id = <string>
     core.users([<string>]) -> returns array of record objects with matching ids
     core.users()   -> returns array of all record objects
     core.userStore() -> returns the userstore object
     core.userStore().syncRecords() -> syncs all records with status 'dirty'
 `````
+When adding a new record, it is possible to include data in the object like: cow.users({_id: 1, data: {name: 'myname'}}). The _id parameter is optional. If you don't give it, a new id will be automatically assigned to the record by COW. We recommend to let COW assign the id for you to avoid the risk of having doublings.
+
 Some store's are configured differently:
 * peerStore doesn't use local storage (indexeddb) since peers are unique in every session
 * stores can have a maximum lifetime for the records. When a record isn't updated for x time then the record is not used anymore. It is still kept in the localstorage however.
@@ -114,9 +116,9 @@ All *record objects* behave the same* and as follows (user object as example):
 `````
 Since most methods return their own object, the methods are chainable. So you can write rather condensed code:
 `````javascript
-    var defaultproject = core.projects({_id:1}).data('name',"Sketch").sync();
-    var defaultgroup = defaultproject.groups({_id:1}).data('name','Public').sync();
-    var firstitem = defaultproject.items({_id:1})
+    var defaultproject = core.projects({}).data('name',"Sketch").sync();
+    var defaultgroup = defaultproject.groups({}).data('name','Public').sync();
+    var firstitem = defaultproject.items({})
         .data('type','msg')
         .data('creator',core.user().id())
         .sync();
