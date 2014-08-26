@@ -127,7 +127,7 @@ Cow.localdb.prototype.getRecords = function(config){
     var storename = config.storename;
     var projectid = config.projectid;
     
-    var key,index = undefined;
+    var key,index;
     var trans = this._db.transaction([storename]);
     var store = trans.objectStore(storename);
     if (projectid){
@@ -139,7 +139,13 @@ Cow.localdb.prototype.getRecords = function(config){
     }
     var promise = new Promise(function(resolve, reject){
         var result = [];
-        var request = index.openCursor(key);
+        var request;
+        if (key){ //Solution to make it work on IE, since openCursor(undefined) gives an error
+            request = index.openCursor(key);
+        }
+        else{
+            request = index.openCursor();
+        }
         request.onsuccess = function(event) {
           var cursor = event.target.result;
           if (cursor) {

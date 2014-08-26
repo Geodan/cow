@@ -544,7 +544,7 @@ Cow.localdb.prototype.getRecords = function(config){
     var storename = config.storename;
     var projectid = config.projectid;
     
-    var key,index = undefined;
+    var key,index;
     var trans = this._db.transaction([storename]);
     var store = trans.objectStore(storename);
     if (projectid){
@@ -556,7 +556,13 @@ Cow.localdb.prototype.getRecords = function(config){
     }
     var promise = new Promise(function(resolve, reject){
         var result = [];
-        var request = index.openCursor(key);
+        var request;
+        if (key){ //Solution to make it work on IE, since openCursor(undefined) gives an error
+            request = index.openCursor(key);
+        }
+        else{
+            request = index.openCursor();
+        }
         request.onsuccess = function(event) {
           var cursor = event.target.result;
           if (cursor) {
@@ -636,7 +642,6 @@ Cow.syncstore =  function(config){
                              self._records.push(record); //Adding to the list
                          }
                      });
-                    console.log('Loaded '+rows.length+' records from', self._storename, self._projectid);
                     resolve();
                 },function(d){ //DB Fail
                     reject(d);
@@ -942,7 +947,6 @@ Cow.syncstore.prototype =
     sync: function(){
         var self = this;
         this.loaded.then(function(d){
-            console.log('Start sync ', self._type, self._projectid);
             var message = {};
             message.syncType = self._type;
             message.project = self._projectid;
