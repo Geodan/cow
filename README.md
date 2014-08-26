@@ -17,7 +17,7 @@ Setting up a new cow:
 -----------
 `````javascript
 //Create core object
-var core = new Cow.core();
+var core = new Cow.core({herdname: 'test'});
 
 //Add a default socketserver
 core.socketservers({
