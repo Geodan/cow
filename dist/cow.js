@@ -513,11 +513,9 @@ Cow.localdb.prototype.getRecord = function(config){
 };
 
 Cow.localdb.prototype.getRecords = function(config){
-    var now = new Date();
-    
     var storename = config.storename;
     var projectid = config.projectid;
-    console.log(now.toLocaleTimeString(), now.getMilliseconds(),'Getting records from ' + storename + ' proj. ' + projectid);
+    
     var key,index = undefined;
     var trans = this._db.transaction([storename]);
     var store = trans.objectStore(storename);
@@ -538,8 +536,6 @@ Cow.localdb.prototype.getRecords = function(config){
             cursor.continue();
           }
           else{
-              var now = new Date();
-              console.log(now.toLocaleTimeString(), now.getMilliseconds(),'Got ' + result.length + ' records from ' + storename + ' proj. ' + projectid);
               resolve(result);
           }
         };
@@ -2083,7 +2079,7 @@ Cow.websocket.prototype._onConnect = function(payload){
     var version = payload.server_version;
     var serverkey = payload.server_key;
     
-    if (serverkey !== undefined && serverkey != 'test'){ //TODO: key must become variable
+    if (serverkey !== undefined && serverkey != this._core._herdname){
         self.disconnect();
         return;
     }

@@ -234,7 +234,7 @@ Cow.websocket.prototype._onConnect = function(payload){
     var version = payload.server_version;
     var serverkey = payload.server_key;
     
-    if (serverkey !== undefined && serverkey != 'test'){ //TODO: key must become variable
+    if (serverkey !== undefined && serverkey != this._core._herdname){
         self.disconnect();
         return;
     }
