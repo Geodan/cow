@@ -34,16 +34,10 @@ Cow.peer = function(config){
 
 Cow.peer.prototype = { 
         /**
-            user() - return id of currently connected user
-            user(id) - sets id of currently connected user, returns peer object
+            userid() - return id of currently connected user
+            userid(id) - sets id of currently connected user, returns peer object
         **/
-        //user: function(id){
-        //    if (id) {
-        //        return this.data('userid',id);
-        //    }
-        //    return this.data('userid');
-        //},
-        user: function(id){
+        userid: function(id){
             if (id){
                 return this.data('userid',id).sync();
             }
@@ -51,7 +45,7 @@ Cow.peer.prototype = {
               var userid = this.data('userid');
               return this._core.users(userid);
             }
-            console.warn('No user connected to this peer');
+            //console.warn('No user connected to this peer');
             return null;
         },
         username: function(){
