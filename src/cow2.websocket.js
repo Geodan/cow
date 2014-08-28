@@ -63,13 +63,16 @@ Cow.websocket.prototype.connect = function() {
                     conn.on('close', self._onClose);
                     conn.on('message', function(message) {
                         if (message.type === 'utf8') {
-                            console.log("Received: '" + message.utf8Data + "'");
+                            //console.log("Received: '" + message.utf8Data + "'");
                             self._onMessage({data:message.utf8Data});
                         }
                     });
                     conn.obj = self;
                     self._connection = conn;
                 });
+                //TODO: there is some issue with the websocket module,ssl and certificates
+                //This param should be added: {rejectUnauthorized: false}
+                //according to: http://stackoverflow.com/questions/18461979/node-js-error-with-ssl-unable-to-verify-leaf-signature#20408031
                 connection.connect(this._url, 'connect');
             }
             //Just in-browser websocket

@@ -439,143 +439,120 @@ Cow.localdb = function(config){
     this._core = config.core;
     this._db = null;
     var version = 2;
-    this._openpromise = new Promise(function(resolve, reject){    
-        var request = indexedDB.open(self._dbname,version);
-        request.onerror = function(event) {
-          reject(event.target.error);
-        };
-        request.onupgradeneeded = function(event) {
-          var db = event.target.result;
-          db
-            .createObjectStore("users", { keyPath: "_id" })
-            .createIndex("name", "name", { unique: false });
-          db
-            .createObjectStore("projects", { keyPath: "_id" })
-            .createIndex("name", "name", { unique: false });
-          db
-            .createObjectStore("socketservers", { keyPath: "_id" });
-          db
-            .createObjectStore("items", { keyPath: "_id" })
-            .createIndex("projectid", "projectid", { unique: false });
-          db
-            .createObjectStore("groups", { keyPath: "_id" })
-            .createIndex("projectid", "projectid", { unique: false });
-        };
-        request.onsuccess = function(event) {
-            self._db = event.target.result;
-            resolve(); //We're not sending back the result since we handle the db as private
-        };
+    //var dbUrl = "tcp://osgis:osgis@osgis.geodan.nl/osgis2";
+    var dbUrl = "tcp://geodan:Gehijm@192.168.24.15/research";
+    this._schema = 'cow';
+    this._openpromise = new Promise(function(resolve, reject){
+        var request = pg.connect(dbUrl, function(err, client) {
+                if (err){
+                    console.log(err);
+                    reject(err);
+                }
+                self._db = client;
+                var stores = ['users','projects', 'socketservers', 'items', 'groups'];
+                for (var i=0;i<stores.length;i++){
+                  var create_users = //'DROP TABLE IF EXISTS '+ self._schema+'.'+stores[i]+'; ' + 
+                    'CREATE TABLE IF NOT EXISTS '+ self._schema+'.'+stores[i]+' (' + 
+                    '_id text NOT NULL, ' +
+                    '"status" text,' +
+                    '"deleted" boolean,' +
+                    '"created" bigint,' +
+                    '"updated" bigint,' +
+                    '"data" json,'+
+                    '"deltas" json,' +
+                    '"projectid" text' +
+                    ');'; 
+                  client.query(create_users, function(err, result){
+                        if (err){
+                            console.log(err);
+                            reject(err); 
+                            return;
+                        }
+                  });
+                }
+                resolve();
+        });
     });
 };
-/*
-Cow.localdb.prototype.open  = function(){
-    var self = this;
-    var version = 2;
-    var promise = new Promise(function(resolve, reject){    
-        var request = indexedDB.open(self._dbname,version);
-        request.onerror = function(event) {
-          reject(event.target.error);
-        };
-        request.onupgradeneeded = function(event) {
-          var db = event.target.result;
-          db
-            .createObjectStore("users", { keyPath: "_id" })
-            .createIndex("name", "name", { unique: false });
-          db
-            .createObjectStore("projects", { keyPath: "_id" })
-            .createIndex("name", "name", { unique: false });
-          db
-            .createObjectStore("socketservers", { keyPath: "_id" });
-          db
-            .createObjectStore("items", { keyPath: "_id" })
-            .createIndex("projectid", "projectid", { unique: false });
-          db
-            .createObjectStore("groups", { keyPath: "_id" })
-            .createIndex("projectid", "projectid", { unique: false });
-        };
-        request.onsuccess = function(event) {
-            self._db = event.target.result;
-            resolve(); //We're not sending back the result since we handle the db as private
-        };
-    });
-    return promise;
-};
-*/
+
 Cow.localdb.prototype.write = function(config){
+    var self = this;
     var storename = config.storename;
     var record = config.data;
     var projectid = config.projectid;
     record._id = record._id.toString();
     record.projectid = projectid;
-    var trans = this._db.transaction([storename], "readwrite");
-    var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
-        var request = store.put(record);
-        request.onsuccess = function(e) {
-            resolve(request.result);
-        };
-        request.onerror = function(e) {
-            console.log(e.value);
-            reject("Couldn't add the passed item");
-        };
+          var query = "DELETE FROM "+self._schema+"." + storename + " WHERE _id = '"+record._id+"';";
+          self._db.query(query, function(err, result){
+              if (err){
+                    console.log(err, query);
+                    reject(err);
+              }
+              query = "INSERT INTO "+self._schema+"." + storename + " VALUES(" + 
+                "'"+record._id+"'," + 
+                "'"+record.status+"'," + 
+                record.deleted+',' + 
+                record.created+',' + 
+                record.updated+',' + 
+                "'"+JSON.stringify(record.data)+"'," + 
+                "'"+JSON.stringify(record.deltas)+"'," + 
+                "'"+record.projectid+"'" + 
+                ');'; 
+              self._db.query(query, function(err, result){
+                if (err){
+                    console.log(err, query);
+                    reject(err);
+                }
+                resolve();
+              });
+          });
     });
     return promise;
 };
 
 Cow.localdb.prototype.getRecord = function(config){
+    var self = this;
     var storename = config.storename;
     var id = config.id;
     
-    var trans = this._db.transaction([storename]);
-    var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
-            var request = store.get(id);
-            request.onsuccess = function(){
-                resolve(request.result);
-            };
-            request.onerror = function(d){
-                reject(d);
-            };
+            var query = "SELECT * FROM "+self._schema+"." + storename + " WHERE _id = '"+id+"';";
+            self._db.query(query, function(err, result){
+              if (err){
+                    //console.log(err, query);
+                    reject(err);
+                    return;
+              }
+              var row = result.rows[0];
+              //console.log(row);
+              resolve(row);
+            });
     });
     return promise;
+    
 };
 
 Cow.localdb.prototype.getRecords = function(config){
+    var self = this;
     var storename = config.storename;
     var projectid = config.projectid;
-    
-    var key,index;
-    var trans = this._db.transaction([storename]);
-    var store = trans.objectStore(storename);
+    var query;
     if (projectid){
-        key = IDBKeyRange.only(projectid);
-        index = store.index("projectid");
+        query = "SELECT * FROM "+this._schema+"." + storename + " WHERE projectid = '"+projectid+"';";
     }
     else {
-        index = store;
+        query = "SELECT * FROM "+this._schema+"." + storename + ";";
     }
     var promise = new Promise(function(resolve, reject){
-        var result = [];
-        var request;
-        if (key){ //Solution to make it work on IE, since openCursor(undefined) gives an error
-            request = index.openCursor(key);
-        }
-        else{
-            request = index.openCursor();
-        }
-        request.onsuccess = function(event) {
-          var cursor = event.target.result;
-          if (cursor) {
-            result.push(cursor.value);
-            cursor.continue();
-          }
-          else{
-              resolve(result);
-          }
-        };
-        request.onerror = function(e){
-            reject(e);
-        };
+        self._db.query(query, function(err,result){
+                if (err){
+                    reject(err);
+                }
+                else {
+                    resolve(result.rows);
+                }
+          });
     });
     return promise;
 };
@@ -618,6 +595,7 @@ Cow.syncstore =  function(config){
         if (self.localdb){
             self._core.dbopen()
               .then(function(){
+                      console.log('jabadabadoo!', self._storename);
                 self.localdb.getRecords({
                         storename: self._storename, 
                         projectid: self._projectid
@@ -643,10 +621,12 @@ Cow.syncstore =  function(config){
                          }
                      });
                     resolve();
-                },function(d){ //DB Fail
+                },function(d){ 
+                    console.warn('DB Fail');
                     reject(d);
                 });
             }, function(d){
+                console.warn('DB Fail');
                 reject(d);
             });
         }
@@ -1092,7 +1072,6 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.peer = function(config){
-     //if (!config._id) {throw 'No _id given for peer';}
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;
@@ -1115,10 +1094,10 @@ Cow.peer = function(config){
 
 Cow.peer.prototype = { 
         /**
-            userid() - return id of currently connected user
-            userid(id) - sets id of currently connected user, returns peer object
+            user() - return id of currently connected user
+            user(id) - sets id of currently connected user, returns peer object
         **/
-        userid: function(id){
+        user: function(id){
             if (id){
                 return this.data('userid',id).sync();
             }
@@ -1126,7 +1105,6 @@ Cow.peer.prototype = {
               var userid = this.data('userid');
               return this._core.users(userid);
             }
-            //console.warn('No user connected to this peer');
             return null;
         },
         username: function(){
@@ -1134,7 +1112,7 @@ Cow.peer.prototype = {
                 return this.user().data('name');
             }
             else {
-                return 'Anon';
+                return null;
             }
         }
             
@@ -1938,13 +1916,16 @@ Cow.websocket.prototype.connect = function() {
                     conn.on('close', self._onClose);
                     conn.on('message', function(message) {
                         if (message.type === 'utf8') {
-                            console.log("Received: '" + message.utf8Data + "'");
+                            //console.log("Received: '" + message.utf8Data + "'");
                             self._onMessage({data:message.utf8Data});
                         }
                     });
                     conn.obj = self;
                     self._connection = conn;
                 });
+                //TODO: there is some issue with the websocket module,ssl and certificates
+                //This param should be added: {rejectUnauthorized: false}
+                //according to: http://stackoverflow.com/questions/18461979/node-js-error-with-ssl-unable-to-verify-leaf-signature#20408031
                 connection.connect(this._url, 'connect');
             }
             //Just in-browser websocket

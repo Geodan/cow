@@ -618,6 +618,7 @@ Cow.syncstore =  function(config){
         if (self.localdb){
             self._core.dbopen()
               .then(function(){
+                      console.log('jabadabadoo!', self._storename);
                 self.localdb.getRecords({
                         storename: self._storename, 
                         projectid: self._projectid
@@ -643,10 +644,12 @@ Cow.syncstore =  function(config){
                          }
                      });
                     resolve();
-                },function(d){ //DB Fail
+                },function(d){ 
+                    console.warn('DB Fail');
                     reject(d);
                 });
             }, function(d){
+                console.warn('DB Fail');
                 reject(d);
             });
         }
@@ -1092,7 +1095,6 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.peer = function(config){
-     //if (!config._id) {throw 'No _id given for peer';}
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;
@@ -1115,10 +1117,10 @@ Cow.peer = function(config){
 
 Cow.peer.prototype = { 
         /**
-            userid() - return id of currently connected user
-            userid(id) - sets id of currently connected user, returns peer object
+            user() - return id of currently connected user
+            user(id) - sets id of currently connected user, returns peer object
         **/
-        userid: function(id){
+        user: function(id){
             if (id){
                 return this.data('userid',id).sync();
             }
@@ -1126,7 +1128,6 @@ Cow.peer.prototype = {
               var userid = this.data('userid');
               return this._core.users(userid);
             }
-            //console.warn('No user connected to this peer');
             return null;
         },
         username: function(){
@@ -1134,7 +1135,7 @@ Cow.peer.prototype = {
                 return this.user().data('name');
             }
             else {
-                return 'Anon';
+                return null;
             }
         }
             
@@ -1938,13 +1939,16 @@ Cow.websocket.prototype.connect = function() {
                     conn.on('close', self._onClose);
                     conn.on('message', function(message) {
                         if (message.type === 'utf8') {
-                            console.log("Received: '" + message.utf8Data + "'");
+                            //console.log("Received: '" + message.utf8Data + "'");
                             self._onMessage({data:message.utf8Data});
                         }
                     });
                     conn.obj = self;
                     self._connection = conn;
                 });
+                //TODO: there is some issue with the websocket module,ssl and certificates
+                //This param should be added: {rejectUnauthorized: false}
+                //according to: http://stackoverflow.com/questions/18461979/node-js-error-with-ssl-unable-to-verify-leaf-signature#20408031
                 connection.connect(this._url, 'connect');
             }
             //Just in-browser websocket

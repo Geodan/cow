@@ -56,10 +56,12 @@ Cow.syncstore =  function(config){
                          }
                      });
                     resolve();
-                },function(d){ //DB Fail
+                },function(d){ 
+                    console.warn('DB Fail');
                     reject(d);
                 });
             }, function(d){
+                console.warn('DB Fail');
                 reject(d);
             });
         }
