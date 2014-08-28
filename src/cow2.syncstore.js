@@ -47,7 +47,7 @@ Cow.syncstore =  function(config){
                          //Not likely to exist in the _records at this time but better safe then sorry..
                          for (var i=0;i<self._records.length;i++){
                             if (self._records[i]._id == record._id) {
-                                //existing = true; //Already in list
+                                existing = true; //Already in list
                                 //record = -1;
                             }
                          }//Object should be non existing yet and not older than some max setting
@@ -55,6 +55,7 @@ Cow.syncstore =  function(config){
                              self._records.push(record); //Adding to the list
                          }
                      });
+                    self.trigger('datachange');
                     resolve();
                 },function(d){ 
                     console.warn('DB Fail');
@@ -104,33 +105,52 @@ Cow.syncstore.prototype =
         });
       }, //returns promise
       */
-      /** NOT USED AT THE MOMENT, replaced by function in creating syncstore **/
-      /*
-    _initRecords: function(){ //This will start the process of getting records from db (returns promise)
-        var promise = this._db_getRecords();
+      /** 
+        _loadFromDb() - This will start the process of getting records from db (returns promise)
+            experimental, used for nodejs client
+      **/
+      
+    _loadFromDb: function(){ 
         var self = this;
-        promise.then(function(r){
-             
-             r.forEach(function(d){
-                 //console.log(d.doc);
-                 var record = self._recordproto(d._id);
-                 record.inflate(d);
-                 var existing = false; //Not likely to exist in the _records at this time but better safe then sorry..
-                 for (var i=0;i<self._records.length;i++){
-                    if (self._records[i]._id == record._id) {
-                        existing = true; //Already in list
-                        record = -1;
-                    }
-                 }
-                 if (!existing){
-                     self._records.push(record); //Adding to the list
-                 }
-             });
-             self.trigger('datachange');
+        return new Promise(function(resolve, reject){
+            self.localdb.getRecords({
+                    storename: self._storename, 
+                    projectid: self._projectid
+                })
+              .then(function(rows){
+                
+                rows.forEach(function(d){
+                     var record = self._recordproto(d._id);
+                     record.inflate(d);
+                     var lastupdate = record.timestamp();
+                     var now = new Date().getTime();
+                     var staleness = now - lastupdate;
+                     var existing = false; 
+                     //Not likely to exist in the _records at this time but better safe then sorry..
+                     for (var i=0;i<self._records.length;i++){
+                         //Object exists but is newer (only happens if localdb is updated from outside
+                        if (self._records[i]._id == record._id && self._records[i]._updated < record._updated) {
+                            self._records.splice(i,1,record); //replace with new
+                            existing = true; //Already in list
+                        }
+                        else if (self._records[i]._id == record._id && self._records[i]._updated >= record._updated) {
+                            existing = true; //Already in list
+                            //record = -1;
+                        }
+                     }//Object should be non existing yet and not older than some max setting
+                     if (!existing && (staleness < self.maxStaleness || self.maxStaleness === null)){
+                         self._records.push(record); //Adding to the list
+                     }
+                 });
+                self.trigger('datachange');
+                resolve();
+            },function(d){ 
+                console.warn('DB Fail');
+                reject(d);
+            });
         });
-        return promise;
      },
-     */
+     
     //_getRecords([<string>]) - return all records, if ID array is filled, only return that records
     _getRecords: function(idarray){
         var returnArray = [];

@@ -27,6 +27,7 @@ Cow.localdb = function(config){
     this._schema = 'cow';
     this._openpromise = new Promise(function(resolve, reject){
         var request = pg.connect(dbUrl, function(err, client) {
+                
                 if (err){
                     console.log(err);
                     reject(err);
@@ -53,6 +54,24 @@ Cow.localdb = function(config){
                         }
                   });
                 }
+                client.on('notification', function(data) {
+                    var table = data.payload;
+                    console.log(table, ' has been changed in the database');
+                    switch(table) {
+                    case 'users':
+                        self._core.userStore()._loadFromDb().then(
+                            function(){
+                                self._core.userStore().sync();
+                                console.log('loaded');
+                            },function(err){
+                                console.log('Error: ', err);
+                            });
+                        break;
+                    default:
+                        console.warn('Update from unknown table: ', table);
+                    }
+                });
+                client.query("LISTEN watchers");
                 resolve();
         });
     });

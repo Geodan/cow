@@ -47,7 +47,7 @@ Cow.websocket.prototype.connect = function() {
         return false;
     }
 
-    if (!this._connection || this._connection.readyState != 1) //if no connection
+    if (!this._connection || this._connection.readyState != 1 || this._connection.state != 'open') //if no connection
     {
         if(this._url.indexOf('ws') === 0) {
             var connection = null;
@@ -119,8 +119,8 @@ Cow.websocket.prototype.sendData = function(data, action, target){
     catch (e){
         console.error(e, message);
     }
-    if (this._connection && this._connection.readyState == 1){
-        //console.log('Sending ',message);
+    if (this._connection && (this._connection.readyState == 1 || this._connection.state == 'open')){
+        console.log('Sending ',message);
         this._connection.send(JSON.stringify(message));
     }
     else{
@@ -136,7 +136,7 @@ Cow.websocket.prototype._onMessage = function(message){
     var payload = data.payload;    
     var target = data.target;
     if (sender != PEERID){
-        //console.log('Receiving ',data);
+        console.log('Receiving ',data);
     }
     switch (action) {
     /**

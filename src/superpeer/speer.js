@@ -8,7 +8,7 @@ Cow = require('../../dist/cow.node.js');
 core = new Cow.core({herdname: 'test'});
 core.socketservers({
         _id: 'default', 
-        data: {protocol:'ws',ip:'192.168.26.95', port:8081}
+        data: {protocol:'ws',ip:'192.168.25.152', port:8081}
         //data: {protocol:'wss',ip:'192.168.40.10', port:443}
       });
 core.socketserver('default');

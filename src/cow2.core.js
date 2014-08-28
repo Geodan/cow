@@ -27,7 +27,7 @@ Cow.core = function(config){
     this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     
     /*LOCALDB*/
-    this._localdb = new Cow.localdb({dbname: this._herdname});
+    this._localdb = new Cow.localdb({dbname: this._herdname, core: this});
     
     /*PROJECTS*/
     this._projectStore =  _.extend(
