@@ -23,8 +23,8 @@ Cow.localdb = function(config){
     this._db = null;
     var version = 2;
     //var dbUrl = "tcp://osgis:osgis@osgis.geodan.nl/osgis2";
-    var dbUrl = "tcp://geodan:Gehijm@192.168.24.15/research";
-    this._schema = 'cow';
+    var dbUrl = "tcp://geodan:Gehijm@192.168.24.15/cow";
+    this._schema = self._dbname;
     this._openpromise = new Promise(function(resolve, reject){
         var request = pg.connect(dbUrl, function(err, client) {
                 
@@ -33,8 +33,19 @@ Cow.localdb = function(config){
                     reject(err);
                 }
                 self._db = client;
+                
+                var create_schema = 'CREATE SCHEMA IF NOT EXISTS ' + self._schema;
+                client.query(create_schema, function(err, result){
+                    if (err){
+                        console.log(err);
+                        reject(err); 
+                        return;
+                    }
+                });
+                
                 var stores = ['users','projects', 'socketservers', 'items', 'groups'];
                 for (var i=0;i<stores.length;i++){
+                    
                   var create_users = //'DROP TABLE IF EXISTS '+ self._schema+'.'+stores[i]+'; ' + 
                     'CREATE TABLE IF NOT EXISTS '+ self._schema+'.'+stores[i]+' (' + 
                     '_id text NOT NULL, ' +

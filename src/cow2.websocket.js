@@ -120,7 +120,7 @@ Cow.websocket.prototype.sendData = function(data, action, target){
         console.error(e, message);
     }
     if (this._connection && (this._connection.readyState == 1 || this._connection.state == 'open')){
-        console.log('Sending ',message);
+        //console.log('Sending ',message);
         this._connection.send(JSON.stringify(message));
     }
     else{
@@ -136,7 +136,7 @@ Cow.websocket.prototype._onMessage = function(message){
     var payload = data.payload;    
     var target = data.target;
     if (sender != PEERID){
-        console.log('Receiving ',data);
+        //console.log('Receiving ',data);
     }
     switch (action) {
     /**
