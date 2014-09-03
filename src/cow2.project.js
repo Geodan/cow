@@ -16,9 +16,10 @@ Cow.project = function(config){
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;
+    this._maxAge = this._core._maxAge;
     
     //FIXME: this might be inherited from cow.record 
-    this._status= 'dirty';
+    this._dirty= 'true';
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -31,7 +32,7 @@ Cow.project = function(config){
     //var dbname = 'groups_' + config._id;
     var dbname = 'groups';
     this._groupStore = _.extend(
-        new Cow.syncstore({dbname: dbname, core: self._core}),{
+        new Cow.syncstore({dbname: dbname, core: self._core, maxAge: this._maxAge}),{
         _records: [],
         _recordproto: function(_id){return new Cow.group({_id: _id, store: this});},
         _type: 'groups',
@@ -45,7 +46,7 @@ Cow.project = function(config){
     //dbname = 'items_' + config._id;
     dbname = 'items';
     this._itemStore = _.extend(
-        new Cow.syncstore({dbname: dbname, core: self._core}),{
+        new Cow.syncstore({dbname: dbname, core: self._core, maxAge: this._maxAge}),{
         _recordproto:   function(_id){return new Cow.item({_id: _id, store: this});},
         _projectid: this._id,
         _records: [],

@@ -13,7 +13,8 @@ if (typeof exports !== 'undefined') {
 Cow.record = function(){
     //FIXME: 'this' object is being overwritten by its children 
     this._id    = null;
-    this._status= 'dirty';
+    this._status= 'dirty'; //deprecated, replaced by _dirty
+    this._dirty = false;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -42,6 +43,7 @@ Cow.record.prototype =
         //You can't set creation date afterwards
     },
     timestamp: function(timestamp){
+        console.warn('timestamp() has been deprecated. Use updated() instead');
         if (timestamp) {
             this._updated = timestamp;
             return this;
@@ -50,21 +52,50 @@ Cow.record.prototype =
             return this._updated;
         }
     },
+    updated: function(timestamp){
+        if (timestamp) {
+            this._updated = timestamp;
+            return this;
+        }
+        else {
+            return this._updated;
+        }
+    },
+    touch: function(){
+        this.updated(new Date().getTime());
+    },
     deleted: function(truefalse){
         if (truefalse !== undefined){
             this._deleted = truefalse;
-            this.timestamp(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
-            this._status = 'dirty';
+            this.updated(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
+            this._dirty = true;
             return this;
         }
         else {
             return this._deleted;
         }
     },
+    dirty: function(truefalse){
+        if (truefalse !== undefined){
+            this._dirty = truefalse;
+            
+            if (this._dirty) this._status = 'dirty'; //to be removed when status becomes deprecated
+            else this._status = 'clean';
+            
+            return this;
+        }
+        else {
+            return this._dirty;
+        }
+    },
     status: function(status){
         if (status){
             this._status = status;
-            this.timestamp(new Date().getTime());
+            
+            if (this._status == 'dirty') this._dirty = true;
+            else this._dirty = false;
+            
+            this.updated(new Date().getTime());
             return this;
         }
         else {
@@ -89,7 +120,7 @@ Cow.record.prototype =
         }
         else if (param && typeof(param) == 'object' && !value){
             this._data = param;
-            this.status('dirty');
+            this.dirty(true);
             return this;
         }
         else if (param && typeof(param) == 'string' && !value){
@@ -104,7 +135,7 @@ Cow.record.prototype =
             }
             this._data[param] = value;
             this._deltaq[param] = value;
-            this.status('dirty');
+            this.dirty(true);
             return this; 
         }
     },
@@ -162,16 +193,22 @@ Cow.record.prototype =
                 this._deltas.push({
                         timestamp: time,
                         data: data
+                        //TODO: Issue: #125
+                        //it would be nice if we also save the userid of the user that syncs this 
                 });
             }
             return this;
         }
         
     },
+    /**
+        deflate() - create a json out of a record object 
+    **/
     deflate: function(){
         return {
             _id: this._id,
             status: this._status,
+            dirty: this._dirty,
             created: this._created,
             deleted: this._deleted,
             updated: this._updated,
@@ -179,9 +216,19 @@ Cow.record.prototype =
             deltas: this._deltas
         }; 
     },
+    /**
+        inflate(config) - create a record object out of json
+    **/
     inflate: function(config){
         this._id = config._id || this._id || new Date().getTime().toString();
-        this._status = config.status || this._status;
+        this._status = config.status || this._status; //to be deprecated
+        if (config.dirty !== undefined){
+            this._dirty = config.dirty;
+        }
+        else { //remove this when status is deprecated
+            if (this._status == 'clean') this._dirty = false;
+            else this._dirty = true;
+        }
         this._created = config.created || this._created;
         if (config.deleted !== undefined){
             this._deleted = config.deleted;

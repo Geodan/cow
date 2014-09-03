@@ -40,7 +40,7 @@ Cow.syncstore =  function(config){
                     rows.forEach(function(d){
                          var record = self._recordproto(d._id);
                          record.inflate(d);
-                         var lastupdate = record.timestamp();
+                         var lastupdate = record.updated();
                          var now = new Date().getTime();
                          var staleness = now - lastupdate;
                          var existing = false; 
@@ -51,8 +51,16 @@ Cow.syncstore =  function(config){
                                 //record = -1;
                             }
                          }//Object should be non existing yet and not older than some max setting
-                         if (!existing && (staleness < self.maxStaleness || self.maxStaleness === null)){
+                         if (!existing && (staleness <= self.maxStaleness || self.maxStaleness === null)){
                              self._records.push(record); //Adding to the list
+                         }
+                         //If it is stale, than remove it from the database
+                         if(self.maxStaleness && staleness > self.maxStaleness){
+                             self.localdb.delRecord({
+                                storename:self._storename,
+                                projectid: self._projectid,
+                                id: record._id
+                             });
                          }
                      });
                     self.trigger('datachange');
@@ -122,7 +130,7 @@ Cow.syncstore.prototype =
                 rows.forEach(function(d){
                      var record = self._recordproto(d._id);
                      record.inflate(d);
-                     var lastupdate = record.timestamp();
+                     var lastupdate = record.updated();
                      var now = new Date().getTime();
                      var staleness = now - lastupdate;
                      var existing = false; 
@@ -138,8 +146,16 @@ Cow.syncstore.prototype =
                             //record = -1;
                         }
                      }//Object should be non existing yet and not older than some max setting
-                     if (!existing && (staleness < self.maxStaleness || self.maxStaleness === null)){
+                     if (!existing && (staleness <= self.maxStaleness || self.maxStaleness === null)){
                          self._records.push(record); //Adding to the list
+                     }
+                     //If it is stale, than remove it from the database
+                     else if(self.maxStaleness && staleness > self.maxStaleness){
+                         self.localdb.delRecord({
+                            storename:self._storename,
+                            projectid: self._projectid,
+                            id: record._id
+                         });
                      }
                  });
                 self.trigger('datachange');
@@ -171,7 +187,7 @@ Cow.syncstore.prototype =
             }
         }
         //var config = {_id: id};
-        //return this._addRecord({source: 'UI', data: config}).status('dirty');
+        //return this._addRecord({source: 'UI', data: config}).dirty(true);
         //TODO: rethink this strategy: should we make a new record on non-existing or just return null
         return null;
     },
@@ -257,7 +273,7 @@ Cow.syncstore.prototype =
             return this._getRecords(config);
         }
         else if (config && typeof(config) == 'object'){
-            return this._addRecord({source: 'UI', data: config}).status('dirty');
+            return this._addRecord({source: 'UI', data: config}).dirty(true);
         }
         else if (config && typeof(config) == 'string'){
             return this._getRecord(config);
@@ -317,7 +333,7 @@ Cow.syncstore.prototype =
         var self = this;
         var message = {};
         message.syncType = this._type;
-        record.status('clean');
+        record.dirty(false);
         
         if (this._projectid){ //parent store
             message.project = this._projectid;
@@ -349,9 +365,9 @@ Cow.syncstore.prototype =
         var pushlist = [];
         for (var i=0;i<this._records.length;i++){
             var record = this._records[i];
-            if (record._status == 'dirty') {
+            if (record.dirty()) {
                 //this.syncRecord(record);
-                record.status('clean');
+                record.dirty(false);
                 pushlist.push(record.deflate());
             }
         }
@@ -403,7 +419,7 @@ Cow.syncstore.prototype =
             var item = this._records[i];
             var iditem = {};
             iditem._id = item._id;
-            iditem.timestamp = item.timestamp();
+            iditem.timestamp = item.updated();
             iditem.deleted = item.deleted();
             fids.push(iditem);    
         }
@@ -426,7 +442,7 @@ Cow.syncstore.prototype =
 		return pushlist;
 	},
     /**
-	compareRecords(config) - compares incoming idlist with idlist from current stack based on timestamp and status
+	compareRecords(config) - compares incoming idlist with idlist from current stack based on timestamp and dirtystatus
 					generates 2 lists: requestlist and pushlist
 	**/
     compareRecords: function(config){

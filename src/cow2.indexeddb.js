@@ -163,8 +163,22 @@ Cow.localdb.prototype.getRecords = function(config){
     return promise;
 };
 
-Cow.localdb.prototype.clear = function(config,projectid){
-    //TODO, returns promise
+Cow.localdb.prototype.delRecord = function(config){
+    var storename = config.storename;
+    var projectid = config.projectid;
+    var id = config.id;
+    var trans = this._db.transaction([storename], "readwrite");
+    var store = trans.objectStore(storename);
+    var promise = new Promise(function(resolve, reject){
+        var request = store.delete(id);
+        request.onsuccess = function(event){
+            resolve();
+        };
+        request.onerror = function(e){
+            reject(e);
+        };
+    });
+    return promise;
 };
 
 }).call(this);

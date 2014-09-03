@@ -17,7 +17,7 @@ Cow.group = function(config){
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 
-    this._status= 'dirty';
+    this._dirty= 'true';
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -167,7 +167,6 @@ Cow.group.prototype =
         var hasmember = false;
         var memberList = this.members();
         for (var i=0;i<memberList.length;i++){
-            //if (this.memberList[i].id == peerid && this.memberList[i].status != 'deleted') {
             if (memberList[i] == peerid) {
                 hasmember = true;
             }

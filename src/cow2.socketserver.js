@@ -23,7 +23,7 @@ Cow.socketserver = function(config){
     };
     
     //FIXME: this might be inherited from cow.record 
-    this._status= 'dirty';
+    this._dirty= true;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();

@@ -49,7 +49,7 @@ Cow.localdb = function(config){
                   var create_users = //'DROP TABLE IF EXISTS '+ self._schema+'.'+stores[i]+'; ' + 
                     'CREATE TABLE IF NOT EXISTS '+ self._schema+'.'+stores[i]+' (' + 
                     '_id text NOT NULL, ' +
-                    '"status" text,' +
+                    '"dirty" boolean,' +
                     '"deleted" boolean,' +
                     '"created" bigint,' +
                     '"updated" bigint,' +
@@ -102,17 +102,18 @@ Cow.localdb.prototype.write = function(config){
                     console.log(err, query);
                     reject(err);
               }
-              query = "INSERT INTO "+self._schema+"." + storename + " VALUES(" + 
-                "'"+record._id+"'," + 
-                "'"+record.status+"'," + 
-                record.deleted+',' + 
-                record.created+',' + 
-                record.updated+',' + 
-                "'"+JSON.stringify(record.data)+"'," + 
-                "'"+JSON.stringify(record.deltas)+"'," + 
-                "'"+record.projectid+"'" + 
-                ');'; 
-              self._db.query(query, function(err, result){
+              query = "INSERT INTO "+self._schema+"." + storename + " VALUES($1, $2, $3, $4, $5, $6, $7, $8)";
+              var vars = [
+                record._id,
+                record.dirty, 
+                record.deleted, 
+                record.created, 
+                record.updated, 
+                JSON.stringify(record.data), 
+                JSON.stringify(record.deltas), 
+                record.projectid
+                ]; 
+              self._db.query(query, vars, function(err, result){
                 if (err){
                     console.log(err, query);
                     reject(err);
@@ -170,8 +171,12 @@ Cow.localdb.prototype.getRecords = function(config){
     return promise;
 };
 
-Cow.localdb.prototype.clear = function(config,projectid){
-    //TODO, returns promise
+Cow.localdb.prototype.delRecord = function(config){
+    var promise = new Promise(function(resolve, reject){
+            console.warn('delRecord not used with postgres');
+            reject();
+    });
+    return promise;
 };
 
 }).call(this);

@@ -213,13 +213,15 @@ Cow.websocket.prototype._onClose = function(event){
     var code = event.code;
     var reason = event.reason;
     var wasClean = event.wasClean;
-    var self = this;
+    var self = this.obj;
+    console.log('WS disconnected:' , this.closeDescription);
     //this.close(); //FIME: TT: why was this needed?
-    this._core.peerStore().clear();
-    this._connected = false;
+    self._core.peerStore().clear();
+    self._connected = false;
     //TODO this._core.trigger('ws-disconnected');    
     var restart = function(){
         try{
+            console.log('Trying to reconnect');
             self._core.websocket().disconnect();
         }
         catch(err){
