@@ -11,7 +11,6 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.peer = function(config){
-     //if (!config._id) {throw 'No _id given for peer';}
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;
@@ -21,7 +20,7 @@ Cow.peer = function(config){
     };
     
     //FIXME: this might be inherited from cow.record 
-    this._status= 'dirty';
+    this._dirty= 'true';
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -37,12 +36,6 @@ Cow.peer.prototype = {
             user() - return id of currently connected user
             user(id) - sets id of currently connected user, returns peer object
         **/
-        //user: function(id){
-        //    if (id) {
-        //        return this.data('userid',id);
-        //    }
-        //    return this.data('userid');
-        //},
         user: function(id){
             if (id){
                 return this.data('userid',id).sync();
@@ -51,7 +44,6 @@ Cow.peer.prototype = {
               var userid = this.data('userid');
               return this._core.users(userid);
             }
-            console.warn('No user connected to this peer');
             return null;
         },
         username: function(){
@@ -59,7 +51,7 @@ Cow.peer.prototype = {
                 return this.user().data('name');
             }
             else {
-                return 'Anon';
+                return null;
             }
         }
             

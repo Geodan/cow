@@ -47,7 +47,7 @@ Cow.websocket.prototype.connect = function() {
         return false;
     }
 
-    if (!this._connection || this._connection.readyState != 1) //if no connection
+    if (!this._connection || this._connection.readyState != 1 || this._connection.state != 'open') //if no connection
     {
         if(this._url.indexOf('ws') === 0) {
             var connection = null;
@@ -63,13 +63,16 @@ Cow.websocket.prototype.connect = function() {
                     conn.on('close', self._onClose);
                     conn.on('message', function(message) {
                         if (message.type === 'utf8') {
-                            console.log("Received: '" + message.utf8Data + "'");
+                            //console.log("Received: '" + message.utf8Data + "'");
                             self._onMessage({data:message.utf8Data});
                         }
                     });
                     conn.obj = self;
                     self._connection = conn;
                 });
+                //TODO: there is some issue with the websocket module,ssl and certificates
+                //This param should be added: {rejectUnauthorized: false}
+                //according to: http://stackoverflow.com/questions/18461979/node-js-error-with-ssl-unable-to-verify-leaf-signature#20408031
                 connection.connect(this._url, 'connect');
             }
             //Just in-browser websocket
@@ -116,7 +119,7 @@ Cow.websocket.prototype.sendData = function(data, action, target){
     catch (e){
         console.error(e, message);
     }
-    if (this._connection && this._connection.readyState == 1){
+    if (this._connection && (this._connection.readyState == 1 || this._connection.state == 'open')){
         //console.log('Sending ',message);
         this._connection.send(JSON.stringify(message));
     }
@@ -210,13 +213,15 @@ Cow.websocket.prototype._onClose = function(event){
     var code = event.code;
     var reason = event.reason;
     var wasClean = event.wasClean;
-    var self = this;
+    var self = this.obj;
+    console.log('WS disconnected:' , this.closeDescription);
     //this.close(); //FIME: TT: why was this needed?
-    this._core.peerStore().clear();
-    this._connected = false;
+    self._core.peerStore().clear();
+    self._connected = false;
     //TODO this._core.trigger('ws-disconnected');    
     var restart = function(){
         try{
+            console.log('Trying to reconnect');
             self._core.websocket().disconnect();
         }
         catch(err){
@@ -234,7 +239,7 @@ Cow.websocket.prototype._onConnect = function(payload){
     var version = payload.server_version;
     var serverkey = payload.server_key;
     
-    if (serverkey !== undefined && serverkey != 'test'){ //TODO: key must become variable
+    if (serverkey !== undefined && serverkey != this._core._herdname){
         self.disconnect();
         return;
     }

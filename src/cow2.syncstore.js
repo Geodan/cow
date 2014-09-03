@@ -29,35 +29,48 @@ Cow.syncstore =  function(config){
     }
     this.loaded = new Promise(function(resolve, reject){
         if (self.localdb){
-            self.localdb.open().then(function(){
+            self._core.dbopen()
+              .then(function(){
                 self.localdb.getRecords({
                         storename: self._storename, 
                         projectid: self._projectid
-                    }).then(function(rows){
-                    //console.log('Got records from db ',self._dbname);
+                    })
+                  .then(function(rows){
+                    
                     rows.forEach(function(d){
                          var record = self._recordproto(d._id);
                          record.inflate(d);
-                         var lastupdate = record.timestamp();
+                         var lastupdate = record.updated();
                          var now = new Date().getTime();
                          var staleness = now - lastupdate;
                          var existing = false; 
                          //Not likely to exist in the _records at this time but better safe then sorry..
                          for (var i=0;i<self._records.length;i++){
                             if (self._records[i]._id == record._id) {
-                                //existing = true; //Already in list
+                                existing = true; //Already in list
                                 //record = -1;
                             }
                          }//Object should be non existing yet and not older than some max setting
-                         if (!existing && (staleness < self.maxStaleness || self.maxStaleness === null)){
+                         if (!existing && (staleness <= self.maxStaleness || self.maxStaleness === null)){
                              self._records.push(record); //Adding to the list
                          }
+                         //If it is stale, than remove it from the database
+                         if(self.maxStaleness && staleness > self.maxStaleness){
+                             self.localdb.delRecord({
+                                storename:self._storename,
+                                projectid: self._projectid,
+                                id: record._id
+                             });
+                         }
                      });
+                    self.trigger('datachange');
                     resolve();
-                },function(d){ //DB Fail
+                },function(d){ 
+                    console.warn('DB Fail');
                     reject(d);
                 });
             }, function(d){
+                console.warn('DB Fail');
                 reject(d);
             });
         }
@@ -100,33 +113,60 @@ Cow.syncstore.prototype =
         });
       }, //returns promise
       */
-      /** NOT USED AT THE MOMENT, replaced by function in creating syncstore **/
-      /*
-    _initRecords: function(){ //This will start the process of getting records from db (returns promise)
-        var promise = this._db_getRecords();
+      /** 
+        _loadFromDb() - This will start the process of getting records from db (returns promise)
+            experimental, used for nodejs client
+      **/
+      
+    _loadFromDb: function(){ 
         var self = this;
-        promise.then(function(r){
-             
-             r.forEach(function(d){
-                 //console.log(d.doc);
-                 var record = self._recordproto(d._id);
-                 record.inflate(d);
-                 var existing = false; //Not likely to exist in the _records at this time but better safe then sorry..
-                 for (var i=0;i<self._records.length;i++){
-                    if (self._records[i]._id == record._id) {
-                        existing = true; //Already in list
-                        record = -1;
-                    }
-                 }
-                 if (!existing){
-                     self._records.push(record); //Adding to the list
-                 }
-             });
-             self.trigger('datachange');
+        return new Promise(function(resolve, reject){
+            self.localdb.getRecords({
+                    storename: self._storename, 
+                    projectid: self._projectid
+                })
+              .then(function(rows){
+                
+                rows.forEach(function(d){
+                     var record = self._recordproto(d._id);
+                     record.inflate(d);
+                     var lastupdate = record.updated();
+                     var now = new Date().getTime();
+                     var staleness = now - lastupdate;
+                     var existing = false; 
+                     //Not likely to exist in the _records at this time but better safe then sorry..
+                     for (var i=0;i<self._records.length;i++){
+                         //Object exists but is newer (only happens if localdb is updated from outside
+                        if (self._records[i]._id == record._id && self._records[i]._updated < record._updated) {
+                            self._records.splice(i,1,record); //replace with new
+                            existing = true; //Already in list
+                        }
+                        else if (self._records[i]._id == record._id && self._records[i]._updated >= record._updated) {
+                            existing = true; //Already in list
+                            //record = -1;
+                        }
+                     }//Object should be non existing yet and not older than some max setting
+                     if (!existing && (staleness <= self.maxStaleness || self.maxStaleness === null)){
+                         self._records.push(record); //Adding to the list
+                     }
+                     //If it is stale, than remove it from the database
+                     else if(self.maxStaleness && staleness > self.maxStaleness){
+                         self.localdb.delRecord({
+                            storename:self._storename,
+                            projectid: self._projectid,
+                            id: record._id
+                         });
+                     }
+                 });
+                self.trigger('datachange');
+                resolve();
+            },function(d){ 
+                console.warn('DB Fail');
+                reject(d);
+            });
         });
-        return promise;
      },
-     */
+     
     //_getRecords([<string>]) - return all records, if ID array is filled, only return that records
     _getRecords: function(idarray){
         var returnArray = [];
@@ -147,7 +187,7 @@ Cow.syncstore.prototype =
             }
         }
         //var config = {_id: id};
-        //return this._addRecord({source: 'UI', data: config}).status('dirty');
+        //return this._addRecord({source: 'UI', data: config}).dirty(true);
         //TODO: rethink this strategy: should we make a new record on non-existing or just return null
         return null;
     },
@@ -233,7 +273,7 @@ Cow.syncstore.prototype =
             return this._getRecords(config);
         }
         else if (config && typeof(config) == 'object'){
-            return this._addRecord({source: 'UI', data: config}).status('dirty');
+            return this._addRecord({source: 'UI', data: config}).dirty(true);
         }
         else if (config && typeof(config) == 'string'){
             return this._getRecord(config);
@@ -293,7 +333,7 @@ Cow.syncstore.prototype =
         var self = this;
         var message = {};
         message.syncType = this._type;
-        record.status('clean');
+        record.dirty(false);
         
         if (this._projectid){ //parent store
             message.project = this._projectid;
@@ -325,9 +365,9 @@ Cow.syncstore.prototype =
         var pushlist = [];
         for (var i=0;i<this._records.length;i++){
             var record = this._records[i];
-            if (record._status == 'dirty') {
+            if (record.dirty()) {
                 //this.syncRecord(record);
-                record.status('clean');
+                record.dirty(false);
                 pushlist.push(record.deflate());
             }
         }
@@ -364,7 +404,7 @@ Cow.syncstore.prototype =
             message.list = self.idList();
             self._core.websocket().sendData(message, 'newList');
         });
-        self.loaded.catch(function(e){
+        this.loaded.catch(function(e){
                 console.error(e.message);
         });
     },
@@ -379,7 +419,7 @@ Cow.syncstore.prototype =
             var item = this._records[i];
             var iditem = {};
             iditem._id = item._id;
-            iditem.timestamp = item.timestamp();
+            iditem.timestamp = item.updated();
             iditem.deleted = item.deleted();
             fids.push(iditem);    
         }
@@ -402,7 +442,7 @@ Cow.syncstore.prototype =
 		return pushlist;
 	},
     /**
-	compareRecords(config) - compares incoming idlist with idlist from current stack based on timestamp and status
+	compareRecords(config) - compares incoming idlist with idlist from current stack based on timestamp and dirtystatus
 					generates 2 lists: requestlist and pushlist
 	**/
     compareRecords: function(config){

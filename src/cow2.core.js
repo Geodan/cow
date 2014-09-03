@@ -22,16 +22,15 @@ Cow.core = function(config){
     this._projectid = null;
     this._wsUrl = null;
     this._peerid = null;
-    this._maxAge = 1000 * 60 * 60 * 24 * 30; //30 days in mseconds
-    /*WEBSOCKET*/
-    this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
+    this._maxAge = config.maxage || 1000 * 60 * 60 * 24 * 30; //30 days in mseconds
+    
     
     /*LOCALDB*/
-    this._localdb = new Cow.localdb({dbname: this._herdname});
+    this._localdb = new Cow.localdb({dbname: this._herdname, core: this});
     
     /*PROJECTS*/
     this._projectStore =  _.extend(
-        new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self}),{
+        new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self, maxAge: this._maxAge}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
         _dbname:        'projects',
@@ -41,7 +40,7 @@ Cow.core = function(config){
     
     /*PEERS*/
     this._peerStore =  _.extend(
-        new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
+        new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this, maxAge: this._maxAge}), {
          _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.peer({_id: _id, store: this});}, 
@@ -55,7 +54,7 @@ Cow.core = function(config){
     
     /*USERS*/
     this._userStore =  _.extend(
-        new Cow.syncstore({dbname: 'users', noDeltas: true, core: this}), {
+        new Cow.syncstore({dbname: 'users', noDeltas: true, core: this, maxAge: this._maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
@@ -65,13 +64,16 @@ Cow.core = function(config){
     
     /*SOCKETSERVERS*/
     this._socketserverStore =  _.extend(
-        new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this.maxAge}), {
+        new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this._maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.socketserver({_id: _id, store: this});},     
         _dbname:        'socketservers',
         _type:          'socketservers'
     });
+    
+    /*WEBSOCKET*/
+    this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     
 };
 Cow.core.prototype = 
@@ -256,6 +258,12 @@ Cow.core.prototype =
             }
         }
         return returnArr;
+    },
+    /**
+        localdbase() - return the open promise of the localdbase
+    **/
+    dbopen: function(){
+        return this._localdb._openpromise;
     },
     /**
         websocket() - return the _websocket object

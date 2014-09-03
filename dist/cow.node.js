@@ -222,7 +222,8 @@ if (typeof exports !== 'undefined') {
 Cow.record = function(){
     //FIXME: 'this' object is being overwritten by its children 
     this._id    = null;
-    this._status= 'dirty';
+    this._status= 'dirty'; //deprecated, replaced by _dirty
+    this._dirty = false;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -251,6 +252,7 @@ Cow.record.prototype =
         //You can't set creation date afterwards
     },
     timestamp: function(timestamp){
+        console.warn('timestamp() has been deprecated. Use updated() instead');
         if (timestamp) {
             this._updated = timestamp;
             return this;
@@ -259,21 +261,50 @@ Cow.record.prototype =
             return this._updated;
         }
     },
+    updated: function(timestamp){
+        if (timestamp) {
+            this._updated = timestamp;
+            return this;
+        }
+        else {
+            return this._updated;
+        }
+    },
+    touch: function(){
+        this.updated(new Date().getTime());
+    },
     deleted: function(truefalse){
         if (truefalse !== undefined){
             this._deleted = truefalse;
-            this.timestamp(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
-            this._status = 'dirty';
+            this.updated(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
+            this._dirty = true;
             return this;
         }
         else {
             return this._deleted;
         }
     },
+    dirty: function(truefalse){
+        if (truefalse !== undefined){
+            this._dirty = truefalse;
+            
+            if (this._dirty) this._status = 'dirty'; //to be removed when status becomes deprecated
+            else this._status = 'clean';
+            
+            return this;
+        }
+        else {
+            return this._dirty;
+        }
+    },
     status: function(status){
         if (status){
             this._status = status;
-            this.timestamp(new Date().getTime());
+            
+            if (this._status == 'dirty') this._dirty = true;
+            else this._dirty = false;
+            
+            this.updated(new Date().getTime());
             return this;
         }
         else {
@@ -298,7 +329,7 @@ Cow.record.prototype =
         }
         else if (param && typeof(param) == 'object' && !value){
             this._data = param;
-            this.status('dirty');
+            this.dirty(true);
             return this;
         }
         else if (param && typeof(param) == 'string' && !value){
@@ -313,7 +344,7 @@ Cow.record.prototype =
             }
             this._data[param] = value;
             this._deltaq[param] = value;
-            this.status('dirty');
+            this.dirty(true);
             return this; 
         }
     },
@@ -371,16 +402,22 @@ Cow.record.prototype =
                 this._deltas.push({
                         timestamp: time,
                         data: data
+                        //TODO: Issue: #125
+                        //it would be nice if we also save the userid of the user that syncs this 
                 });
             }
             return this;
         }
         
     },
+    /**
+        deflate() - create a json out of a record object 
+    **/
     deflate: function(){
         return {
             _id: this._id,
             status: this._status,
+            dirty: this._dirty,
             created: this._created,
             deleted: this._deleted,
             updated: this._updated,
@@ -388,9 +425,19 @@ Cow.record.prototype =
             deltas: this._deltas
         }; 
     },
+    /**
+        inflate(config) - create a record object out of json
+    **/
     inflate: function(config){
         this._id = config._id || this._id || new Date().getTime().toString();
-        this._status = config.status || this._status;
+        this._status = config.status || this._status; //to be deprecated
+        if (config.dirty !== undefined){
+            this._dirty = config.dirty;
+        }
+        else { //remove this when status is deprecated
+            if (this._status == 'clean') this._dirty = false;
+            else this._dirty = true;
+        }
         this._created = config.created || this._created;
         if (config.deleted !== undefined){
             this._deleted = config.deleted;
@@ -438,120 +485,162 @@ Cow.localdb = function(config){
     this._dbname = config.dbname;
     this._core = config.core;
     this._db = null;
-};
-
-Cow.localdb.prototype.open  = function(){
-    var self = this;
     var version = 2;
-    var promise = new Promise(function(resolve, reject){    
-        var request = indexedDB.open(self._dbname,version);
-        request.onerror = function(event) {
-          reject(event.target.error);
-        };
-        request.onupgradeneeded = function(event) {
-          var db = event.target.result;
-          db
-            .createObjectStore("users", { keyPath: "_id" })
-            .createIndex("name", "name", { unique: false });
-          db
-            .createObjectStore("projects", { keyPath: "_id" })
-            .createIndex("name", "name", { unique: false });
-          db
-            .createObjectStore("socketservers", { keyPath: "_id" });
-          db
-            .createObjectStore("items", { keyPath: "_id" })
-            .createIndex("projectid", "projectid", { unique: false });
-          db
-            .createObjectStore("groups", { keyPath: "_id" })
-            .createIndex("projectid", "projectid", { unique: false });
-        };
-        request.onsuccess = function(event) {
-            self._db = event.target.result;
-            resolve(); //We're not sending back the result since we handle the db as private
-        };
+    //var dbUrl = "tcp://osgis:osgis@osgis.geodan.nl/osgis2";
+    var dbUrl = "tcp://geodan:Gehijm@192.168.24.15/cow";
+    this._schema = self._dbname;
+    this._openpromise = new Promise(function(resolve, reject){
+        var request = pg.connect(dbUrl, function(err, client) {
+                
+                if (err){
+                    console.log(err);
+                    reject(err);
+                }
+                self._db = client;
+                
+                var create_schema = 'CREATE SCHEMA IF NOT EXISTS ' + self._schema;
+                client.query(create_schema, function(err, result){
+                    if (err){
+                        console.log(err);
+                        reject(err); 
+                        return;
+                    }
+                });
+                
+                var stores = ['users','projects', 'socketservers', 'items', 'groups'];
+                for (var i=0;i<stores.length;i++){
+                    
+                  var create_users = //'DROP TABLE IF EXISTS '+ self._schema+'.'+stores[i]+'; ' + 
+                    'CREATE TABLE IF NOT EXISTS '+ self._schema+'.'+stores[i]+' (' + 
+                    '_id text NOT NULL, ' +
+                    '"dirty" boolean,' +
+                    '"deleted" boolean,' +
+                    '"created" bigint,' +
+                    '"updated" bigint,' +
+                    '"data" json,'+
+                    '"deltas" json,' +
+                    '"projectid" text' +
+                    ');'; 
+                  client.query(create_users, function(err, result){
+                        if (err){
+                            console.log(err);
+                            reject(err); 
+                            return;
+                        }
+                  });
+                }
+                client.on('notification', function(data) {
+                    var table = data.payload;
+                    console.log(table, ' has been changed in the database');
+                    switch(table) {
+                    case 'users':
+                        self._core.userStore()._loadFromDb().then(
+                            function(){
+                                self._core.userStore().sync();
+                                console.log('loaded');
+                            },function(err){
+                                console.log('Error: ', err);
+                            });
+                        break;
+                    default:
+                        console.warn('Update from unknown table: ', table);
+                    }
+                });
+                client.query("LISTEN watchers");
+                resolve();
+        });
     });
-    return promise;
 };
 
 Cow.localdb.prototype.write = function(config){
+    var self = this;
     var storename = config.storename;
     var record = config.data;
     var projectid = config.projectid;
     record._id = record._id.toString();
     record.projectid = projectid;
-    var trans = this._db.transaction([storename], "readwrite");
-    var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
-        var request = store.put(record);
-        request.onsuccess = function(e) {
-            resolve(request.result);
-        };
-        request.onerror = function(e) {
-            console.log(e.value);
-            reject("Couldn't add the passed item");
-        };
+          var query = "DELETE FROM "+self._schema+"." + storename + " WHERE _id = '"+record._id+"';";
+          self._db.query(query, function(err, result){
+              if (err){
+                    console.log(err, query);
+                    reject(err);
+              }
+              query = "INSERT INTO "+self._schema+"." + storename + " VALUES($1, $2, $3, $4, $5, $6, $7, $8)";
+              var vars = [
+                record._id,
+                record.dirty, 
+                record.deleted, 
+                record.created, 
+                record.updated, 
+                JSON.stringify(record.data), 
+                JSON.stringify(record.deltas), 
+                record.projectid
+                ]; 
+              self._db.query(query, vars, function(err, result){
+                if (err){
+                    console.log(err, query);
+                    reject(err);
+                }
+                resolve();
+              });
+          });
     });
     return promise;
 };
 
 Cow.localdb.prototype.getRecord = function(config){
+    var self = this;
     var storename = config.storename;
     var id = config.id;
     
-    var trans = this._db.transaction([storename]);
-    var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
-            var request = store.get(id);
-            request.onsuccess = function(){
-                resolve(request.result);
-            };
-            request.onerror = function(d){
-                reject(d);
-            };
+            var query = "SELECT * FROM "+self._schema+"." + storename + " WHERE _id = '"+id+"';";
+            self._db.query(query, function(err, result){
+              if (err){
+                    //console.log(err, query);
+                    reject(err);
+                    return;
+              }
+              var row = result.rows[0];
+              //console.log(row);
+              resolve(row);
+            });
     });
     return promise;
+    
 };
 
 Cow.localdb.prototype.getRecords = function(config){
-    var now = new Date();
-    
+    var self = this;
     var storename = config.storename;
     var projectid = config.projectid;
-    console.log(now.toLocaleTimeString(), now.getMilliseconds(),'Getting records from ' + storename + ' proj. ' + projectid);
-    var key,index = undefined;
-    var trans = this._db.transaction([storename]);
-    var store = trans.objectStore(storename);
+    var query;
     if (projectid){
-        key = IDBKeyRange.only(projectid);
-        index = store.index("projectid");
+        query = "SELECT * FROM "+this._schema+"." + storename + " WHERE projectid = '"+projectid+"';";
     }
     else {
-        index = store;
+        query = "SELECT * FROM "+this._schema+"." + storename + ";";
     }
     var promise = new Promise(function(resolve, reject){
-        var result = [];
-        var request = index.openCursor(key);
-        request.onsuccess = function(event) {
-          var cursor = event.target.result;
-          if (cursor) {
-            result.push(cursor.value);
-            cursor.continue();
-          }
-          else{
-              var now = new Date();
-              console.log(now.toLocaleTimeString(), now.getMilliseconds(),'Got ' + result.length + ' records from ' + storename + ' proj. ' + projectid);
-              resolve(result);
-          }
-        };
-        request.onerror = function(e){
-            reject(e);
-        };
+        self._db.query(query, function(err,result){
+                if (err){
+                    reject(err);
+                }
+                else {
+                    resolve(result.rows);
+                }
+          });
     });
     return promise;
 };
 
-Cow.localdb.prototype.clear = function(config,projectid){
-    //TODO, returns promise
+Cow.localdb.prototype.delRecord = function(config){
+    var promise = new Promise(function(resolve, reject){
+            console.warn('delRecord not used with postgres');
+            reject();
+    });
+    return promise;
 };
 
 }).call(this);
@@ -586,35 +675,48 @@ Cow.syncstore =  function(config){
     }
     this.loaded = new Promise(function(resolve, reject){
         if (self.localdb){
-            self.localdb.open().then(function(){
+            self._core.dbopen()
+              .then(function(){
                 self.localdb.getRecords({
                         storename: self._storename, 
                         projectid: self._projectid
-                    }).then(function(rows){
-                    //console.log('Got records from db ',self._dbname);
+                    })
+                  .then(function(rows){
+                    
                     rows.forEach(function(d){
                          var record = self._recordproto(d._id);
                          record.inflate(d);
-                         var lastupdate = record.timestamp();
+                         var lastupdate = record.updated();
                          var now = new Date().getTime();
                          var staleness = now - lastupdate;
                          var existing = false; 
                          //Not likely to exist in the _records at this time but better safe then sorry..
                          for (var i=0;i<self._records.length;i++){
                             if (self._records[i]._id == record._id) {
-                                //existing = true; //Already in list
+                                existing = true; //Already in list
                                 //record = -1;
                             }
                          }//Object should be non existing yet and not older than some max setting
-                         if (!existing && (staleness < self.maxStaleness || self.maxStaleness === null)){
+                         if (!existing && (staleness <= self.maxStaleness || self.maxStaleness === null)){
                              self._records.push(record); //Adding to the list
                          }
+                         //If it is stale, than remove it from the database
+                         if(self.maxStaleness && staleness > self.maxStaleness){
+                             self.localdb.delRecord({
+                                storename:self._storename,
+                                projectid: self._projectid,
+                                id: record._id
+                             });
+                         }
                      });
+                    self.trigger('datachange');
                     resolve();
-                },function(d){ //DB Fail
+                },function(d){ 
+                    console.warn('DB Fail');
                     reject(d);
                 });
             }, function(d){
+                console.warn('DB Fail');
                 reject(d);
             });
         }
@@ -657,33 +759,60 @@ Cow.syncstore.prototype =
         });
       }, //returns promise
       */
-      /** NOT USED AT THE MOMENT, replaced by function in creating syncstore **/
-      /*
-    _initRecords: function(){ //This will start the process of getting records from db (returns promise)
-        var promise = this._db_getRecords();
+      /** 
+        _loadFromDb() - This will start the process of getting records from db (returns promise)
+            experimental, used for nodejs client
+      **/
+      
+    _loadFromDb: function(){ 
         var self = this;
-        promise.then(function(r){
-             
-             r.forEach(function(d){
-                 //console.log(d.doc);
-                 var record = self._recordproto(d._id);
-                 record.inflate(d);
-                 var existing = false; //Not likely to exist in the _records at this time but better safe then sorry..
-                 for (var i=0;i<self._records.length;i++){
-                    if (self._records[i]._id == record._id) {
-                        existing = true; //Already in list
-                        record = -1;
-                    }
-                 }
-                 if (!existing){
-                     self._records.push(record); //Adding to the list
-                 }
-             });
-             self.trigger('datachange');
+        return new Promise(function(resolve, reject){
+            self.localdb.getRecords({
+                    storename: self._storename, 
+                    projectid: self._projectid
+                })
+              .then(function(rows){
+                
+                rows.forEach(function(d){
+                     var record = self._recordproto(d._id);
+                     record.inflate(d);
+                     var lastupdate = record.updated();
+                     var now = new Date().getTime();
+                     var staleness = now - lastupdate;
+                     var existing = false; 
+                     //Not likely to exist in the _records at this time but better safe then sorry..
+                     for (var i=0;i<self._records.length;i++){
+                         //Object exists but is newer (only happens if localdb is updated from outside
+                        if (self._records[i]._id == record._id && self._records[i]._updated < record._updated) {
+                            self._records.splice(i,1,record); //replace with new
+                            existing = true; //Already in list
+                        }
+                        else if (self._records[i]._id == record._id && self._records[i]._updated >= record._updated) {
+                            existing = true; //Already in list
+                            //record = -1;
+                        }
+                     }//Object should be non existing yet and not older than some max setting
+                     if (!existing && (staleness <= self.maxStaleness || self.maxStaleness === null)){
+                         self._records.push(record); //Adding to the list
+                     }
+                     //If it is stale, than remove it from the database
+                     else if(self.maxStaleness && staleness > self.maxStaleness){
+                         self.localdb.delRecord({
+                            storename:self._storename,
+                            projectid: self._projectid,
+                            id: record._id
+                         });
+                     }
+                 });
+                self.trigger('datachange');
+                resolve();
+            },function(d){ 
+                console.warn('DB Fail');
+                reject(d);
+            });
         });
-        return promise;
      },
-     */
+     
     //_getRecords([<string>]) - return all records, if ID array is filled, only return that records
     _getRecords: function(idarray){
         var returnArray = [];
@@ -704,7 +833,7 @@ Cow.syncstore.prototype =
             }
         }
         //var config = {_id: id};
-        //return this._addRecord({source: 'UI', data: config}).status('dirty');
+        //return this._addRecord({source: 'UI', data: config}).dirty(true);
         //TODO: rethink this strategy: should we make a new record on non-existing or just return null
         return null;
     },
@@ -790,7 +919,7 @@ Cow.syncstore.prototype =
             return this._getRecords(config);
         }
         else if (config && typeof(config) == 'object'){
-            return this._addRecord({source: 'UI', data: config}).status('dirty');
+            return this._addRecord({source: 'UI', data: config}).dirty(true);
         }
         else if (config && typeof(config) == 'string'){
             return this._getRecord(config);
@@ -850,7 +979,7 @@ Cow.syncstore.prototype =
         var self = this;
         var message = {};
         message.syncType = this._type;
-        record.status('clean');
+        record.dirty(false);
         
         if (this._projectid){ //parent store
             message.project = this._projectid;
@@ -882,9 +1011,9 @@ Cow.syncstore.prototype =
         var pushlist = [];
         for (var i=0;i<this._records.length;i++){
             var record = this._records[i];
-            if (record._status == 'dirty') {
+            if (record.dirty()) {
                 //this.syncRecord(record);
-                record.status('clean');
+                record.dirty(false);
                 pushlist.push(record.deflate());
             }
         }
@@ -921,7 +1050,7 @@ Cow.syncstore.prototype =
             message.list = self.idList();
             self._core.websocket().sendData(message, 'newList');
         });
-        self.loaded.catch(function(e){
+        this.loaded.catch(function(e){
                 console.error(e.message);
         });
     },
@@ -936,7 +1065,7 @@ Cow.syncstore.prototype =
             var item = this._records[i];
             var iditem = {};
             iditem._id = item._id;
-            iditem.timestamp = item.timestamp();
+            iditem.timestamp = item.updated();
             iditem.deleted = item.deleted();
             fids.push(iditem);    
         }
@@ -959,7 +1088,7 @@ Cow.syncstore.prototype =
 		return pushlist;
 	},
     /**
-	compareRecords(config) - compares incoming idlist with idlist from current stack based on timestamp and status
+	compareRecords(config) - compares incoming idlist with idlist from current stack based on timestamp and dirtystatus
 					generates 2 lists: requestlist and pushlist
 	**/
     compareRecords: function(config){
@@ -1060,7 +1189,6 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.peer = function(config){
-     //if (!config._id) {throw 'No _id given for peer';}
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;
@@ -1070,7 +1198,7 @@ Cow.peer = function(config){
     };
     
     //FIXME: this might be inherited from cow.record 
-    this._status= 'dirty';
+    this._dirty= 'true';
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -1086,12 +1214,6 @@ Cow.peer.prototype = {
             user() - return id of currently connected user
             user(id) - sets id of currently connected user, returns peer object
         **/
-        //user: function(id){
-        //    if (id) {
-        //        return this.data('userid',id);
-        //    }
-        //    return this.data('userid');
-        //},
         user: function(id){
             if (id){
                 return this.data('userid',id).sync();
@@ -1100,7 +1222,6 @@ Cow.peer.prototype = {
               var userid = this.data('userid');
               return this._core.users(userid);
             }
-            console.warn('No user connected to this peer');
             return null;
         },
         username: function(){
@@ -1108,7 +1229,7 @@ Cow.peer.prototype = {
                 return this.user().data('name');
             }
             else {
-                return 'Anon';
+                return null;
             }
         }
             
@@ -1140,7 +1261,7 @@ Cow.socketserver = function(config){
     };
     
     //FIXME: this might be inherited from cow.record 
-    this._status= 'dirty';
+    this._dirty= true;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -1180,7 +1301,7 @@ Cow.user = function(config){
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 
-    this._status= 'dirty';
+    this._dirty= true;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -1295,7 +1416,7 @@ Cow.group = function(config){
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 
-    this._status= 'dirty';
+    this._dirty= 'true';
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -1445,7 +1566,6 @@ Cow.group.prototype =
         var hasmember = false;
         var memberList = this.members();
         for (var i=0;i<memberList.length;i++){
-            //if (this.memberList[i].id == peerid && this.memberList[i].status != 'deleted') {
             if (memberList[i] == peerid) {
                 hasmember = true;
             }
@@ -1486,7 +1606,7 @@ Cow.item = function(config){
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 
-    this._status= 'dirty';
+    this._dirty= 'true';
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -1740,9 +1860,10 @@ Cow.project = function(config){
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;
+    this._maxAge = this._core._maxAge;
     
     //FIXME: this might be inherited from cow.record 
-    this._status= 'dirty';
+    this._dirty= 'true';
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -1755,7 +1876,7 @@ Cow.project = function(config){
     //var dbname = 'groups_' + config._id;
     var dbname = 'groups';
     this._groupStore = _.extend(
-        new Cow.syncstore({dbname: dbname, core: self._core}),{
+        new Cow.syncstore({dbname: dbname, core: self._core, maxAge: this._maxAge}),{
         _records: [],
         _recordproto: function(_id){return new Cow.group({_id: _id, store: this});},
         _type: 'groups',
@@ -1769,7 +1890,7 @@ Cow.project = function(config){
     //dbname = 'items_' + config._id;
     dbname = 'items';
     this._itemStore = _.extend(
-        new Cow.syncstore({dbname: dbname, core: self._core}),{
+        new Cow.syncstore({dbname: dbname, core: self._core, maxAge: this._maxAge}),{
         _recordproto:   function(_id){return new Cow.item({_id: _id, store: this});},
         _projectid: this._id,
         _records: [],
@@ -1896,7 +2017,7 @@ Cow.websocket.prototype.connect = function() {
         return false;
     }
 
-    if (!this._connection || this._connection.readyState != 1) //if no connection
+    if (!this._connection || this._connection.readyState != 1 || this._connection.state != 'open') //if no connection
     {
         if(this._url.indexOf('ws') === 0) {
             var connection = null;
@@ -1912,13 +2033,16 @@ Cow.websocket.prototype.connect = function() {
                     conn.on('close', self._onClose);
                     conn.on('message', function(message) {
                         if (message.type === 'utf8') {
-                            console.log("Received: '" + message.utf8Data + "'");
+                            //console.log("Received: '" + message.utf8Data + "'");
                             self._onMessage({data:message.utf8Data});
                         }
                     });
                     conn.obj = self;
                     self._connection = conn;
                 });
+                //TODO: there is some issue with the websocket module,ssl and certificates
+                //This param should be added: {rejectUnauthorized: false}
+                //according to: http://stackoverflow.com/questions/18461979/node-js-error-with-ssl-unable-to-verify-leaf-signature#20408031
                 connection.connect(this._url, 'connect');
             }
             //Just in-browser websocket
@@ -1965,7 +2089,7 @@ Cow.websocket.prototype.sendData = function(data, action, target){
     catch (e){
         console.error(e, message);
     }
-    if (this._connection && this._connection.readyState == 1){
+    if (this._connection && (this._connection.readyState == 1 || this._connection.state == 'open')){
         //console.log('Sending ',message);
         this._connection.send(JSON.stringify(message));
     }
@@ -2059,13 +2183,15 @@ Cow.websocket.prototype._onClose = function(event){
     var code = event.code;
     var reason = event.reason;
     var wasClean = event.wasClean;
-    var self = this;
+    var self = this.obj;
+    console.log('WS disconnected:' , this.closeDescription);
     //this.close(); //FIME: TT: why was this needed?
-    this._core.peerStore().clear();
-    this._connected = false;
+    self._core.peerStore().clear();
+    self._connected = false;
     //TODO this._core.trigger('ws-disconnected');    
     var restart = function(){
         try{
+            console.log('Trying to reconnect');
             self._core.websocket().disconnect();
         }
         catch(err){
@@ -2083,7 +2209,7 @@ Cow.websocket.prototype._onConnect = function(payload){
     var version = payload.server_version;
     var serverkey = payload.server_key;
     
-    if (serverkey !== undefined && serverkey != 'test'){ //TODO: key must become variable
+    if (serverkey !== undefined && serverkey != this._core._herdname){
         self.disconnect();
         return;
     }
@@ -2395,16 +2521,15 @@ Cow.core = function(config){
     this._projectid = null;
     this._wsUrl = null;
     this._peerid = null;
-    this._maxAge = 1000 * 60 * 60 * 24 * 30; //30 days in mseconds
-    /*WEBSOCKET*/
-    this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
+    this._maxAge = config.maxage || 1000 * 60 * 60 * 24 * 30; //30 days in mseconds
+    
     
     /*LOCALDB*/
-    this._localdb = new Cow.localdb({dbname: this._herdname});
+    this._localdb = new Cow.localdb({dbname: this._herdname, core: this});
     
     /*PROJECTS*/
     this._projectStore =  _.extend(
-        new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self}),{
+        new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self, maxAge: this._maxAge}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
         _dbname:        'projects',
@@ -2414,7 +2539,7 @@ Cow.core = function(config){
     
     /*PEERS*/
     this._peerStore =  _.extend(
-        new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
+        new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this, maxAge: this._maxAge}), {
          _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.peer({_id: _id, store: this});}, 
@@ -2428,7 +2553,7 @@ Cow.core = function(config){
     
     /*USERS*/
     this._userStore =  _.extend(
-        new Cow.syncstore({dbname: 'users', noDeltas: true, core: this}), {
+        new Cow.syncstore({dbname: 'users', noDeltas: true, core: this, maxAge: this._maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
@@ -2438,13 +2563,16 @@ Cow.core = function(config){
     
     /*SOCKETSERVERS*/
     this._socketserverStore =  _.extend(
-        new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this.maxAge}), {
+        new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this._maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.socketserver({_id: _id, store: this});},     
         _dbname:        'socketservers',
         _type:          'socketservers'
     });
+    
+    /*WEBSOCKET*/
+    this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     
 };
 Cow.core.prototype = 
@@ -2629,6 +2757,12 @@ Cow.core.prototype =
             }
         }
         return returnArr;
+    },
+    /**
+        localdbase() - return the open promise of the localdbase
+    **/
+    dbopen: function(){
+        return this._localdb._openpromise;
     },
     /**
         websocket() - return the _websocket object
