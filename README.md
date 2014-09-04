@@ -107,7 +107,7 @@ All *record objects* behave the same* and as follows (user object as example):
     core.socketserver() -> returns the current socketserver configuration in use
     core.socketserver(<string>) -> sets the current socketserver
     core.websocket() -> returns the websocket object
-    core.connect() -> start websocket connection
+    core.connect() -> start websocket connection, returns promise
     core.disconnect() -> closes the websocket connection (auto reconnect in 5 secs)
     core.location() -> returns location object of current peer
     core.location(obj) -> set location object of current peer, returns locations object
@@ -127,8 +127,26 @@ The timestamp and dirtystatus are automatically updated when invoking the data(<
 
 
 #### Core
->$(selector).cow([options])
+`````javascript
+var cow = new Cow.core({
+    herdname: 'test', //name of organisation
+    maxage: 1000 * 60 * 60 * 24 * 30 //30 days in milliseconds
+});
+//add a default socketserver
+cow.socketservers({
+ _id: 'default', 
+ data: {protocol:'wss',ip:'websocket.geodan.nl', port:443,dir: 'icms'}
+ //data: {protocol:'ws',ip:'192.168.25.152', port:8081}
+});
+cow.socketserver('default');
 
+var connection;
+cow.connect().then(function(d){
+        connection = d;
+}, function(e){
+    console.log('Connecting error', e);
+});
+`````
 **description** initialise Cow and associate it with the matched element. The Cow object is refered to as *cow* in the documentation
 
 [options]: wsUrl (url to the websocket server 
