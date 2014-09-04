@@ -63,6 +63,7 @@ Cow.record.prototype =
     },
     touch: function(){
         this.updated(new Date().getTime());
+        return this;
     },
     deleted: function(truefalse){
         if (truefalse !== undefined){
@@ -82,12 +83,15 @@ Cow.record.prototype =
             if (this._dirty) this._status = 'dirty'; //to be removed when status becomes deprecated
             else this._status = 'clean';
             
+            this.updated(new Date().getTime());
             return this;
         }
         else {
             return this._dirty;
         }
     },
+    // Status is going to be deprecated. 
+    //Functionality is still here to address clients that still transmit a status instead of dirty
     status: function(status){
         if (status){
             this._status = status;

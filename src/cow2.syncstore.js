@@ -351,7 +351,7 @@ Cow.syncstore.prototype =
         promise.then(function(d){ //wait for db
             message.record = record.deflate();
             self.trigger('datachange');
-            self._core.websocket().sendData(message, 'updatedRecord');
+            self._core.messenger().sendData(message, 'updatedRecord');
         },function(err){
             console.warn(err);
         });
@@ -376,7 +376,7 @@ Cow.syncstore.prototype =
             "project" : this._projectid,
             "list" : pushlist
         };
-        this._core.websocket().sendData(data, 'requestedRecords');
+        this._core.messenger().sendData(data, 'requestedRecords');
     },
     
     /**
@@ -402,7 +402,7 @@ Cow.syncstore.prototype =
             message.syncType = self._type;
             message.project = self._projectid;
             message.list = self.idList();
-            self._core.websocket().sendData(message, 'newList');
+            self._core.messenger().sendData(message, 'newList');
         });
         this.loaded.catch(function(e){
                 console.error(e.message);

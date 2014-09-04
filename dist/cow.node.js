@@ -272,6 +272,7 @@ Cow.record.prototype =
     },
     touch: function(){
         this.updated(new Date().getTime());
+        return this;
     },
     deleted: function(truefalse){
         if (truefalse !== undefined){
@@ -291,12 +292,15 @@ Cow.record.prototype =
             if (this._dirty) this._status = 'dirty'; //to be removed when status becomes deprecated
             else this._status = 'clean';
             
+            this.updated(new Date().getTime());
             return this;
         }
         else {
             return this._dirty;
         }
     },
+    // Status is going to be deprecated. 
+    //Functionality is still here to address clients that still transmit a status instead of dirty
     status: function(status){
         if (status){
             this._status = status;
@@ -997,7 +1001,7 @@ Cow.syncstore.prototype =
         promise.then(function(d){ //wait for db
             message.record = record.deflate();
             self.trigger('datachange');
-            self._core.websocket().sendData(message, 'updatedRecord');
+            self._core.messenger().sendData(message, 'updatedRecord');
         },function(err){
             console.warn(err);
         });
@@ -1022,7 +1026,7 @@ Cow.syncstore.prototype =
             "project" : this._projectid,
             "list" : pushlist
         };
-        this._core.websocket().sendData(data, 'requestedRecords');
+        this._core.messenger().sendData(data, 'requestedRecords');
     },
     
     /**
@@ -1048,7 +1052,7 @@ Cow.syncstore.prototype =
             message.syncType = self._type;
             message.project = self._projectid;
             message.list = self.idList();
-            self._core.websocket().sendData(message, 'newList');
+            self._core.messenger().sendData(message, 'newList');
         });
         this.loaded.catch(function(e){
                 console.error(e.message);
@@ -1977,18 +1981,20 @@ if (typeof exports !== 'undefined') {
     }
     exports.Cow = Cow || {}; 
 } else {
-    root.Cow = Cow || {};
+    if (typeof(Cow) == 'undefined') {
+        root.Cow = {};
+    }
+    else {
+        root.Cow = Cow;
+    }
 }
 
 Cow.websocket = function(config){
     this._core = config.core;
-    //socket connection object
     this._url = config.url;
-    this._connection = null; //obs this.connect();
+    this._connection = null;
     this._connected = false;
 };
-
-
 
     /**
         disconnect() - disconnect us from websocket server
@@ -2002,6 +2008,7 @@ Cow.websocket.prototype.disconnect = function() {
         console.log('No websocket active');
     }
 };
+
     /**
         connect(url) - connect to websocket server on url, returns connection
     **/
@@ -2016,13 +2023,16 @@ Cow.websocket.prototype.connect = function() {
         console.warn('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');
         return false;
     }
-
+    
+    var connectpromise;
     if (!this._connection || this._connection.readyState != 1 || this._connection.state != 'open') //if no connection
     {
         if(this._url.indexOf('ws') === 0) {
             var connection = null;
             //In case of nodejs....
+            
             if (typeof exports !== 'undefined') {
+            /**     
                 connection = new WebSocket();
                 connection.on('connectFailed', function(error) {
                     console.log('Connect Error: ' + error.toString());
@@ -2039,11 +2049,13 @@ Cow.websocket.prototype.connect = function() {
                     });
                     conn.obj = self;
                     self._connection = conn;
+                    
                 });
                 //TODO: there is some issue with the websocket module,ssl and certificates
                 //This param should be added: {rejectUnauthorized: false}
                 //according to: http://stackoverflow.com/questions/18461979/node-js-error-with-ssl-unable-to-verify-leaf-signature#20408031
                 connection.connect(this._url, 'connect');
+                **/
             }
             //Just in-browser websocket
             else {
@@ -2068,14 +2080,96 @@ Cow.websocket.prototype.connect = function() {
     **/
 Cow.websocket.prototype.connection = function(){
     return this._connection;
-};    
+};
+
+Cow.websocket.prototype.send = function(message){
+    if (this._connection && (this._connection.readyState == 1 || this._connection.state == 'open')){
+        this._connection.send(message);
+    }
+};
+
+Cow.websocket.prototype._onMessage = function(message){
+    this._core.websocket().trigger('message',message);
+};
+
+Cow.websocket.prototype._onError = function(e){
+    this._core.peerStore().clear();
+    this._connected = false;
+    console.warn('error in websocket connection: ' + e.type);
+    this._core.websocket().trigger('error');
+};
+Cow.websocket.prototype._onError = function(e){
+    console.log('closed');
+};
+_.extend(Cow.websocket.prototype, Events);
+}.call(this));
+var url;
+
+function initWebSocket() {
+
+    var connection = new WebSocket(url, ['connect']);
+    
+    connection.onopen = function () {
+        connection.send('Ping'); // Send the message 'Ping' to the server
+    };
+    
+    // Log errors
+    connection.onerror = function (error) {
+      console.log('WebSocket Error ' + error);
+    };
+    
+    // Log messages from the server
+    connection.onmessage = function (e) {
+      console.log('Server: ' + e.data);
+      self.postMessage('Worker received : ' + e.data);
+    };
+
+}
+
+self.addEventListener('message', function(e) {
+  var command = e.data.cmd;
+  var msg = e.data.msg;
+  switch (command) {
+    case 'setUrl':
+        url = msg.url;
+        break;
+    case 'init':
+        initWebSocket();
+        break;
+    case 'disconnect':
+        break;
+    case 'send':
+        break;
+    default:
+        self.postMessage('Unknown command: ' + e.data);
+  } //end switch
+}, false);
+(function(){
+
+var root = this;
+if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = Cow || {};
+    }
+    exports.Cow = Cow || {}; 
+} else {
+    root.Cow = Cow || {};
+}
+
+Cow.messenger = function(config){
+    this._core = config.core;
+    this.ws = this._core.websocket();
+    this.ws.on('message',this._onMessage);
+    this.ws.on('error', this._onError);
+};
+    
     /**
         sendData(data, action, target) - send data to websocket server with params:
             data - json object
             action - string that describes the context of the message
             target - (optional) id of the target peer
     **/
-Cow.websocket.prototype.sendData = function(data, action, target){
+Cow.messenger.prototype.sendData = function(data, action, target){
     //TODO: check if data is an object
     var message = {};        
     message.sender = this._core.peerid();
@@ -2089,15 +2183,11 @@ Cow.websocket.prototype.sendData = function(data, action, target){
     catch (e){
         console.error(e, message);
     }
-    if (this._connection && (this._connection.readyState == 1 || this._connection.state == 'open')){
-        //console.log('Sending ',message);
-        this._connection.send(JSON.stringify(message));
-    }
-    else{
-        //console.warn('Could not send, socket not connected?');
-    }
+    console.log('Sending ',message);
+    this.ws.send(stringified);
 };
-Cow.websocket.prototype._onMessage = function(message){
+
+Cow.messenger.prototype._onMessage = function(message){
     var core = this._core;
     var data = JSON.parse(message.data); //TODO: catch parse errors
     var sender = data.sender;
@@ -2106,7 +2196,7 @@ Cow.websocket.prototype._onMessage = function(message){
     var payload = data.payload;    
     var target = data.target;
     if (sender != PEERID){
-        //console.log('Receiving ',data);
+        console.log('Receiving ',data);
     }
     switch (action) {
     /**
@@ -2114,7 +2204,7 @@ Cow.websocket.prototype._onMessage = function(message){
     **/
         case 'command':
             if (sender != PEERID){
-                this._core.websocket()._onCommand(data);
+                this._core.messenger()._onCommand(data);
             }
         break;
     /**
@@ -2122,12 +2212,12 @@ Cow.websocket.prototype._onMessage = function(message){
     **/
         //websocket confirms connection by returning the unique peerID (targeted)
         case 'connected':
-            this._core.websocket()._onConnect(payload);
+            this._core.messenger()._onConnect(payload);
         break;
         
-        //websocket tells everybody a peer has gone, with ID: peerID
+        //messenger tells everybody a peer has gone, with ID: peerID
         case 'peerGone':
-            this._core.websocket()._onPeerGone(payload);
+            this._core.messenger()._onPeerGone(payload);
         break;      
     
     /**
@@ -2136,33 +2226,33 @@ Cow.websocket.prototype._onMessage = function(message){
         //a new peer has arrived and gives a list of its records
         case 'newList':
             if(sender != PEERID) {
-                this._core.websocket()._onNewList(payload,sender);
+                this._core.messenger()._onNewList(payload,sender);
             }
         break;
         //you just joined and you receive info from the alpha peer on how much will be synced
         case 'syncinfo':
             if(sender != PEERID) {
-                this._core.websocket()._onSyncinfo(payload,sender);
+                this._core.messenger()._onSyncinfo(payload,sender);
             }
         break;
         //you just joined and you receive a list of records the others want (targeted)
         case 'wantedList':
             if(target == PEERID) {
-                this._core.websocket()._onWantedList(payload);
+                this._core.messenger()._onWantedList(payload);
             }
         break;
         
         //you just joined and receive the records you are missing (targeted)
         case 'missingRecords':
             if(target == PEERID) {
-                this._core.websocket()._onMissingRecords(payload);
+                this._core.messenger()._onMissingRecords(payload);
             }   
         break;
         
         //a new peer has arrived and sends everybody the records that are requested in the *wantedList*
         case 'requestedRecords':
             if(sender != PEERID) {
-                this._core.websocket()._onMissingRecords(payload);
+                this._core.messenger()._onMissingRecords(payload);
                 //OBS: this._onRequestedRecords(payload);
             }
         break;
@@ -2172,14 +2262,14 @@ Cow.websocket.prototype._onMessage = function(message){
         //a peer sends a new or updated record
         case 'updatedRecord':
             if(sender != PEERID) {
-                this._core.websocket()._onUpdatedRecords(payload);
+                this._core.messenger()._onUpdatedRecords(payload);
             }
         break;
         
     }
     
 };
-Cow.websocket.prototype._onClose = function(event){
+Cow.messenger.prototype._onClose = function(event){
     var code = event.code;
     var reason = event.reason;
     var wasClean = event.wasClean;
@@ -2201,7 +2291,8 @@ Cow.websocket.prototype._onClose = function(event){
     };
     setTimeout(restart,5000);
 };
-Cow.websocket.prototype._onConnect = function(payload){
+Cow.messenger.prototype._onConnect = function(payload){
+    console.log('connected!');
     this._connected = true;
     var self = this;
     this._core.peerid(payload.peerID);
@@ -2247,7 +2338,7 @@ Cow.websocket.prototype._onConnect = function(payload){
     
     
     //A peer has disconnected, remove it from your peerList
-Cow.websocket.prototype._onPeerGone = function(payload) {
+Cow.messenger.prototype._onPeerGone = function(payload) {
     var peerGone = payload.gonePeerID.toString();
     if (this._core.peers(peerGone)){
         this._core.peers(peerGone).deleted(true).sync();
@@ -2255,12 +2346,8 @@ Cow.websocket.prototype._onPeerGone = function(payload) {
     //this._core.peerStore().removePeer(peerGone);        
     //TODO this.core.trigger('ws-peerGone',payload); 
 };
-Cow.websocket.prototype._onError = function(e){
-    this._core.peerStore().clear();
-    this._connected = false;
-    console.warn('error in websocket connection: ' + e.type);
-};
-Cow.websocket.prototype._getStore = function(payload){
+
+Cow.messenger.prototype._getStore = function(payload){
     var storetype = payload.syncType;
     var projectid = payload.project;
     var project;
@@ -2295,7 +2382,7 @@ Cow.websocket.prototype._getStore = function(payload){
 };
     
 //A peer initiates a sync
-Cow.websocket.prototype._onNewList = function(payload,sender) {
+Cow.messenger.prototype._onNewList = function(payload,sender) {
     var self = this;
     //Only answer if we are the alpha peer
     if (this._amIAlpha()){
@@ -2328,9 +2415,10 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
             "project" : project,
             "list" : syncobject.pushlist
         };
-        /** TT: IIS/signalR can't handle large chunks in websocket.
+        /* TT: This was used because IIS/signalR couldn't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
-        more stable **/
+        more stable 
+        
         _(data.list).each(function(d){
             msg = {
                 "syncType" : payload.syncType,
@@ -2339,10 +2427,11 @@ Cow.websocket.prototype._onNewList = function(payload,sender) {
             };
             self.sendData(msg, 'updatedRecord', sender);
         });
-        //this.sendData(data, 'missingRecords', sender);
+        */
+        this.sendData(data, 'missingRecords', sender);
     }
 };
-Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
+Cow.messenger.prototype._amIAlpha = function(){ //find out wether I am alpha
     /** 
     peers all have a unique id from the server based on the timestamp
     the peer with the oldest timestamp AND member of the alpha familty is alpha
@@ -2366,13 +2455,13 @@ Cow.websocket.prototype._amIAlpha = function(){ //find out wether I am alpha
     return returnval;
 };
 
-Cow.websocket.prototype._onSyncinfo = function(payload) {
+Cow.messenger.prototype._onSyncinfo = function(payload) {
     var store = this._getStore(payload);
     store.syncinfo.toReceive = payload.syncinfo.IWillSent;
     store.syncinfo.toSent = payload.syncinfo.IShallReceive;
 };
 
-Cow.websocket.prototype._onWantedList = function(payload) {
+Cow.messenger.prototype._onWantedList = function(payload) {
     var self = this;
     var store = this._getStore(payload);
     var returnlist = store.requestRecords(payload.list);
@@ -2381,9 +2470,9 @@ Cow.websocket.prototype._onWantedList = function(payload) {
         "project" : store._projectid,
         "list" : returnlist
     };
-    /** TT: IIS/signalR can't handle large chunks in websocket.
+    /* TT: This was used because IIS/signalR couldn't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
-        more stable **/
+        more stable 
     _(data.list).each(function(d){
         msg = {
             "syncType" : payload.syncType,
@@ -2392,11 +2481,12 @@ Cow.websocket.prototype._onWantedList = function(payload) {
         };
         self.sendData(msg, 'updatedRecord');
     });
-    //this.sendData(data, 'requestedRecords');
+    */
+    this.sendData(data, 'requestedRecords');
     //TODO this.core.trigger('ws-wantedList',payload); 
 };
     
-Cow.websocket.prototype._onMissingRecords = function(payload) {
+Cow.messenger.prototype._onMissingRecords = function(payload) {
     var store = this._getStore(payload);
     var list = payload.list;
     var synclist = [];
@@ -2428,7 +2518,7 @@ Cow.websocket.prototype._onMissingRecords = function(payload) {
     store.trigger('datachange');
 };
   
-Cow.websocket.prototype._onUpdatedRecords = function(payload) {
+Cow.messenger.prototype._onUpdatedRecords = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
@@ -2445,7 +2535,7 @@ Cow.websocket.prototype._onUpdatedRecords = function(payload) {
             Commands can be targeted or non-targeted. Some commands are handled here (all purpose) but all commands
             will send a trigger with the command including the message data.
     **/
-Cow.websocket.prototype._onCommand = function(data) {
+Cow.messenger.prototype._onCommand = function(data) {
     var core = this._core;
     var payload = data.payload;
     var command = payload.command;
@@ -2495,7 +2585,7 @@ Cow.websocket.prototype._onCommand = function(data) {
 };
 
 //Adding some Backbone event binding functionality to the store
-_.extend(Cow.websocket.prototype, Events);
+_.extend(Cow.messenger.prototype, Events);
 }.call(this));
 (function(){
 
@@ -2572,9 +2662,14 @@ Cow.core = function(config){
     });
     
     /*WEBSOCKET*/
-    this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
+    //this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
+    this._websocket = new Cow.websocket({core: this, url: this._wsUrl});
+    
+    /*MESSENGER*/
+    this._messenger = new Cow.messenger({core:this});
     
 };
+
 Cow.core.prototype = 
 {
     /**
@@ -2769,6 +2864,12 @@ Cow.core.prototype =
     **/
     websocket: function(){
         return this._websocket;
+    },
+    /**
+        messenger() - return the _messenger object
+    **/
+    messenger: function(){
+        return this._messenger;
     },
     /**
         localdb() - return the _localdb object

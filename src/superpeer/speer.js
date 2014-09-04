@@ -21,7 +21,10 @@ core.socketservers({
       });
 core.socketserver('default');
 
-core.connect();
+core.connect().then(function(){
+        console.log('yes!');
+        core.peer().data('superpeer', true).sync();
+});
 
 core.userStore().loaded.then(function(){
         console.log(core.users().length, ' users loaded');
