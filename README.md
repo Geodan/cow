@@ -149,7 +149,9 @@ cow.connect().then(function(d){
 `````
 **description** initialise Cow and associate it with the matched element. The Cow object is refered to as *cow* in the documentation
 
-[options]: wsUrl (url to the websocket server 
+[options]: 
+    herdname (name of the organisation, this will create a separate database, defaults to 'cow')
+    maxage (maximum lifetime of objects to be stored, defaults to null)
  
 * peerid() -- get peerid
 * peerid(id) -- set peerid
