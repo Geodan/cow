@@ -73,9 +73,14 @@ Cow.core = function(config){
     });
     
     /*WEBSOCKET*/
-    this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
+    //this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
+    this._websocket = new Cow.websocket({core: this, url: this._wsUrl});
+    
+    /*MESSENGER*/
+    this._messenger = new Cow.messenger({core:this});
     
 };
+
 Cow.core.prototype = 
 {
     /**
@@ -272,19 +277,25 @@ Cow.core.prototype =
         return this._websocket;
     },
     /**
+        messenger() - return the _messenger object
+    **/
+    messenger: function(){
+        return this._messenger;
+    },
+    /**
         localdb() - return the _localdb object
     **/
     localdb: function(){
         return this._localdb;
     },
     /**
-        connect() - starts the websocket connection, returns connection
+        connect() - starts the websocket connection, returns connection promise
     **/
     connect: function(){
         return this._websocket.connect();
     },
     /**
-        connect() - starts the websocket connection, returns connection
+        disconnect() - disconnects the websocket
     **/
     disconnect: function(){
         return this._websocket.disconnect();
