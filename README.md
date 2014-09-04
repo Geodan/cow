@@ -19,19 +19,20 @@ Setting up a new cow:
 //Create core object
 var core = new Cow.core({herdname: 'test'});
 
-//Add a default socketserver
-core.socketservers({
-    _id: 'default', 
-    data: {
-        protocol:'wss',
-        ip:'80.113.1.156', 
-        port:443
-    }
+//add a default socketserver
+cow.socketservers({
+ _id: 'default', 
+ data: {protocol:'ws',ip:'192.168.25.152', port:8081}
 });
-//Set current socket server
-core.socketserver('default');
-//Create a connection
-var connection = core.connect();
+cow.socketserver('default');
+
+var connection;
+cow.connect().then(function(d){
+        connection = d;
+}, function(e){
+    console.log('Connecting error', e);
+});
+
 `````
 
 From here on you are set to work with the workspace according to the API.
@@ -132,20 +133,7 @@ var cow = new Cow.core({
     herdname: 'test', //name of organisation
     maxage: 1000 * 60 * 60 * 24 * 30 //30 days in milliseconds
 });
-//add a default socketserver
-cow.socketservers({
- _id: 'default', 
- data: {protocol:'wss',ip:'websocket.geodan.nl', port:443,dir: 'icms'}
- //data: {protocol:'ws',ip:'192.168.25.152', port:8081}
-});
-cow.socketserver('default');
 
-var connection;
-cow.connect().then(function(d){
-        connection = d;
-}, function(e){
-    console.log('Connecting error', e);
-});
 `````
 **description** initialise Cow and associate it with the matched element. The Cow object is refered to as *cow* in the documentation
 
