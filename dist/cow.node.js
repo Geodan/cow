@@ -2015,24 +2015,21 @@ Cow.websocket.prototype.disconnect = function() {
 Cow.websocket.prototype.connect = function() {
     var self = this;
     var core = this._core;
-    if (core.socketserver()){
-        this._url = core.socketserver().url(); //get url from list of socketservers
-    }
+    var promise = new Promise(function(resolve, reject){
+        if (core.socketserver()){
+            self._url = core.socketserver().url(); //get url from list of socketservers
+        }
+        
+        if (!self._url) {
+            console.warn('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');
+            reject();
+            return false;
+        }
     
-    if (!this._url) {
-        console.warn('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');
-        return false;
-    }
-    
-    var connectpromise;
-    if (!this._connection || this._connection.readyState != 1 || this._connection.state != 'open') //if no connection
-    {
-        if(this._url.indexOf('ws') === 0) {
-            var connection = null;
-            //In case of nodejs....
-            
-            if (typeof exports !== 'undefined') {
-            /**     
+        if (!self._connection || self._connection.readyState != 1 || self._connection.state != 'open') //if no connection
+        {
+            if(self._url.indexOf('ws') === 0) {
+                var connection = null;
                 connection = new WebSocket();
                 connection.on('connectFailed', function(error) {
                     console.log('Connect Error: ' + error.toString());
@@ -2040,7 +2037,6 @@ Cow.websocket.prototype.connect = function() {
                 connection.on('connect', function(conn) {
                     console.log('WebSocket client connected');
                     conn.on('error', self._onError);
-                    conn.on('close', self._onClose);
                     conn.on('message', function(message) {
                         if (message.type === 'utf8') {
                             //console.log("Received: '" + message.utf8Data + "'");
@@ -2049,31 +2045,23 @@ Cow.websocket.prototype.connect = function() {
                     });
                     conn.obj = self;
                     self._connection = conn;
-                    
                 });
                 //TODO: there is some issue with the websocket module,ssl and certificates
                 //This param should be added: {rejectUnauthorized: false}
                 //according to: http://stackoverflow.com/questions/18461979/node-js-error-with-ssl-unable-to-verify-leaf-signature#20408031
-                connection.connect(this._url, 'connect');
-                **/
+                connection.connect(self._url, 'connect');
             }
-            //Just in-browser websocket
             else {
-                connection = new WebSocket(this._url, 'connect');
-                //connection.onopen = this._onOpen;
-                connection.onmessage = this._onMessage;
-                connection.onclose = this._onClose;    
-                connection.onerror = this._onError;
-                connection._core = this._core;
-                this._connection = connection;
+                console.warn('Incorrect URL: ' + self._url);
+                reject();
             }
         }
-        else {throw('Incorrect URL: ' + this._url);}
-    }
-    else {
-        connection = this._connection;
-    }
-    return connection;
+        else {
+            connection = self._connection;
+        }
+        recolve(connection);
+    });
+    return promise;
 };
     /**
         connection() - returns connection object
@@ -2103,47 +2091,6 @@ Cow.websocket.prototype._onError = function(e){
 };
 _.extend(Cow.websocket.prototype, Events);
 }.call(this));
-var url;
-
-function initWebSocket() {
-
-    var connection = new WebSocket(url, ['connect']);
-    
-    connection.onopen = function () {
-        connection.send('Ping'); // Send the message 'Ping' to the server
-    };
-    
-    // Log errors
-    connection.onerror = function (error) {
-      console.log('WebSocket Error ' + error);
-    };
-    
-    // Log messages from the server
-    connection.onmessage = function (e) {
-      console.log('Server: ' + e.data);
-      self.postMessage('Worker received : ' + e.data);
-    };
-
-}
-
-self.addEventListener('message', function(e) {
-  var command = e.data.cmd;
-  var msg = e.data.msg;
-  switch (command) {
-    case 'setUrl':
-        url = msg.url;
-        break;
-    case 'init':
-        initWebSocket();
-        break;
-    case 'disconnect':
-        break;
-    case 'send':
-        break;
-    default:
-        self.postMessage('Unknown command: ' + e.data);
-  } //end switch
-}, false);
 (function(){
 
 var root = this;
@@ -2183,7 +2130,7 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     catch (e){
         console.error(e, message);
     }
-    console.log('Sending ',message);
+    //console.log('Sending ',message);
     this.ws.send(stringified);
 };
 
@@ -2196,7 +2143,7 @@ Cow.messenger.prototype._onMessage = function(message){
     var payload = data.payload;    
     var target = data.target;
     if (sender != PEERID){
-        console.log('Receiving ',data);
+        //console.log('Receiving ',data);
     }
     switch (action) {
     /**
@@ -2287,7 +2234,11 @@ Cow.messenger.prototype._onClose = function(event){
         catch(err){
             console.warn(err);
         }
-        self._connection = self._core.websocket().connect();
+        self._core.websocket().connect().then(function(d){
+           self._connection = d;
+        }, function(e){
+            console.warn('connection failed',e);
+        });
     };
     setTimeout(restart,5000);
 };
@@ -2878,13 +2829,13 @@ Cow.core.prototype =
         return this._localdb;
     },
     /**
-        connect() - starts the websocket connection, returns connection
+        connect() - starts the websocket connection, returns connection promise
     **/
     connect: function(){
         return this._websocket.connect();
     },
     /**
-        connect() - starts the websocket connection, returns connection
+        disconnect() - disconnects the websocket
     **/
     disconnect: function(){
         return this._websocket.disconnect();

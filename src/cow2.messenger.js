@@ -141,7 +141,11 @@ Cow.messenger.prototype._onClose = function(event){
         catch(err){
             console.warn(err);
         }
-        self._connection = self._core.websocket().connect();
+        self._core.websocket().connect().then(function(d){
+           self._connection = d;
+        }, function(e){
+            console.warn('connection failed',e);
+        });
     };
     setTimeout(restart,5000);
 };

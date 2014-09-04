@@ -289,13 +289,13 @@ Cow.core.prototype =
         return this._localdb;
     },
     /**
-        connect() - starts the websocket connection, returns connection
+        connect() - starts the websocket connection, returns connection promise
     **/
     connect: function(){
         return this._websocket.connect();
     },
     /**
-        connect() - starts the websocket connection, returns connection
+        disconnect() - disconnects the websocket
     **/
     disconnect: function(){
         return this._websocket.disconnect();

@@ -49,21 +49,33 @@ Cow.websocket.prototype.connect = function() {
         if (!self._url) {
             console.warn('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');
             reject();
+            return false;
         }
-        
-        var connectpromise;
+    
         if (!self._connection || self._connection.readyState != 1 || self._connection.state != 'open') //if no connection
         {
             if(self._url.indexOf('ws') === 0) {
                 var connection = null;
-                //In case of nodejs....
-                connection = new WebSocket(self._url, 'connect');
-                //connection.onopen = self._onOpen;
-                connection.onmessage = self._onMessage;
-                connection.onclose = self._onClose;    
-                connection.onerror = self._onError;
-                connection._core = self._core;
-                self._connection = connection;
+                connection = new WebSocket();
+                connection.on('connectFailed', function(error) {
+                    console.log('Connect Error: ' + error.toString());
+                });
+                connection.on('connect', function(conn) {
+                    console.log('WebSocket client connected');
+                    conn.on('error', self._onError);
+                    conn.on('message', function(message) {
+                        if (message.type === 'utf8') {
+                            //console.log("Received: '" + message.utf8Data + "'");
+                            self._onMessage({data:message.utf8Data});
+                        }
+                    });
+                    conn.obj = self;
+                    self._connection = conn;
+                });
+                //TODO: there is some issue with the websocket module,ssl and certificates
+                //This param should be added: {rejectUnauthorized: false}
+                //according to: http://stackoverflow.com/questions/18461979/node-js-error-with-ssl-unable-to-verify-leaf-signature#20408031
+                connection.connect(self._url, 'connect');
             }
             else {
                 console.warn('Incorrect URL: ' + self._url);
@@ -73,7 +85,7 @@ Cow.websocket.prototype.connect = function() {
         else {
             connection = self._connection;
         }
-        resolve(connection);
+        recolve(connection);
     });
     return promise;
 };
