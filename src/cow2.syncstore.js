@@ -305,7 +305,10 @@ Cow.syncstore.prototype =
             self._records = [];
             self.trigger('datachange');
             if (self.localdb){
-                self.localdb.clear().then(function(){
+                self.localdb.clear({
+                    storename: self._storename, 
+                    projectid: self._projectid
+                }).then(function(){
                         resolve(); //empty dbase from items
                 });
             }

@@ -61,13 +61,16 @@ Cow.testsuite.prototype.lifecycle = function(){
     core.projectStore().loaded.then(function(foo){
         var project = core.projects({_id: 'test'});
         project.data('name', 'TEST');
-        project.itemStore().clear(); //remove existing items from store
+        log('We now have ' + core.projects('test').items().length + ' items (should be 0)'); //should be 0 items
+        //project.itemStore().clear(); //remove existing items from store
+        
         project.deleted(false).sync(); //set project undeleted
         for (var i = 0;i<100;i++){ //Add 100 records
             var item = project.items({_id: i.toString()});
             item.data('tmp',(Math.random()*100).toString());
             item.data('text','Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit...');
         }
+        log('We now have ' + core.projects('test').items().length + ' items (should be 100)'); //should be 0 items
         log('changing items');
         var syncpromise = project.itemStore().syncRecords(); //sync the records
         for (i = 0;i<100;i++){//Update the records 
@@ -80,16 +83,16 @@ Cow.testsuite.prototype.lifecycle = function(){
         
         log('Clearing itemstore');
         project.itemStore().clear(); //remove items from store
-        log('We now have ' + core.projects('test').items().length + ' items'); //should be 0 items
+        log('We now have ' + core.projects('test').items().length + ' items (should be 0)'); //should be 0 items
         project.itemStore().sync(); //full sync on itemstore
         log('Sync it back! Waiting 5 secs to sync back the 100 items');
         window.setTimeout(function(){
-            log('We now have ' + core.projects('test').items().length + ' items'); //should be 100
+            log('We now have ' + core.projects('test').items().length + ' items (should be 100)'); //should be 100
             log('Clearing itemstore');
-            //project.itemStore().clear(); //remove items from store
-            log('Back to ' + core.projects('test').items().length + ' items'); //should be 0
+            project.itemStore().clear(); //remove items from store
+            log('Back to ' + core.projects('test').items().length + ' items (should be 0)'); //should be 0
             log('Sending flushing command to peers');
-            core.websocket().sendData({command: 'flushProject',projectid: 'test'}, 'command');
+            core.messenger().sendData({command: 'flushProject',projectid: 'test'}, 'command');
             project.deleted(true).sync();//set project to deleted
             log(self.laptime(starttime) + ' lifecycletest finished');
         },5000);
@@ -101,17 +104,17 @@ Cow.testsuite.prototype.lifecycle = function(){
 
 Cow.testsuite.prototype.pingtest = function(){
     var self = this;
-    this.core.websocket().off('command');
-    this.core.websocket().on('command', function(data){
+    this.core.messenger().off('command');
+    this.core.messenger().on('command', function(data){
         var payload = data.payload;
         var returntime = new Date().getTime();
         var triptime = returntime - self.starttime;
         var sender = data.sender;
         log('PONG from ' + sender + ' in ' + triptime + 'ms');
     });
-    var ws = core.websocket();
+    var msn = core.messenger();
     this.starttime = new Date().getTime();
-    ws.sendData({command: 'ping'},'command');
+    msn.sendData({command: 'ping'},'command');
 };
 
 Cow.testsuite.prototype.socketsearch = function(){

@@ -11,7 +11,7 @@ Cow.data.prototype =
         return _.sortBy(
                 _.filter(data,  
                     function(d){return !d.deleted();}), 
-            function(d){return d.timestamp();});
+            function(d){return d.updated();});
     },
     
     users: function(){

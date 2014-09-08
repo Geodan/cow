@@ -955,7 +955,10 @@ Cow.syncstore.prototype =
             self._records = [];
             self.trigger('datachange');
             if (self.localdb){
-                self.localdb.clear().then(function(){
+                self.localdb.clear({
+                    storename: self._storename, 
+                    projectid: self._projectid
+                }).then(function(){
                         resolve(); //empty dbase from items
                 });
             }
@@ -2216,32 +2219,7 @@ Cow.messenger.prototype._onMessage = function(message){
     }
     
 };
-Cow.messenger.prototype._onClose = function(event){
-    var code = event.code;
-    var reason = event.reason;
-    var wasClean = event.wasClean;
-    var self = this.obj;
-    console.log('WS disconnected:' , this.closeDescription);
-    //this.close(); //FIME: TT: why was this needed?
-    self._core.peerStore().clear();
-    self._connected = false;
-    //TODO this._core.trigger('ws-disconnected');    
-    var restart = function(){
-        try{
-            console.log('Trying to reconnect');
-            self._core.websocket().disconnect();
-        }
-        catch(err){
-            console.warn(err);
-        }
-        self._core.websocket().connect().then(function(d){
-           self._connection = d;
-        }, function(e){
-            console.warn('connection failed',e);
-        });
-    };
-    setTimeout(restart,5000);
-};
+
 Cow.messenger.prototype._onConnect = function(payload){
     console.log('connected!');
     this._connected = true;
@@ -2524,8 +2502,7 @@ Cow.messenger.prototype._onCommand = function(data) {
         var project;
         if (core.projects(projectid)){
             project = core.projects(projectid);
-            project.itemStore().clear(); //remove objects from store
-            project.itemStore()._db.main.clear(); //remove records from db
+            project.itemStore().clear(); //remove objects from store and db
         }
     }
     //Answer a ping with a pong
