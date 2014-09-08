@@ -649,6 +649,44 @@ Cow.localdb.prototype.delRecord = function(config){
     return promise;
 };
 
+Cow.localdb.prototype.clear = function(config){
+    var storename = config.storename;
+    var projectid = config.projectid;
+    var key,index;
+    var trans = this._db.transaction([storename], "readwrite");
+    var store = trans.objectStore(storename);
+    if (projectid){
+        key = IDBKeyRange.only(projectid);
+        index = store.index("projectid");
+    }
+    else {
+        index = store;
+    }
+    var promise = new Promise(function(resolve, reject){
+        var request;
+        if (key){ //Solution to make it work on IE, since openCursor(undefined) gives an error
+            request = index.openCursor(key);
+        }
+        else{
+            request = index.openCursor();
+        }
+        request.onsuccess = function(event) {
+          var cursor = event.target.result;
+          if (cursor) {
+            store.delete(cursor.primaryKey);
+            cursor.continue();
+          }
+          else{
+              resolve();
+          }
+        };
+        request.onerror = function(e){
+            reject(e);
+        };
+    });
+    return promise;
+};
+
 }).call(this);
 (function(){
 
@@ -957,7 +995,10 @@ Cow.syncstore.prototype =
             self._records = [];
             self.trigger('datachange');
             if (self.localdb){
-                self.localdb.clear().then(function(){
+                self.localdb.clear({
+                    storename: self._storename, 
+                    projectid: self._projectid
+                }).then(function(){
                         resolve(); //empty dbase from items
                 });
             }
@@ -2076,9 +2117,34 @@ Cow.websocket.prototype._onError = function(e){
     console.warn('error in websocket connection: ' + e.type);
     this._core.websocket().trigger('error');
 };
-Cow.websocket.prototype._onError = function(e){
-    console.log('closed');
+
+Cow.websocket.prototype._onClose = function(event){
+    this._core.websocket().trigger('closed');
+    var code = event.code;
+    var reason = event.reason;
+    var wasClean = event.wasClean;
+    
+    console.log('WS disconnected:' , this.closeDescription);
+    this._core.peerStore().clear();
+    this._connected = false;
+    var self = this;
+    var restart = function(){
+        try{
+            console.log('Trying to reconnect');
+            self._core.websocket().disconnect();
+        }
+        catch(err){
+            console.warn(err);
+        }
+        self._core.websocket().connect().then(function(d){
+           self._connection = d;
+        }, function(e){
+            console.warn('connection failed',e);
+        });
+    };
+    setTimeout(restart,5000);
 };
+
 _.extend(Cow.websocket.prototype, Events);
 }.call(this));
 (function(){
@@ -2206,32 +2272,7 @@ Cow.messenger.prototype._onMessage = function(message){
     }
     
 };
-Cow.messenger.prototype._onClose = function(event){
-    var code = event.code;
-    var reason = event.reason;
-    var wasClean = event.wasClean;
-    var self = this.obj;
-    console.log('WS disconnected:' , this.closeDescription);
-    //this.close(); //FIME: TT: why was this needed?
-    self._core.peerStore().clear();
-    self._connected = false;
-    //TODO this._core.trigger('ws-disconnected');    
-    var restart = function(){
-        try{
-            console.log('Trying to reconnect');
-            self._core.websocket().disconnect();
-        }
-        catch(err){
-            console.warn(err);
-        }
-        self._core.websocket().connect().then(function(d){
-           self._connection = d;
-        }, function(e){
-            console.warn('connection failed',e);
-        });
-    };
-    setTimeout(restart,5000);
-};
+
 Cow.messenger.prototype._onConnect = function(payload){
     console.log('connected!');
     this._connected = true;
@@ -2514,8 +2555,7 @@ Cow.messenger.prototype._onCommand = function(data) {
         var project;
         if (core.projects(projectid)){
             project = core.projects(projectid);
-            project.itemStore().clear(); //remove objects from store
-            project.itemStore()._db.main.clear(); //remove records from db
+            project.itemStore().clear(); //remove objects from store and db
         }
     }
     //Answer a ping with a pong

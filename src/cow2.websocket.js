@@ -100,8 +100,33 @@ Cow.websocket.prototype._onError = function(e){
     console.warn('error in websocket connection: ' + e.type);
     this._core.websocket().trigger('error');
 };
-Cow.websocket.prototype._onError = function(e){
-    console.log('closed');
+
+Cow.websocket.prototype._onClose = function(event){
+    this._core.websocket().trigger('closed');
+    var code = event.code;
+    var reason = event.reason;
+    var wasClean = event.wasClean;
+    
+    console.log('WS disconnected:' , this.closeDescription);
+    this._core.peerStore().clear();
+    this._connected = false;
+    var self = this;
+    var restart = function(){
+        try{
+            console.log('Trying to reconnect');
+            self._core.websocket().disconnect();
+        }
+        catch(err){
+            console.warn(err);
+        }
+        self._core.websocket().connect().then(function(d){
+           self._connection = d;
+        }, function(e){
+            console.warn('connection failed',e);
+        });
+    };
+    setTimeout(restart,5000);
 };
+
 _.extend(Cow.websocket.prototype, Events);
 }.call(this));

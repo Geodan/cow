@@ -181,4 +181,42 @@ Cow.localdb.prototype.delRecord = function(config){
     return promise;
 };
 
+Cow.localdb.prototype.clear = function(config){
+    var storename = config.storename;
+    var projectid = config.projectid;
+    var key,index;
+    var trans = this._db.transaction([storename], "readwrite");
+    var store = trans.objectStore(storename);
+    if (projectid){
+        key = IDBKeyRange.only(projectid);
+        index = store.index("projectid");
+    }
+    else {
+        index = store;
+    }
+    var promise = new Promise(function(resolve, reject){
+        var request;
+        if (key){ //Solution to make it work on IE, since openCursor(undefined) gives an error
+            request = index.openCursor(key);
+        }
+        else{
+            request = index.openCursor();
+        }
+        request.onsuccess = function(event) {
+          var cursor = event.target.result;
+          if (cursor) {
+            store.delete(cursor.primaryKey);
+            cursor.continue();
+          }
+          else{
+              resolve();
+          }
+        };
+        request.onerror = function(e){
+            reject(e);
+        };
+    });
+    return promise;
+};
+
 }).call(this);
