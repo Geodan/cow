@@ -134,7 +134,7 @@ Cow.messenger.prototype._onConnect = function(payload){
     var serverkey = payload.server_key;
     
     if (serverkey !== undefined && serverkey != this._core._herdname){
-        self.disconnect();
+        self.ws.disconnect();
         return;
     }
         
