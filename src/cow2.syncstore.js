@@ -197,7 +197,7 @@ Cow.syncstore.prototype =
     **/
     _addRecord: function(config){
         if (!config.source || !config.data){
-            console.warn('Wrong input: ',config);
+            log.warn('Wrong input: ' + config);
             return false;
         }
         var promise = null;

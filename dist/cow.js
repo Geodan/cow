@@ -861,7 +861,7 @@ Cow.syncstore.prototype =
     **/
     _addRecord: function(config){
         if (!config.source || !config.data){
-            console.warn('Wrong input: ',config);
+            log.warn('Wrong input: ' + config);
             return false;
         }
         var promise = null;
@@ -1877,7 +1877,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.project = function(config){
     var self = this;
-    if (!config._id) {throw 'No _id given for project';}
+    //if (!config._id) {throw 'No _id given for project';}
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;
@@ -2557,6 +2557,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.core = function(config){
+    log.setLevel('info');
     var self = this;
     if (typeof(config) == 'undefined' ) {
         config = {};
