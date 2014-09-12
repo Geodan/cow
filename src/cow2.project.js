@@ -12,7 +12,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.project = function(config){
     var self = this;
-    if (!config._id) {throw 'No _id given for project';}
+    //if (!config._id) {throw 'No _id given for project';}
     this._id = config._id;
     this._store = config.store;
     this._core = this._store._core;

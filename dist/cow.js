@@ -1,3 +1,5 @@
+/*! loglevel - v1.1.0 - https://github.com/pimterry/loglevel - (c) 2014 Tim Perry - licensed MIT */
+!function(a,b){"object"==typeof module&&module.exports&&"function"==typeof require?module.exports=b():"function"==typeof define&&"object"==typeof define.amd?define(b):a.log=b()}(this,function(){function a(a){return typeof console===k?j:void 0===console[a]?void 0!==console.log?b(console,"log"):j:b(console,a)}function b(a,b){var d=a[b];if(void 0!==d.bind)return a[b].bind(a);if(void 0===Function.prototype.bind)return c(d,a);try{return Function.prototype.bind.call(a[b],a)}catch(e){return c(d,a)}}function c(a,b){return function(){Function.prototype.apply.apply(a,[b,arguments])}}function d(a){for(var b=0;b<l.length;b++)i[l[b]]=a(l[b])}function e(){return typeof window!==k&&void 0!==window.document&&void 0!==window.document.cookie}function f(){try{return typeof window!==k&&void 0!==window.localStorage&&null!==window.localStorage}catch(a){return!1}}function g(a){var b,c=!1;for(var d in i.levels)if(i.levels.hasOwnProperty(d)&&i.levels[d]===a){b=d;break}if(f())try{window.localStorage.loglevel=b}catch(g){c=!0}else c=!0;c&&e()&&(window.document.cookie="loglevel="+b+";")}function h(){var a;if(f()&&(a=window.localStorage.loglevel),void 0===a&&e()){var b=m.exec(window.document.cookie)||[];a=b[1]}void 0===i.levels[a]&&(a="WARN"),i.setLevel(i.levels[a])}var i={},j=function(){},k="undefined",l=["trace","debug","info","warn","error"],m=/loglevel=([^;]+)/;i.levels={TRACE:0,DEBUG:1,INFO:2,WARN:3,ERROR:4,SILENT:5},i.setLevel=function(b){if("number"==typeof b&&b>=0&&b<=i.levels.SILENT){if(g(b),b===i.levels.SILENT)return void d(function(){return j});if(typeof console===k)return d(function(a){return function(){typeof console!==k&&(i.setLevel(b),i[a].apply(i,arguments))}}),"No console available for logging";d(function(c){return b<=i.levels[c.toUpperCase()]?a(c):j})}else{if("string"!=typeof b||void 0===i.levels[b.toUpperCase()])throw"log.setLevel() called with invalid level: "+b;i.setLevel(i.levels[b.toUpperCase()])}},i.enableAll=function(){i.setLevel(i.levels.TRACE)},i.disableAll=function(){i.setLevel(i.levels.SILENT)};var n=typeof window!==k?window.log:void 0;return i.noConflict=function(){return typeof window!==k&&window.log===i&&(window.log=n),i},h(),i});
 (function(){
 
 // Create local references to array methods we'll want to use later.
@@ -493,6 +495,7 @@ Cow.localdb = function(config){
     this._openpromise = new Promise(function(resolve, reject){    
         var request = indexedDB.open(self._dbname,version);
         request.onerror = function(event) {
+          console.warn('indexedb error: ',event.target.error);
           reject(event.target.error);
         };
         request.onupgradeneeded = function(event) {
@@ -518,40 +521,7 @@ Cow.localdb = function(config){
         };
     });
 };
-/*
-Cow.localdb.prototype.open  = function(){
-    var self = this;
-    var version = 2;
-    var promise = new Promise(function(resolve, reject){    
-        var request = indexedDB.open(self._dbname,version);
-        request.onerror = function(event) {
-          reject(event.target.error);
-        };
-        request.onupgradeneeded = function(event) {
-          var db = event.target.result;
-          db
-            .createObjectStore("users", { keyPath: "_id" })
-            .createIndex("name", "name", { unique: false });
-          db
-            .createObjectStore("projects", { keyPath: "_id" })
-            .createIndex("name", "name", { unique: false });
-          db
-            .createObjectStore("socketservers", { keyPath: "_id" });
-          db
-            .createObjectStore("items", { keyPath: "_id" })
-            .createIndex("projectid", "projectid", { unique: false });
-          db
-            .createObjectStore("groups", { keyPath: "_id" })
-            .createIndex("projectid", "projectid", { unique: false });
-        };
-        request.onsuccess = function(event) {
-            self._db = event.target.result;
-            resolve(); //We're not sending back the result since we handle the db as private
-        };
-    });
-    return promise;
-};
-*/
+
 Cow.localdb.prototype.write = function(config){
     var storename = config.storename;
     var record = config.data;
@@ -566,7 +536,7 @@ Cow.localdb.prototype.write = function(config){
             resolve(request.result);
         };
         request.onerror = function(e) {
-            console.log(e.value);
+            console.warn('IDB Error: ',e.value);
             reject("Couldn't add the passed item");
         };
     });
@@ -584,8 +554,9 @@ Cow.localdb.prototype.getRecord = function(config){
             request.onsuccess = function(){
                 resolve(request.result);
             };
-            request.onerror = function(d){
-                reject(d);
+            request.onerror = function(e){
+                console.warn('IDB Error: ',e.value);
+                reject(e);
             };
     });
     return promise;
@@ -625,6 +596,7 @@ Cow.localdb.prototype.getRecords = function(config){
           }
         };
         request.onerror = function(e){
+            console.warn('IDB Error: ',e.value);
             reject(e);
         };
     });
@@ -643,6 +615,7 @@ Cow.localdb.prototype.delRecord = function(config){
             resolve();
         };
         request.onerror = function(e){
+            console.warn('IDB Error: ',e.value);
             reject(e);
         };
     });
@@ -681,6 +654,7 @@ Cow.localdb.prototype.clear = function(config){
           }
         };
         request.onerror = function(e){
+            console.warn('IDB Error: ',e.value);
             reject(e);
         };
     });
@@ -2186,6 +2160,7 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     catch (e){
         console.error(e, message);
     }
+    log.info('Sending ' + JSON.stringify(message));
     //console.log('Sending ',message);
     this.ws.send(stringified);
 };
@@ -2199,6 +2174,7 @@ Cow.messenger.prototype._onMessage = function(message){
     var payload = data.payload;    
     var target = data.target;
     if (sender != PEERID){
+        log.info('Receiving '+JSON.stringify(data));
         //console.log('Receiving ',data);
     }
     switch (action) {
@@ -2600,7 +2576,7 @@ Cow.core = function(config){
     
     /*PROJECTS*/
     this._projectStore =  _.extend(
-        new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self, maxAge: this._maxAge}),{
+        new Cow.syncstore({dbname: 'projects', noDeltas: false, core: self, maxAge: this._maxAge}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
         _dbname:        'projects',

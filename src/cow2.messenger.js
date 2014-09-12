@@ -37,6 +37,7 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     catch (e){
         console.error(e, message);
     }
+    log.info('Sending ' + JSON.stringify(message));
     //console.log('Sending ',message);
     this.ws.send(stringified);
 };
@@ -50,6 +51,7 @@ Cow.messenger.prototype._onMessage = function(message){
     var payload = data.payload;    
     var target = data.target;
     if (sender != PEERID){
+        log.info('Receiving '+JSON.stringify(data));
         //console.log('Receiving ',data);
     }
     switch (action) {
