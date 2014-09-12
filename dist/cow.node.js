@@ -2294,7 +2294,9 @@ Cow.messenger.prototype._getStore = function(payload){
         case 'users':
             return this._core.userStore();
         case 'items':
-            if (!projectid) {throw('No project id given');}
+            if (!projectid) {
+                throw('No project id given');
+            }
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
@@ -2303,7 +2305,9 @@ Cow.messenger.prototype._getStore = function(payload){
             }
             return project.itemStore();
         case 'groups':
-            if (!projectid) {throw('No project id given');}
+            if (!projectid) {
+                throw('No project id given');
+            }
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
@@ -2333,15 +2337,20 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             "project" : project,
             "syncinfo" : syncinfo
         };
-            
-        this.sendData(data, 'syncinfo',sender);
+        //Don't send empty lists
+        if (syncobject.requestlist.length > 0 && syncobject.pushlist.length > 0){
+            this.sendData(data, 'syncinfo',sender);
+        }
         
         data =  {
             "syncType" : payload.syncType,
             "project" : project,
             "list" : syncobject.requestlist
         };
-        this.sendData(data, 'wantedList', sender);
+        //Don't send empty lists
+        if (syncobject.requestlist.length > 0){
+            this.sendData(data, 'wantedList', sender);
+        }
         
         data =  {
             "syncType" : payload.syncType,
@@ -2361,7 +2370,10 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             self.sendData(msg, 'updatedRecord', sender);
         });
         */
-        this.sendData(data, 'missingRecords', sender);
+        //Don't send empty lists
+        if (syncobject.pushlist.length > 0){
+            this.sendData(data, 'missingRecords', sender);
+        }
     }
 };
 Cow.messenger.prototype._amIAlpha = function(){ //find out wether I am alpha

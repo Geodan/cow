@@ -71,6 +71,10 @@
         <h2>Projects</h2>
         <ul id='projectlist' class="list-group"></ul>
     </div>
+    <div class="col-lg-2">
+        <h2>Users</h2>
+        <ul id='userlist' class="list-group"></ul>
+    </div>
     
    </div>
    </div><!-- /container -->
@@ -109,13 +113,13 @@
   <script type="text/javascript">
   var us = _;
   var core = new Cow.core({
-    herdname: 'cow'
+    herdname: 'test'
   });
   //add a default socketserver
   core.socketservers({
     _id: 'default', 
-    //data: {protocol:'wss',ip:'websocket.geodan.nl', port:443}
-    data: {protocol:'ws',ip:'192.168.24.156', port:8081}
+    data: {protocol:'wss',ip:'websocket.geodan.nl', port:443}
+    //data: {protocol:'ws',ip:'192.168.24.156', port:8081}
   });
   core.socketserver('default');
   var data = new Cow.data(core);
@@ -253,6 +257,21 @@
           });
   }
   
+  function reload_userlist(){
+      var list = data.users();
+      var items = d3.select('#userlist').selectAll('li')
+            .data(list, function(d){return d.id();});
+          items.enter().append('li').classed("list-group-item",true)
+            .html(function(d){return d.data('name') || d.id() ;});
+          items.exit().remove();
+          //items.classed('list-group-item-success', function(d){
+          //    if (d.id() == core.user().id()){
+          //              return true;
+          //          }
+          //          else {return false;}
+          //});
+  }
+  
   
   function reload_projectlist(){
       var list = data.projects();//_.filter(core.projects(), function(d){return !d.deleted()});
@@ -281,6 +300,9 @@
   
   core.peerStore().loaded.then(reload_peerlist);
   core.peerStore().on('datachange', reload_peerlist);
+  
+  core.userStore().loaded.then(reload_userlist);
+  core.userStore().on('datachange', reload_userlist);
   
   core.projectStore().loaded.then(reload_projectlist);
   core.projectStore().on('datachange', reload_projectlist);
