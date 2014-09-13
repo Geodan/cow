@@ -2181,7 +2181,7 @@ Cow.messenger.prototype._onMessage = function(message){
     var target = data.target;
     if (sender != PEERID){
         log.info('Receiving '+JSON.stringify(data));
-        this._numreqs++;
+        this._core.messenger()._numreqs++;
     }
     switch (action) {
     /**
