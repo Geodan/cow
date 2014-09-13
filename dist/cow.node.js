@@ -2110,11 +2110,41 @@ if (typeof exports !== 'undefined') {
 
 Cow.messenger = function(config){
     this._core = config.core;
+    this._requesthistory = [];
+    this._numreqs = 0;
+    this._sendhistory = [];
+    this._numsends = 0;
+    this._reqhistory = [];
     this.ws = this._core.websocket();
     this.ws.on('message',this._onMessage);
     this.ws.on('error', this._onError);
+    var self = this;
+    var maxloglength = 60;
+    //Calculate throughput
+    setInterval(function(){
+        self._sendhistory.push(self._numsends);
+        if (self._sendhistory.length > maxloglength){
+            self._sendhistory.shift();
+        }
+        self._reqhistory.push(self._numreqs);
+        if (self._reqhistory.length > maxloglength){
+            self._reqhistory.shift();
+        }
+        self._numsends = 0;
+        self._numreqs = 0;
+    },1000);
 };
-    
+
+/**
+    activitylog() - returns activity log object
+**/
+Cow.messenger.prototype.activitylog = function(){
+    return {
+        reqhistory: this._reqhistory,
+        sendhistory: this._sendhistory
+    };
+};
+
     /**
         sendData(data, action, target) - send data to websocket server with params:
             data - json object
@@ -2138,6 +2168,7 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     log.info('Sending ' + JSON.stringify(message));
     //console.log('Sending ',message);
     this.ws.send(stringified);
+    this._numsends++;
 };
 
 Cow.messenger.prototype._onMessage = function(message){
@@ -2150,7 +2181,7 @@ Cow.messenger.prototype._onMessage = function(message){
     var target = data.target;
     if (sender != PEERID){
         log.info('Receiving '+JSON.stringify(data));
-        //console.log('Receiving ',data);
+        this._numreqs++;
     }
     switch (action) {
     /**
@@ -2325,12 +2356,13 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
     if (this._amIAlpha()){
         var store = this._getStore(payload);
         var project = store._projectid;
+        //Find out what should be synced
         var syncobject = store.compareRecords({uid:sender, list: payload.list});
         var data;
         //Give the peer information on what will be synced
         var syncinfo = {
             IWillSent: _.pluck(syncobject.pushlist,"_id"),
-            IShallReceive: _.pluck(syncobject.requestlist,"_id") 
+            IShallReceive: _.pluck(syncobject.requestlist,"_id") //TODO: hey, this seems like doubling the functionality of 'wantedList'
         };
         data = {
             "syncType" : payload.syncType,
