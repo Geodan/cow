@@ -17,21 +17,22 @@ Setting up a new cow:
 -----------
 `````javascript
 //Create core object
-var core = new Cow.core();
+var core = new Cow.core({herdname: 'test'});
 
-//Add a default socketserver
-core.socketservers({
-    _id: 'default', 
-    data: {
-        protocol:'wss',
-        ip:'80.113.1.156', 
-        port:443
-    }
+//add a default socketserver
+cow.socketservers({
+ _id: 'default', 
+ data: {protocol:'ws',ip:'192.168.25.152', port:8081}
 });
-//Set current socket server
-core.socketserver('default');
-//Create a connection
-var connection = core.connect();
+cow.socketserver('default');
+
+var connection;
+cow.connect().then(function(d){
+        connection = d;
+}, function(e){
+    console.log('Connecting error', e);
+});
+
 `````
 
 From here on you are set to work with the workspace according to the API.
@@ -72,7 +73,7 @@ All the stores share the same basemethods as follows (userStore as example):
     core.users([<string>]) -> returns array of record objects with matching ids
     core.users()   -> returns array of all record objects
     core.userStore() -> returns the userstore object
-    core.userStore().syncRecords() -> syncs all records with status 'dirty'
+    core.userStore().syncRecords() -> syncs all records with dirty == true
 `````
 When adding a new record, it is possible to include data in the object like: cow.users({_id: 1, data: {name: 'myname'}}). The _id parameter is optional. If you don't give it, a new id will be automatically assigned to the record by COW. We recommend to let COW assign the id for you to avoid the risk of having doublings.
 
@@ -85,12 +86,12 @@ All *record objects* behave the same* and as follows (user object as example):
 `````javascript
     user.id() -> returns the id of the record
     user.created() -> returns the timestamp of creation
-    user.status() -> returns the status of the record (being one of  'clean', 'dirty')
-    user.status(<string>) -> sets the status of the record, returns record
+    user.dirty() -> returns the dirtystatus of the record
+    user.dirty(boolean) -> sets the dirtystatus of the record, returns record
     user.deleted() -> returns a boolean (true, false) indicating wether the record has been deleted
     user.deleted(boolean) -> sets the record to deleted, returns record
-    user.timestamp() -> returns the timestamp (last edit) of the record
-    user.timestamp(<timestamp>) -> sets the timestamp of the record, returns record
+    user.updated() -> returns the timestamp (last edit) of the record
+    user.updated(<timestamp>) -> sets the timestamp of the record, returns record
     user.data() -> returns the data (object) of the record
     user.data('key') -> returns the data->key (value) of the record
     user.data('key', 'value') -> sets a key value pair of the data, returns the record
@@ -107,7 +108,7 @@ All *record objects* behave the same* and as follows (user object as example):
     core.socketserver() -> returns the current socketserver configuration in use
     core.socketserver(<string>) -> sets the current socketserver
     core.websocket() -> returns the websocket object
-    core.connect() -> start websocket connection
+    core.connect() -> start websocket connection, returns promise
     core.disconnect() -> closes the websocket connection (auto reconnect in 5 secs)
     core.location() -> returns location object of current peer
     core.location(obj) -> set location object of current peer, returns locations object
@@ -123,15 +124,22 @@ Since most methods return their own object, the methods are chainable. So you ca
         .data('creator',core.user().id())
         .sync();
 `````
-The timestamp and status are automatically updated when invoking the data(<whatever>) or deleted(true/false) method so you don't need to worry about that.
+The timestamp and dirtystatus are automatically updated when invoking the data(<whatever>) or deleted(true/false) method so you don't need to worry about that.
 
 
 #### Core
->$(selector).cow([options])
+`````javascript
+var cow = new Cow.core({
+    herdname: 'test', //name of organisation
+    maxage: 1000 * 60 * 60 * 24 * 30 //30 days in milliseconds
+});
 
+`````
 **description** initialise Cow and associate it with the matched element. The Cow object is refered to as *cow* in the documentation
 
-[options]: wsUrl (url to the websocket server 
+[options]: 
+    herdname (name of the organisation, this will create a separate database, defaults to 'cow')
+    maxage (maximum lifetime of objects to be stored, defaults to null)
  
 * peerid() -- get peerid
 * peerid(id) -- set peerid
