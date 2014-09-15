@@ -11,7 +11,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.core = function(config){
-    log.setLevel('info');
+    log.setLevel('warn');
     var self = this;
     if (typeof(config) == 'undefined' ) {
         config = {};
@@ -264,6 +264,21 @@ Cow.core.prototype =
             }
         }
         return returnArr;
+    },
+    /** 
+        alphaPeer() - return the alpha peer object
+    **/
+    alphaPeer: function(){
+        /** 
+        peers all have a unique id from the server based on the timestamp
+        the peer with the oldest timestamp AND member of the alpha familty is alpha
+        **/
+        var alphaPeers = _.sortBy(
+            _.filter(this.peers(),function(d){
+                return (d.data('family') == 'alpha' && !d.deleted());
+            }),
+            function(d){return d.created();});
+        return alphaPeers[0];
     },
     /**
         localdbase() - return the open promise of the localdbase
