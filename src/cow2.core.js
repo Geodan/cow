@@ -11,7 +11,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.core = function(config){
-    log.setLevel('warn');
+    //log.setLevel('warn');
     var self = this;
     if (typeof(config) == 'undefined' ) {
         config = {};
