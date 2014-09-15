@@ -2110,11 +2110,52 @@ if (typeof exports !== 'undefined') {
 
 Cow.messenger = function(config){
     this._core = config.core;
+    this._numreqs = 0;
+    this._amountreq = 0;
+    this._sendhistory = [];
+    this._amountsendhistory = [];
+    this._numsends = 0;
+    this._amountsend = 0;
+    this._reqhistory = [];
+    this._amountreqhistory = [];
     this.ws = this._core.websocket();
     this.ws.on('message',this._onMessage);
     this.ws.on('error', this._onError);
+    var self = this;
+    var maxloglength = 60;
+    //Calculate throughput
+    setInterval(function(){
+        self._sendhistory.push(self._numsends);
+        self._amountsendhistory.push(self._amountsend);
+        if (self._sendhistory.length > maxloglength){
+            self._sendhistory.shift();
+            self._amountsendhistory.shift();
+        }
+        self._reqhistory.push(self._numreqs);
+        self._amountreqhistory.push(self._amountreq);
+        if (self._reqhistory.length > maxloglength){
+            self._reqhistory.shift();
+            self._amountreqhistory.shift();
+        }
+        self._numsends = 0;
+        self._amountsend = 0;
+        self._numreqs = 0;
+        self._amountreq = 0;
+    },1000);
 };
-    
+
+/**
+    activitylog() - returns activity log object
+**/
+Cow.messenger.prototype.activitylog = function(){
+    return {
+        reqhistory: this._reqhistory,
+        sendhistory: this._sendhistory,
+        amountreqhistory: this._amountreqhistory,
+        amountsendhistory: this._amountsendhistory
+    };
+};
+
     /**
         sendData(data, action, target) - send data to websocket server with params:
             data - json object
@@ -2138,6 +2179,8 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     log.info('Sending ' + JSON.stringify(message));
     //console.log('Sending ',message);
     this.ws.send(stringified);
+    this._numsends++;
+    this._amountsend = +stringified.length;
 };
 
 Cow.messenger.prototype._onMessage = function(message){
@@ -2150,7 +2193,8 @@ Cow.messenger.prototype._onMessage = function(message){
     var target = data.target;
     if (sender != PEERID){
         log.info('Receiving '+JSON.stringify(data));
-        //console.log('Receiving ',data);
+        this._core.messenger()._numreqs++;
+        this._core.messenger()._amountreq = +message.data.length;
     }
     switch (action) {
     /**
@@ -2325,12 +2369,13 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
     if (this._amIAlpha()){
         var store = this._getStore(payload);
         var project = store._projectid;
+        //Find out what should be synced
         var syncobject = store.compareRecords({uid:sender, list: payload.list});
         var data;
         //Give the peer information on what will be synced
         var syncinfo = {
             IWillSent: _.pluck(syncobject.pushlist,"_id"),
-            IShallReceive: _.pluck(syncobject.requestlist,"_id") 
+            IShallReceive: _.pluck(syncobject.requestlist,"_id") //TODO: hey, this seems like doubling the functionality of 'wantedList'
         };
         data = {
             "syncType" : payload.syncType,
@@ -2377,21 +2422,10 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
     }
 };
 Cow.messenger.prototype._amIAlpha = function(){ //find out wether I am alpha
-    /** 
-    peers all have a unique id from the server based on the timestamp
-    the peer with the oldest timestamp AND member of the alpha familty is alpha
-    **/
     var returnval = null;
-    //First only get alpha peers
-    var alphaPeers = _.sortBy(
-        _.filter(this._core.peers(),function(d){
-            return (d.data('family') == 'alpha' && !d.deleted());
-        }),
-     function(d){return d.created();});
-    //If we are the oldest of alpha peers
-    var oldestpeer = alphaPeers[0];
+    var alphapeer = this._core.alphaPeer();
     var me = this._core.peer();
-    if (me.created() == oldestpeer.created()) {//yes, I certainly am (the oldest) 
+    if (me.id() == alphapeer.id()) {//yes, I certainly am (the oldest) 
         returnval =  true;
     }
     else { 
@@ -2544,7 +2578,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.core = function(config){
-    log.setLevel('info');
+    log.setLevel('warn');
     var self = this;
     if (typeof(config) == 'undefined' ) {
         config = {};
@@ -2797,6 +2831,21 @@ Cow.core.prototype =
             }
         }
         return returnArr;
+    },
+    /** 
+        alphaPeer() - return the alpha peer object
+    **/
+    alphaPeer: function(){
+        /** 
+        peers all have a unique id from the server based on the timestamp
+        the peer with the oldest timestamp AND member of the alpha familty is alpha
+        **/
+        var alphaPeers = _.sortBy(
+            _.filter(this.peers(),function(d){
+                return (d.data('family') == 'alpha' && !d.deleted());
+            }),
+            function(d){return d.created();});
+        return alphaPeers[0];
     },
     /**
         localdbase() - return the open promise of the localdbase

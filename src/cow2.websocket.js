@@ -29,6 +29,7 @@ Cow.websocket.prototype.disconnect = function() {
     if (this._connection){
         this._connection.close();    
         this._connection = null;
+        this._connected = false;
     }
     else { 
         console.log('No websocket active');
@@ -64,6 +65,7 @@ Cow.websocket.prototype.connect = function() {
                 connection.onerror = self._onError;
                 connection._core = self._core;
                 self._connection = connection;
+                self._connected = true;//TODO, perhaps better to check if the connection really works
             }
             else {
                 console.warn('Incorrect URL: ' + self._url);
