@@ -11,11 +11,15 @@ There are two types of messages: targeted and broadcast. The first is meant for 
 This message is send by the websocket server to the peer once a connection has been established between de server and the peer. It contains the PEERID, the unique ID to keep track of the client. It will change after reconnect. This is a read only message sent by the server and never by a client.
 
 ```
+{"action":"connected","payload":{"peerID":1410519905412,"server_ip":"192.168.24.151","server_key":"cow","server_version":"0.1"}} 
 {
-    "action" : "connected",
-    "payload" : {
-        "peerID" : PEERID
-    }
+    action : "connected",
+    payload : {
+        peerID: ID,
+        server_ip: IP,
+        server_key: KEY,
+        server_version: VERSION
+     }
 }
 ```
 
@@ -61,9 +65,9 @@ When you want to sync (ie after connecting) you sent a 'newlist' with the ids, t
     "action" : "newList",
     "sender" : PEERID,
     "payload" : {
-        "syncType" : ITEMTYPE, //One of 'peers','users', 'projects', 'items', 'groups'
+        "syncType" : ITEMTYPE, //One of 'peers','users', 'projects', 'items', 'groups','socketservers'
         "list" : MYLIST,
-        "project": PROJECTID //optional
+        "project": PROJECTID //optional, only for items and groups 
     }
 }
 ```

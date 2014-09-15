@@ -37,6 +37,7 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     catch (e){
         console.error(e, message);
     }
+    log.info('Sending ' + JSON.stringify(message));
     //console.log('Sending ',message);
     this.ws.send(stringified);
 };
@@ -50,6 +51,7 @@ Cow.messenger.prototype._onMessage = function(message){
     var payload = data.payload;    
     var target = data.target;
     if (sender != PEERID){
+        log.info('Receiving '+JSON.stringify(data));
         //console.log('Receiving ',data);
     }
     switch (action) {
@@ -194,7 +196,9 @@ Cow.messenger.prototype._getStore = function(payload){
         case 'users':
             return this._core.userStore();
         case 'items':
-            if (!projectid) {throw('No project id given');}
+            if (!projectid) {
+                throw('No project id given');
+            }
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
@@ -203,7 +207,9 @@ Cow.messenger.prototype._getStore = function(payload){
             }
             return project.itemStore();
         case 'groups':
-            if (!projectid) {throw('No project id given');}
+            if (!projectid) {
+                throw('No project id given');
+            }
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
@@ -221,27 +227,33 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
     if (this._amIAlpha()){
         var store = this._getStore(payload);
         var project = store._projectid;
+        //Find out what should be synced
         var syncobject = store.compareRecords({uid:sender, list: payload.list});
         var data;
         //Give the peer information on what will be synced
         var syncinfo = {
             IWillSent: _.pluck(syncobject.pushlist,"_id"),
-            IShallReceive: _.pluck(syncobject.requestlist,"_id") 
+            IShallReceive: _.pluck(syncobject.requestlist,"_id") //TODO: hey, this seems like doubling the functionality of 'wantedList'
         };
         data = {
             "syncType" : payload.syncType,
             "project" : project,
             "syncinfo" : syncinfo
         };
-            
-        this.sendData(data, 'syncinfo',sender);
+        //Don't send empty lists
+        if (syncobject.requestlist.length > 0 && syncobject.pushlist.length > 0){
+            this.sendData(data, 'syncinfo',sender);
+        }
         
         data =  {
             "syncType" : payload.syncType,
             "project" : project,
             "list" : syncobject.requestlist
         };
-        this.sendData(data, 'wantedList', sender);
+        //Don't send empty lists
+        if (syncobject.requestlist.length > 0){
+            this.sendData(data, 'wantedList', sender);
+        }
         
         data =  {
             "syncType" : payload.syncType,
@@ -261,7 +273,10 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             self.sendData(msg, 'updatedRecord', sender);
         });
         */
-        this.sendData(data, 'missingRecords', sender);
+        //Don't send empty lists
+        if (syncobject.pushlist.length > 0){
+            this.sendData(data, 'missingRecords', sender);
+        }
     }
 };
 Cow.messenger.prototype._amIAlpha = function(){ //find out wether I am alpha

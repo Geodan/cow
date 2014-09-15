@@ -25,6 +25,7 @@ Cow.localdb = function(config){
     this._openpromise = new Promise(function(resolve, reject){    
         var request = indexedDB.open(self._dbname,version);
         request.onerror = function(event) {
+          console.warn('indexedb error: ',event.target.error);
           reject(event.target.error);
         };
         request.onupgradeneeded = function(event) {
@@ -50,40 +51,7 @@ Cow.localdb = function(config){
         };
     });
 };
-/*
-Cow.localdb.prototype.open  = function(){
-    var self = this;
-    var version = 2;
-    var promise = new Promise(function(resolve, reject){    
-        var request = indexedDB.open(self._dbname,version);
-        request.onerror = function(event) {
-          reject(event.target.error);
-        };
-        request.onupgradeneeded = function(event) {
-          var db = event.target.result;
-          db
-            .createObjectStore("users", { keyPath: "_id" })
-            .createIndex("name", "name", { unique: false });
-          db
-            .createObjectStore("projects", { keyPath: "_id" })
-            .createIndex("name", "name", { unique: false });
-          db
-            .createObjectStore("socketservers", { keyPath: "_id" });
-          db
-            .createObjectStore("items", { keyPath: "_id" })
-            .createIndex("projectid", "projectid", { unique: false });
-          db
-            .createObjectStore("groups", { keyPath: "_id" })
-            .createIndex("projectid", "projectid", { unique: false });
-        };
-        request.onsuccess = function(event) {
-            self._db = event.target.result;
-            resolve(); //We're not sending back the result since we handle the db as private
-        };
-    });
-    return promise;
-};
-*/
+
 Cow.localdb.prototype.write = function(config){
     var storename = config.storename;
     var record = config.data;
@@ -98,7 +66,7 @@ Cow.localdb.prototype.write = function(config){
             resolve(request.result);
         };
         request.onerror = function(e) {
-            console.log(e.value);
+            console.warn('IDB Error: ',e.value);
             reject("Couldn't add the passed item");
         };
     });
@@ -116,8 +84,9 @@ Cow.localdb.prototype.getRecord = function(config){
             request.onsuccess = function(){
                 resolve(request.result);
             };
-            request.onerror = function(d){
-                reject(d);
+            request.onerror = function(e){
+                console.warn('IDB Error: ',e.value);
+                reject(e);
             };
     });
     return promise;
@@ -157,6 +126,7 @@ Cow.localdb.prototype.getRecords = function(config){
           }
         };
         request.onerror = function(e){
+            console.warn('IDB Error: ',e.value);
             reject(e);
         };
     });
@@ -175,6 +145,7 @@ Cow.localdb.prototype.delRecord = function(config){
             resolve();
         };
         request.onerror = function(e){
+            console.warn('IDB Error: ',e.value);
             reject(e);
         };
     });
@@ -213,6 +184,7 @@ Cow.localdb.prototype.clear = function(config){
           }
         };
         request.onerror = function(e){
+            console.warn('IDB Error: ',e.value);
             reject(e);
         };
     });

@@ -11,6 +11,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.core = function(config){
+    log.setLevel('info');
     var self = this;
     if (typeof(config) == 'undefined' ) {
         config = {};
@@ -30,7 +31,7 @@ Cow.core = function(config){
     
     /*PROJECTS*/
     this._projectStore =  _.extend(
-        new Cow.syncstore({dbname: 'projects', noDeltas: true, core: self, maxAge: this._maxAge}),{
+        new Cow.syncstore({dbname: 'projects', noDeltas: false, core: self, maxAge: this._maxAge}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
         _dbname:        'projects',
