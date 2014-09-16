@@ -72,6 +72,7 @@ All the stores share the same basemethods as follows (userStore as example):
     core.users(<string>) -> returns record object with id = <string>
     core.users([<string>]) -> returns array of record objects with matching ids
     core.users()   -> returns array of all record objects
+    core.users(<timestamp>) -> returns array of records created before timestamp
     core.userStore() -> returns the userstore object
     core.userStore().syncRecords() -> syncs all records with dirty == true
 `````
