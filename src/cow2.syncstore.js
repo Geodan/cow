@@ -279,7 +279,7 @@ Cow.syncstore.prototype =
             return this._getRecord(config);
         }
         else if (config && typeof(config) == 'number'){
-            //TODO return this._getRecordsOn(config);
+            return this._getRecordsOn(config);
         }
         else{
             return this._records;

@@ -931,7 +931,7 @@ Cow.syncstore.prototype =
             return this._getRecord(config);
         }
         else if (config && typeof(config) == 'number'){
-            //TODO return this._getRecordsOn(config);
+            return this._getRecordsOn(config);
         }
         else{
             return this._records;
@@ -2325,7 +2325,7 @@ Cow.messenger.prototype._onPeerGone = function(payload) {
 
 Cow.messenger.prototype._getStore = function(payload){
     var storetype = payload.syncType;
-    var projectid = payload.project;
+    var projectid = payload.project ? payload.project.toString() : null;
     var project;
     switch (storetype) {
         case 'peers':
