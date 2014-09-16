@@ -97,6 +97,7 @@ All *record objects* behave the same* and as follows (user object as example):
     user.data('key', 'value') -> sets a key value pair of the data, returns the record
     user.data({object}) -> sets the data of the record, overrides old data, returns the record
     user.sync() -> syncs the record with the database and with the websocket
+    user.data_on(<timestamp>) -> get the data (object) as it was at a specific time
 `````
 **core specific:**
 `````javascript
