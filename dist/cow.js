@@ -492,25 +492,44 @@ Cow.localdb = function(config){
     var version = 2;
     this._openpromise = new Promise(function(resolve, reject){    
         var request = indexedDB.open(self._dbname,version);
-        request.onerror = function(event) {
-          console.warn('indexedb error: ',event.target.error);
-          reject(event.target.error);
-        };
         request.onupgradeneeded = function(event) {
+          console.log('Indexeddb initialized/upgraded');
           var db = event.target.result;
+          
+          //Deleting DB if already exists
+          
+          if(db.objectStoreNames.contains("users")) {
+                db.deleteObjectStore("users");
+          }
+          if(db.objectStoreNames.contains("projects")) {
+                db.deleteObjectStore("projects");
+          }
+          if(db.objectStoreNames.contains("socketservers")) {
+                db.deleteObjectStore("socketservers");
+          }
+          if(db.objectStoreNames.contains("items")) {
+                db.deleteObjectStore("items");
+          }
+          if(db.objectStoreNames.contains("groups")) {
+                db.deleteObjectStore("groups");
+          }
+          
           db
-            .createObjectStore("users", { keyPath: "_id" })
-            .createIndex("name", "name", { unique: false });
+            .createObjectStore("users", { keyPath: "_id" });
+            //.createIndex("updated", "updated", { unique: false });
           db
-            .createObjectStore("projects", { keyPath: "_id" })
-            .createIndex("name", "name", { unique: false });
+            .createObjectStore("projects", { keyPath: "_id" });
+            //.createIndex("updated", "updated", { unique: false });
           db
             .createObjectStore("socketservers", { keyPath: "_id" });
+            //.createIndex("updated", "updated", { unique: false });
           db
             .createObjectStore("items", { keyPath: "_id" })
+            //.createIndex("updated", "updated", { unique: false })
             .createIndex("projectid", "projectid", { unique: false });
           db
             .createObjectStore("groups", { keyPath: "_id" })
+            //.createIndex("updated", "updated", { unique: false })
             .createIndex("projectid", "projectid", { unique: false });
         };
         request.onsuccess = function(event) {
@@ -521,14 +540,16 @@ Cow.localdb = function(config){
 };
 
 Cow.localdb.prototype.write = function(config){
+    var self = this;
     var storename = config.storename;
     var record = config.data;
     var projectid = config.projectid;
     record._id = record._id.toString();
     record.projectid = projectid;
-    var trans = this._db.transaction([storename], "readwrite");
-    var store = trans.objectStore(storename);
+    
     var promise = new Promise(function(resolve, reject){
+        var trans = self._db.transaction([storename], "readwrite");
+        var store = trans.objectStore(storename);
         var request = store.put(record);
         request.onsuccess = function(e) {
             resolve(request.result);
@@ -542,9 +563,9 @@ Cow.localdb.prototype.write = function(config){
 };
 
 Cow.localdb.prototype.getRecord = function(config){
+    var self = this;
     var storename = config.storename;
     var id = config.id;
-    
     var trans = this._db.transaction([storename]);
     var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
@@ -602,6 +623,7 @@ Cow.localdb.prototype.getRecords = function(config){
 };
 
 Cow.localdb.prototype.delRecord = function(config){
+    var self = this;
     var storename = config.storename;
     var projectid = config.projectid;
     var id = config.id;
@@ -2098,7 +2120,7 @@ Cow.websocket.prototype._onClose = function(event){
     var reason = event.reason;
     var wasClean = event.wasClean;
     
-    console.log('WS disconnected:' , this.closeDescription);
+    console.log('WS disconnected:' , code, reason);
     this._core.peerStore().clear();
     this._connected = false;
     var self = this;
@@ -2201,8 +2223,7 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     catch (e){
         console.error(e, message);
     }
-    //log.info('Sending ' + JSON.stringify(message));
-    //console.log('Sending ',message);
+    //console.info('Sending ' + JSON.stringify(message));
     this.ws.send(stringified);
     this._numsends++;
     this._amountsend = +stringified.length;
@@ -2217,7 +2238,7 @@ Cow.messenger.prototype._onMessage = function(message){
     var payload = data.payload;    
     var target = data.target;
     if (sender != PEERID){
-        //log.info('Receiving '+JSON.stringify(data));
+        //console.info('Receiving '+JSON.stringify(data));
         this._core.messenger()._numreqs++;
         this._core.messenger()._amountreq = +message.data.length;
     }
