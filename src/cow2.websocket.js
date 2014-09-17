@@ -109,7 +109,7 @@ Cow.websocket.prototype._onClose = function(event){
     var reason = event.reason;
     var wasClean = event.wasClean;
     
-    console.log('WS disconnected:' , this.closeDescription);
+    console.log('WS disconnected:' , code, reason);
     this._core.peerStore().clear();
     this._connected = false;
     var self = this;
