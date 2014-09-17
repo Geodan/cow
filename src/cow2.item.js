@@ -12,7 +12,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.item = function(config){
     //if (!config || !config._id) {throw 'No _id given for item';}
-    this._id = config._id;
+    this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 

@@ -223,7 +223,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.record = function(){
     //FIXME: 'this' object is being overwritten by its children 
-    this._id    = null;
+    this._id    = null  || new Date().getTime().toString();
     this._status= 'dirty'; //deprecated, replaced by _dirty
     this._dirty = false;
     this._deleted= false;
@@ -238,20 +238,25 @@ Cow.record.prototype =
 {
     sync: function(){
         var now = new Date().getTime();
-        if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
-            this.deltas(now, this._deltaq); //add deltas from queue
+        //TT: dirty should be enough to add delta //if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
+        if ( this._dirty && !this._store.noDeltas){ //avoid empty deltas
+            this.deltas(now, this._deltaq, this._deleted, null); //add deltas from queue //TODO: add userid
         }
         this._deltaq = {}; //reset deltaq
         return this._store.syncRecord(this);
     },
     
-    id: function(){
+    id: function(x){
+        if (x){
+            console.warn("You can't set an id afterwards, that only happens when object is created (ignoring)");
+        }
         return this._id.toString();
-        //You can't set an id afterwards, that only happens when object is created
     },
-    created: function(){
+    created: function(x){
+        if (x){
+            console.warn("You can't set creation date afterwards. (ignoring)");
+        };
         return this._created;
-        //You can't set creation date afterwards
     },
     timestamp: function(timestamp){
         console.warn('timestamp() has been deprecated. Use updated() instead');
@@ -274,14 +279,24 @@ Cow.record.prototype =
     },
     touch: function(){
         this.updated(new Date().getTime());
+        this._dirty = true;
         return this;
     },
+    /**
+        deleted() - returns current deleted status (boolean)
+        deleted(timestamp) - returns the deleted status at given timestamp (boolean)
+        deleted(boolean) - sets the deleted status, returns record (object)
+    **/
     deleted: function(truefalse){
-        if (truefalse !== undefined){
+        if (truefalse !== undefined && typeof(truefalse) == 'boolean'){
             this._deleted = truefalse;
             this.updated(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
             this._dirty = true;
             return this;
+        }
+        //if a timestamp instead of boolean is given
+        else if (truefalse !== undefined && typeof(truefalse) == 'number'){
+            return this.deleted_on(truefalse);
         }
         else {
             return this._deleted;
@@ -304,6 +319,7 @@ Cow.record.prototype =
     // Status is going to be deprecated. 
     //Functionality is still here to address clients that still transmit a status instead of dirty
     status: function(status){
+        console.warn('status() has been deprecated. Use dirty() instead like: \n set: dirty(boolean) \n get: dirty() returns boolean.');
         if (status){
             this._status = status;
             
@@ -318,8 +334,6 @@ Cow.record.prototype =
         }
     },
     /**
-        Only to be used from client API
-        
         data() - returns data object
         data(timestamp) - returns data object on specific time
         data(param) - returns value of data param (only 1 deep)
@@ -329,12 +343,14 @@ Cow.record.prototype =
     data: function(param, value){
         if (!param){
             if (typeof(this._data) == 'object'){
-                return JSON.parse(JSON.stringify(this._data));
+                return JSON.parse(JSON.stringify(this._data));//TT: ehm... why do we do this?!
             }
             return this._data;
         }
         else if (param && typeof(param) == 'object' && !value){
+            //overwriting any existing data
             this._data = param;
+            this._deltaq = param;
             this.dirty(true);
             return this;
         }
@@ -379,13 +395,37 @@ Cow.record.prototype =
         }
     },
     /**
+        deleted_on(timestamp) - same as deleted(timestamp)
+    **/
+    deleted_on: function(timestamp){
+        //If request is older than feature itself, disregard
+        if (timestamp < this._created){
+            return null; //nodata
+        }
+        //If request is younger than last feature update, return normal deleted
+        else if (timestamp > this._updated){
+            return this.deleted();
+        }
+        else {
+            //Recreate the deleted status based on deltas
+            var returnval = {};
+            var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
+            _.each(deltas, function(d){
+                if (d.timestamp <= timestamp){
+                    returnval = d.deleted;
+                }
+            });
+            return returnval;
+        }
+    },
+    /**
         Deltas are written at the moment of sync, only to be used from client API
         
         deltas() - returns array of all deltas objects
         deltas(time) - returns deltas object from specific time
         deltas(time, data) - adds a new deltas objects (only done at sync)
     **/
-    deltas: function(time, data){
+    deltas: function(time, data, deleted, userid){
         if (!time){
             return this._deltas;
         }
@@ -407,9 +447,13 @@ Cow.record.prototype =
             if (!existing){
                 this._deltas.push({
                         timestamp: time,
-                        data: data
+                        data: data,
                         //TODO: Issue: #125
-                        //it would be nice if we also save the userid of the user that syncs this 
+                        //it would be nice if we also save the userid of the user that syncs this
+                        userid: userid,
+                        //TODO: Issue #149
+                        //Add deleted status
+                        deleted: deleted
                 });
             }
             return this;
@@ -435,7 +479,7 @@ Cow.record.prototype =
         inflate(config) - create a record object out of json
     **/
     inflate: function(config){
-        this._id = config._id || this._id || new Date().getTime().toString();
+        this._id = config._id || this._id;
         this._status = config.status || this._status; //to be deprecated
         if (config.dirty !== undefined){
             this._dirty = config.dirty;
@@ -459,7 +503,9 @@ Cow.record.prototype =
                 for (var i = 0; i < config.deltas.length;i++){
                     var time = config.deltas[i].timestamp;
                     var data = config.deltas[i].data;
-                    this.deltas(time, data);
+                    var deleted = config.deltas[i].deleted;
+                    var userid = config.deltas[i].userid;
+                    this.deltas(time, data, deleted, userid);
                 }
             }
         }
@@ -1198,7 +1244,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.peer = function(config){
-    this._id = config._id;
+    this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     this._core = this._store._core;
     this._data = {
@@ -1259,7 +1305,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.socketserver = function(config){
      //if (!config._id) {throw 'No _id given for socketserver';}
-    this._id = config._id;
+    this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     this._core = this._store._core;
     this._data = {
@@ -1306,7 +1352,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.user = function(config){
     //if (!config._id) {throw 'No _id given for user';}
-    this._id = config._id;
+    this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 
@@ -1421,7 +1467,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.group = function(config){
     //if (!config._id) {throw 'No _id given for group';}
-    this._id = config._id;
+    this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 
@@ -1611,7 +1657,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.item = function(config){
     //if (!config || !config._id) {throw 'No _id given for item';}
-    this._id = config._id;
+    this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 
@@ -1866,7 +1912,7 @@ if (typeof exports !== 'undefined') {
 Cow.project = function(config){
     var self = this;
     //if (!config._id) {throw 'No _id given for project';}
-    this._id = config._id;
+    this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     this._core = this._store._core;
     this._maxAge = this._core._maxAge;
