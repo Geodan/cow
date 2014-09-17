@@ -27,9 +27,10 @@ Cow.record.prototype =
 {
     sync: function(){
         var now = new Date().getTime();
+        var userid = this._store._core.user() ? this._store._core.user().id() : null; 
         //TT: dirty should be enough to add delta //if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
         if ( this._dirty && !this._store.noDeltas){ //avoid empty deltas
-            this.deltas(now, this._deltaq, this._deleted, null); //add deltas from queue //TODO: add userid
+            this.deltas(now, this._deltaq, this._deleted, userid); //add deltas from queue 
         }
         this._deltaq = {}; //reset deltaq
         return this._store.syncRecord(this);
@@ -41,6 +42,9 @@ Cow.record.prototype =
         }
         return this._id.toString();
     },
+    /** 
+        created() - returns the timestamp of creation
+    **/
     created: function(x){
         if (x){
             console.warn("You can't set creation date afterwards. (ignoring)");
@@ -57,6 +61,10 @@ Cow.record.prototype =
             return this._updated;
         }
     },
+    /**
+        updated() - returns the timestamp of last update
+        updated(timestamp) - sets the updated time to timestamp, returns record
+    **/
     updated: function(timestamp){
         if (timestamp) {
             this._updated = timestamp;
@@ -66,6 +74,9 @@ Cow.record.prototype =
             return this._updated;
         }
     },
+    /**
+        touch() - reset the update time to now, returns record 
+    **/
     touch: function(){
         this.updated(new Date().getTime());
         this._dirty = true;
@@ -91,6 +102,10 @@ Cow.record.prototype =
             return this._deleted;
         }
     },
+    /**
+        dirty() - returns the dirty status (boolean)
+        dirty(boolean) - sets the dirty status, returns record
+    **/
     dirty: function(truefalse){
         if (truefalse !== undefined){
             this._dirty = truefalse;
@@ -237,11 +252,7 @@ Cow.record.prototype =
                 this._deltas.push({
                         timestamp: time,
                         data: data,
-                        //TODO: Issue: #125
-                        //it would be nice if we also save the userid of the user that syncs this
                         userid: userid,
-                        //TODO: Issue #149
-                        //Add deleted status
                         deleted: deleted
                 });
             }

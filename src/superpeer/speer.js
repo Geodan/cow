@@ -12,13 +12,13 @@ pg = require('pg').native;
 Cow = require('../../dist/cow.node.js');
 log.setLevel('warn');
 core = new Cow.core({
-    herdname: 'test',
+    herdname: 'cow',
     maxage: 1000 * 60 * 60 * 24 * 365 //one year 
 });
 core.socketservers({
         _id: 'default', 
-        //data: {protocol:'ws',ip:'192.168.24.156', port:8081}
-        data: {protocol:'wss',ip:'192.168.40.10', port:443,dir: 'icms'}
+        data: {protocol:'ws',ip:'192.168.24.95', port:8081}
+        //data: {protocol:'wss',ip:'192.168.40.10', port:443,dir: 'icms'}
       });
 core.socketserver('default');
 
