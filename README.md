@@ -91,6 +91,7 @@ All *record objects* behave the same* and as follows (user object as example):
     user.dirty(boolean) -> sets the dirtystatus of the record, returns record
     user.deleted() -> returns a boolean (true, false) indicating wether the record has been deleted
     user.deleted(boolean) -> sets the record to deleted, returns record
+    user.deleted(<timestamp>) -> returns the deleted status at timestamp
     user.updated() -> returns the timestamp (last edit) of the record
     user.updated(<timestamp>) -> sets the timestamp of the record, returns record
     user.data() -> returns the data (object) of the record
