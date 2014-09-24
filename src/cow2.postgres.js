@@ -56,6 +56,7 @@ Cow.localdb = function(config){
                     '"data" json,'+
                     '"deltas" json,' +
                     '"projectid" text' +
+                    '"CONSTRAINT '+stores[i]+'_pkey PRIMARY KEY (_id)' + 
                     ');'; 
                   client.query(create_users, function(err, result){
                         if (err){

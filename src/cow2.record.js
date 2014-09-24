@@ -153,9 +153,12 @@ Cow.record.prototype =
         }
         else if (param && typeof(param) == 'object' && !value){
             //overwriting any existing data
+            /*
             this._data = param;
             this._deltaq = param;
             this.dirty(true);
+            */
+            console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data'); 
             return this;
         }
         else if (param && typeof(param) == 'string' && !value){
@@ -293,7 +296,7 @@ Cow.record.prototype =
             this._deleted = config.deleted;
         }
         this._updated = config.updated || this._updated;
-        this._data = config.data || this._data || {};
+        this._data = config.data || this._data || {warn:'empty inflate'};
         if (!this._store.noDeltas){ //only inflate deltas when enabled
             this._deltaq = this._deltaq || {}; //FIXME: workaround for non working prototype (see top)
             this._deltasforupload = this._deltasforupload || {}; //FIXME: same here

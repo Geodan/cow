@@ -10,12 +10,13 @@ CREATE OR REPLACE VIEW test.allfeats AS
     ((items.data -> 'feature'::text) -> 'properties'::text) ->> 'stroke-width'::text AS strokewidth,
     ((items.data -> 'feature'::text) -> 'properties'::text) ->> 'marker-url'::text AS markerurl,
     items.projectid,
-    items.status,
+    items.dirty,
     items.deleted,
     items.created,
     items.updated
    FROM test.items
-  WHERE (items.data ->> 'type'::text) = 'feature'::text;
+  WHERE (items.data ->> 'type'::text) = 'feature'::text
+  AND items.deleted = false;
 
 ALTER TABLE test.allfeats
   OWNER TO geodan;

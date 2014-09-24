@@ -31,13 +31,6 @@ core.userStore().loaded.then(function(){
         console.log(core.users().length, ' users loaded');
 });
 
-core.projectStore().loaded.then(function(){
-        console.log(core.projects().length, ' projects loaded');
-        console.log('My peerid: ', core.peerid()); //dirty hack
-});
-
-
-
 
 /** TODO
 
