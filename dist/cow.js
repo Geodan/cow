@@ -251,6 +251,9 @@ Cow.record.prototype =
         }
         return this._id.toString();
     },
+    /** 
+        created() - returns the timestamp of creation
+    **/
     created: function(x){
         if (x){
             console.warn("You can't set creation date afterwards. (ignoring)");
@@ -267,6 +270,10 @@ Cow.record.prototype =
             return this._updated;
         }
     },
+    /**
+        updated() - returns the timestamp of last update
+        updated(timestamp) - sets the updated time to timestamp, returns record
+    **/
     updated: function(timestamp){
         if (timestamp) {
             this._updated = timestamp;
@@ -276,6 +283,9 @@ Cow.record.prototype =
             return this._updated;
         }
     },
+    /**
+        touch() - reset the update time to now, returns record 
+    **/
     touch: function(){
         this.updated(new Date().getTime());
         this._dirty = true;
@@ -301,6 +311,10 @@ Cow.record.prototype =
             return this._deleted;
         }
     },
+    /**
+        dirty() - returns the dirty status (boolean)
+        dirty(boolean) - sets the dirty status, returns record
+    **/
     dirty: function(truefalse){
         if (truefalse !== undefined){
             this._dirty = truefalse;
@@ -348,9 +362,12 @@ Cow.record.prototype =
         }
         else if (param && typeof(param) == 'object' && !value){
             //overwriting any existing data
+            /*
             this._data = param;
             this._deltaq = param;
             this.dirty(true);
+            */
+            console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data'); 
             return this;
         }
         else if (param && typeof(param) == 'string' && !value){
@@ -447,11 +464,7 @@ Cow.record.prototype =
                 this._deltas.push({
                         timestamp: time,
                         data: data,
-                        //TODO: Issue: #125
-                        //it would be nice if we also save the userid of the user that syncs this
                         userid: userid,
-                        //TODO: Issue #149
-                        //Add deleted status
                         deleted: deleted
                 });
             }
@@ -492,7 +505,7 @@ Cow.record.prototype =
             this._deleted = config.deleted;
         }
         this._updated = config.updated || this._updated;
-        this._data = config.data || this._data || {};
+        this._data = config.data || this._data || {warn:'empty inflate'};
         if (!this._store.noDeltas){ //only inflate deltas when enabled
             this._deltaq = this._deltaq || {}; //FIXME: workaround for non working prototype (see top)
             this._deltasforupload = this._deltasforupload || {}; //FIXME: same here
