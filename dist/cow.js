@@ -609,6 +609,9 @@ Cow.localdb.prototype.write = function(config){
     
     var promise = new Promise(function(resolve, reject){
         var trans = self._db.transaction([storename], "readwrite");
+        trans.onabort = function(e){
+            console.warn('Abort error');
+        };
         var store = trans.objectStore(storename);
         var request = store.put(record);
         request.onsuccess = function(e) {
@@ -627,6 +630,9 @@ Cow.localdb.prototype.getRecord = function(config){
     var storename = config.storename;
     var id = config.id;
     var trans = this._db.transaction([storename]);
+    trans.onabort = function(e){
+        console.warn('Abort error');
+    };
     var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
             var request = store.get(id);
@@ -647,6 +653,9 @@ Cow.localdb.prototype.getRecords = function(config){
     
     var key,index;
     var trans = this._db.transaction([storename]);
+    trans.onabort = function(e){
+        console.warn('Abort error');
+    };
     var store = trans.objectStore(storename);
     if (projectid){
         key = IDBKeyRange.only(projectid);
@@ -688,6 +697,9 @@ Cow.localdb.prototype.delRecord = function(config){
     var projectid = config.projectid;
     var id = config.id;
     var trans = this._db.transaction([storename], "readwrite");
+    trans.onabort = function(e){
+        console.warn('Abort error');
+    };
     var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
         var request = store.delete(id);
@@ -707,6 +719,9 @@ Cow.localdb.prototype.clear = function(config){
     var projectid = config.projectid;
     var key,index;
     var trans = this._db.transaction([storename], "readwrite");
+    trans.onabort = function(e){
+        console.warn('Abort error');
+    };
     var store = trans.objectStore(storename);
     if (projectid){
         key = IDBKeyRange.only(projectid);
@@ -2390,8 +2405,9 @@ Cow.messenger.prototype._onConnect = function(payload){
         
     //add userid to peer object
     if (this._core.user()){
-        mypeer.data('userid',this._core.user()._id);
+        mypeer.data('userid',this._core.user().id());
     }
+    mypeer.data('version',this._core.version());
     mypeer.deleted(false).sync();
     this.trigger('connected',payload);
     
@@ -2689,7 +2705,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    
+    this._version = '2.0.1-beta';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
@@ -2823,6 +2839,14 @@ Cow.core.prototype =
             return this.users(this._userid); 
         }
     },
+    
+    /**
+        version() - get the version of cow
+    **/
+    version: function(){
+        return this._version;
+    },
+    
     /**
         socketserver() - return my socketserver object
     **/
