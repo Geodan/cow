@@ -61,8 +61,8 @@ Cow.testsuite.prototype.lifecycle = function(){
     core.projectStore().loaded.then(function(foo){
         var project = core.projects({_id: 'test'});
         project.data('name', 'TEST');
+        project.itemStore().clear(); //remove existing items from store
         mylog('We now have ' + core.projects('test').items().length + ' items (should be 0)'); //should be 0 items
-        //project.itemStore().clear(); //remove existing items from store
         
         project.deleted(false).sync(); //set project undeleted
         for (var i = 0;i<100;i++){ //Add 100 records
@@ -110,7 +110,7 @@ Cow.testsuite.prototype.pingtest = function(){
         var returntime = new Date().getTime();
         var triptime = returntime - self.starttime;
         var sender = data.sender;
-        mylog('PONG from ' + sender + ' in ' + triptime + 'ms');
+        mylog('PONG from ' + sender + '(' + core.peers(sender).username() + ') in ' + triptime + 'ms');
     });
     var msn = core.messenger();
     this.starttime = new Date().getTime();
