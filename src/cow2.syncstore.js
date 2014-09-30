@@ -192,7 +192,7 @@ Cow.syncstore.prototype =
         return null;
     },
     /**
-    _addRecord - creates a new record and replaces an existing one with the same _id
+    _addRecord - creates a new record or replaces an existing one with the same _id
         when the source is 'WS' it immidiately sends to the local, if not the record needs a manual record.sync()
     **/
     _addRecord: function(config){
@@ -214,7 +214,7 @@ Cow.syncstore.prototype =
                 //record.deleted(false); //set undeleted //TT: disabled, since this gives a problem when a record from WS comes in as deleted
                 if (this.localdb && source == 'WS'){ //update the db
                     this.localdb.write({
-                        storename:this._storename,
+                        storename: this._storename,
                         projectid: this._projectid,
                         data: record.deflate()
                     });
