@@ -16,7 +16,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    
+    this._version = '2.0.1-beta';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
@@ -150,6 +150,14 @@ Cow.core.prototype =
             return this.users(this._userid); 
         }
     },
+    
+    /**
+        version() - get the version of cow
+    **/
+    version: function(){
+        return this._version;
+    },
+    
     /**
         socketserver() - return my socketserver object
     **/

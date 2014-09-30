@@ -185,8 +185,9 @@ Cow.messenger.prototype._onConnect = function(payload){
         
     //add userid to peer object
     if (this._core.user()){
-        mypeer.data('userid',this._core.user()._id);
+        mypeer.data('userid',this._core.user().id());
     }
+    mypeer.data('version',this._core.version());
     mypeer.deleted(false).sync();
     this.trigger('connected',payload);
     

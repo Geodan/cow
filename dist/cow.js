@@ -2405,8 +2405,9 @@ Cow.messenger.prototype._onConnect = function(payload){
         
     //add userid to peer object
     if (this._core.user()){
-        mypeer.data('userid',this._core.user()._id);
+        mypeer.data('userid',this._core.user().id());
     }
+    mypeer.data('version',this._core.version());
     mypeer.deleted(false).sync();
     this.trigger('connected',payload);
     
@@ -2704,7 +2705,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    
+    this._version = '2.0.1-beta';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
@@ -2838,6 +2839,14 @@ Cow.core.prototype =
             return this.users(this._userid); 
         }
     },
+    
+    /**
+        version() - get the version of cow
+    **/
+    version: function(){
+        return this._version;
+    },
+    
     /**
         socketserver() - return my socketserver object
     **/
