@@ -246,8 +246,11 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
-            else {
+            else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
                 project = this._core.projects({_id:projectid});
+            }
+            else {
+                throw "Indexeddb too slow with loading";
             }
             return project.itemStore();
         case 'groups':
@@ -257,8 +260,11 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
-            else {
+            else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
                 project = this._core.projects({_id:projectid});
+            }
+            else {
+                throw "Indexeddb too slow with loading";
             }
             return project.groupStore();
     }

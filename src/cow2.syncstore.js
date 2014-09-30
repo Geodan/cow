@@ -14,6 +14,7 @@ if (typeof exports !== 'undefined') {
 Cow.syncstore =  function(config){
     var self = this;
     this._storename = config.dbname;
+    this._isloaded = false; //Used in messenger.js to check if store is loaded (workaround)
     this._core = config.core;
     this.noDeltas = config.noDeltas || false;
     this.noIDB = config.noIDB || false;
@@ -64,6 +65,7 @@ Cow.syncstore =  function(config){
                          }
                      });
                     self.trigger('datachange');
+                    self._isloaded = true;
                     resolve();
                 },function(d){ 
                     console.warn('DB Fail');
@@ -75,6 +77,7 @@ Cow.syncstore =  function(config){
             });
         }
         else { //NO localdb, so nothing to load and we're done immediately
+            self._isloaded = true;
             resolve();
         }
     });

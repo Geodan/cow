@@ -727,6 +727,7 @@ if (typeof exports !== 'undefined') {
 Cow.syncstore =  function(config){
     var self = this;
     this._storename = config.dbname;
+    this._isloaded = false; //Used in messenger.js to check if store is loaded (workaround)
     this._core = config.core;
     this.noDeltas = config.noDeltas || false;
     this.noIDB = config.noIDB || false;
@@ -777,6 +778,7 @@ Cow.syncstore =  function(config){
                          }
                      });
                     self.trigger('datachange');
+                    self._isloaded = true;
                     resolve();
                 },function(d){ 
                     console.warn('DB Fail');
@@ -788,6 +790,7 @@ Cow.syncstore =  function(config){
             });
         }
         else { //NO localdb, so nothing to load and we're done immediately
+            self._isloaded = true;
             resolve();
         }
     });
@@ -905,7 +908,7 @@ Cow.syncstore.prototype =
         return null;
     },
     /**
-    _addRecord - creates a new record and replaces an existing one with the same _id
+    _addRecord - creates a new record or replaces an existing one with the same _id
         when the source is 'WS' it immidiately sends to the local, if not the record needs a manual record.sync()
     **/
     _addRecord: function(config){
@@ -927,7 +930,7 @@ Cow.syncstore.prototype =
                 //record.deleted(false); //set undeleted //TT: disabled, since this gives a problem when a record from WS comes in as deleted
                 if (this.localdb && source == 'WS'){ //update the db
                     this.localdb.write({
-                        storename:this._storename,
+                        storename: this._storename,
                         projectid: this._projectid,
                         data: record.deflate()
                     });
@@ -2405,8 +2408,11 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
-            else {
+            else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
                 project = this._core.projects({_id:projectid});
+            }
+            else {
+                throw "Indexeddb too slow with loading";
             }
             return project.itemStore();
         case 'groups':
@@ -2416,8 +2422,11 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
-            else {
+            else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
                 project = this._core.projects({_id:projectid});
+            }
+            else {
+                throw "Indexeddb too slow with loading";
             }
             return project.groupStore();
     }
@@ -2644,7 +2653,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.0.1-beta';
+    this._version = '2.0.1-beta1';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
