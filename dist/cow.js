@@ -609,6 +609,9 @@ Cow.localdb.prototype.write = function(config){
     
     var promise = new Promise(function(resolve, reject){
         var trans = self._db.transaction([storename], "readwrite");
+        trans.onabort = function(e){
+            console.warn('Abort error');
+        };
         var store = trans.objectStore(storename);
         var request = store.put(record);
         request.onsuccess = function(e) {
@@ -627,6 +630,9 @@ Cow.localdb.prototype.getRecord = function(config){
     var storename = config.storename;
     var id = config.id;
     var trans = this._db.transaction([storename]);
+    trans.onabort = function(e){
+        console.warn('Abort error');
+    };
     var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
             var request = store.get(id);
@@ -647,6 +653,9 @@ Cow.localdb.prototype.getRecords = function(config){
     
     var key,index;
     var trans = this._db.transaction([storename]);
+    trans.onabort = function(e){
+        console.warn('Abort error');
+    };
     var store = trans.objectStore(storename);
     if (projectid){
         key = IDBKeyRange.only(projectid);
@@ -688,6 +697,9 @@ Cow.localdb.prototype.delRecord = function(config){
     var projectid = config.projectid;
     var id = config.id;
     var trans = this._db.transaction([storename], "readwrite");
+    trans.onabort = function(e){
+        console.warn('Abort error');
+    };
     var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
         var request = store.delete(id);
@@ -707,6 +719,9 @@ Cow.localdb.prototype.clear = function(config){
     var projectid = config.projectid;
     var key,index;
     var trans = this._db.transaction([storename], "readwrite");
+    trans.onabort = function(e){
+        console.warn('Abort error');
+    };
     var store = trans.objectStore(storename);
     if (projectid){
         key = IDBKeyRange.only(projectid);
