@@ -1387,6 +1387,8 @@ Cow.user = function(config){
 };
 Cow.user.prototype = 
 {
+    /*
+    TT: made obsolete, not in the scope of cow
     name: function(name){
         if (name){
             return this.data('name', name);
@@ -1399,8 +1401,10 @@ Cow.user.prototype =
         }
         return this.data('mail');
     },
+    */
     /**
         isActive() - returns wether or not the user is connected to a peer at the moment
+        TT: Might be obsolete, was used by core.activeUsers()
     **/
     isActive: function(){
         var returnVal = false;
@@ -1429,12 +1433,13 @@ Cow.user.prototype =
             }
         }
         return returnArr;
-    },
+    }
     /** 
         activeprojects() - returns array of active projects
         activeprojects(id) - adds project to array of active projects
         activeprojects(id,true) - removes project from array of active projects
     **/
+    /* TT: obsolete
     activeprojects: function(projectid, deleteme){
         var projectarr = this.data('activeprojects') || [];
         if (projectid && deleteme){
@@ -1447,12 +1452,13 @@ Cow.user.prototype =
             return this.data('activeprojects',projectarr);
         }
         return this.data('activeprojects') || [];
-    },
+    },*/
     /** 
         mutedprojects() - returns array of muted projects
         mutedprojects(id) - adds project to array of muted projects
         mutedprojects(id,true) - removes project from array of muted projects
     **/
+    /* TT: obsolete
     mutedprojects: function(projectid, deleteme){
         var projectarr = this.data('mutedprojects') || [];
         if (projectid && deleteme){
@@ -1465,7 +1471,7 @@ Cow.user.prototype =
             return this.data('mutedprojects',projectarr);
         }
         return this.data('mutedprojects') || [];
-    }
+    }*/
     
 };
 _.extend(Cow.user.prototype, Cow.record.prototype);
@@ -2653,7 +2659,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.0.1-alpha2';
+    this._version = '2.0.1-alpha3';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
