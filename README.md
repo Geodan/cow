@@ -118,7 +118,7 @@ All *record objects* behave the same* and as follows (item object as example):
     core.location() -> returns location object of current peer
     core.location(obj) -> set location object of current peer, returns locations object
     core.activeUsers() -> returns array with userobjects that are currently active
-    
+    core.version() -> returns the current version number of cow
 `````
 Since most methods return their own object, these methods are chainable. So you can write:
 `````javascript
