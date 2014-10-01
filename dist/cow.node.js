@@ -554,18 +554,22 @@ Cow.localdb = function(config){
     var dbUrl = "tcp://geodan:Gehijm@192.168.24.15/cow";
     this._schema = self._dbname;
     this._openpromise = new Promise(function(resolve, reject){
+        pg.on('error', function (err) {
+          console.log('Database error!', err);
+        });
         var request = pg.connect(dbUrl, function(err, client) {
                 
                 if (err){
-                    console.log(err);
+                    console.log('meeh',err);
                     reject(err);
                 }
                 self._db = client;
                 
+                
                 var create_schema = 'CREATE SCHEMA IF NOT EXISTS ' + self._schema;
                 client.query(create_schema, function(err, result){
                     if (err){
-                        console.log(err);
+                        console.log('meeh',err);
                         reject(err); 
                         return;
                     }
@@ -574,7 +578,7 @@ Cow.localdb = function(config){
                 var stores = ['users','projects', 'socketservers', 'items', 'groups'];
                 for (var i=0;i<stores.length;i++){
                     
-                  var create_users = //'DROP TABLE IF EXISTS '+ self._schema+'.'+stores[i]+'; ' + 
+                  var create_table = //'DROP TABLE IF EXISTS '+ self._schema+'.'+stores[i]+'; ' + 
                     'CREATE TABLE IF NOT EXISTS '+ self._schema+'.'+stores[i]+' (' + 
                     '_id text NOT NULL, ' +
                     '"dirty" boolean,' +
@@ -583,10 +587,10 @@ Cow.localdb = function(config){
                     '"updated" bigint,' +
                     '"data" json,'+
                     '"deltas" json,' +
-                    '"projectid" text' +
-                    '"CONSTRAINT '+stores[i]+'_pkey PRIMARY KEY (_id)' + 
+                    '"projectid" text,' +
+                    ' CONSTRAINT '+stores[i]+'_pkey PRIMARY KEY (_id)' + 
                     ');'; 
-                  client.query(create_users, function(err, result){
+                  client.query(create_table, function(err, result){
                         if (err){
                             console.log(err);
                             reject(err); 
@@ -594,6 +598,9 @@ Cow.localdb = function(config){
                         }
                   });
                 }
+                client.on('error', function(err){
+                   console.log('client error: ', err);
+                });
                 client.on('notification', function(data) {
                     var table = data.payload;
                     console.log(table, ' has been changed in the database');
@@ -690,6 +697,7 @@ Cow.localdb.prototype.getRecords = function(config){
     var promise = new Promise(function(resolve, reject){
         self._db.query(query, function(err,result){
                 if (err){
+                    console.log('meeh',err);
                     reject(err);
                 }
                 else {
