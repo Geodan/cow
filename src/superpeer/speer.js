@@ -34,6 +34,7 @@ core.userStore().loaded.then(function(){
 core.projectStore().loaded.then(function(){
         console.log(core.projects().length, ' projects loaded');
         console.log('My peerid: ', core.peerid()); //dirty hack
+        core.peer().data('superpeer', true).sync();
 });
 
 
