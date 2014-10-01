@@ -2653,7 +2653,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.0.1-beta1';
+    this._version = '2.0.1-alpha2';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
@@ -2902,13 +2902,13 @@ Cow.core.prototype =
     **/
     activeUsers: function(){
         var returnArr = [];
-        var users = this.users();
-        for (var i = 0;i<users.length;i++){
-            if (users[i].isActive()){
-                returnArr.push(users[i]);
+        var peers = _(this.peers()).filter(function(d){return !d.deleted();});
+        for (var i = 0;i<peers.length;i++){
+            if (peers[i].user()){
+                returnArr.push(peers[i].user());
             }
         }
-        return returnArr;
+        return _.uniq(returnArr); //As user can be logged in to more than one peer, only give unique users
     },
     /** 
         alphaPeer() - return the alpha peer object
