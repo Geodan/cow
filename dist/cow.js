@@ -362,12 +362,10 @@ Cow.record.prototype =
         }
         else if (param && typeof(param) == 'object' && !value){
             //overwriting any existing data
-            /*
             this._data = param;
             this._deltaq = param;
             this.dirty(true);
-            */
-            console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data'); 
+            //console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data'); 
             return this;
         }
         else if (param && typeof(param) == 'string' && !value){
@@ -2681,7 +2679,7 @@ Cow.messenger.prototype._onCommand = function(data) {
     }
     //Remove all data from a peer
     if (command == 'purgePeer'){
-        if (targetuser && targetuser == this._core.peerid()){
+        if (target && target == this._core.peerid()){
             _.each(core.projects(), function(d){
                 d.itemStore().clear();
                 d.groupStore().clear();
@@ -2701,8 +2699,7 @@ Cow.messenger.prototype._onCommand = function(data) {
     }
     //Answer a ping with a pong
     if (command == 'ping'){
-        var target = data.sender;
-        this.sendData({command: 'pong'},'command',target);
+        this.sendData({command: 'pong'},'command',data.sender);
     }
 };
 
