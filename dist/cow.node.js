@@ -2345,8 +2345,17 @@ Cow.messenger.prototype._onConnect = function(payload){
     var mypeer = this._core.peers({_id: payload.peerID});
     var version = payload.server_version;
     var serverkey = payload.server_key;
-    
+    var servertime = payload.server_time;
+    var now = new Date().getTime();
+    var maxdiff = 1000 * 60 * 5; //5 minutes
+    if (Math.abs(servertime - now) > maxdiff){
+        console.warn('Time difference between server and client larger ('+Math.abs(servertime-now)+'ms) than allowed ('+maxdiff+' ms).');
+        self.ws.disconnect();
+        return;
+    }
+            
     if (serverkey !== undefined && serverkey != this._core._herdname){
+        console.warn('Key on server ('+serverkey+') not the same as client key ('+this._core._herdname+').')
         self.ws.disconnect();
         return;
     }
