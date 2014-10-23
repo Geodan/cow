@@ -300,7 +300,7 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             "syncinfo" : syncinfo
         };
         //Don't send empty lists
-        if (syncobject.requestlist.length > 0 && syncobject.pushlist.length > 0){
+        if (syncobject.requestlist.length > 0 || syncobject.pushlist.length > 0){
             this.sendData(data, 'syncinfo',sender);
         }
         
@@ -408,6 +408,7 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
             }
         }
     }
+    store.trigger('synced');
     for (i=0;i<synclist.length;i++){
         store.syncRecord(synclist[i]);
     }

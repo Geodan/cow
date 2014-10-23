@@ -2639,6 +2639,7 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
             }
         }
     }
+    store.trigger('synced');
     for (i=0;i<synclist.length;i++){
         store.syncRecord(synclist[i]);
     }

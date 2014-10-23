@@ -598,9 +598,6 @@ Cow.localdb = function(config){
                         }
                   });
                 }
-                client.on('error', function(err){
-                   console.log('client error: ', err);
-                });
                 client.on('notification', function(data) {
                     var table = data.payload;
                     console.log(table, ' has been changed in the database');
@@ -2582,6 +2579,7 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
             }
         }
     }
+    store.trigger('synced');
     for (i=0;i<synclist.length;i++){
         store.syncRecord(synclist[i]);
     }
