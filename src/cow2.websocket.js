@@ -46,6 +46,10 @@ Cow.websocket.prototype.connect = function() {
         if (core.socketserver()){
             self._url = core.socketserver().url(); //get url from list of socketservers
         }
+        else {
+            console.warn('No valid socketserver selected');
+            self._url = null;
+        }
         
         if (!self._url) {
             console.warn('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');

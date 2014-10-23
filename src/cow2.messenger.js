@@ -435,26 +435,20 @@ Cow.messenger.prototype._onCommand = function(data) {
     var core = this._core;
     var payload = data.payload;
     var command = payload.command;
-    var targetuser = payload.targetuser;
+    var target = payload.target;
     var params = payload.params;
     this.trigger('command',data);
-    //TODO: move to icm
-    if (command == 'zoomTo'){
-        if (targetuser && targetuser == core.user().id()){
-            this.trigger(command, payload.location);
-        }
-    }
-    //Closes a (misbehaving or stale) peer
+    
+    //Disconnects a (misbehaving or stale) peer
     if (command == 'kickPeer'){
-        if (targetuser && targetuser == core.peerid()){
-            //TODO: make this more gentle, possibly with a trigger
-            window.open('', '_self', ''); 
-            window.close();
+        if (data.target == core.peerid()){
+            core.socketserver('invalid');
+            core.disconnect();
         }
     }
     //Remove all data from a peer
     if (command == 'purgePeer'){
-        if (targetuser && targetuser == this._core.peerid()){
+        if (target && target == this._core.peerid()){
             _.each(core.projects(), function(d){
                 d.itemStore().clear();
                 d.groupStore().clear();
@@ -474,8 +468,7 @@ Cow.messenger.prototype._onCommand = function(data) {
     }
     //Answer a ping with a pong
     if (command == 'ping'){
-        var target = data.sender;
-        this.sendData({command: 'pong'},'command',target);
+        this.sendData({command: 'pong'},'command',data.sender);
     }
 };
 

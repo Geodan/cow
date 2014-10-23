@@ -362,12 +362,10 @@ Cow.record.prototype =
         }
         else if (param && typeof(param) == 'object' && !value){
             //overwriting any existing data
-            /*
             this._data = param;
             this._deltaq = param;
             this.dirty(true);
-            */
-            console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data'); 
+            //console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data'); 
             return this;
         }
         else if (param && typeof(param) == 'string' && !value){
@@ -2141,6 +2139,10 @@ Cow.websocket.prototype.connect = function() {
         if (core.socketserver()){
             self._url = core.socketserver().url(); //get url from list of socketservers
         }
+        else {
+            console.warn('No valid socketserver selected');
+            self._url = null;
+        }
         
         if (!self._url) {
             console.warn('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');
@@ -2664,26 +2666,20 @@ Cow.messenger.prototype._onCommand = function(data) {
     var core = this._core;
     var payload = data.payload;
     var command = payload.command;
-    var targetuser = payload.targetuser;
+    var target = payload.target;
     var params = payload.params;
     this.trigger('command',data);
-    //TODO: move to icm
-    if (command == 'zoomTo'){
-        if (targetuser && targetuser == core.user().id()){
-            this.trigger(command, payload.location);
-        }
-    }
-    //Closes a (misbehaving or stale) peer
+    
+    //Disconnects a (misbehaving or stale) peer
     if (command == 'kickPeer'){
-        if (targetuser && targetuser == core.peerid()){
-            //TODO: make this more gentle, possibly with a trigger
-            window.open('', '_self', ''); 
-            window.close();
+        if (data.target == core.peerid()){
+            core.socketserver('invalid');
+            core.disconnect();
         }
     }
     //Remove all data from a peer
     if (command == 'purgePeer'){
-        if (targetuser && targetuser == this._core.peerid()){
+        if (target && target == this._core.peerid()){
             _.each(core.projects(), function(d){
                 d.itemStore().clear();
                 d.groupStore().clear();
@@ -2703,8 +2699,7 @@ Cow.messenger.prototype._onCommand = function(data) {
     }
     //Answer a ping with a pong
     if (command == 'ping'){
-        var target = data.sender;
-        this.sendData({command: 'pong'},'command',target);
+        this.sendData({command: 'pong'},'command',data.sender);
     }
 };
 

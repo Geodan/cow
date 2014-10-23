@@ -364,12 +364,10 @@ Cow.record.prototype =
         }
         else if (param && typeof(param) == 'object' && !value){
             //overwriting any existing data
-            /*
             this._data = param;
             this._deltaq = param;
             this.dirty(true);
-            */
-            console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data'); 
+            //console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data'); 
             return this;
         }
         else if (param && typeof(param) == 'string' && !value){
@@ -556,18 +554,22 @@ Cow.localdb = function(config){
     var dbUrl = "tcp://geodan:Gehijm@192.168.24.15/cow";
     this._schema = self._dbname;
     this._openpromise = new Promise(function(resolve, reject){
+        pg.on('error', function (err) {
+          console.log('Database error!', err);
+        });
         var request = pg.connect(dbUrl, function(err, client) {
                 
                 if (err){
-                    console.log(err);
+                    console.log('meeh',err);
                     reject(err);
                 }
                 self._db = client;
                 
+                
                 var create_schema = 'CREATE SCHEMA IF NOT EXISTS ' + self._schema;
                 client.query(create_schema, function(err, result){
                     if (err){
-                        console.log(err);
+                        console.log('meeh',err);
                         reject(err); 
                         return;
                     }
@@ -576,7 +578,7 @@ Cow.localdb = function(config){
                 var stores = ['users','projects', 'socketservers', 'items', 'groups'];
                 for (var i=0;i<stores.length;i++){
                     
-                  var create_users = //'DROP TABLE IF EXISTS '+ self._schema+'.'+stores[i]+'; ' + 
+                  var create_table = //'DROP TABLE IF EXISTS '+ self._schema+'.'+stores[i]+'; ' + 
                     'CREATE TABLE IF NOT EXISTS '+ self._schema+'.'+stores[i]+' (' + 
                     '_id text NOT NULL, ' +
                     '"dirty" boolean,' +
@@ -585,10 +587,10 @@ Cow.localdb = function(config){
                     '"updated" bigint,' +
                     '"data" json,'+
                     '"deltas" json,' +
-                    '"projectid" text' +
-                    '"CONSTRAINT '+stores[i]+'_pkey PRIMARY KEY (_id)' + 
+                    '"projectid" text,' +
+                    ' CONSTRAINT '+stores[i]+'_pkey PRIMARY KEY (_id)' + 
                     ');'; 
-                  client.query(create_users, function(err, result){
+                  client.query(create_table, function(err, result){
                         if (err){
                             console.log(err);
                             reject(err); 
@@ -596,6 +598,9 @@ Cow.localdb = function(config){
                         }
                   });
                 }
+                client.on('error', function(err){
+                   console.log('client error: ', err);
+                });
                 client.on('notification', function(data) {
                     var table = data.payload;
                     console.log(table, ' has been changed in the database');
@@ -692,6 +697,7 @@ Cow.localdb.prototype.getRecords = function(config){
     var promise = new Promise(function(resolve, reject){
         self._db.query(query, function(err,result){
                 if (err){
+                    console.log('meeh',err);
                     reject(err);
                 }
                 else {
@@ -2603,26 +2609,20 @@ Cow.messenger.prototype._onCommand = function(data) {
     var core = this._core;
     var payload = data.payload;
     var command = payload.command;
-    var targetuser = payload.targetuser;
+    var target = payload.target;
     var params = payload.params;
     this.trigger('command',data);
-    //TODO: move to icm
-    if (command == 'zoomTo'){
-        if (targetuser && targetuser == core.user().id()){
-            this.trigger(command, payload.location);
-        }
-    }
-    //Closes a (misbehaving or stale) peer
+    
+    //Disconnects a (misbehaving or stale) peer
     if (command == 'kickPeer'){
-        if (targetuser && targetuser == core.peerid()){
-            //TODO: make this more gentle, possibly with a trigger
-            window.open('', '_self', ''); 
-            window.close();
+        if (data.target == core.peerid()){
+            core.socketserver('invalid');
+            core.disconnect();
         }
     }
     //Remove all data from a peer
     if (command == 'purgePeer'){
-        if (targetuser && targetuser == this._core.peerid()){
+        if (target && target == this._core.peerid()){
             _.each(core.projects(), function(d){
                 d.itemStore().clear();
                 d.groupStore().clear();
@@ -2642,8 +2642,7 @@ Cow.messenger.prototype._onCommand = function(data) {
     }
     //Answer a ping with a pong
     if (command == 'ping'){
-        var target = data.sender;
-        this.sendData({command: 'pong'},'command',target);
+        this.sendData({command: 'pong'},'command',data.sender);
     }
 };
 
