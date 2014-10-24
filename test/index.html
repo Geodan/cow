@@ -113,9 +113,33 @@
   <script type="text/javascript">
   var us = _;
   var core = new Cow.core({
-    herdname: 'test',
+    herdname: 'testx',
     maxage: 1000 * 60 * 60 * 24 * 30 //30 days
   });
+  
+  core.userStore().loaded.then(function(){
+          console.log('Userstore loaded');
+  });
+  core.userStore().on('synced', function(){
+          console.log('userstore synced');
+  });
+  core.peerStore().loaded.then(function(){
+          console.log('Peerstore loaded');
+  });
+  core.projectStore().loaded.then(function(){
+          console.log('Projectstore loaded');
+          if (core.projects()[0]){
+              core.project(core.projects()[0].id());
+              core.project().itemStore().on('datachange', function(){
+                      console.log('itemstore changed');
+              });
+              if (core.project().items()[0])
+                  core.project().items()[0].data('test','test1').sync();
+              else
+                  core.project().items({}).data('test', 'test1').sync();
+          };
+  });
+  
   //add a default socketserver
   core.socketservers({
     _id: 'default', 

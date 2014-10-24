@@ -81,6 +81,18 @@ Cow.syncstore =  function(config){
             resolve();
         }
     });
+    this.synced = new Promise(function(resolve, reject){
+        self.loaded.then(function(){
+            self.on('synced', function(){
+                    resolve();
+            });
+            self.sync();
+        });
+        self.loaded.catch(function(e){
+            console.error(e.message);
+            reject();
+        });
+    });
 }; 
 /**
     See for use of promises: 
@@ -403,15 +415,17 @@ Cow.syncstore.prototype =
     **/
     sync: function(){
         var self = this;
-        this.loaded.then(function(d){
+        self.loaded.then(function(d){
             var message = {};
             message.syncType = self._type;
             message.project = self._projectid;
             message.list = self.idList();
             self._core.messenger().sendData(message, 'newList');
+            
         });
-        this.loaded.catch(function(e){
+        self.loaded.catch(function(e){
                 console.error(e.message);
+                reject();
         });
     },
     
