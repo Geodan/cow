@@ -31,7 +31,7 @@ Cow.core = function(config){
     
     /*PROJECTS*/
     this._projectStore =  _.extend(
-        new Cow.syncstore({dbname: 'projects', noDeltas: false, core: self, maxAge: this._maxAge}),{
+        new Cow.syncstore({dbname: 'projects', noIDB: true, noDeltas: false, core: self, maxAge: this._maxAge}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
         _dbname:        'projects',
@@ -55,7 +55,7 @@ Cow.core = function(config){
     
     /*USERS*/
     this._userStore =  _.extend(
-        new Cow.syncstore({dbname: 'users', noDeltas: true, core: this, maxAge: this._maxAge}), {
+        new Cow.syncstore({dbname: 'users', noIDB: true, noDeltas: true, core: this, maxAge: this._maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
@@ -65,7 +65,7 @@ Cow.core = function(config){
     
     /*SOCKETSERVERS*/
     this._socketserverStore =  _.extend(
-        new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this._maxAge}), {
+        new Cow.syncstore({dbname: 'socketservers', noIDB: true, noDeltas: true, core: this, maxAge: this._maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.socketserver({_id: _id, store: this});},     

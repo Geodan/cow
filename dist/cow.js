@@ -823,6 +823,8 @@ Cow.syncstore =  function(config){
                      });
                     self.trigger('datachange');
                     self._isloaded = true;
+                    if (self._storename != 'items' && self._storename != 'groups') 
+                        console.log(self._storename, 'is loaded with ', self._records.length, ' records');
                     resolve();
                 },function(d){ 
                     console.warn('DB Fail');
@@ -1999,7 +2001,7 @@ Cow.project = function(config){
     //var dbname = 'groups_' + config._id;
     var dbname = 'groups';
     this._groupStore = _.extend(
-        new Cow.syncstore({dbname: dbname, core: self._core, maxAge: this._maxAge}),{
+        new Cow.syncstore({dbname: dbname, noIDB: true, core: self._core, maxAge: this._maxAge}),{
         _records: [],
         _recordproto: function(_id){return new Cow.group({_id: _id, store: this});},
         _type: 'groups',
@@ -2013,7 +2015,7 @@ Cow.project = function(config){
     //dbname = 'items_' + config._id;
     dbname = 'items';
     this._itemStore = _.extend(
-        new Cow.syncstore({dbname: dbname, core: self._core, maxAge: this._maxAge}),{
+        new Cow.syncstore({dbname: dbname, noIDB: true, core: self._core, maxAge: this._maxAge}),{
         _recordproto:   function(_id){return new Cow.item({_id: _id, store: this});},
         _projectid: this._id,
         _records: [],
@@ -2418,7 +2420,7 @@ Cow.messenger.prototype._onConnect = function(payload){
     }
             
     if (serverkey !== undefined && serverkey != this._core._herdname){
-        console.warn('Key on server ('+serverkey+') not the same as client key ('+this._core._herdname+').')
+        console.warn('Key on server ('+serverkey+') not the same as client key ('+this._core._herdname+').');
         self.ws.disconnect();
         return;
     }
@@ -2431,26 +2433,42 @@ Cow.messenger.prototype._onConnect = function(payload){
     mypeer.deleted(false).sync();
     this.trigger('connected',payload);
     
+    //FIXME: at the moment the idb can be slowing down the whole process by minutes.
+    //Therefore we immediately start a sync, eventhough the database is not loaded yet
+    //The idb loading time should be decreased to seconds at most 
+    
     //initiate socketserver sync
-    this._core.socketserverStore().sync();
+    //this._core.socketserverStore().loaded.then(function(){
+            self._core.socketserverStore().sync();
+    //});
     
     //initiate peer sync
-    this._core.peerStore().sync();
+    //this._core.peerStore().loaded.then(function(){
+            self._core.peerStore().sync();
+    //});
 
     //initiate user sync
-    this._core.userStore().sync();
+    //this._core.userStore().loaded.then(function(){
+            self._core.userStore().sync();
+    //});
     
     //initiate project sync
     var projectstore = this._core.projectStore();
-    projectstore.sync();
     
     //wait for projectstore to load
     projectstore.loaded.then(function(d){
+        projectstore.sync();
         var projects = self._core.projects();
         for (var i=0;i<projects.length;i++){
             var project = projects[i];
-            self._core.projects(project._id).itemStore().sync();
-            self._core.projects(project._id).groupStore().sync();
+            //TT: mmm, does this iterate well?
+            //FIXME: same as above
+            //project.itemStore().loaded.then(function(){
+                project.itemStore().sync();
+            //});
+            //project.groupStore().loaded.then(function(){
+                project.groupStore().sync();
+            //});
         }
     });
 };
@@ -2531,9 +2549,9 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             "syncinfo" : syncinfo
         };
         //Don't send empty lists
-        if (syncobject.requestlist.length > 0 && syncobject.pushlist.length > 0){
+        //if (syncobject.requestlist.length > 0 || syncobject.pushlist.length > 0){
             this.sendData(data, 'syncinfo',sender);
-        }
+        //}
         
         data =  {
             "syncType" : payload.syncType,
@@ -2586,6 +2604,8 @@ Cow.messenger.prototype._onSyncinfo = function(payload) {
     var store = this._getStore(payload);
     store.syncinfo.toReceive = payload.syncinfo.IWillSent;
     store.syncinfo.toSent = payload.syncinfo.IShallReceive;
+    if (payload.syncType != 'items' && payload.syncType != 'groups')
+        console.log('Receiving for: ', payload.syncType, ' ',store.syncinfo.toReceive.length,' records'); 
 };
 
 Cow.messenger.prototype._onWantedList = function(payload) {
@@ -2740,7 +2760,7 @@ Cow.core = function(config){
     
     /*PROJECTS*/
     this._projectStore =  _.extend(
-        new Cow.syncstore({dbname: 'projects', noDeltas: false, core: self, maxAge: this._maxAge}),{
+        new Cow.syncstore({dbname: 'projects', noIDB: true, noDeltas: false, core: self, maxAge: this._maxAge}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
         _dbname:        'projects',
@@ -2764,7 +2784,7 @@ Cow.core = function(config){
     
     /*USERS*/
     this._userStore =  _.extend(
-        new Cow.syncstore({dbname: 'users', noDeltas: true, core: this, maxAge: this._maxAge}), {
+        new Cow.syncstore({dbname: 'users', noIDB: true, noDeltas: true, core: this, maxAge: this._maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
@@ -2774,7 +2794,7 @@ Cow.core = function(config){
     
     /*SOCKETSERVERS*/
     this._socketserverStore =  _.extend(
-        new Cow.syncstore({dbname: 'socketservers', noDeltas: true, core: this, maxAge: this._maxAge}), {
+        new Cow.syncstore({dbname: 'socketservers', noIDB: true, noDeltas: true, core: this, maxAge: this._maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.socketserver({_id: _id, store: this});},     

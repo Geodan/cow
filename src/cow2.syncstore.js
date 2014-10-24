@@ -66,6 +66,8 @@ Cow.syncstore =  function(config){
                      });
                     self.trigger('datachange');
                     self._isloaded = true;
+                    if (self._storename != 'items' && self._storename != 'groups') 
+                        console.log(self._storename, 'is loaded with ', self._records.length, ' records');
                     resolve();
                 },function(d){ 
                     console.warn('DB Fail');
