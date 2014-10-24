@@ -823,8 +823,6 @@ Cow.syncstore =  function(config){
                      });
                     self.trigger('datachange');
                     self._isloaded = true;
-                    if (self._storename != 'items' && self._storename != 'groups') 
-                        console.log(self._storename, 'is loaded with ', self._records.length, ' records');
                     resolve();
                 },function(d){ 
                     console.warn('DB Fail');
@@ -839,6 +837,18 @@ Cow.syncstore =  function(config){
             self._isloaded = true;
             resolve();
         }
+    });
+    this.synced = new Promise(function(resolve, reject){
+        self.loaded.then(function(){
+            self.on('synced', function(){
+                    resolve();
+            });
+            self.sync();
+        });
+        self.loaded.catch(function(e){
+            console.error(e.message);
+            reject();
+        });
     });
 }; 
 /**
@@ -1162,15 +1172,17 @@ Cow.syncstore.prototype =
     **/
     sync: function(){
         var self = this;
-        this.loaded.then(function(d){
+        self.loaded.then(function(d){
             var message = {};
             message.syncType = self._type;
             message.project = self._projectid;
             message.list = self.idList();
             self._core.messenger().sendData(message, 'newList');
+            
         });
-        this.loaded.catch(function(e){
+        self.loaded.catch(function(e){
                 console.error(e.message);
+                reject();
         });
     },
     
@@ -2434,23 +2446,23 @@ Cow.messenger.prototype._onConnect = function(payload){
     this.trigger('connected',payload);
     
     //FIXME: at the moment the idb can be slowing down the whole process by minutes.
-    //Therefore we immediately start a sync, eventhough the database is not loaded yet
+    //Therefore the indexedb is disabled for all stores
     //The idb loading time should be decreased to seconds at most 
     
     //initiate socketserver sync
-    //this._core.socketserverStore().loaded.then(function(){
+    this._core.socketserverStore().loaded.then(function(){
             self._core.socketserverStore().sync();
-    //});
+    });
     
     //initiate peer sync
-    //this._core.peerStore().loaded.then(function(){
+    this._core.peerStore().loaded.then(function(){
             self._core.peerStore().sync();
-    //});
+    });
 
     //initiate user sync
-    //this._core.userStore().loaded.then(function(){
+    this._core.userStore().loaded.then(function(){
             self._core.userStore().sync();
-    //});
+    });
     
     //initiate project sync
     var projectstore = this._core.projectStore();
@@ -2463,12 +2475,12 @@ Cow.messenger.prototype._onConnect = function(payload){
             var project = projects[i];
             //TT: mmm, does this iterate well?
             //FIXME: same as above
-            //project.itemStore().loaded.then(function(){
+            project.itemStore().loaded.then(function(){
                 project.itemStore().sync();
-            //});
-            //project.groupStore().loaded.then(function(){
+            });
+            project.groupStore().loaded.then(function(){
                 project.groupStore().sync();
-            //});
+            });
         }
     });
 };
@@ -2604,8 +2616,6 @@ Cow.messenger.prototype._onSyncinfo = function(payload) {
     var store = this._getStore(payload);
     store.syncinfo.toReceive = payload.syncinfo.IWillSent;
     store.syncinfo.toSent = payload.syncinfo.IShallReceive;
-    if (payload.syncType != 'items' && payload.syncType != 'groups')
-        console.log('Receiving for: ', payload.syncType, ' ',store.syncinfo.toReceive.length,' records'); 
 };
 
 Cow.messenger.prototype._onWantedList = function(payload) {

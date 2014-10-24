@@ -371,8 +371,6 @@ Cow.messenger.prototype._onSyncinfo = function(payload) {
     var store = this._getStore(payload);
     store.syncinfo.toReceive = payload.syncinfo.IWillSent;
     store.syncinfo.toSent = payload.syncinfo.IShallReceive;
-    if (payload.syncType != 'items' && payload.syncType != 'groups')
-        console.log('Receiving for: ', payload.syncType, ' ',store.syncinfo.toReceive.length,' records'); 
 };
 
 Cow.messenger.prototype._onWantedList = function(payload) {

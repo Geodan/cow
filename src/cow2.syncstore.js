@@ -66,8 +66,6 @@ Cow.syncstore =  function(config){
                      });
                     self.trigger('datachange');
                     self._isloaded = true;
-                    if (self._storename != 'items' && self._storename != 'groups') 
-                        console.log(self._storename, 'is loaded with ', self._records.length, ' records');
                     resolve();
                 },function(d){ 
                     console.warn('DB Fail');
@@ -82,6 +80,18 @@ Cow.syncstore =  function(config){
             self._isloaded = true;
             resolve();
         }
+    });
+    this.synced = new Promise(function(resolve, reject){
+        self.loaded.then(function(){
+            self.on('synced', function(){
+                    resolve();
+            });
+            self.sync();
+        });
+        self.loaded.catch(function(e){
+            console.error(e.message);
+            reject();
+        });
     });
 }; 
 /**
@@ -405,15 +415,17 @@ Cow.syncstore.prototype =
     **/
     sync: function(){
         var self = this;
-        this.loaded.then(function(d){
+        self.loaded.then(function(d){
             var message = {};
             message.syncType = self._type;
             message.project = self._projectid;
             message.list = self.idList();
             self._core.messenger().sendData(message, 'newList');
+            
         });
-        this.loaded.catch(function(e){
+        self.loaded.catch(function(e){
                 console.error(e.message);
+                reject();
         });
     },
     
