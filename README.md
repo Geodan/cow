@@ -72,6 +72,7 @@ All the stores share the same basemethods as follows (userStore as example):
     core.users(<string>) -> returns record object with id = <string>
     core.users([<string>]) -> returns array of record objects with matching ids
     core.users()   -> returns array of all record objects
+    core.users(<timestamp>) -> returns array of records created before timestamp
     core.userStore() -> returns the userstore object
     core.userStore().syncRecords() -> syncs all records with dirty == true
 `````
@@ -80,23 +81,27 @@ When adding a new record, it is possible to include data in the object like: cow
 Some store's are configured differently:
 * peerStore doesn't use local storage (indexeddb) since peers are unique in every session
 * stores can have a maximum lifetime for the records. When a record isn't updated for x time then the record is not used anymore. It is still kept in the localstorage however.
-* only the itemstores keep a history of delta's. Other stores have disabled that option for the sake of data reduction
+* only the projectstore and itemstore keep a history of delta's. Other stores have disabled that option for the sake of data reduction
 
-All *record objects* behave the same* and as follows (user object as example):
+All *record objects* behave the same* and as follows (item object as example):
 `````javascript
-    user.id() -> returns the id of the record
-    user.created() -> returns the timestamp of creation
-    user.dirty() -> returns the dirtystatus of the record
-    user.dirty(boolean) -> sets the dirtystatus of the record, returns record
-    user.deleted() -> returns a boolean (true, false) indicating wether the record has been deleted
-    user.deleted(boolean) -> sets the record to deleted, returns record
-    user.updated() -> returns the timestamp (last edit) of the record
-    user.updated(<timestamp>) -> sets the timestamp of the record, returns record
-    user.data() -> returns the data (object) of the record
-    user.data('key') -> returns the data->key (value) of the record
-    user.data('key', 'value') -> sets a key value pair of the data, returns the record
-    user.data({object}) -> sets the data of the record, overrides old data, returns the record
-    user.sync() -> syncs the record with the database and with the websocket
+    item.id() -> returns the id of the record
+    item.created() -> returns the timestamp of creation
+    item.dirty() -> returns the dirtystatus of the record
+    item.dirty(boolean) -> sets the dirtystatus of the record, returns record
+    item.deleted() -> returns a boolean (true, false) indicating wether the record has been deleted
+    item.deleted(boolean) -> sets the record to deleted, returns record
+    item.deleted(<timestamp>) -> returns the deleted status at timestamp
+    item.updated() -> returns the timestamp (last edit) of the record
+    item.updated(<timestamp>) -> sets the timestamp of the record, returns record
+    item.data() -> returns the data (object) of the record
+    item.data(<timestamp>) -> get the data (object) as it was at a specific time
+    item.data('key') -> returns the data->key (value) of the record
+    item.data('key', 'value') -> sets a key value pair of the data, returns the record
+    item.data({object}) -> sets the data of the record, overrides old data, returns the record
+    item.deltas() -> returns an array with delta objects (see delta)
+    item.sync() -> syncs the record with the database and with the websocket
+    
 `````
 **core specific:**
 `````javascript
@@ -113,9 +118,9 @@ All *record objects* behave the same* and as follows (user object as example):
     core.location() -> returns location object of current peer
     core.location(obj) -> set location object of current peer, returns locations object
     core.activeUsers() -> returns array with userobjects that are currently active
-    
+    core.version() -> returns the current version number of cow
 `````
-Since most methods return their own object, the methods are chainable. So you can write rather condensed code:
+Since most methods return their own object, these methods are chainable. So you can write:
 `````javascript
     var defaultproject = core.projects({}).data('name',"Sketch").sync();
     var defaultgroup = defaultproject.groups({}).data('name','Public').sync();
@@ -125,6 +130,16 @@ Since most methods return their own object, the methods are chainable. So you ca
         .sync();
 `````
 The timestamp and dirtystatus are automatically updated when invoking the data(<whatever>) or deleted(true/false) method so you don't need to worry about that.
+
+
+Some stores have deltas (invoked by item.deltas() ) which means that you can see a per-record history. Every change on an object (be it data or deleted status) is recorded as a delta and for the data only the new or updated data is being recorded (hence the name delta). A delta object contains:
+`````javascript
+{
+ timestamp: <timestamp> //timestamp of time of update
+ data: <object> //data object that has been changed as key-value pairs
+ deleted: boolean //the deleted status at that moment
+ userid: string or null //the userid of the user that made the change (if available)
+`````
 
 
 #### Core
