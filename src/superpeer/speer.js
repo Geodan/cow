@@ -9,7 +9,7 @@ log = require('../../lib/loglevel/loglevel.min.js');
 **/
 WebSocket = require('websocket').client;
 pg = require('pg').native;
-Cow = require('../../dist/cow.node.js');
+Cow = require('./cow.node.js');
 log.setLevel('warn');
 core = new Cow.core({
     herdname: 'test',

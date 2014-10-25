@@ -1,22 +1,68 @@
 <html>
 <head>
-<script src="../src/cow2.indexeddb.js"></script>
 </head>
 <body>
-
+<h2>IDB TEST</h2>
+<p>Runs in console</p>
 <script>
+var db = null;
+var request = indexedDB.open('test',2);
+request.onsuccess = function(event) {
+    db = event.target.result;
+getUsers();    
+};
 
-var db = new Cow.indexeddb({dbname: 'cow'});
+function getItems(projectid){
+    var items = [];
+    var trans = db.transaction(['items']);
+    var store = trans.objectStore('items');
+    var key = IDBKeyRange.only(projectid);
+    var index = store.index("projectid");
 
-var dbopen = db.open();
+    request = index.openCursor(key);
+    request.onsuccess = function(event) {
+          var cursor = event.target.result;
+          if (cursor) {
+            items.push(cursor.value);
+            cursor.continue();
+          }
+          if (!cursor)
+              console.log('Project: ', projectid, ' has ', items.length, ' items');          
+    };
+}
 
-dbopen.then(function(d){
-    db.getAll('items', '456').then(function(d){
-        console.log(d);
-    },function(d){
-        console.log(d);
-    });
-});
+function getUsers(){
+    var users = [];
+    var projects = [];
+    var trans = db.transaction(['users']);
+    var store = trans.objectStore('users');
+    var index = store;
+    request = index.openCursor();
+    request.onsuccess = function(event) {
+          var cursor = event.target.result;
+          if (cursor) {
+            users.push(cursor.value);
+            cursor.continue();
+          }
+          if (!cursor)
+              console.log(users.length, ' users');          
+    };
+    var trans = db.transaction(['projects']);
+    var store = trans.objectStore('projects');
+    var index = store;
+    request = index.openCursor();
+    request.onsuccess = function(event) {
+          var cursor = event.target.result;
+          if (cursor) {
+            projects.push(cursor.value);
+            getItems(cursor.value._id);
+            cursor.continue();
+          }
+          if (!cursor)
+              console.log(projects.length, ' projects');
+    };
+}
+
 /*
 dbopen.then(function(d){
     db = d;

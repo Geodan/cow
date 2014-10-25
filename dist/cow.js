@@ -606,6 +606,8 @@ Cow.localdb.prototype.write = function(config){
     record.projectid = projectid;
     
     var promise = new Promise(function(resolve, reject){
+        resolve(); //FIXME!!!!!!!!!!!!!
+        /*
         var trans = self._db.transaction([storename], "readwrite");
         trans.onabort = function(e){
             console.warn('Abort error');
@@ -619,6 +621,7 @@ Cow.localdb.prototype.write = function(config){
             console.warn('IDB Error: ',e.value);
             reject("Couldn't add the passed item");
         };
+        */
     });
     return promise;
 };
@@ -627,12 +630,15 @@ Cow.localdb.prototype.getRecord = function(config){
     var self = this;
     var storename = config.storename;
     var id = config.id;
-    var trans = this._db.transaction([storename]);
-    trans.onabort = function(e){
-        console.warn('Abort error');
-    };
-    var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
+            resolve(); //FIXME!!!!!!!!!!!!!!!!!!!!
+            /*
+            var trans = this._db.transaction([storename]);
+            trans.onabort = function(e){
+                console.warn('Abort error');
+            };
+            var store = trans.objectStore(storename);
+
             var request = store.get(id);
             request.onsuccess = function(){
                 resolve(request.result);
@@ -640,7 +646,7 @@ Cow.localdb.prototype.getRecord = function(config){
             request.onerror = function(e){
                 console.warn('IDB Error: ',e.value);
                 reject(e);
-            };
+            };*/
     });
     return promise;
 };
@@ -678,6 +684,7 @@ Cow.localdb.prototype.getRecords = function(config){
             cursor.continue();
           }
           else{
+              //console.log(result.length, storename, 'in', projectid);
               resolve(result);
           }
         };
@@ -694,12 +701,14 @@ Cow.localdb.prototype.delRecord = function(config){
     var storename = config.storename;
     var projectid = config.projectid;
     var id = config.id;
-    var trans = this._db.transaction([storename], "readwrite");
-    trans.onabort = function(e){
-        console.warn('Abort error');
-    };
-    var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
+        resolve(); //FIXME!!!!!!!!!!!!!
+        /*
+        var trans = this._db.transaction([storename], "readwrite");
+        trans.onabort = function(e){
+            console.warn('Abort error');
+        };
+        var store = trans.objectStore(storename);
         var request = store.delete(id);
         request.onsuccess = function(event){
             resolve();
@@ -707,7 +716,7 @@ Cow.localdb.prototype.delRecord = function(config){
         request.onerror = function(e){
             console.warn('IDB Error: ',e.value);
             reject(e);
-        };
+        };*/
     });
     return promise;
 };
@@ -729,6 +738,8 @@ Cow.localdb.prototype.clear = function(config){
         index = store;
     }
     var promise = new Promise(function(resolve, reject){
+        resolve(); //FIXME!!!!!!!!!!!!!!!!!!!!!!!
+        /*
         var request;
         if (key){ //Solution to make it work on IE, since openCursor(undefined) gives an error
             request = index.openCursor(key);
@@ -749,7 +760,7 @@ Cow.localdb.prototype.clear = function(config){
         request.onerror = function(e){
             console.warn('IDB Error: ',e.value);
             reject(e);
-        };
+        };*/
     });
     return promise;
 };
@@ -2013,7 +2024,7 @@ Cow.project = function(config){
     //var dbname = 'groups_' + config._id;
     var dbname = 'groups';
     this._groupStore = _.extend(
-        new Cow.syncstore({dbname: dbname, noIDB: true, core: self._core, maxAge: this._maxAge}),{
+        new Cow.syncstore({dbname: dbname, noIDB: false, core: self._core, maxAge: this._maxAge}),{
         _records: [],
         _recordproto: function(_id){return new Cow.group({_id: _id, store: this});},
         _type: 'groups',
@@ -2027,7 +2038,7 @@ Cow.project = function(config){
     //dbname = 'items_' + config._id;
     dbname = 'items';
     this._itemStore = _.extend(
-        new Cow.syncstore({dbname: dbname, noIDB: true, core: self._core, maxAge: this._maxAge}),{
+        new Cow.syncstore({dbname: dbname, noIDB: false, core: self._core, maxAge: this._maxAge}),{
         _recordproto:   function(_id){return new Cow.item({_id: _id, store: this});},
         _projectid: this._id,
         _records: [],
@@ -2448,41 +2459,43 @@ Cow.messenger.prototype._onConnect = function(payload){
     //FIXME: at the moment the idb can be slowing down the whole process by minutes.
     //Therefore the indexedb is disabled for all stores
     //The idb loading time should be decreased to seconds at most 
-    
-    //initiate socketserver sync
-    this._core.socketserverStore().loaded.then(function(){
+    var promisearray = [
+        this._core.socketserverStore().loaded,
+        this._core.peerStore().loaded,
+        this._core.userStore().loaded,
+        this._core.projectStore().loaded
+    ];
+    Promise.all(promisearray).then(function(){
             self._core.socketserverStore().sync();
-    });
-    
-    //initiate peer sync
-    this._core.peerStore().loaded.then(function(){
             self._core.peerStore().sync();
-    });
-
-    //initiate user sync
-    this._core.userStore().loaded.then(function(){
             self._core.userStore().sync();
+            self._core.projectstore().sync();
+            self._core.projectstore().synced.then(function(){
+                loadItems();
+            });
     });
-    
-    //initiate project sync
-    var projectstore = this._core.projectStore();
-    
-    //wait for projectstore to load
-    projectstore.loaded.then(function(d){
-        projectstore.sync();
+    function loadItems(){
         var projects = self._core.projects();
+        var loadarray = [];
         for (var i=0;i<projects.length;i++){
             var project = projects[i];
             //TT: mmm, does this iterate well?
             //FIXME: same as above
-            project.itemStore().loaded.then(function(){
+            loadarray.push([
+                project.itemStore().loaded,
+                project.groupStore().loaded
+            ]);
+            
+            Promise.all(loadarray).then(function(){
+              for (var i=0;i<projects.length;i++){
                 project.itemStore().sync();
-            });
-            project.groupStore().loaded.then(function(){
                 project.groupStore().sync();
+              }
             });
         }
-    });
+    }
+    
+    
 };
     
     
@@ -2755,7 +2768,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.0.1-alpha3';
+    this._version = '2.0.1-alpha4';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
@@ -2770,7 +2783,7 @@ Cow.core = function(config){
     
     /*PROJECTS*/
     this._projectStore =  _.extend(
-        new Cow.syncstore({dbname: 'projects', noIDB: true, noDeltas: false, core: self, maxAge: this._maxAge}),{
+        new Cow.syncstore({dbname: 'projects', noIDB: false, noDeltas: false, core: self, maxAge: this._maxAge}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
         _dbname:        'projects',
@@ -2794,7 +2807,7 @@ Cow.core = function(config){
     
     /*USERS*/
     this._userStore =  _.extend(
-        new Cow.syncstore({dbname: 'users', noIDB: true, noDeltas: true, core: this, maxAge: this._maxAge}), {
+        new Cow.syncstore({dbname: 'users', noIDB: false, noDeltas: true, core: this, maxAge: this._maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
@@ -2804,7 +2817,7 @@ Cow.core = function(config){
     
     /*SOCKETSERVERS*/
     this._socketserverStore =  _.extend(
-        new Cow.syncstore({dbname: 'socketservers', noIDB: true, noDeltas: true, core: this, maxAge: this._maxAge}), {
+        new Cow.syncstore({dbname: 'socketservers', noIDB: false, noDeltas: true, core: this, maxAge: this._maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.socketserver({_id: _id, store: this});},     

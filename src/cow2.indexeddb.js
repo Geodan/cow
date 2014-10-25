@@ -80,6 +80,8 @@ Cow.localdb.prototype.write = function(config){
     record.projectid = projectid;
     
     var promise = new Promise(function(resolve, reject){
+        resolve(); //FIXME!!!!!!!!!!!!!
+        /*
         var trans = self._db.transaction([storename], "readwrite");
         trans.onabort = function(e){
             console.warn('Abort error');
@@ -93,6 +95,7 @@ Cow.localdb.prototype.write = function(config){
             console.warn('IDB Error: ',e.value);
             reject("Couldn't add the passed item");
         };
+        */
     });
     return promise;
 };
@@ -101,12 +104,15 @@ Cow.localdb.prototype.getRecord = function(config){
     var self = this;
     var storename = config.storename;
     var id = config.id;
-    var trans = this._db.transaction([storename]);
-    trans.onabort = function(e){
-        console.warn('Abort error');
-    };
-    var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
+            resolve(); //FIXME!!!!!!!!!!!!!!!!!!!!
+            /*
+            var trans = this._db.transaction([storename]);
+            trans.onabort = function(e){
+                console.warn('Abort error');
+            };
+            var store = trans.objectStore(storename);
+
             var request = store.get(id);
             request.onsuccess = function(){
                 resolve(request.result);
@@ -114,7 +120,7 @@ Cow.localdb.prototype.getRecord = function(config){
             request.onerror = function(e){
                 console.warn('IDB Error: ',e.value);
                 reject(e);
-            };
+            };*/
     });
     return promise;
 };
@@ -152,6 +158,7 @@ Cow.localdb.prototype.getRecords = function(config){
             cursor.continue();
           }
           else{
+              //console.log(result.length, storename, 'in', projectid);
               resolve(result);
           }
         };
@@ -168,12 +175,14 @@ Cow.localdb.prototype.delRecord = function(config){
     var storename = config.storename;
     var projectid = config.projectid;
     var id = config.id;
-    var trans = this._db.transaction([storename], "readwrite");
-    trans.onabort = function(e){
-        console.warn('Abort error');
-    };
-    var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
+        resolve(); //FIXME!!!!!!!!!!!!!
+        /*
+        var trans = this._db.transaction([storename], "readwrite");
+        trans.onabort = function(e){
+            console.warn('Abort error');
+        };
+        var store = trans.objectStore(storename);
         var request = store.delete(id);
         request.onsuccess = function(event){
             resolve();
@@ -181,7 +190,7 @@ Cow.localdb.prototype.delRecord = function(config){
         request.onerror = function(e){
             console.warn('IDB Error: ',e.value);
             reject(e);
-        };
+        };*/
     });
     return promise;
 };
@@ -203,6 +212,8 @@ Cow.localdb.prototype.clear = function(config){
         index = store;
     }
     var promise = new Promise(function(resolve, reject){
+        resolve(); //FIXME!!!!!!!!!!!!!!!!!!!!!!!
+        /*
         var request;
         if (key){ //Solution to make it work on IE, since openCursor(undefined) gives an error
             request = index.openCursor(key);
@@ -223,7 +234,7 @@ Cow.localdb.prototype.clear = function(config){
         request.onerror = function(e){
             console.warn('IDB Error: ',e.value);
             reject(e);
-        };
+        };*/
     });
     return promise;
 };
