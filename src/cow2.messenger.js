@@ -169,6 +169,12 @@ Cow.messenger.prototype._onMessage = function(message){
     
 };
 
+/**
+_onConnect handles 2 things
+    1) some checks to see if the server connection is ok. (time diff and key)
+    2) initiate the first sync of the stores
+**/
+
 Cow.messenger.prototype._onConnect = function(payload){
     console.log('connected!');
     this._connected = true;
@@ -199,17 +205,15 @@ Cow.messenger.prototype._onConnect = function(payload){
     mypeer.data('version',this._core.version());
     mypeer.deleted(false).sync();
     this.trigger('connected',payload);
-    
-    //FIXME: at the moment the idb can be slowing down the whole process by minutes.
-    //Therefore the indexedb is disabled for all stores
-    //The idb loading time should be decreased to seconds at most 
+
+    //Put all load promises together
     var promisearray = [
         this._core.socketserverStore().loaded,
         this._core.peerStore().loaded,
         this._core.userStore().loaded,
         this._core.projectStore().loaded
     ];
-    //First load all databases
+    //Add the itemstore/groupstore load promises
     Promise.all(promisearray).then(function(){
         var projects = self._core.projects();
         var loadarray = [];
@@ -223,6 +227,7 @@ Cow.messenger.prototype._onConnect = function(payload){
         Promise.all(loadarray).then(syncAll);
     });
     
+    //After all idb's are loaded, start syncing process
     function syncAll(){
         console.log('Starting sync');
         self._core.socketserverStore().sync();
@@ -238,8 +243,6 @@ Cow.messenger.prototype._onConnect = function(payload){
             }
         });
     }
-    
-    
 };
     
     
