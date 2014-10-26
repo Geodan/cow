@@ -845,7 +845,7 @@ Cow.syncstore =  function(config){
             self.on('synced', function(){
                     resolve();
             });
-            self.sync();
+            //self.sync(); //disabled sync here because we want to wait for all the stores to be synced
         });
         self.loaded.catch(function(e){
             console.error(e.message);
@@ -2456,34 +2456,34 @@ Cow.messenger.prototype._onConnect = function(payload){
         this._core.userStore().loaded,
         this._core.projectStore().loaded
     ];
+    //First load all databases
     Promise.all(promisearray).then(function(){
-            self._core.socketserverStore().sync();
-            self._core.peerStore().sync();
-            self._core.userStore().sync();
-            self._core.projectstore().sync();
-            self._core.projectstore().synced.then(function(){
-                loadItems();
-            });
-    });
-    function loadItems(){
         var projects = self._core.projects();
         var loadarray = [];
         for (var i=0;i<projects.length;i++){
             var project = projects[i];
-            //TT: mmm, does this iterate well?
-            //FIXME: same as above
             loadarray.push([
                 project.itemStore().loaded,
                 project.groupStore().loaded
             ]);
-            
-            Promise.all(loadarray).then(function(){
-              for (var i=0;i<projects.length;i++){
+        }
+        Promise.all(loadarray).then(syncAll);
+    });
+    
+    function syncAll(){
+        console.log('Starting sync');
+        self._core.socketserverStore().sync();
+        self._core.peerStore().sync();
+        self._core.userStore().sync();
+        self._core.projectstore().sync();
+        self._core.projectstore().synced.then(function(){
+            var projects = self._core.projects();
+            for (var i=0;i<projects.length;i++){
+                var project = projects[i];
                 project.itemStore().sync();
                 project.groupStore().sync();
-              }
-            });
-        }
+            }
+        });
     }
     
     

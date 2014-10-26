@@ -86,7 +86,7 @@ Cow.syncstore =  function(config){
             self.on('synced', function(){
                     resolve();
             });
-            self.sync();
+            //self.sync(); //disabled sync here because we want to wait for all the stores to be synced
         });
         self.loaded.catch(function(e){
             console.error(e.message);
