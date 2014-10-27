@@ -623,16 +623,47 @@ Cow.localdb.prototype.write = function(config){
     return promise;
 };
 
+Cow.localdb.prototype.writeAll = function(config){
+    var self = this;
+    var storename = config.storename;
+    var list = config.data;
+    var projectid = config.projectid;
+    var promise = new Promise(function(resolve, reject){
+        var trans = self._db.transaction([storename], "readwrite");
+        trans.onabort = function(e){
+            console.warn('Abort error');
+            reject();
+        };
+        var store = trans.objectStore(storename);
+        for (var i = 0;i< list.length;i++){
+            var record = list[i];
+            record._id = record._id.toString();
+            record.projectid = projectid;
+            var request = store.put(record);
+            request.onsuccess = function(e) {
+                //continue
+            };
+            request.onerror = function(e) {
+                console.warn('IDB Error: ',e.value);
+                reject("Couldn't add the passed item");
+            };
+        }
+        resolve();
+    });
+    return promise;
+};
+
 Cow.localdb.prototype.getRecord = function(config){
     var self = this;
     var storename = config.storename;
     var id = config.id;
-    var trans = this._db.transaction([storename]);
-    trans.onabort = function(e){
-        console.warn('Abort error');
-    };
-    var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
+            var trans = this._db.transaction([storename]);
+            trans.onabort = function(e){
+                console.warn('Abort error');
+            };
+            var store = trans.objectStore(storename);
+
             var request = store.get(id);
             request.onsuccess = function(){
                 resolve(request.result);
@@ -678,6 +709,7 @@ Cow.localdb.prototype.getRecords = function(config){
             cursor.continue();
           }
           else{
+              //console.log(result.length, storename, 'in', projectid);
               resolve(result);
           }
         };
@@ -694,12 +726,12 @@ Cow.localdb.prototype.delRecord = function(config){
     var storename = config.storename;
     var projectid = config.projectid;
     var id = config.id;
-    var trans = this._db.transaction([storename], "readwrite");
-    trans.onabort = function(e){
-        console.warn('Abort error');
-    };
-    var store = trans.objectStore(storename);
     var promise = new Promise(function(resolve, reject){
+        var trans = this._db.transaction([storename], "readwrite");
+        trans.onabort = function(e){
+            console.warn('Abort error');
+        };
+        var store = trans.objectStore(storename);
         var request = store.delete(id);
         request.onsuccess = function(event){
             resolve();
@@ -781,9 +813,14 @@ Cow.syncstore =  function(config){
         toSent: [],
         received: 0, 
         send: 0
-    };
+    };      
     if (!this.noIDB){
         this.localdb = this._core.localdb();//new Cow.localdb(config, this);
+        this._commitqueue = {
+            storename:this._storename,
+            projectid: this._projectid,
+            data: []
+        };
     }
     this.loaded = new Promise(function(resolve, reject){
         if (self.localdb){
@@ -843,7 +880,7 @@ Cow.syncstore =  function(config){
             self.on('synced', function(){
                     resolve();
             });
-            self.sync();
+            //self.sync(); //disabled sync here because we want to wait for all the stores to be synced
         });
         self.loaded.catch(function(e){
             console.error(e.message);
@@ -985,11 +1022,12 @@ Cow.syncstore.prototype =
                 record.inflate(data);
                 //record.deleted(false); //set undeleted //TT: disabled, since this gives a problem when a record from WS comes in as deleted
                 if (this.localdb && source == 'WS'){ //update the db
-                    this.localdb.write({
-                        storename: this._storename,
-                        projectid: this._projectid,
-                        data: record.deflate()
-                    });
+                    //this.localdb.write({
+                    //    storename:this._storename,
+                    //    projectid: this._projectid,
+                    //    data:record.deflate()
+                    //});
+                    this._commitqueue.data.push(record.deflate());
                 }
             }
         }
@@ -998,11 +1036,12 @@ Cow.syncstore.prototype =
             record = this._recordproto(data._id);
             record.inflate(data);
             if (this.localdb && source == 'WS'){
-                promise = this.localdb.write({
-                    storename:this._storename,
-                    projectid: this._projectid,
-                    data:record.deflate()
-                });
+                this._commitqueue.data.push(record.deflate());
+                //this.localdb.write({
+                //    storename:this._storename,
+                //    projectid: this._projectid,
+                //    data:record.deflate()
+                //});
             }
             this._records.push(record); //Adding to the list
             //console.log(this._records.length); 
@@ -1010,6 +1049,18 @@ Cow.syncstore.prototype =
         
         return record;
     },
+    /**
+        _commit() - sends the commitqueue to the idb
+    **/
+    _commit: function(){
+        if (!this.noIDB && this._commitqueue.data.length > 0){
+            //console.log('starting commit for ', this._commitqueue.data.length, this._storename);
+            this._commitqueue.projectid = this._projectid;
+            this.localdb.writeAll(this._commitqueue);
+        }
+        
+    },
+    
     /**
         _getRecordsOn(timestamp) - 
     **/
@@ -2013,7 +2064,7 @@ Cow.project = function(config){
     //var dbname = 'groups_' + config._id;
     var dbname = 'groups';
     this._groupStore = _.extend(
-        new Cow.syncstore({dbname: dbname, noIDB: true, core: self._core, maxAge: this._maxAge}),{
+        new Cow.syncstore({dbname: dbname, noIDB: false, core: self._core, maxAge: this._maxAge}),{
         _records: [],
         _recordproto: function(_id){return new Cow.group({_id: _id, store: this});},
         _type: 'groups',
@@ -2027,7 +2078,7 @@ Cow.project = function(config){
     //dbname = 'items_' + config._id;
     dbname = 'items';
     this._itemStore = _.extend(
-        new Cow.syncstore({dbname: dbname, noIDB: true, core: self._core, maxAge: this._maxAge}),{
+        new Cow.syncstore({dbname: dbname, noIDB: false, core: self._core, maxAge: this._maxAge}),{
         _recordproto:   function(_id){return new Cow.item({_id: _id, store: this});},
         _projectid: this._id,
         _records: [],
@@ -2414,6 +2465,12 @@ Cow.messenger.prototype._onMessage = function(message){
     
 };
 
+/**
+_onConnect handles 2 things
+    1) some checks to see if the server connection is ok. (time diff and key)
+    2) initiate the first sync of the stores
+**/
+
 Cow.messenger.prototype._onConnect = function(payload){
     console.log('connected!');
     this._connected = true;
@@ -2444,45 +2501,55 @@ Cow.messenger.prototype._onConnect = function(payload){
     mypeer.data('version',this._core.version());
     mypeer.deleted(false).sync();
     this.trigger('connected',payload);
-    
-    //FIXME: at the moment the idb can be slowing down the whole process by minutes.
-    //Therefore the indexedb is disabled for all stores
-    //The idb loading time should be decreased to seconds at most 
-    
-    //initiate socketserver sync
-    this._core.socketserverStore().loaded.then(function(){
-            self._core.socketserverStore().sync();
-    });
-    
-    //initiate peer sync
-    this._core.peerStore().loaded.then(function(){
-            self._core.peerStore().sync();
-    });
 
-    //initiate user sync
-    this._core.userStore().loaded.then(function(){
-            self._core.userStore().sync();
-    });
-    
-    //initiate project sync
-    var projectstore = this._core.projectStore();
-    
-    //wait for projectstore to load
-    projectstore.loaded.then(function(d){
-        projectstore.sync();
+    //Put all load promises together
+    var promisearray = [
+        this._core.socketserverStore().loaded,
+        this._core.peerStore().loaded,
+        this._core.userStore().loaded,
+        this._core.projectStore().loaded
+    ];
+    //Add the itemstore/groupstore load promises
+    Promise.all(promisearray).then(function(){
         var projects = self._core.projects();
+        var loadarray = [];
         for (var i=0;i<projects.length;i++){
             var project = projects[i];
-            //TT: mmm, does this iterate well?
-            //FIXME: same as above
-            project.itemStore().loaded.then(function(){
-                project.itemStore().sync();
-            });
-            project.groupStore().loaded.then(function(){
-                project.groupStore().sync();
-            });
+            loadarray.push([
+                project.itemStore().loaded,
+                project.groupStore().loaded
+            ]);
         }
+        Promise.all(loadarray).then(syncAll);
     });
+    
+    syncarray = [
+        this._core.socketserverStore().synced,
+        this._core.peerStore().synced,
+        this._core.userStore().synced,
+        this._core.projectStore().synced
+    ];
+    
+    //After all idb's are loaded, start syncing process
+    function syncAll(){
+        console.log('Starting sync');
+        self._core.projectStore().sync();
+        self._core.socketserverStore().sync();
+        self._core.peerStore().sync();
+        self._core.userStore().sync();
+        self._core.projectStore().synced.then(function(){
+            var projects = self._core.projects();
+            for (var i=0;i<projects.length;i++){
+                var project = projects[i];
+                syncarray.push([project.itemStore().synced,project.groupStore().synced]); 
+                project.itemStore().sync();
+                project.groupStore().sync();
+            }
+            Promise.all(syncarray).then(function(d){
+                    console.log('all synced');
+            });
+        });
+    }
 };
     
     
@@ -2594,9 +2661,9 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
         });
         */
         //Don't send empty lists
-        if (syncobject.pushlist.length > 0){
+        //if (syncobject.pushlist.length > 0){
             this.sendData(data, 'missingRecords', sender);
-        }
+        //}
     }
 };
 Cow.messenger.prototype._amIAlpha = function(){ //find out wether I am alpha
@@ -2648,15 +2715,17 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
     var list = payload.list;
     var synclist = [];
     var i;
+    
     for (i=0;i<list.length;i++){
         var data = list[i];
-        //var record = store._addRecord({source: 'WS', data: data});
         var record = store._addRecord({source: 'WS', data: data});
+        
         //if we receive a new project, we also have to get the items and groups in it
-        if (store._type == 'projects'){
-            record.groupStore().sync();
-            record.itemStore().sync();
-        }
+        //TT: disables because handled in the onConnect
+        //if (store._type == 'projects'){
+        //    record.groupStore().sync();
+        //    record.itemStore().sync();
+        //}
         //Do the syncing for the deltas
         if (data.deltas && record.deltas()){
             var localarr = _.pluck(record.deltas(),'timestamp');
@@ -2669,11 +2738,13 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
             }
         }
     }
+    store._commit();
     store.trigger('synced');
     for (i=0;i<synclist.length;i++){
         store.syncRecord(synclist[i]);
     }
     store.trigger('datachange');
+    
 };
   
 Cow.messenger.prototype._onUpdatedRecords = function(payload) {
@@ -2755,7 +2826,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.0.1-alpha4';
+    this._version = '2.0.1-alpha5';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
@@ -2770,7 +2841,7 @@ Cow.core = function(config){
     
     /*PROJECTS*/
     this._projectStore =  _.extend(
-        new Cow.syncstore({dbname: 'projects', noIDB: true, noDeltas: false, core: self, maxAge: this._maxAge}),{
+        new Cow.syncstore({dbname: 'projects', noIDB: false, noDeltas: false, core: self, maxAge: this._maxAge}),{
         _records: [],
         _recordproto:   function(_id){return new Cow.project({_id:_id, store: this});},
         _dbname:        'projects',
@@ -2794,7 +2865,7 @@ Cow.core = function(config){
     
     /*USERS*/
     this._userStore =  _.extend(
-        new Cow.syncstore({dbname: 'users', noIDB: true, noDeltas: true, core: this, maxAge: this._maxAge}), {
+        new Cow.syncstore({dbname: 'users', noIDB: false, noDeltas: true, core: this, maxAge: null}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
@@ -2804,7 +2875,7 @@ Cow.core = function(config){
     
     /*SOCKETSERVERS*/
     this._socketserverStore =  _.extend(
-        new Cow.syncstore({dbname: 'socketservers', noIDB: true, noDeltas: true, core: this, maxAge: this._maxAge}), {
+        new Cow.syncstore({dbname: 'socketservers', noIDB: false, noDeltas: true, core: this, maxAge: null}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.socketserver({_id: _id, store: this});},     
