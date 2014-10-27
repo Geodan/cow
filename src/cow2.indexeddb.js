@@ -97,6 +97,36 @@ Cow.localdb.prototype.write = function(config){
     return promise;
 };
 
+Cow.localdb.prototype.writeAll = function(config){
+    var self = this;
+    var storename = config.storename;
+    var list = config.data;
+    var projectid = config.projectid;
+    var promise = new Promise(function(resolve, reject){
+        var trans = self._db.transaction([storename], "readwrite");
+        trans.onabort = function(e){
+            console.warn('Abort error');
+            reject();
+        };
+        var store = trans.objectStore(storename);
+        for (var i = 0;i< list.length;i++){
+            var record = list[i];
+            record._id = record._id.toString();
+            record.projectid = projectid;
+            var request = store.put(record);
+            request.onsuccess = function(e) {
+                //continue
+            };
+            request.onerror = function(e) {
+                console.warn('IDB Error: ',e.value);
+                reject("Couldn't add the passed item");
+            };
+        }
+        resolve();
+    });
+    return promise;
+};
+
 Cow.localdb.prototype.getRecord = function(config){
     var self = this;
     var storename = config.storename;

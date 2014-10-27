@@ -117,14 +117,11 @@
     maxage: 1000 * 60 * 60 * 24 * 30 //30 days
   });
   
-  core.userStore().loaded.then(function(){
-          console.log('Userstore loaded');
+  core.projectStore().loaded.then(function(){
+          console.log('projectstore loaded');
   });
-  core.userStore().on('synced', function(){
-          console.log('userstore synced');
-  });
-  core.peerStore().loaded.then(function(){
-          console.log('Peerstore loaded');
+  core.projectStore().on('synced', function(){
+          console.log('projectstore synced');
   });
   core.projectStore().loaded.then(function(){
           console.log('Projectstore loaded');

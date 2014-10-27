@@ -24,9 +24,14 @@ Cow.syncstore =  function(config){
         toSent: [],
         received: 0, 
         send: 0
-    };
+    };      
     if (!this.noIDB){
         this.localdb = this._core.localdb();//new Cow.localdb(config, this);
+        this._commitqueue = {
+            storename:this._storename,
+            projectid: this._projectid,
+            data: []
+        };
     }
     this.loaded = new Promise(function(resolve, reject){
         if (self.localdb){
@@ -228,11 +233,12 @@ Cow.syncstore.prototype =
                 record.inflate(data);
                 //record.deleted(false); //set undeleted //TT: disabled, since this gives a problem when a record from WS comes in as deleted
                 if (this.localdb && source == 'WS'){ //update the db
-                    this.localdb.write({
-                        storename: this._storename,
-                        projectid: this._projectid,
-                        data: record.deflate()
-                    });
+                    //this.localdb.write({
+                    //    storename:this._storename,
+                    //    projectid: this._projectid,
+                    //    data:record.deflate()
+                    //});
+                    this._commitqueue.data.push(record.deflate());
                 }
             }
         }
@@ -241,11 +247,12 @@ Cow.syncstore.prototype =
             record = this._recordproto(data._id);
             record.inflate(data);
             if (this.localdb && source == 'WS'){
-                promise = this.localdb.write({
-                    storename:this._storename,
-                    projectid: this._projectid,
-                    data:record.deflate()
-                });
+                this._commitqueue.data.push(record.deflate());
+                //this.localdb.write({
+                //    storename:this._storename,
+                //    projectid: this._projectid,
+                //    data:record.deflate()
+                //});
             }
             this._records.push(record); //Adding to the list
             //console.log(this._records.length); 
@@ -253,6 +260,17 @@ Cow.syncstore.prototype =
         
         return record;
     },
+    /**
+        _commit() - sends the commitqueue to the idb
+    **/
+    _commit: function(){
+        if (!this.noIDB && this._commitqueue.data.length > 0){
+            //console.log('starting commit for ', this._commitqueue.data.length, this._storename);
+            this.localdb.writeAll(this._commitqueue);
+        }
+        
+    },
+    
     /**
         _getRecordsOn(timestamp) - 
     **/

@@ -130,6 +130,27 @@ Cow.localdb.prototype.write = function(config){
     return promise;
 };
 
+//This is different from the idb approach since we don't care about the transaction in postgres
+//We just redirect every record to a .write function
+Cow.localdb.prototype.writeAll = function(config){
+    var self = this;
+    var storename = config.storename;
+    var list = config.data;
+    var projectid = config.projectid;
+    var promisearray = [];
+    for (var i = 0;i< list.length;i++){
+        var record = list[i];
+        var subpromise = this.write({
+            storename: storename,
+            projectid: projectid,
+            data: record
+        });
+        promisearray.push(subpromise);
+    }
+    var promise = new Promise.all(promisearray);
+    return promise;
+};
+
 Cow.localdb.prototype.getRecord = function(config){
     var self = this;
     var storename = config.storename;

@@ -230,11 +230,11 @@ Cow.messenger.prototype._onConnect = function(payload){
     //After all idb's are loaded, start syncing process
     function syncAll(){
         console.log('Starting sync');
+        self._core.projectStore().sync();
         self._core.socketserverStore().sync();
         self._core.peerStore().sync();
         self._core.userStore().sync();
-        self._core.projectstore().sync();
-        self._core.projectstore().synced.then(function(){
+        self._core.projectStore().synced.then(function(){
             var projects = self._core.projects();
             for (var i=0;i<projects.length;i++){
                 var project = projects[i];
@@ -354,9 +354,9 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
         });
         */
         //Don't send empty lists
-        if (syncobject.pushlist.length > 0){
+        //if (syncobject.pushlist.length > 0){
             this.sendData(data, 'missingRecords', sender);
-        }
+        //}
     }
 };
 Cow.messenger.prototype._amIAlpha = function(){ //find out wether I am alpha
@@ -408,15 +408,17 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
     var list = payload.list;
     var synclist = [];
     var i;
+    
     for (i=0;i<list.length;i++){
         var data = list[i];
-        //var record = store._addRecord({source: 'WS', data: data});
         var record = store._addRecord({source: 'WS', data: data});
+        
         //if we receive a new project, we also have to get the items and groups in it
-        if (store._type == 'projects'){
-            record.groupStore().sync();
-            record.itemStore().sync();
-        }
+        //TT: disables because handled in the onConnect
+        //if (store._type == 'projects'){
+        //    record.groupStore().sync();
+        //    record.itemStore().sync();
+        //}
         //Do the syncing for the deltas
         if (data.deltas && record.deltas()){
             var localarr = _.pluck(record.deltas(),'timestamp');
@@ -429,11 +431,13 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
             }
         }
     }
+    store._commit();
     store.trigger('synced');
     for (i=0;i<synclist.length;i++){
         store.syncRecord(synclist[i]);
     }
     store.trigger('datachange');
+    
 };
   
 Cow.messenger.prototype._onUpdatedRecords = function(payload) {
