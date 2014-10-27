@@ -227,6 +227,13 @@ Cow.messenger.prototype._onConnect = function(payload){
         Promise.all(loadarray).then(syncAll);
     });
     
+    syncarray = [
+        this._core.socketserverStore().synced,
+        this._core.peerStore().synced,
+        this._core.userStore().synced,
+        this._core.projectStore().synced
+    ];
+    
     //After all idb's are loaded, start syncing process
     function syncAll(){
         console.log('Starting sync');
@@ -238,9 +245,13 @@ Cow.messenger.prototype._onConnect = function(payload){
             var projects = self._core.projects();
             for (var i=0;i<projects.length;i++){
                 var project = projects[i];
+                syncarray.push([project.itemStore().synced,project.groupStore().synced]); 
                 project.itemStore().sync();
                 project.groupStore().sync();
             }
+            Promise.all(syncarray).then(function(d){
+                    console.log('all synced');
+            });
         });
     }
 };

@@ -266,6 +266,7 @@ Cow.syncstore.prototype =
     _commit: function(){
         if (!this.noIDB && this._commitqueue.data.length > 0){
             //console.log('starting commit for ', this._commitqueue.data.length, this._storename);
+            this._commitqueue.projectid = this._projectid;
             this.localdb.writeAll(this._commitqueue);
         }
         
