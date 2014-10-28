@@ -274,10 +274,6 @@ http://underscorejs.org/underscore-min.js
 ### polyfill-promise ###
 https://github.com/jakearchibald/es6-promise
 
-### DB.js ###
-https://github.com/aaronpowell/db.js/releases/tag/0.9.0
-
-
 Dependencies Server
 ===================
 
