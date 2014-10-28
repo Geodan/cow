@@ -16,7 +16,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.0.1-alpha5';
+    this._version = '2.0.1-alpha5x';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
@@ -265,7 +265,7 @@ Cow.core.prototype =
     **/
     activeUsers: function(){
         var returnArr = [];
-        var peers = _(this.peers()).filter(function(d){return !d.deleted();});
+        var peers = this.peers().filter(function(d){return !d.deleted();});
         for (var i = 0;i<peers.length;i++){
             if (peers[i].user()){
                 returnArr.push(peers[i].user());
@@ -282,7 +282,7 @@ Cow.core.prototype =
         the peer with the oldest timestamp AND member of the alpha familty is alpha
         **/
         var alphaPeers = _.sortBy(
-            _.filter(this.peers(),function(d){
+            this.peers().filter(function(d){
                 return (d.data('family') == 'alpha' && !d.deleted());
             }),
             function(d){return d.created();});
