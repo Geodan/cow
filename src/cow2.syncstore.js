@@ -277,7 +277,7 @@ Cow.syncstore.prototype =
     **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
-        _.each(this._records, function(d){
+        this._records.forEach(function(d){
             //If request is older than feature itself, disregard
             if (timestamp < d._created){
                 //don't add

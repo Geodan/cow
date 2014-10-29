@@ -1,0 +1,27 @@
+CACHE MANIFEST
+# 2010-06-18:v2
+
+# Explicitly cached entries
+index.html
+http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css
+http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css
+../lib/underscore/underscore-min.js
+../lib/polyfill-promise/promise-0.1.1.min.js
+http://d3js.org/d3.v3.min.js
+../dist/cow.js
+../test/cow.data.js
+../test/cow.testsuite.js
+
+
+# offline.html will be displayed if the user is offline
+FALLBACK:
+
+# All other resources (e.g. sites) require the user to be online. 
+NETWORK:
+#*
+
+# Additional resources to cache
+CACHE:
+#images/logo1.png
+#images/logo2.png
+#images/logo3.png

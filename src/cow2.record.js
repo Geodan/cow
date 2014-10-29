@@ -191,7 +191,7 @@ Cow.record.prototype =
             //Recreate the data based on deltas
             var returnval = {};
             var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
-            _.each(deltas, function(d){
+            deltas.forEach(function(d){
                 if (d.timestamp <= timestamp){
                     _.extend(returnval, d.data);
                 }
@@ -215,7 +215,7 @@ Cow.record.prototype =
             //Recreate the deleted status based on deltas
             var returnval = {};
             var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
-            _.each(deltas, function(d){
+            deltas.forEach(function(d){
                 if (d.timestamp <= timestamp){
                     returnval = d.deleted;
                 }
