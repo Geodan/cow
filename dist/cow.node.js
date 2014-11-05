@@ -402,7 +402,7 @@ Cow.record.prototype =
             //Recreate the data based on deltas
             var returnval = {};
             var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
-            _.each(deltas, function(d){
+            deltas.forEach(function(d){
                 if (d.timestamp <= timestamp){
                     _.extend(returnval, d.data);
                 }
@@ -426,7 +426,7 @@ Cow.record.prototype =
             //Recreate the deleted status based on deltas
             var returnval = {};
             var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
-            _.each(deltas, function(d){
+            deltas.forEach(function(d){
                 if (d.timestamp <= timestamp){
                     returnval = d.deleted;
                 }
@@ -1014,7 +1014,7 @@ Cow.syncstore.prototype =
     **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
-        _.each(this._records, function(d){
+        this._records.forEach(function(d){
             //If request is older than feature itself, disregard
             if (timestamp < d._created){
                 //don't add
@@ -1649,11 +1649,10 @@ Cow.group.prototype =
                     return this._addGroup(groupid);
                 }
                 else {
-                   for (var i=0;i<groupid.length;i++){
-                   //$.each(groupid, function(i,d){
+                   groupid.forEach(function(d){
                      var d = groupid[i];
                      self._addGroup(d);
-                   }
+                   });
                    return this._getGroups();
                 }
                 break;
@@ -1823,7 +1822,6 @@ Cow.item.prototype =
             }
             else {
                 for (var i=0;i<groups.length;i++){
-                //$.each(groups,function(i){
                     if(!self.permissionHasGroup(type,groups[i])) {
                         permission.groups.push(groups[i]);
                     }
@@ -1857,9 +1855,7 @@ Cow.item.prototype =
             else {
                 var doeshave = false;
                 for (var i=0;i<groups.length;i++){
-                //$.each(groups,function(i){
                     for (var j=0;j<ingroups.length;j++){
-                    //$.each(ingroups, function(j){
                        if (groups[i] == ingroups[j]){
                            doeshave = true;
                        }
@@ -1882,7 +1878,6 @@ Cow.item.prototype =
         var permittedgroups = this.permissions(type);
         if (permittedgroups){
             for (var i=0;i<permittedgroups.groups.length;i++){
-            //$.each(permittedgroups[0].groups, function(key,value) {
                 var value = permittedgroups.groups[i];
                 if((project.groups(value) !== undefined) &&(project.groups(value).hasMember(user))) {
                     hasperm = true;
@@ -1963,7 +1958,6 @@ Cow.item.prototype =
                     permission.groups = pgroups;
                     this.data('permissions',permissions);
                 }
-                //self._timestamp = new Date().getTime();
                 return this;
             }
             else {
@@ -2580,7 +2574,7 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable 
         
-        _(data.list).each(function(d){
+        data.list.forEach(function(d){
             msg = {
                 "syncType" : payload.syncType,
                 "project" : project,
@@ -2626,7 +2620,7 @@ Cow.messenger.prototype._onWantedList = function(payload) {
     /* TT: This was used because IIS/signalR couldn't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable 
-    _(data.list).each(function(d){
+    data.list.forEach(function(d){
         msg = {
             "syncType" : payload.syncType,
             "project" : store._projectid,
@@ -2711,7 +2705,7 @@ Cow.messenger.prototype._onCommand = function(data) {
     //Remove all data from a peer
     if (command == 'purgePeer'){
         if (target && target == this._core.peerid()){
-            _.each(core.projects(), function(d){
+            core.projects().forEach(function(d){
                 d.itemStore().clear();
                 d.groupStore().clear();
             });
@@ -2755,7 +2749,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.0.1-alpha5x';
+    this._version = '2.0.1';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
