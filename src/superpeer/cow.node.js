@@ -402,7 +402,7 @@ Cow.record.prototype =
             //Recreate the data based on deltas
             var returnval = {};
             var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
-            deltas.forEach(function(d){
+            _.each(deltas, function(d){
                 if (d.timestamp <= timestamp){
                     _.extend(returnval, d.data);
                 }
@@ -426,7 +426,7 @@ Cow.record.prototype =
             //Recreate the deleted status based on deltas
             var returnval = {};
             var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
-            deltas.forEach(function(d){
+            _.each(deltas, function(d){
                 if (d.timestamp <= timestamp){
                     returnval = d.deleted;
                 }
@@ -658,27 +658,6 @@ Cow.localdb.prototype.write = function(config){
     return promise;
 };
 
-//This is different from the idb approach since we don't care about the transaction in postgres
-//We just redirect every record to a .write function
-Cow.localdb.prototype.writeAll = function(config){
-    var self = this;
-    var storename = config.storename;
-    var list = config.data;
-    var projectid = config.projectid;
-    var promisearray = [];
-    for (var i = 0;i< list.length;i++){
-        var record = list[i];
-        var subpromise = this.write({
-            storename: storename,
-            projectid: projectid,
-            data: record
-        });
-        promisearray.push(subpromise);
-    }
-    var promise = new Promise.all(promisearray);
-    return promise;
-};
-
 Cow.localdb.prototype.getRecord = function(config){
     var self = this;
     var storename = config.storename;
@@ -761,14 +740,9 @@ Cow.syncstore =  function(config){
         toSent: [],
         received: 0, 
         send: 0
-    };      
+    };
     if (!this.noIDB){
         this.localdb = this._core.localdb();//new Cow.localdb(config, this);
-        this._commitqueue = {
-            storename:this._storename,
-            projectid: this._projectid,
-            data: []
-        };
     }
     this.loaded = new Promise(function(resolve, reject){
         if (self.localdb){
@@ -970,12 +944,11 @@ Cow.syncstore.prototype =
                 record.inflate(data);
                 //record.deleted(false); //set undeleted //TT: disabled, since this gives a problem when a record from WS comes in as deleted
                 if (this.localdb && source == 'WS'){ //update the db
-                    //this.localdb.write({
-                    //    storename:this._storename,
-                    //    projectid: this._projectid,
-                    //    data:record.deflate()
-                    //});
-                    this._commitqueue.data.push(record.deflate());
+                    this.localdb.write({
+                        storename: this._storename,
+                        projectid: this._projectid,
+                        data: record.deflate()
+                    });
                 }
             }
         }
@@ -984,12 +957,11 @@ Cow.syncstore.prototype =
             record = this._recordproto(data._id);
             record.inflate(data);
             if (this.localdb && source == 'WS'){
-                this._commitqueue.data.push(record.deflate());
-                //this.localdb.write({
-                //    storename:this._storename,
-                //    projectid: this._projectid,
-                //    data:record.deflate()
-                //});
+                promise = this.localdb.write({
+                    storename:this._storename,
+                    projectid: this._projectid,
+                    data:record.deflate()
+                });
             }
             this._records.push(record); //Adding to the list
             //console.log(this._records.length); 
@@ -998,23 +970,11 @@ Cow.syncstore.prototype =
         return record;
     },
     /**
-        _commit() - sends the commitqueue to the idb
-    **/
-    _commit: function(){
-        if (!this.noIDB && this._commitqueue.data.length > 0){
-            //console.log('starting commit for ', this._commitqueue.data.length, this._storename);
-            this._commitqueue.projectid = this._projectid;
-            this.localdb.writeAll(this._commitqueue);
-        }
-        
-    },
-    
-    /**
         _getRecordsOn(timestamp) - 
     **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
-        this._records.forEach(function(d){
+        _.each(this._records, function(d){
             //If request is older than feature itself, disregard
             if (timestamp < d._created){
                 //don't add
@@ -1649,10 +1609,11 @@ Cow.group.prototype =
                     return this._addGroup(groupid);
                 }
                 else {
-                   groupid.forEach(function(d){
+                   for (var i=0;i<groupid.length;i++){
+                   //$.each(groupid, function(i,d){
                      var d = groupid[i];
                      self._addGroup(d);
-                   });
+                   }
                    return this._getGroups();
                 }
                 break;
@@ -1822,6 +1783,7 @@ Cow.item.prototype =
             }
             else {
                 for (var i=0;i<groups.length;i++){
+                //$.each(groups,function(i){
                     if(!self.permissionHasGroup(type,groups[i])) {
                         permission.groups.push(groups[i]);
                     }
@@ -1855,7 +1817,9 @@ Cow.item.prototype =
             else {
                 var doeshave = false;
                 for (var i=0;i<groups.length;i++){
+                //$.each(groups,function(i){
                     for (var j=0;j<ingroups.length;j++){
+                    //$.each(ingroups, function(j){
                        if (groups[i] == ingroups[j]){
                            doeshave = true;
                        }
@@ -1878,6 +1842,7 @@ Cow.item.prototype =
         var permittedgroups = this.permissions(type);
         if (permittedgroups){
             for (var i=0;i<permittedgroups.groups.length;i++){
+            //$.each(permittedgroups[0].groups, function(key,value) {
                 var value = permittedgroups.groups[i];
                 if((project.groups(value) !== undefined) &&(project.groups(value).hasMember(user))) {
                     hasperm = true;
@@ -1958,6 +1923,7 @@ Cow.item.prototype =
                     permission.groups = pgroups;
                     this.data('permissions',permissions);
                 }
+                //self._timestamp = new Date().getTime();
                 return this;
             }
             else {
@@ -2446,31 +2412,21 @@ Cow.messenger.prototype._onConnect = function(payload){
         Promise.all(loadarray).then(syncAll);
     });
     
-    syncarray = [
-        this._core.socketserverStore().synced,
-        this._core.peerStore().synced,
-        this._core.userStore().synced,
-        this._core.projectStore().synced
-    ];
-    
     //After all idb's are loaded, start syncing process
     function syncAll(){
         console.log('Starting sync');
-        self._core.projectStore().sync();
         self._core.socketserverStore().sync();
         self._core.peerStore().sync();
         self._core.userStore().sync();
-        self._core.projectStore().synced.then(function(){
+        self._core.projectstore().sync();
+        self._core.projectstore().synced.then(function(){
             var projects = self._core.projects();
             for (var i=0;i<projects.length;i++){
                 var project = projects[i];
-                syncarray.push([project.itemStore().synced,project.groupStore().synced]); 
+                console.log('syncing', project.id());
                 project.itemStore().sync();
                 project.groupStore().sync();
             }
-            Promise.all(syncarray).then(function(d){
-                    console.log('all synced');
-            });
         });
     }
 };
@@ -2574,7 +2530,7 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable 
         
-        data.list.forEach(function(d){
+        _(data.list).each(function(d){
             msg = {
                 "syncType" : payload.syncType,
                 "project" : project,
@@ -2620,7 +2576,7 @@ Cow.messenger.prototype._onWantedList = function(payload) {
     /* TT: This was used because IIS/signalR couldn't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable 
-    data.list.forEach(function(d){
+    _(data.list).each(function(d){
         msg = {
             "syncType" : payload.syncType,
             "project" : store._projectid,
@@ -2638,17 +2594,15 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
     var list = payload.list;
     var synclist = [];
     var i;
-    
     for (i=0;i<list.length;i++){
         var data = list[i];
+        //var record = store._addRecord({source: 'WS', data: data});
         var record = store._addRecord({source: 'WS', data: data});
-        
         //if we receive a new project, we also have to get the items and groups in it
-        //TT: disables because handled in the onConnect
-        //if (store._type == 'projects'){
-        //    record.groupStore().sync();
-        //    record.itemStore().sync();
-        //}
+        if (store._type == 'projects'){
+            record.groupStore().sync();
+            record.itemStore().sync();
+        }
         //Do the syncing for the deltas
         if (data.deltas && record.deltas()){
             var localarr = _.pluck(record.deltas(),'timestamp');
@@ -2661,13 +2615,11 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
             }
         }
     }
-    store._commit();
     store.trigger('synced');
     for (i=0;i<synclist.length;i++){
         store.syncRecord(synclist[i]);
     }
     store.trigger('datachange');
-    
 };
   
 Cow.messenger.prototype._onUpdatedRecords = function(payload) {
@@ -2705,7 +2657,7 @@ Cow.messenger.prototype._onCommand = function(data) {
     //Remove all data from a peer
     if (command == 'purgePeer'){
         if (target && target == this._core.peerid()){
-            core.projects().forEach(function(d){
+            _.each(core.projects(), function(d){
                 d.itemStore().clear();
                 d.groupStore().clear();
             });
@@ -2749,7 +2701,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.0.1';
+    this._version = '2.0.1-alpha4';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
@@ -2788,7 +2740,7 @@ Cow.core = function(config){
     
     /*USERS*/
     this._userStore =  _.extend(
-        new Cow.syncstore({dbname: 'users', noIDB: false, noDeltas: true, core: this, maxAge: null}), {
+        new Cow.syncstore({dbname: 'users', noIDB: false, noDeltas: true, core: this, maxAge: this._maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
@@ -2798,7 +2750,7 @@ Cow.core = function(config){
     
     /*SOCKETSERVERS*/
     this._socketserverStore =  _.extend(
-        new Cow.syncstore({dbname: 'socketservers', noIDB: false, noDeltas: true, core: this, maxAge: null}), {
+        new Cow.syncstore({dbname: 'socketservers', noIDB: false, noDeltas: true, core: this, maxAge: this._maxAge}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.socketserver({_id: _id, store: this});},     
@@ -2998,7 +2950,7 @@ Cow.core.prototype =
     **/
     activeUsers: function(){
         var returnArr = [];
-        var peers = this.peers().filter(function(d){return !d.deleted();});
+        var peers = _(this.peers()).filter(function(d){return !d.deleted();});
         for (var i = 0;i<peers.length;i++){
             if (peers[i].user()){
                 returnArr.push(peers[i].user());
@@ -3015,7 +2967,7 @@ Cow.core.prototype =
         the peer with the oldest timestamp AND member of the alpha familty is alpha
         **/
         var alphaPeers = _.sortBy(
-            this.peers().filter(function(d){
+            _.filter(this.peers(),function(d){
                 return (d.data('family') == 'alpha' && !d.deleted());
             }),
             function(d){return d.created();});

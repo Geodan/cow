@@ -97,7 +97,6 @@ Cow.item.prototype =
             }
             else {
                 for (var i=0;i<groups.length;i++){
-                //$.each(groups,function(i){
                     if(!self.permissionHasGroup(type,groups[i])) {
                         permission.groups.push(groups[i]);
                     }
@@ -131,9 +130,7 @@ Cow.item.prototype =
             else {
                 var doeshave = false;
                 for (var i=0;i<groups.length;i++){
-                //$.each(groups,function(i){
                     for (var j=0;j<ingroups.length;j++){
-                    //$.each(ingroups, function(j){
                        if (groups[i] == ingroups[j]){
                            doeshave = true;
                        }
@@ -156,7 +153,6 @@ Cow.item.prototype =
         var permittedgroups = this.permissions(type);
         if (permittedgroups){
             for (var i=0;i<permittedgroups.groups.length;i++){
-            //$.each(permittedgroups[0].groups, function(key,value) {
                 var value = permittedgroups.groups[i];
                 if((project.groups(value) !== undefined) &&(project.groups(value).hasMember(user))) {
                     hasperm = true;
@@ -237,7 +233,6 @@ Cow.item.prototype =
                     permission.groups = pgroups;
                     this.data('permissions',permissions);
                 }
-                //self._timestamp = new Date().getTime();
                 return this;
             }
             else {

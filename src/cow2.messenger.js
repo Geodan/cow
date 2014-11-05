@@ -355,7 +355,7 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable 
         
-        _(data.list).each(function(d){
+        data.list.forEach(function(d){
             msg = {
                 "syncType" : payload.syncType,
                 "project" : project,
@@ -401,7 +401,7 @@ Cow.messenger.prototype._onWantedList = function(payload) {
     /* TT: This was used because IIS/signalR couldn't handle large chunks in websocket.
         Therefore we sent the records one by one. This slows down the total but should be 
         more stable 
-    _(data.list).each(function(d){
+    data.list.forEach(function(d){
         msg = {
             "syncType" : payload.syncType,
             "project" : store._projectid,
@@ -486,7 +486,7 @@ Cow.messenger.prototype._onCommand = function(data) {
     //Remove all data from a peer
     if (command == 'purgePeer'){
         if (target && target == this._core.peerid()){
-            _.each(core.projects(), function(d){
+            core.projects().forEach(function(d){
                 d.itemStore().clear();
                 d.groupStore().clear();
             });
