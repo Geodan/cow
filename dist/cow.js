@@ -658,7 +658,7 @@ Cow.localdb.prototype.getRecord = function(config){
     var storename = config.storename;
     var id = config.id;
     var promise = new Promise(function(resolve, reject){
-            var trans = this._db.transaction([storename]);
+            var trans = self._db.transaction([storename]);
             trans.onabort = function(e){
                 console.warn('Abort error');
             };
@@ -727,7 +727,7 @@ Cow.localdb.prototype.delRecord = function(config){
     var projectid = config.projectid;
     var id = config.id;
     var promise = new Promise(function(resolve, reject){
-        var trans = this._db.transaction([storename], "readwrite");
+        var trans = self._db.transaction([storename], "readwrite");
         trans.onabort = function(e){
             console.warn('Abort error');
         };
@@ -2820,7 +2820,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.0.1';
+    this._version = '2.0.2-beta1';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
