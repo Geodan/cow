@@ -9,11 +9,12 @@ Events = require('../../src/events.js');
 **/
 WebSocket = require('websocket').client;
 pg = require('pg').native;
+//Set global dbUrl
+GLOBAL.dbUrl = 'tcp://geodan:Gehijm@192.168.24.15/cow';
 Cow = require('./cow.node.js');
 //log.setLevel('warn');
 
-//Set global dbUrl
-var dbUrl = 'tcp://geodan:Gehijm@192.168.24.15/cow';
+
 core = new Cow.core({
     herdname: 'hhnk',
     maxage: 1000 * 60 * 60 * 24 * 365 //one year 
