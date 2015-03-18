@@ -1,7 +1,9 @@
 _ = require('../../node_modules/underscore/underscore.js')._
 Promise = require('../../node_modules/es6-promise').Promise;
 Events = require('../../src/events.js');
-//log = require('../../lib/loglevel/loglevel.min.js');
+
+
+
 /**
     !! websocket source code has been changed !!
     node_modules/websocket/lib/WebSocketClient.js, line 251
