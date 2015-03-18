@@ -6,3 +6,4 @@ node_modules
 tmp
 demo.obs
 *.log
+config

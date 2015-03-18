@@ -1,9 +1,9 @@
 configfile = process.argv[2];
 config = require('./'+ configfile);
 
-_ = require('../../node_modules/underscore/underscore.js')._
-Promise = require('../../node_modules/es6-promise').Promise;
-Events = require('../../src/events.js');
+_ = require('../node_modules/underscore/underscore.js')._
+Promise = require('../node_modules/es6-promise').Promise;
+Events = require('../src/events.js');
 
 WebSocket = require('websocket').client;
 pg = require('pg').native;
@@ -21,9 +21,9 @@ core = new Cow.core({
 core.socketservers({
         _id: 'default', 
         data: {
-        	protocol:config.protocol,
-        	ip:config.ip, 
-        	port:config.port,
+        	protocol: config.protocol,
+        	ip: config.ip, 
+        	port: config.port,
         	dir: config.dir}
       });
 core.socketserver('default');
@@ -35,5 +35,5 @@ core.userStore().loaded.then(function(){
 core.projectStore().loaded.then(function(){
 	console.log(core.projects().length, ' projects loaded');
 	core.peer().data('superpeer', true).sync();
-	console.log('My peerid: ', core.peerid()); //dirty hack
+	console.log('My peerid: ', core.peerid());
 });
