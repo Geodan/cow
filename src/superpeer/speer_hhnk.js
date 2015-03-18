@@ -15,12 +15,12 @@ Cow = require('./cow.node.js');
 //Set global dbUrl
 var dbUrl = 'tcp://geodan:Gehijm@192.168.24.15/cow';
 core = new Cow.core({
-    herdname: 'wetterskip',
+    herdname: 'hhnk',
     maxage: 1000 * 60 * 60 * 24 * 365 //one year 
 });
 core.socketservers({
         _id: 'default', 
-        data: {protocol:'wss',ip:'192.168.40.10', port:443,dir: 'wetterskip'}
+        data: {protocol:'wss',ip:'192.168.40.10', port:443,dir: 'hhnk'}
       });
 core.socketserver('default');
 
