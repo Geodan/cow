@@ -150,7 +150,7 @@ Cow.localdb.prototype.writeAll = function(config){
         });
         promisearray.push(subpromise);
     }
-    var promise = new Promise.all(promisearray);
+    var promise = Promise.all(promisearray);
     return promise;
 };
 
