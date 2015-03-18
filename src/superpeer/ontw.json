@@ -1,0 +1,8 @@
+{
+	"dbUrl": "tcp://geodan:Gehijm@192.168.24.15/cow",
+	"herdname":"ontw",
+	"protocol": "wss",
+	"ip": "websocket.geodan.nl",
+	"port": 443,
+	"dir": "ontw"
+}
