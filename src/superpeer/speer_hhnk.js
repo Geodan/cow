@@ -1,7 +1,7 @@
 _ = require('../../node_modules/underscore/underscore.js')._
 Promise = require('../../node_modules/es6-promise').Promise;
 Events = require('../../src/events.js');
-log = require('../../lib/loglevel/loglevel.min.js');
+//log = require('../../lib/loglevel/loglevel.min.js');
 /**
     !! websocket source code has been changed !!
     node_modules/websocket/lib/WebSocketClient.js, line 251
@@ -10,14 +10,16 @@ log = require('../../lib/loglevel/loglevel.min.js');
 WebSocket = require('websocket').client;
 pg = require('pg').native;
 Cow = require('./cow.node.js');
-log.setLevel('warn');
+//log.setLevel('warn');
+
+//Set global dbUrl
+var dbUrl = 'tcp://geodan:Gehijm@192.168.24.15/cow';
 core = new Cow.core({
     herdname: 'hhnk',
     maxage: 1000 * 60 * 60 * 24 * 365 //one year 
 });
 core.socketservers({
         _id: 'default', 
-        //data: {protocol:'ws',ip:'192.168.24.95', port:8081}
         data: {protocol:'wss',ip:'192.168.40.10', port:443,dir: 'hhnk'}
       });
 core.socketserver('default');

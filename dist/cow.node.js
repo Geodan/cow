@@ -551,7 +551,10 @@ Cow.localdb = function(config){
     this._db = null;
     var version = 2;
     //var dbUrl = "tcp://osgis:osgis@osgis.geodan.nl/osgis2";
-    var dbUrl = "tcp://geodan:Gehijm@192.168.24.15/cow";
+    //var dbUrl = "tcp://geodan:Gehijm@192.168.24.15/cow";
+    if (!dbUrl){
+    	throw('No global dbUrl set. Should be like: "tcp://user:pass@ip/dir"');
+    }
     this._schema = self._dbname;
     this._openpromise = new Promise(function(resolve, reject){
         pg.on('error', function (err) {
@@ -728,7 +731,7 @@ Cow.localdb.prototype.getRecords = function(config){
 
 Cow.localdb.prototype.delRecord = function(config){
     var promise = new Promise(function(resolve, reject){
-            console.warn('delRecord not used with postgres');
+            //console.warn('delRecord not used with postgres');
             reject();
     });
     return promise;
