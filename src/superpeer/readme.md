@@ -91,4 +91,27 @@ The superpeer can be started with
 ```
 node superpeer.js config.json
 ```
-Tbd: Supervisor config:
+6. supervisor config:
+	See https://www.digitalocean.com/community/tutorials/how-to-install-and-manage-supervisor-on-ubuntu-and-debian-vps
+
+	A supervisor configuration per running superpeer, for example:
+
+ 	File `/etc/supervisor/conf.d/this-superpeer-node.conf`
+
+```
+[program:this-superpeer-node]
+directory=/opt/primus/cow/src/superpeer
+command=/usr/bin/node superpeer.js this.json
+autostart=true
+autorestart=unexpected
+user=geodan
+startsecs=10
+stdout_logfile=/opt/primus/log/this.log
+redirect_stderr=true
+```
+
+To start the superpeer as supervisor
+```
+supervisord reread
+supervisord update
+```
