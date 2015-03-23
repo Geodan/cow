@@ -1,4 +1,11 @@
-Make a new superpeer with:
+Install
+-------
+tbd
+
+
+Running direct
+---------------
+Run a new superpeer with:
 ```
 node superpeer.js config.json
 ```
@@ -14,3 +21,6 @@ Config file should look like:
 	"dir": "blabla"
 }   
 ```
+
+Running in supervisord
+----------------------
