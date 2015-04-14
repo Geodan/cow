@@ -1,0 +1,24 @@
+{
+  "name": "cash",
+  "version": "0.1.0",
+  "description": "CASH COW websocket server",
+  "main": "cash.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Geodan/cow.git"
+  },
+  "author": "COW Contributors",
+  "license": "MIT",
+  "dependencies": {
+    "fs": "~0.0.2",
+    "forever": "~0.14.1",
+    "http": "*",
+    "websocket": "~1.0.18"
+  },
+  "bugs": {
+    "url": "https://github.com/Geodan/cow/issues"
+  }
+}

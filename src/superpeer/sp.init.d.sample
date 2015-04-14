@@ -1,0 +1,32 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides: Superpeer
+# Required-Start: $remote_fs $syslog
+# Required-Stop: $remote_fs $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Superpeer init.d script
+# Description: Superpeer init.d script for client ontw
+# 
+### END INIT INFO
+
+set -e
+
+case "$1" in
+ start)
+   forever --uid sp-ontw -a -o /opt/primus/log/sp-ontw.out.log -l /opt/primus/log/sp-ontw.log -e /opt/primus/log/sp-ontw.err.log start /opt/primus/cow/src/superpeer/superpeer.js /opt/primus/cow/src/superpeer/ontw.json
+   ;;
+ stop)
+   forever stop sp-ontw
+   sleep 1
+   ;;
+ restart)
+   forever stop sp-ontw
+   sleep 2
+   forever --uid sp-ontw -a -o /opt/primus/log/sp-ontw.out.log -l /opt/primus/log/sp-ontw.log -e /opt/primus/log/sp-ontw.err.log start /opt/primus/cow/src/superpeer/superpeer.js /opt/primus/cow/src/superpeer/ontw.json
+   ;;
+ *)
+   echo "Usage: sp-ontw {start|stop|restart}" >&2
+   exit 3
+   ;;
+esac
