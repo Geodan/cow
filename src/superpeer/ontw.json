@@ -1,5 +1,5 @@
 {
-	"dbUrl": "tcp://geodan:Gehijm@192.168.24.15/cow",
+	"dbUrl": "tcp://user:pass@my.pgis.db.machine/cow",
 	"herdname":"ontw",
 	"protocol": "wss",
 	"ip": "websocket.geodan.nl",

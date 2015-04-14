@@ -1,0 +1,32 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides: CASH
+# Required-Start: $remote_fs $syslog
+# Required-Stop: $remote_fs $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: CASH init.d script
+# Description: CASH init.d script for client ontw
+# 
+### END INIT INFO
+
+set -e
+
+case "$1" in
+ start)
+   forever --uid cash-ontw -a -o /opt/primus/log/cash-ontw.out.log -l /opt/primus/log/cash-ontw.log -e /opt/primus/log/cash-ontw.err.log start /opt/primus/cow/server/node/cash-ontw.js
+   ;;
+ stop)
+   forever stop cash-ontw
+   sleep 1
+   ;;
+ restart)
+   forever stop cash-ontw
+   sleep 2
+   forever --uid cash-ontw -a -o /opt/primus/log/cash-ontw.out.log -l /opt/primus/log/cash-ontw.log -e /opt/primus/log/cash-ontw.err.log start /opt/primus/cow/server/node/cash-ontw.js
+   ;;
+ *)
+   echo "Usage: cash-ontw {start|stop|restart}" >&2
+   exit 3
+   ;;
+esac
