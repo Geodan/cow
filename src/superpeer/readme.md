@@ -15,7 +15,7 @@ Config file should look like:
 	"port": 443,
 	"dir": "blabla"
 }  
-
+```
 
 Superpeer global configuration
 ----------------------------------------
@@ -55,12 +55,12 @@ Note that the user 'cow' must be able to access the database.  Dee file pg_hba.c
 Run in PostGIS:
 
 ```
-create role cow login with createdb createrole password 'cow';
+	create role cow login with createdb createrole password 'cow';
 
-create database cow with owner =  cow;
-grant all on database cow to cow;
+	create database cow with owner =  cow;
+	grant all on database cow to cow;
 
-create extension postgis;
+	create extension postgis;
 ```
 
 Superpeer creates it's own schema and schema-objects upon first run.
