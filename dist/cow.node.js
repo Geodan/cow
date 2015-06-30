@@ -2752,7 +2752,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.0.3';
+    this._version = '2.0.4';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
