@@ -1,5 +1,6 @@
 configfile = process.argv[2];
-config = require('./'+ configfile);
+//Enable full path
+config = require(configfile);
 
 _ = require('../node_modules/underscore/underscore.js')._
 Promise = require('../node_modules/es6-promise').Promise;
@@ -11,7 +12,7 @@ pg = require('pg').native;
 GLOBAL.dbUrl = config.dbUrl;
 //Set env var to accept all certificates
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-Cow = require('./cow.node.js');
+Cow = require('../../dist/cow.node.js');
 
 
 core = new Cow.core({
