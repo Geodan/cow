@@ -233,13 +233,13 @@ Cow.syncstore.prototype =
                 record.inflate(data);
                 //record.deleted(false); //set undeleted //TT: disabled, since this gives a problem when a record from WS comes in as deleted
                 if (this.localdb && source == 'WS'){ //update the db
-                    this.localdb.write({
-                        storename:this._storename,
-                        projectid: this._projectid,
-                        data:record.deflate()
-                    });
-                    //TT: this was never commited, reverted back to old situtation adding directly to db
-                    //this._commitqueue.data.push(record.deflate());
+                	//Disabled because new way of adding records by first adding them to a commitqueue
+                    //this.localdb.write({
+                    //    storename:this._storename,
+                    //    projectid: this._projectid,
+                    //    data:record.deflate()
+                    //});
+                    this._commitqueue.data.push(record.deflate());
                 }
             }
         }
@@ -248,13 +248,13 @@ Cow.syncstore.prototype =
             record = this._recordproto(data._id);
             record.inflate(data);
             if (this.localdb && source == 'WS'){
-                this.localdb.write({
-                    storename:this._storename,
-                    projectid: this._projectid,
-                    data:record.deflate()
-                });
-                //TT: this was never commited, reverted back to old situtation adding directly to db
-                //this._commitqueue.data.push(record.deflate());
+            	//Disabled because New way of adding records by first adding them to a commitqueue
+                //this.localdb.write({
+                //    storename:this._storename,
+                //    projectid: this._projectid,
+                //    data:record.deflate()
+                //});
+                this._commitqueue.data.push(record.deflate());
             }
             this._records.push(record); //Adding to the list
             //console.log(this._records.length); 

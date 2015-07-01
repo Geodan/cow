@@ -442,6 +442,7 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
             }
         }
     }
+    //After doing all the _addRecord to the store, now we should commit the queue
     store._commit();
     store.trigger('synced');
     for (i=0;i<synclist.length;i++){
@@ -455,6 +456,8 @@ Cow.messenger.prototype._onUpdatedRecords = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
+    //After doing the _addRecord to the store, now we should commit the queue
+    store._commit();
     //TODO: _.without might not be most effective way to purge an array
     store.syncinfo.toReceive = _.without(store.syncinfo.toReceive,data._id); 
     store.trigger('datachange');
