@@ -165,7 +165,7 @@ Cow.record.prototype =
         else if (param && typeof(param) == 'number' && typeof(value) == 'undefined'){
             return this.data_on(param);
         }
-        else if (param && typeof(value) != ''){
+        else if (param && typeof(value) != 'undefined'){
             if (typeof(value) == 'object'){
                 value = JSON.parse(JSON.stringify(value));
             }
