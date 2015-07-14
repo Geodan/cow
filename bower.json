@@ -1,8 +1,8 @@
 {
   "name": "cow",
-  "version": "2.0.1",
+  "version": "2.0.5",
   "homepage": "https://github.com/Geodan/cow",
-  "description": "Pre release for Eagle water",
+  "description": "Release for Eagle water",
   "authors": [
     "Tom van Tilburg",
     "Steven Ottens"
