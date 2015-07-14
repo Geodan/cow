@@ -441,7 +441,9 @@ Cow.record.prototype =
     **/
     deltas: function(time, data, deleted, userid){
         if (!time){
-            return this._deltas;
+            return this._deltas.sort(function(a, b) {
+			  return a.timestamp - b.timestamp;
+			});
         }
         else if (time && !data){
             for (var i = 0;i<this._deltas.length;i++){
