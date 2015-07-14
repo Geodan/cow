@@ -159,13 +159,13 @@ Cow.record.prototype =
             //console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data'); 
             return this;
         }
-        else if (param && typeof(param) == 'string' && !value){
+        else if (param && typeof(param) == 'string' && typeof(value) == 'undefined'){
             return this._data[param];
         }
-        else if (param && typeof(param) == 'number' && !value){
+        else if (param && typeof(param) == 'number' && typeof(value) == 'undefined'){
             return this.data_on(param);
         }
-        else if (param && value){
+        else if (param && typeof(value) != 'undefined'){
             if (typeof(value) == 'object'){
                 value = JSON.parse(JSON.stringify(value));
             }
@@ -232,7 +232,9 @@ Cow.record.prototype =
     **/
     deltas: function(time, data, deleted, userid){
         if (!time){
-            return this._deltas;
+            return this._deltas.sort(function(a, b) {
+			  return a.timestamp - b.timestamp;
+			});
         }
         else if (time && !data){
             for (var i = 0;i<this._deltas.length;i++){
