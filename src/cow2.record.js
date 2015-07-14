@@ -159,13 +159,13 @@ Cow.record.prototype =
             //console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data'); 
             return this;
         }
-        else if (param && typeof(param) == 'string' && !value){
+        else if (param && typeof(param) == 'string' && typeof(value) == 'undefined'){
             return this._data[param];
         }
-        else if (param && typeof(param) == 'number' && !value){
+        else if (param && typeof(param) == 'number' && typeof(value) == 'undefined'){
             return this.data_on(param);
         }
-        else if (param && value){
+        else if (param && typeof(value) != ''){
             if (typeof(value) == 'object'){
                 value = JSON.parse(JSON.stringify(value));
             }
