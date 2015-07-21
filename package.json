@@ -1,0 +1,13 @@
+{
+    "name" : "cow",
+    "version" : "0.1.0",
+    "author" : "Geodan Research",
+    "private" : true,
+
+    "devDependencies" : {
+        "grunt" :                   "~0.4.0",
+        "grunt-contrib-uglify":         "*",
+        "grunt-contrib-concat":         "*",
+        "pg": "*"
+    }
+}
