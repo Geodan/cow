@@ -1190,8 +1190,11 @@ Cow.syncstore.prototype =
     
     /**
     syncRecords() - looks for dirty records and returns them all at once for syncing them
+    TT: this function does *not* update the localdb and does *not* trigger a datachange.
+    	Therefore it is unsuited for use at the moment.
     **/
     syncRecords: function(){
+    	console.warn('syncRecords is not fully functional!. Please sync record by record.');
         var pushlist = [];
         for (var i=0;i<this._records.length;i++){
             var record = this._records[i];
