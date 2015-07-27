@@ -2222,7 +2222,7 @@ Cow.websocket.prototype.connect = function() {
                 var connection = null;
                 //In case of nodejs....
                 connection = new WebSocket(self._url, 'connect');
-                //connection.onopen = self._onOpen;
+                connection.onopen = self._onOpen;
                 connection.onmessage = self._onMessage;
                 connection.onclose = self._onClose;    
                 connection.onerror = self._onError;
@@ -2254,6 +2254,9 @@ Cow.websocket.prototype.send = function(message){
         this._connection.send(message);
     }
 };
+Cow.websocket.prototype._onOpen = function(){
+	this._core.websocket().trigger('connected');
+};
 
 Cow.websocket.prototype._onMessage = function(message){
     this._core.websocket().trigger('message',message);
@@ -2263,11 +2266,11 @@ Cow.websocket.prototype._onError = function(e){
     this._core.peerStore().clear();
     this._connected = false;
     console.warn('error in websocket connection: ' + e.type);
-    this._core.websocket().trigger('error');
+    this._core.websocket().trigger('error',e);
 };
 
 Cow.websocket.prototype._onClose = function(event){
-    this._core.websocket().trigger('closed');
+    this._core.websocket().trigger('closed',event);
     var code = event.code;
     var reason = event.reason;
     var wasClean = event.wasClean;
