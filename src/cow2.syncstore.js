@@ -360,7 +360,7 @@ Cow.syncstore.prototype =
         for (var i=0;i<this._records.length;i++){
             this._records[i].deleted(true);
         }
-        this.syncRecords();
+        this.syncRecords();//FIXME: syncrecords is not perfect yet (see below)
         this.trigger('datachange');
         return this;
     },
