@@ -69,24 +69,26 @@ Cow.testsuite.prototype.lifecycle = function(){
             var item = project.items({_id: i.toString()});
             item.data('tmp',(Math.random()*100).toString());
             item.data('text','Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit...');
+            item.sync();
         }
-        mylog('We now have ' + core.projects('test').items().length + ' items (should be 100)'); //should be 0 items
+        mylog('We now have ' + core.projects('test').items().length + ' items (should be 100)'); //should be 100 items
         mylog('changing items');
-        var syncpromise = project.itemStore().syncRecords(); //sync the records
+        //var syncpromise = project.itemStore().sync(); //sync the whole store
         for (i = 0;i<100;i++){//Update the records 
             item = project.items(i.toString());
             item.data('tmp',(Math.random()*100).toString()).sync();
         }
         //syncpromise = project.itemStore().syncRecords(); //sync the records
+        mylog('Waiting 2 secs. for all data to be transferred to alphapeer.');
         
-        
-        
-        mylog('Clearing itemstore');
-        project.itemStore().clear(); //remove items from store
-        mylog('We now have ' + core.projects('test').items().length + ' items (should be 0)'); //should be 0 items
-        project.itemStore().sync(); //full sync on itemstore
-        mylog('Sync it back! Waiting 5 secs to sync back the 100 items');
         window.setTimeout(function(){
+			mylog('Clearing itemstore');
+			project.itemStore().clear(); //remove items from store
+			mylog('We now have ' + core.projects('test').items().length + ' items (should be 0)'); //should be 0 items
+			project.itemStore().sync(); //full sync on itemstore
+			mylog('Sync it back!');
+		},2000);
+        project.itemStore().on('synced',function(){
             mylog('We now have ' + core.projects('test').items().length + ' items (should be 100)'); //should be 100
             mylog('Clearing itemstore');
             project.itemStore().clear(); //remove items from store
@@ -95,7 +97,7 @@ Cow.testsuite.prototype.lifecycle = function(){
             core.messenger().sendData({command: 'flushProject',projectid: 'test'}, 'command');
             project.deleted(true).sync();//set project to deleted
             mylog(self.laptime(starttime) + ' lifecycletest finished');
-        },5000);
+        });
     });
 };
 /**

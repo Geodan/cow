@@ -141,32 +141,17 @@ Cow.messenger.prototype._onMessage = function(message){
             }
         break;
         
-        //you just joined and receive the records you are missing (targeted)
-        case 'missingRecords':
-            if(target == PEERID) {
-                this._core.messenger()._onMissingRecords(payload);
-            }   
-        break;
-        
-        //alternative for missingRecords, one by one (targeted)
+        //you just joined and receive the records (one by one)  you are missing (targeted)
         case 'missingRecord':
             if(target == PEERID) {
                 this._core.messenger()._onMissingRecord(payload);
             }   
         break;
         
-        //a new peer has arrived and sends everybody the records that are requested in the *wantedList*
-        case 'requestedRecords':
-            if(sender != PEERID) {
-                this._core.messenger()._onMissingRecords(payload);
-                //OBS: this._onRequestedRecords(payload);
-            }
-        break;
-        //alternative for missingRecords, one by one
+        //a new peer has arrived and sends everybody the records (one by one) that are requested in the *wantedList*
         case 'requestedRecord':
             if(sender != PEERID) {
                 this._core.messenger()._onMissingRecord(payload);
-                //OBS: this._onRequestedRecords(payload);
             }
         break;
         
@@ -176,7 +161,7 @@ Cow.messenger.prototype._onMessage = function(message){
         //a peer sends a new or updated record
         case 'updatedRecord':
             if(sender != PEERID) {
-                this._core.messenger()._onUpdatedRecords(payload);
+                this._core.messenger()._onUpdatedRecord(payload);
             }
         break;
         
@@ -359,16 +344,11 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             this.sendData(data, 'wantedList', sender);
         }
         
-        data =  {
-            "syncType" : payload.syncType,
-            "project" : project,
-            "list" : syncobject.pushlist
-        };
         /* 20150730 TT: 
         Changed the way of syncing by sending records 1 by 1. This slows down the total but should be 
         more stable since we reduce the risk of passing the max message size for websockets 
         */
-        data.list.forEach(function(d){
+        syncobject.pushlist.forEach(function(d){
             msg = {
                 "syncType" : payload.syncType,
                 "project" : project,
@@ -376,11 +356,6 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             };
             self.sendData(msg, 'missingRecord', sender);
         });
-        
-        //Don't send empty lists
-        //if (syncobject.pushlist.length > 0){
-        //    this.sendData(data, 'missingRecords', sender);
-        //}
     }
 };
 Cow.messenger.prototype._amIAlpha = function(){ //find out wether I am alpha
@@ -409,16 +384,11 @@ Cow.messenger.prototype._onWantedList = function(payload) {
     var self = this;
     var store = this._getStore(payload);
     var returnlist = store.requestRecords(payload.list);
-    var data =  {
-        "syncType" : payload.syncType,
-        "project" : store._projectid,
-        "list" : returnlist
-    };
     /* 20150730 TT: 
         Changed the way of syncing by sending records 1 by 1. This slows down the total but should be 
         more stable since we reduce the risk of passing the max message size for websockets 
     */
-    data.list.forEach(function(d){
+    returnlist.forEach(function(d){
 		msg = {
 			"syncType" : payload.syncType,
 			"project" : store._projectid,
@@ -428,7 +398,7 @@ Cow.messenger.prototype._onWantedList = function(payload) {
     });
     //TODO this.core.trigger('ws-wantedList',payload); 
 };
-    
+/*OBS - kept for reference    
 Cow.messenger.prototype._onMissingRecords = function(payload) {
     var store = this._getStore(payload);
     var list = payload.list;
@@ -460,7 +430,7 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
     store.trigger('datachange');
     
 };
-
+*/
 /* Alternative for missingRecods */
 Cow.messenger.prototype._onMissingRecord = function(payload) {
     var store = this._getStore(payload);
@@ -489,7 +459,7 @@ Cow.messenger.prototype._onMissingRecord = function(payload) {
 	}
 };
   
-Cow.messenger.prototype._onUpdatedRecords = function(payload) {
+Cow.messenger.prototype._onUpdatedRecord = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
