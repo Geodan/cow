@@ -2514,11 +2514,17 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
-            else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
-                project = this._core.projects({_id:projectid});
-            }
+            /*
+            	Disabled because potentially dangerous!
+            	When a client is fresh (meaning no data) and receives an item before
+            	it receives the corresponding project, the project will be created as new
+            	and subsequently overwrite the original one.
+            */
+            //else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
+            //    project = this._core.projects({_id:projectid});
+            //}
             else {
-                throw "Indexeddb too slow with loading";
+                throw "No project with id "+projectid+" Indexeddb too slow with loading?";
             }
             return project.itemStore();
         case 'groups':
@@ -2528,11 +2534,17 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
-            else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
-                project = this._core.projects({_id:projectid});
-            }
+            /*
+            	Disabled because potentially dangerous!
+            	When a client is fresh (meaning no data) and receives an item before
+            	it receives the corresponding project, the project will be created as new
+            	and subsequently overwrite the original one.
+            */
+            //else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
+            //    project = this._core.projects({_id:projectid});
+            //}
             else {
-                throw "Indexeddb too slow with loading";
+                throw "No project with id "+projectid+" Indexeddb too slow with loading?";
             }
             return project.groupStore();
     }
@@ -2772,7 +2784,7 @@ Cow.core = function(config){
     this._projectid = null;
     this._wsUrl = null;
     this._peerid = null;
-    this._maxAge = config.maxage || 1000 * 60 * 60 * 24 * 30; //30 days in mseconds
+    this._maxAge = config.maxage || 1000 * 60 * 60 * 24 * 120; //120 days in mseconds
     this._autoReconnect = config.autoReconnect || true;
     
     /*LOCALDB*/

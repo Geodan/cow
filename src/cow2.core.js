@@ -23,7 +23,7 @@ Cow.core = function(config){
     this._projectid = null;
     this._wsUrl = null;
     this._peerid = null;
-    this._maxAge = config.maxage || 1000 * 60 * 60 * 24 * 30; //30 days in mseconds
+    this._maxAge = config.maxage || 1000 * 60 * 60 * 24 * 120; //120 days in mseconds
     this._autoReconnect = config.autoReconnect || true;
     
     /*LOCALDB*/
