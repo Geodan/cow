@@ -270,6 +270,7 @@ Cow.syncstore.prototype =
             //console.log('starting commit for ', this._commitqueue.data.length, this._storename);
             this._commitqueue.projectid = this._projectid;
             this.localdb.writeAll(this._commitqueue);
+            this._commitqueue.data = [];
         }
         
     },

@@ -16,7 +16,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.1.0-beta1';
+    this._version = '2.1.0';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;

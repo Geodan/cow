@@ -1061,6 +1061,7 @@ Cow.syncstore.prototype =
             //console.log('starting commit for ', this._commitqueue.data.length, this._storename);
             this._commitqueue.projectid = this._projectid;
             this.localdb.writeAll(this._commitqueue);
+            this._commitqueue.data = [];
         }
         
     },
@@ -2521,10 +2522,13 @@ Cow.messenger.prototype._onConnect = function(payload){
         var loadarray = [];
         for (var i=0;i<projects.length;i++){
             var project = projects[i];
-            loadarray.push([
-                project.itemStore().loaded,
-                project.groupStore().loaded
-            ]);
+            //20150731 TT: stopping the syncing of items and groups in deleted projects
+            if (!project.deleted()){
+				loadarray.push([
+					project.itemStore().loaded,
+					project.groupStore().loaded
+				]);
+            }
         }
         Promise.all(loadarray).then(syncAll);
     });
@@ -2547,9 +2551,12 @@ Cow.messenger.prototype._onConnect = function(payload){
             var projects = self._core.projects();
             for (var i=0;i<projects.length;i++){
                 var project = projects[i];
-                syncarray.push([project.itemStore().synced,project.groupStore().synced]); 
-                project.itemStore().sync();
-                project.groupStore().sync();
+                //20150731 TT: stopping the syncing of items and groups in deleted projects
+                if (!project.deleted()){
+					syncarray.push([project.itemStore().synced,project.groupStore().synced]); 
+					project.itemStore().sync();
+					project.groupStore().sync();
+				}
             }
             Promise.all(syncarray).then(function(d){
                 console.log('all synced');
@@ -2589,7 +2596,7 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
-            /*
+            /* TT: 20150731
             	Disabled because potentially dangerous!
             	When a client is fresh (meaning no data) and receives an item before
             	it receives the corresponding project, the project will be created as new
@@ -2609,7 +2616,7 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
-            /*
+            /* TT: 20150731
             	Disabled because potentially dangerous!
             	When a client is fresh (meaning no data) and receives an item before
             	it receives the corresponding project, the project will be created as new
@@ -2852,7 +2859,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.1.0-beta1';
+    this._version = '2.1.0';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;

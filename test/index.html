@@ -117,9 +117,6 @@
     maxage: 1000 * 60 * 60 * 24 * 30 //30 days
   });
   
-  core.projectStore().loaded.then(function(){
-          console.log('projectstore loaded');
-  });
   core.projectStore().on('synced', function(){
           console.log('projectstore synced');
   });
