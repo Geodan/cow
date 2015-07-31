@@ -134,7 +134,9 @@ Cow.websocket.prototype._onClose = function(event){
             console.warn('connection failed',e);
         });
     };
-    //setTimeout(restart,5000);
+    if (this._core._autoReconnect){
+    	window.setTimeout(restart,5000);
+    }
 };
 
 _.extend(Cow.websocket.prototype, Events);
