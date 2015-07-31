@@ -24,7 +24,7 @@ Cow.core = function(config){
     this._wsUrl = null;
     this._peerid = null;
     this._maxAge = config.maxage || 1000 * 60 * 60 * 24 * 30; //30 days in mseconds
-    
+    this._autoReconnect = config.autoReconnect || true;
     
     /*LOCALDB*/
     this._localdb = new Cow.localdb({dbname: this._herdname, core: this});
