@@ -141,27 +141,27 @@ Cow.messenger.prototype._onMessage = function(message){
             }
         break;
         
-        //you just joined and receive the records you are missing (targeted)
-        case 'missingRecords':
+        //you just joined and receive the records (one by one)  you are missing (targeted)
+        case 'missingRecord':
             if(target == PEERID) {
-                this._core.messenger()._onMissingRecords(payload);
+                this._core.messenger()._onMissingRecord(payload);
             }   
         break;
         
-        //a new peer has arrived and sends everybody the records that are requested in the *wantedList*
-        case 'requestedRecords':
+        //a new peer has arrived and sends everybody the records (one by one) that are requested in the *wantedList*
+        case 'requestedRecord':
             if(sender != PEERID) {
-                this._core.messenger()._onMissingRecords(payload);
-                //OBS: this._onRequestedRecords(payload);
+                this._core.messenger()._onMissingRecord(payload);
             }
         break;
+        
     /**
         Messages related to real-time changes in records
     **/
         //a peer sends a new or updated record
         case 'updatedRecord':
             if(sender != PEERID) {
-                this._core.messenger()._onUpdatedRecords(payload);
+                this._core.messenger()._onUpdatedRecord(payload);
             }
         break;
         
@@ -250,7 +250,7 @@ Cow.messenger.prototype._onConnect = function(payload){
                 project.groupStore().sync();
             }
             Promise.all(syncarray).then(function(d){
-                    console.log('all synced');
+                console.log('all synced');
             });
         });
     }
@@ -331,10 +331,8 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             "project" : project,
             "syncinfo" : syncinfo
         };
-        //Don't send empty lists
-        //if (syncobject.requestlist.length > 0 || syncobject.pushlist.length > 0){
-            this.sendData(data, 'syncinfo',sender);
-        //}
+        this.sendData(data, 'syncinfo',sender);
+        
         
         data =  {
             "syncType" : payload.syncType,
@@ -346,28 +344,18 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             this.sendData(data, 'wantedList', sender);
         }
         
-        data =  {
-            "syncType" : payload.syncType,
-            "project" : project,
-            "list" : syncobject.pushlist
-        };
-        /* TT: This was used because IIS/signalR couldn't handle large chunks in websocket.
-        Therefore we sent the records one by one. This slows down the total but should be 
-        more stable 
-        
-        data.list.forEach(function(d){
+        /* 20150730 TT: 
+        Changed the way of syncing by sending records 1 by 1. This slows down the total but should be 
+        more stable since we reduce the risk of passing the max message size for websockets 
+        */
+        syncobject.pushlist.forEach(function(d){
             msg = {
                 "syncType" : payload.syncType,
                 "project" : project,
                 "record" : d
             };
-            self.sendData(msg, 'updatedRecord', sender);
+            self.sendData(msg, 'missingRecord', sender);
         });
-        */
-        //Don't send empty lists
-        //if (syncobject.pushlist.length > 0){
-            this.sendData(data, 'missingRecords', sender);
-        //}
     }
 };
 Cow.messenger.prototype._amIAlpha = function(){ //find out wether I am alpha
@@ -387,33 +375,30 @@ Cow.messenger.prototype._onSyncinfo = function(payload) {
     var store = this._getStore(payload);
     store.syncinfo.toReceive = payload.syncinfo.IWillSent;
     store.syncinfo.toSent = payload.syncinfo.IShallReceive;
+    if (store.syncinfo.toReceive.length < 1){
+    	store.trigger('synced');
+    }
 };
 
 Cow.messenger.prototype._onWantedList = function(payload) {
     var self = this;
     var store = this._getStore(payload);
     var returnlist = store.requestRecords(payload.list);
-    var data =  {
-        "syncType" : payload.syncType,
-        "project" : store._projectid,
-        "list" : returnlist
-    };
-    /* TT: This was used because IIS/signalR couldn't handle large chunks in websocket.
-        Therefore we sent the records one by one. This slows down the total but should be 
-        more stable 
-    data.list.forEach(function(d){
-        msg = {
-            "syncType" : payload.syncType,
-            "project" : store._projectid,
-            "record" : d
-        };
-        self.sendData(msg, 'updatedRecord');
-    });
+    /* 20150730 TT: 
+        Changed the way of syncing by sending records 1 by 1. This slows down the total but should be 
+        more stable since we reduce the risk of passing the max message size for websockets 
     */
-    this.sendData(data, 'requestedRecords');
+    returnlist.forEach(function(d){
+		msg = {
+			"syncType" : payload.syncType,
+			"project" : store._projectid,
+			"record" : d
+		};
+		self.sendData(msg, 'requestedRecord');
+    });
     //TODO this.core.trigger('ws-wantedList',payload); 
 };
-    
+/*OBS - kept for reference    
 Cow.messenger.prototype._onMissingRecords = function(payload) {
     var store = this._getStore(payload);
     var list = payload.list;
@@ -424,12 +409,6 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
         var data = list[i];
         var record = store._addRecord({source: 'WS', data: data});
         
-        //if we receive a new project, we also have to get the items and groups in it
-        //TT: disables because handled in the onConnect
-        //if (store._type == 'projects'){
-        //    record.groupStore().sync();
-        //    record.itemStore().sync();
-        //}
         //Do the syncing for the deltas
         if (data.deltas && record.deltas()){
             var localarr = _.pluck(record.deltas(),'timestamp');
@@ -451,15 +430,41 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
     store.trigger('datachange');
     
 };
+*/
+/* Alternative for missingRecods */
+Cow.messenger.prototype._onMissingRecord = function(payload) {
+    var store = this._getStore(payload);
+    var synclist = [];
+    var i;
+	var data = payload.record;
+	var record = store._addRecord({source: 'WS', data: data});
+	store._commit(); //TODO: we want to do the commit after *all* missingRecords arrived
+	store.trigger('datachange');
+	//TODO: _.without might not be most effective way to purge an array
+    store.syncinfo.toReceive = _.without(store.syncinfo.toReceive,data._id);
+    //If there is no more records to be received we can trigger the synced
+    if (store.syncinfo.toReceive.length < 1){
+    	store.trigger('synced');
+    }
+	//Do the syncing for the deltas
+	if (data.deltas && record.deltas()){
+		var localarr = _.pluck(record.deltas(),'timestamp');
+		var remotearr = _.pluck(data.deltas,'timestamp');
+		var diff = _.difference(localarr, remotearr);
+		//TODO: nice solution for future, when dealing more with deltas
+		//For now we just respond with a forced sync our own record so the delta's get synced anyway
+		if (diff.length > 0){
+			store.syncRecord(record);
+		}
+	}
+};
   
-Cow.messenger.prototype._onUpdatedRecords = function(payload) {
+Cow.messenger.prototype._onUpdatedRecord = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
     //After doing the _addRecord to the store, now we should commit the queue
     store._commit();
-    //TODO: _.without might not be most effective way to purge an array
-    store.syncinfo.toReceive = _.without(store.syncinfo.toReceive,data._id); 
     store.trigger('datachange');
 };
     // END Syncing messages
