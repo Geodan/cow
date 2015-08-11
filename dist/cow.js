@@ -2357,6 +2357,20 @@ function lzw_decode(s) {
     }
     return out.join("");
 }
+function encode_utf8(s) {
+  return unescape(encodeURIComponent(s));
+}
+
+function decode_utf8(s) {
+try{
+  return decodeURIComponent(escape(s));
+}
+catch(e){
+	console.warn(e,s);
+	debugger;
+}
+}
+
 
 (function(){
 
@@ -2432,7 +2446,7 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     message.action = action;
     //message.payload = data;
     //TT: newly added lzw compression in 2.2.0. This breaks COW versions!
-    message.payload = lzw_encode(JSON.stringify(data));
+    message.payload = lzw_encode(encode_utf8(JSON.stringify(data)));
     var stringified;
     var endcoded;
     try {
@@ -2456,7 +2470,7 @@ Cow.messenger.prototype._onMessage = function(message){
     	var payload = data.payload;
     }
     else {
-    	var payload = JSON.parse(lzw_decode(data.payload));
+    	var payload = JSON.parse(decode_utf8(lzw_decode(data.payload)));
     }
     var target = data.target;
     if (sender != PEERID){
