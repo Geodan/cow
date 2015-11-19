@@ -1,0 +1,8 @@
+{
+	"dbUrl": "tcp://user:pass@my.pgis.db.machine/cow",
+	"herdname":"ontw",
+	"protocol": "wss",
+	"ip": "websocket.geodan.nl",
+	"port": 443,
+	"dir": "ontw"
+}

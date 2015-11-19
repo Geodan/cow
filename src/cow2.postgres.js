@@ -23,21 +23,28 @@ Cow.localdb = function(config){
     this._db = null;
     var version = 2;
     //var dbUrl = "tcp://osgis:osgis@osgis.geodan.nl/osgis2";
-    var dbUrl = "tcp://geodan:Gehijm@192.168.24.15/cow";
+    //var dbUrl = "tcp://geodan:Gehijm@192.168.24.15/cow";
+    if (!dbUrl){
+    	throw('No global dbUrl set. Should be like: "tcp://user:pass@ip/dir"');
+    }
     this._schema = self._dbname;
     this._openpromise = new Promise(function(resolve, reject){
+        pg.on('error', function (err) {
+          console.log('Database error!', err);
+        });
         var request = pg.connect(dbUrl, function(err, client) {
                 
                 if (err){
-                    console.log(err);
+                    console.log('meeh',err);
                     reject(err);
                 }
                 self._db = client;
                 
+                
                 var create_schema = 'CREATE SCHEMA IF NOT EXISTS ' + self._schema;
                 client.query(create_schema, function(err, result){
                     if (err){
-                        console.log(err);
+                        console.log('meeh',err);
                         reject(err); 
                         return;
                     }
@@ -46,7 +53,7 @@ Cow.localdb = function(config){
                 var stores = ['users','projects', 'socketservers', 'items', 'groups'];
                 for (var i=0;i<stores.length;i++){
                     
-                  var create_users = //'DROP TABLE IF EXISTS '+ self._schema+'.'+stores[i]+'; ' + 
+                  var create_table = //'DROP TABLE IF EXISTS '+ self._schema+'.'+stores[i]+'; ' + 
                     'CREATE TABLE IF NOT EXISTS '+ self._schema+'.'+stores[i]+' (' + 
                     '_id text NOT NULL, ' +
                     '"dirty" boolean,' +
@@ -55,9 +62,10 @@ Cow.localdb = function(config){
                     '"updated" bigint,' +
                     '"data" json,'+
                     '"deltas" json,' +
-                    '"projectid" text' +
+                    '"projectid" text,' +
+                    ' CONSTRAINT '+stores[i]+'_pkey PRIMARY KEY (_id)' + 
                     ');'; 
-                  client.query(create_users, function(err, result){
+                  client.query(create_table, function(err, result){
                         if (err){
                             console.log(err);
                             reject(err); 
@@ -125,6 +133,27 @@ Cow.localdb.prototype.write = function(config){
     return promise;
 };
 
+//This is different from the idb approach since we don't care about the transaction in postgres
+//We just redirect every record to a .write function
+Cow.localdb.prototype.writeAll = function(config){
+    var self = this;
+    var storename = config.storename;
+    var list = config.data;
+    var projectid = config.projectid;
+    var promisearray = [];
+    for (var i = 0;i< list.length;i++){
+        var record = list[i];
+        var subpromise = this.write({
+            storename: storename,
+            projectid: projectid,
+            data: record
+        });
+        promisearray.push(subpromise);
+    }
+    var promise = Promise.all(promisearray);
+    return promise;
+};
+
 Cow.localdb.prototype.getRecord = function(config){
     var self = this;
     var storename = config.storename;
@@ -161,6 +190,7 @@ Cow.localdb.prototype.getRecords = function(config){
     var promise = new Promise(function(resolve, reject){
         self._db.query(query, function(err,result){
                 if (err){
+                    console.log('meeh',err);
                     reject(err);
                 }
                 else {
@@ -173,7 +203,7 @@ Cow.localdb.prototype.getRecords = function(config){
 
 Cow.localdb.prototype.delRecord = function(config){
     var promise = new Promise(function(resolve, reject){
-            console.warn('delRecord not used with postgres');
+            //console.warn('delRecord not used with postgres');
             reject();
     });
     return promise;

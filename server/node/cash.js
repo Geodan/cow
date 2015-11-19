@@ -105,7 +105,8 @@ wsServer.on('request', function(request) {
   connections.push(connection);
   var ci = connections.indexOf(connection);
   peers[ci] = new Date().getTime();
-  connection.sendUTF('{"action":"connected","payload":{"peerID":'+peers[ci]+', "server_ip":"'+address+'", "server_key":"'+key+'", "server_version":"'+version+'"}}');
+  var servertime = new Date().getTime();
+  connection.sendUTF('{"action":"connected","payload":{"peerID":'+peers[ci]+', "server_time":'+servertime+', "server_ip":"'+address+'", "server_key":"'+key+'", "server_version":"'+version+'"}}');
   
   /*
    Once a connection is established messages can be received, these

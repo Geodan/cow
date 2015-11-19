@@ -14,6 +14,7 @@ if (typeof exports !== 'undefined') {
 Cow.syncstore =  function(config){
     var self = this;
     this._storename = config.dbname;
+    this._isloaded = false; //Used in messenger.js to check if store is loaded (workaround)
     this._core = config.core;
     this.noDeltas = config.noDeltas || false;
     this.noIDB = config.noIDB || false;
@@ -23,9 +24,14 @@ Cow.syncstore =  function(config){
         toSent: [],
         received: 0, 
         send: 0
-    };
+    };      
     if (!this.noIDB){
         this.localdb = this._core.localdb();//new Cow.localdb(config, this);
+        this._commitqueue = {
+            storename:this._storename,
+            projectid: this._projectid,
+            data: []
+        };
     }
     this.loaded = new Promise(function(resolve, reject){
         if (self.localdb){
@@ -64,6 +70,7 @@ Cow.syncstore =  function(config){
                          }
                      });
                     self.trigger('datachange');
+                    self._isloaded = true;
                     resolve();
                 },function(d){ 
                     console.warn('DB Fail');
@@ -75,8 +82,21 @@ Cow.syncstore =  function(config){
             });
         }
         else { //NO localdb, so nothing to load and we're done immediately
+            self._isloaded = true;
             resolve();
         }
+    });
+    this.synced = new Promise(function(resolve, reject){
+        self.loaded.then(function(){
+            self.on('synced', function(){
+                    resolve();
+            });
+            //self.sync(); //disabled sync here because we want to wait for all the stores to be synced
+        });
+        self.loaded.catch(function(e){
+            console.error(e.message);
+            reject();
+        });
     });
 }; 
 /**
@@ -192,12 +212,12 @@ Cow.syncstore.prototype =
         return null;
     },
     /**
-    _addRecord - creates a new record and replaces an existing one with the same _id
+    _addRecord - creates a new record or replaces an existing one with the same _id
         when the source is 'WS' it immidiately sends to the local, if not the record needs a manual record.sync()
     **/
     _addRecord: function(config){
         if (!config.source || !config.data){
-            log.warn('Wrong input: ' + config);
+            console.warn('Wrong input: ' + config);
             return false;
         }
         var promise = null;
@@ -213,11 +233,13 @@ Cow.syncstore.prototype =
                 record.inflate(data);
                 //record.deleted(false); //set undeleted //TT: disabled, since this gives a problem when a record from WS comes in as deleted
                 if (this.localdb && source == 'WS'){ //update the db
-                    this.localdb.write({
-                        storename:this._storename,
-                        projectid: this._projectid,
-                        data: record.deflate()
-                    });
+                	//Disabled because new way of adding records by first adding them to a commitqueue
+                    //this.localdb.write({
+                    //    storename:this._storename,
+                    //    projectid: this._projectid,
+                    //    data:record.deflate()
+                    //});
+                    this._commitqueue.data.push(record.deflate());
                 }
             }
         }
@@ -226,11 +248,13 @@ Cow.syncstore.prototype =
             record = this._recordproto(data._id);
             record.inflate(data);
             if (this.localdb && source == 'WS'){
-                promise = this.localdb.write({
-                    storename:this._storename,
-                    projectid: this._projectid,
-                    data:record.deflate()
-                });
+            	//Disabled because New way of adding records by first adding them to a commitqueue
+                //this.localdb.write({
+                //    storename:this._storename,
+                //    projectid: this._projectid,
+                //    data:record.deflate()
+                //});
+                this._commitqueue.data.push(record.deflate());
             }
             this._records.push(record); //Adding to the list
             //console.log(this._records.length); 
@@ -239,11 +263,24 @@ Cow.syncstore.prototype =
         return record;
     },
     /**
+        _commit() - sends the commitqueue to the idb
+    **/
+    _commit: function(){
+        if (!this.noIDB && this._commitqueue.data.length > 0){
+            //console.log('starting commit for ', this._commitqueue.data.length, this._storename);
+            this._commitqueue.projectid = this._projectid;
+            this.localdb.writeAll(this._commitqueue);
+            this._commitqueue.data = [];
+        }
+        
+    },
+    
+    /**
         _getRecordsOn(timestamp) - 
     **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
-        _.each(this._records, function(d){
+        this._records.forEach(function(d){
             //If request is older than feature itself, disregard
             if (timestamp < d._created){
                 //don't add
@@ -324,7 +361,7 @@ Cow.syncstore.prototype =
         for (var i=0;i<this._records.length;i++){
             this._records[i].deleted(true);
         }
-        this.syncRecords();
+        this.syncRecords();//FIXME: syncrecords is not perfect yet (see below)
         this.trigger('datachange');
         return this;
     },
@@ -363,8 +400,11 @@ Cow.syncstore.prototype =
     
     /**
     syncRecords() - looks for dirty records and returns them all at once for syncing them
+    TT: this function does *not* update the localdb and does *not* trigger a datachange.
+    	Therefore it is unsuited for use at the moment.
     **/
     syncRecords: function(){
+    	console.warn('syncRecords is not fully functional!. Please sync record by record.');
         var pushlist = [];
         for (var i=0;i<this._records.length;i++){
             var record = this._records[i];
@@ -400,15 +440,17 @@ Cow.syncstore.prototype =
     **/
     sync: function(){
         var self = this;
-        this.loaded.then(function(d){
+        self.loaded.then(function(d){
             var message = {};
             message.syncType = self._type;
             message.project = self._projectid;
             message.list = self.idList();
             self._core.messenger().sendData(message, 'newList');
+            
         });
-        this.loaded.catch(function(e){
+        self.loaded.catch(function(e){
                 console.error(e.message);
+                reject();
         });
     },
     

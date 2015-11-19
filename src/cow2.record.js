@@ -156,15 +156,16 @@ Cow.record.prototype =
             this._data = param;
             this._deltaq = param;
             this.dirty(true);
+            //console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data'); 
             return this;
         }
-        else if (param && typeof(param) == 'string' && !value){
+        else if (param && typeof(param) == 'string' && typeof(value) == 'undefined'){
             return this._data[param];
         }
-        else if (param && typeof(param) == 'number' && !value){
+        else if (param && typeof(param) == 'number' && typeof(value) == 'undefined'){
             return this.data_on(param);
         }
-        else if (param && value){
+        else if (param && typeof(value) != 'undefined'){
             if (typeof(value) == 'object'){
                 value = JSON.parse(JSON.stringify(value));
             }
@@ -190,7 +191,7 @@ Cow.record.prototype =
             //Recreate the data based on deltas
             var returnval = {};
             var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
-            _.each(deltas, function(d){
+            deltas.forEach(function(d){
                 if (d.timestamp <= timestamp){
                     _.extend(returnval, d.data);
                 }
@@ -214,7 +215,7 @@ Cow.record.prototype =
             //Recreate the deleted status based on deltas
             var returnval = {};
             var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
-            _.each(deltas, function(d){
+            deltas.forEach(function(d){
                 if (d.timestamp <= timestamp){
                     returnval = d.deleted;
                 }
@@ -231,7 +232,9 @@ Cow.record.prototype =
     **/
     deltas: function(time, data, deleted, userid){
         if (!time){
-            return this._deltas;
+            return this._deltas.sort(function(a, b) {
+			  return a.timestamp - b.timestamp;
+			});
         }
         else if (time && !data){
             for (var i = 0;i<this._deltas.length;i++){
@@ -293,7 +296,7 @@ Cow.record.prototype =
             this._deleted = config.deleted;
         }
         this._updated = config.updated || this._updated;
-        this._data = config.data || this._data || {};
+        this._data = config.data || this._data || {warn:'empty inflate'};
         if (!this._store.noDeltas){ //only inflate deltas when enabled
             this._deltaq = this._deltaq || {}; //FIXME: workaround for non working prototype (see top)
             this._deltasforupload = this._deltasforupload || {}; //FIXME: same here

@@ -1,3 +1,74 @@
+/*TT:
+Added this from https://gist.github.com/revolunet/843889
+to enable LZW encoding
+*/
+// LZW-compress a string
+function lzw_encode(s) {
+    var dict = {};
+    var data = (s + "").split("");
+    var out = [];
+    var currChar;
+    var phrase = data[0];
+    var code = 256;
+    for (var i=1; i<data.length; i++) {
+        currChar=data[i];
+        if (dict[phrase + currChar] != null) {
+            phrase += currChar;
+        }
+        else {
+            out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+            dict[phrase + currChar] = code;
+            code++;
+            phrase=currChar;
+        }
+    }
+    out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+    for (var i=0; i<out.length; i++) {
+        out[i] = String.fromCharCode(out[i]);
+    }
+    return out.join("");
+}
+
+// Decompress an LZW-encoded string
+function lzw_decode(s) {
+    var dict = {};
+    var data = (s + "").split("");
+    var currChar = data[0];
+    var oldPhrase = currChar;
+    var out = [currChar];
+    var code = 256;
+    var phrase;
+    for (var i=1; i<data.length; i++) {
+        var currCode = data[i].charCodeAt(0);
+        if (currCode < 256) {
+            phrase = data[i];
+        }
+        else {
+           phrase = dict[currCode] ? dict[currCode] : (oldPhrase + currChar);
+        }
+        out.push(phrase);
+        currChar = phrase.charAt(0);
+        dict[code] = oldPhrase + currChar;
+        code++;
+        oldPhrase = phrase;
+    }
+    return out.join("");
+}
+function encode_utf8(s) {
+  return unescape(encodeURIComponent(s));
+}
+
+function decode_utf8(s) {
+try{
+  return decodeURIComponent(escape(s));
+}
+catch(e){
+	console.warn(e,s);
+	debugger;
+}
+}
+
+
 (function(){
 
 var root = this;
@@ -70,15 +141,17 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     message.sender = this._core.peerid();
     message.target = target;
     message.action = action;
-    message.payload = data;
+    //message.payload = data;
+    //TT: newly added lzw compression in 2.2.0. This breaks COW versions!
+    message.payload = lzw_encode(encode_utf8(JSON.stringify(data)));
     var stringified;
+    var endcoded;
     try {
         stringified = JSON.stringify(message);
     }
     catch (e){
         console.error(e, message);
     }
-    //console.info('Sending ' + JSON.stringify(message));
     this.ws.send(stringified);
     this._numsends++;
     this._amountsend = +stringified.length;
@@ -90,7 +163,12 @@ Cow.messenger.prototype._onMessage = function(message){
     var sender = data.sender;
     var PEERID = core.peerid(); 
     var action = data.action;        
-    var payload = data.payload;    
+    if (typeof(data.payload) == 'object'){
+    	var payload = data.payload;
+    }
+    else {
+    	var payload = JSON.parse(decode_utf8(lzw_decode(data.payload)));
+    }
     var target = data.target;
     if (sender != PEERID){
         //console.info('Receiving '+JSON.stringify(data));
@@ -141,33 +219,39 @@ Cow.messenger.prototype._onMessage = function(message){
             }
         break;
         
-        //you just joined and receive the records you are missing (targeted)
-        case 'missingRecords':
+        //you just joined and receive the records (one by one)  you are missing (targeted)
+        case 'missingRecord':
             if(target == PEERID) {
-                this._core.messenger()._onMissingRecords(payload);
+                this._core.messenger()._onMissingRecord(payload);
             }   
         break;
         
-        //a new peer has arrived and sends everybody the records that are requested in the *wantedList*
-        case 'requestedRecords':
+        //a new peer has arrived and sends everybody the records (one by one) that are requested in the *wantedList*
+        case 'requestedRecord':
             if(sender != PEERID) {
-                this._core.messenger()._onMissingRecords(payload);
-                //OBS: this._onRequestedRecords(payload);
+                this._core.messenger()._onMissingRecord(payload);
             }
         break;
+        
     /**
         Messages related to real-time changes in records
     **/
         //a peer sends a new or updated record
         case 'updatedRecord':
             if(sender != PEERID) {
-                this._core.messenger()._onUpdatedRecords(payload);
+                this._core.messenger()._onUpdatedRecord(payload);
             }
         break;
         
     }
     
 };
+
+/**
+_onConnect handles 2 things
+    1) some checks to see if the server connection is ok. (time diff and key)
+    2) initiate the first sync of the stores
+**/
 
 Cow.messenger.prototype._onConnect = function(payload){
     console.log('connected!');
@@ -177,41 +261,83 @@ Cow.messenger.prototype._onConnect = function(payload){
     var mypeer = this._core.peers({_id: payload.peerID});
     var version = payload.server_version;
     var serverkey = payload.server_key;
-    
+    var servertime = payload.server_time;
+    var now = new Date().getTime();
+    var maxdiff = 1000 * 60 * 5; //5 minutes
+    if (Math.abs(servertime - now) > maxdiff){
+        console.warn('Time difference between server and client larger ('+Math.abs(servertime-now)+'ms) than allowed ('+maxdiff+' ms).');
+        self.ws.disconnect();
+        return;
+    }
+            
     if (serverkey !== undefined && serverkey != this._core._herdname){
+        console.warn('Key on server ('+serverkey+') not the same as client key ('+this._core._herdname+').');
         self.ws.disconnect();
         return;
     }
         
     //add userid to peer object
     if (this._core.user()){
-        mypeer.data('userid',this._core.user()._id);
+        mypeer.data('userid',this._core.user().id());
     }
+    mypeer.data('version',this._core.version());
     mypeer.deleted(false).sync();
     this.trigger('connected',payload);
-    
-    //initiate socketserver sync
-    this._core.socketserverStore().sync();
-    
-    //initiate peer sync
-    this._core.peerStore().sync();
 
-    //initiate user sync
-    this._core.userStore().sync();
-    
-    //initiate project sync
-    var projectstore = this._core.projectStore();
-    projectstore.sync();
-    
-    //wait for projectstore to load
-    projectstore.loaded.then(function(d){
+    //Put all load promises together
+    var promisearray = [
+        this._core.socketserverStore().loaded,
+        this._core.peerStore().loaded,
+        this._core.userStore().loaded,
+        this._core.projectStore().loaded
+    ];
+    //Add the itemstore/groupstore load promises
+    Promise.all(promisearray).then(function(){
         var projects = self._core.projects();
+        var loadarray = [];
         for (var i=0;i<projects.length;i++){
             var project = projects[i];
-            self._core.projects(project._id).itemStore().sync();
-            self._core.projects(project._id).groupStore().sync();
+            //20150731 TT: stopping the syncing of items and groups in deleted projects
+            if (!project.deleted()){
+				loadarray.push([
+					project.itemStore().loaded,
+					project.groupStore().loaded
+				]);
+            }
         }
+        Promise.all(loadarray).then(syncAll);
     });
+    
+    syncarray = [
+        this._core.socketserverStore().synced,
+        this._core.peerStore().synced,
+        this._core.userStore().synced,
+        this._core.projectStore().synced
+    ];
+    
+    //After all idb's are loaded, start syncing process
+    function syncAll(){
+        console.log('Starting sync');
+        self._core.projectStore().sync();
+        self._core.socketserverStore().sync();
+        self._core.peerStore().sync();
+        self._core.userStore().sync();
+        self._core.projectStore().synced.then(function(){
+            var projects = self._core.projects();
+            for (var i=0;i<projects.length;i++){
+                var project = projects[i];
+                //20150731 TT: stopping the syncing of items and groups in deleted projects
+                if (!project.deleted()){
+					syncarray.push([project.itemStore().synced,project.groupStore().synced]); 
+					project.itemStore().sync();
+					project.groupStore().sync();
+				}
+            }
+            Promise.all(syncarray).then(function(d){
+                console.log('all synced');
+            });
+        });
+    }
 };
     
     
@@ -245,8 +371,17 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
+            /* TT: 20150731
+            	Disabled because potentially dangerous!
+            	When a client is fresh (meaning no data) and receives an item before
+            	it receives the corresponding project, the project will be created as new
+            	and subsequently overwrite the original one.
+            */
+            //else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
+            //    project = this._core.projects({_id:projectid});
+            //}
             else {
-                project = this._core.projects({_id:projectid});
+                throw "No project with id "+projectid+" Indexeddb too slow with loading?";
             }
             return project.itemStore();
         case 'groups':
@@ -256,8 +391,17 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
+            /* TT: 20150731
+            	Disabled because potentially dangerous!
+            	When a client is fresh (meaning no data) and receives an item before
+            	it receives the corresponding project, the project will be created as new
+            	and subsequently overwrite the original one.
+            */
+            //else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
+            //    project = this._core.projects({_id:projectid});
+            //}
             else {
-                project = this._core.projects({_id:projectid});
+                throw "No project with id "+projectid+" Indexeddb too slow with loading?";
             }
             return project.groupStore();
     }
@@ -283,10 +427,8 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             "project" : project,
             "syncinfo" : syncinfo
         };
-        //Don't send empty lists
-        if (syncobject.requestlist.length > 0 && syncobject.pushlist.length > 0){
-            this.sendData(data, 'syncinfo',sender);
-        }
+        this.sendData(data, 'syncinfo',sender);
+        
         
         data =  {
             "syncType" : payload.syncType,
@@ -298,28 +440,18 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             this.sendData(data, 'wantedList', sender);
         }
         
-        data =  {
-            "syncType" : payload.syncType,
-            "project" : project,
-            "list" : syncobject.pushlist
-        };
-        /* TT: This was used because IIS/signalR couldn't handle large chunks in websocket.
-        Therefore we sent the records one by one. This slows down the total but should be 
-        more stable 
-        
-        _(data.list).each(function(d){
+        /* 20150730 TT: 
+        Changed the way of syncing by sending records 1 by 1. This slows down the total but should be 
+        more stable since we reduce the risk of passing the max message size for websockets 
+        */
+        syncobject.pushlist.forEach(function(d){
             msg = {
                 "syncType" : payload.syncType,
                 "project" : project,
                 "record" : d
             };
-            self.sendData(msg, 'updatedRecord', sender);
+            self.sendData(msg, 'missingRecord', sender);
         });
-        */
-        //Don't send empty lists
-        if (syncobject.pushlist.length > 0){
-            this.sendData(data, 'missingRecords', sender);
-        }
     }
 };
 Cow.messenger.prototype._amIAlpha = function(){ //find out wether I am alpha
@@ -339,47 +471,40 @@ Cow.messenger.prototype._onSyncinfo = function(payload) {
     var store = this._getStore(payload);
     store.syncinfo.toReceive = payload.syncinfo.IWillSent;
     store.syncinfo.toSent = payload.syncinfo.IShallReceive;
+    if (store.syncinfo.toReceive.length < 1){
+    	store.trigger('synced');
+    }
 };
 
 Cow.messenger.prototype._onWantedList = function(payload) {
     var self = this;
     var store = this._getStore(payload);
     var returnlist = store.requestRecords(payload.list);
-    var data =  {
-        "syncType" : payload.syncType,
-        "project" : store._projectid,
-        "list" : returnlist
-    };
-    /* TT: This was used because IIS/signalR couldn't handle large chunks in websocket.
-        Therefore we sent the records one by one. This slows down the total but should be 
-        more stable 
-    _(data.list).each(function(d){
-        msg = {
-            "syncType" : payload.syncType,
-            "project" : store._projectid,
-            "record" : d
-        };
-        self.sendData(msg, 'updatedRecord');
-    });
+    /* 20150730 TT: 
+        Changed the way of syncing by sending records 1 by 1. This slows down the total but should be 
+        more stable since we reduce the risk of passing the max message size for websockets 
     */
-    this.sendData(data, 'requestedRecords');
+    returnlist.forEach(function(d){
+		msg = {
+			"syncType" : payload.syncType,
+			"project" : store._projectid,
+			"record" : d
+		};
+		self.sendData(msg, 'requestedRecord');
+    });
     //TODO this.core.trigger('ws-wantedList',payload); 
 };
-    
+/*OBS - kept for reference    
 Cow.messenger.prototype._onMissingRecords = function(payload) {
     var store = this._getStore(payload);
     var list = payload.list;
     var synclist = [];
     var i;
+    
     for (i=0;i<list.length;i++){
         var data = list[i];
-        //var record = store._addRecord({source: 'WS', data: data});
         var record = store._addRecord({source: 'WS', data: data});
-        //if we receive a new project, we also have to get the items and groups in it
-        if (store._type == 'projects'){
-            record.groupStore().sync();
-            record.itemStore().sync();
-        }
+        
         //Do the syncing for the deltas
         if (data.deltas && record.deltas()){
             var localarr = _.pluck(record.deltas(),'timestamp');
@@ -392,18 +517,50 @@ Cow.messenger.prototype._onMissingRecords = function(payload) {
             }
         }
     }
+    //After doing all the _addRecord to the store, now we should commit the queue
+    store._commit();
+    store.trigger('synced');
     for (i=0;i<synclist.length;i++){
         store.syncRecord(synclist[i]);
     }
     store.trigger('datachange');
+    
+};
+*/
+/* Alternative for missingRecods */
+Cow.messenger.prototype._onMissingRecord = function(payload) {
+    var store = this._getStore(payload);
+    var synclist = [];
+    var i;
+	var data = payload.record;
+	var record = store._addRecord({source: 'WS', data: data});
+	store._commit(); //TODO: we want to do the commit after *all* missingRecords arrived
+	store.trigger('datachange');
+	//TODO: _.without might not be most effective way to purge an array
+    store.syncinfo.toReceive = _.without(store.syncinfo.toReceive,data._id);
+    //If there is no more records to be received we can trigger the synced
+    if (store.syncinfo.toReceive.length < 1){
+    	store.trigger('synced');
+    }
+	//Do the syncing for the deltas
+	if (data.deltas && record.deltas()){
+		var localarr = _.pluck(record.deltas(),'timestamp');
+		var remotearr = _.pluck(data.deltas,'timestamp');
+		var diff = _.difference(localarr, remotearr);
+		//TODO: nice solution for future, when dealing more with deltas
+		//For now we just respond with a forced sync our own record so the delta's get synced anyway
+		if (diff.length > 0){
+			store.syncRecord(record);
+		}
+	}
 };
   
-Cow.messenger.prototype._onUpdatedRecords = function(payload) {
+Cow.messenger.prototype._onUpdatedRecord = function(payload) {
     var store = this._getStore(payload);
     var data = payload.record;
     store._addRecord({source: 'WS', data: data});
-    //TODO: _.without might not be most effective way to purge an array
-    store.syncinfo.toReceive = _.without(store.syncinfo.toReceive,data._id); 
+    //After doing the _addRecord to the store, now we should commit the queue
+    store._commit();
     store.trigger('datachange');
 };
     // END Syncing messages
@@ -419,27 +576,21 @@ Cow.messenger.prototype._onCommand = function(data) {
     var core = this._core;
     var payload = data.payload;
     var command = payload.command;
-    var targetuser = payload.targetuser;
+    var target = payload.target;
     var params = payload.params;
     this.trigger('command',data);
-    //TODO: move to icm
-    if (command == 'zoomTo'){
-        if (targetuser && targetuser == core.user().id()){
-            this.trigger(command, payload.location);
-        }
-    }
-    //Closes a (misbehaving or stale) peer
+    
+    //Disconnects a (misbehaving or stale) peer
     if (command == 'kickPeer'){
-        if (targetuser && targetuser == core.peerid()){
-            //TODO: make this more gentle, possibly with a trigger
-            window.open('', '_self', ''); 
-            window.close();
+        if (data.target == core.peerid()){
+            core.socketserver('invalid');
+            core.disconnect();
         }
     }
     //Remove all data from a peer
     if (command == 'purgePeer'){
-        if (targetuser && targetuser == this._core.peerid()){
-            _.each(core.projects(), function(d){
+        if (target && target == this._core.peerid()){
+            core.projects().forEach(function(d){
                 d.itemStore().clear();
                 d.groupStore().clear();
             });
@@ -458,8 +609,7 @@ Cow.messenger.prototype._onCommand = function(data) {
     }
     //Answer a ping with a pong
     if (command == 'ping'){
-        var target = data.sender;
-        this.sendData({command: 'pong'},'command',target);
+        this.sendData({command: 'pong'},'command',data.sender);
     }
 };
 

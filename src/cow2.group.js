@@ -114,11 +114,10 @@ Cow.group.prototype =
                     return this._addGroup(groupid);
                 }
                 else {
-                   for (var i=0;i<groupid.length;i++){
-                   //$.each(groupid, function(i,d){
+                   groupid.forEach(function(d){
                      var d = groupid[i];
                      self._addGroup(d);
-                   }
+                   });
                    return this._getGroups();
                 }
                 break;
