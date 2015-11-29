@@ -285,8 +285,8 @@ Cow.syncstore.prototype =
             if (timestamp < d._created){
                 //don't add
             }
-            //If request is younger than last feature update, return normal data
-            else if (timestamp > d._updated){
+            //If request is younger than or same as last feature update, return normal data
+            else if (timestamp >= d._updated){
                 returnarr.push(d);
             }
             else if (d.data(timestamp)){
