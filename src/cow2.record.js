@@ -51,6 +51,32 @@ Cow.record.prototype =
         };
         return this._created;
     },
+    /**
+    	creator() - returns the user that created the item
+    **/
+    creator: function(){
+    	var creator;
+    	if (this._deltas.length > 0 && this._deltas[0].userid){
+    		creator = this._store._core.users(this._deltas[0].userid.toString());
+    	}
+    	return creator;
+    },
+    /**
+    	updater() - returns the user that last updated the item
+    	updater(timestamp) - returns the user that updated the item at or before that time
+    **/
+    updater: function(timestamp){
+    	if (timestamp){
+    		return this.updater_on(timestamp);
+    	}
+    	else { //get last updater
+			if (this._deltas.length > 0 && this._deltas[this._deltas.length -1].userid){
+				var updaterid = this._deltas[this._deltas.length -1].userid;
+				return this._store._core.users(updaterid.toString());
+			}
+			return null;
+    	}
+    },
     timestamp: function(timestamp){
         console.warn('timestamp() has been deprecated. Use updated() instead');
         if (timestamp) {
@@ -221,6 +247,29 @@ Cow.record.prototype =
                 }
             });
             return returnval;
+        }
+    },
+    /**
+        updater_on(timestamp) - same as updater(timestamp)
+    **/
+    updater_on: function(timestamp){
+        //If request is older than feature itself, disregard
+        if (timestamp < this._created){
+            return null; //nodata
+        }
+        //If request is younger than last feature update, return normal updater
+        else if (timestamp > this._updated){
+            return this.updater();
+        }
+        else {
+            //get the updater from the deltas
+            var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
+            deltas.forEach(function(d){
+                if (d.timestamp <= timestamp){
+                    //FIXME: return the updater 
+                }
+            });
+            return null; //no data found
         }
     },
     /**
