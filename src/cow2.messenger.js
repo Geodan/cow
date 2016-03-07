@@ -164,11 +164,12 @@ Cow.messenger.prototype._onMessage = function(message){
     var PEERID = core.peerid(); 
     var action = data.action;        
     if (typeof(data.payload) == 'object'){
-    	var payload = data.payload;
+    	data.payload = data.payload;
     }
     else {
-    	var payload = JSON.parse(decode_utf8(lzw_decode(data.payload)));
+    	data.payload = JSON.parse(decode_utf8(lzw_decode(data.payload)));
     }
+    var payload = data.payload;
     var target = data.target;
     if (sender != PEERID){
         //console.info('Receiving '+JSON.stringify(data));
