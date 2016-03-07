@@ -599,52 +599,14 @@ Cow.localdb = function(config){
     this._core = config.core;
     this._db = null;
     var version = 2;
-    this._openpromise = new Promise(function(resolve, reject){    
-        var request = indexedDB.open(self._dbname,version);
-        request.onupgradeneeded = function(event) {
-          console.log('Indexeddb initialized/upgraded');
-          var db = event.target.result;
-          
-          //Deleting DB if already exists
-          
-          if(db.objectStoreNames.contains("users")) {
-                db.deleteObjectStore("users");
-          }
-          if(db.objectStoreNames.contains("projects")) {
-                db.deleteObjectStore("projects");
-          }
-          if(db.objectStoreNames.contains("socketservers")) {
-                db.deleteObjectStore("socketservers");
-          }
-          if(db.objectStoreNames.contains("items")) {
-                db.deleteObjectStore("items");
-          }
-          if(db.objectStoreNames.contains("groups")) {
-                db.deleteObjectStore("groups");
-          }
-          
-          db
-            .createObjectStore("users", { keyPath: "_id" });
-            //.createIndex("updated", "updated", { unique: false });
-          db
-            .createObjectStore("projects", { keyPath: "_id" });
-            //.createIndex("updated", "updated", { unique: false });
-          db
-            .createObjectStore("socketservers", { keyPath: "_id" });
-            //.createIndex("updated", "updated", { unique: false });
-          db
-            .createObjectStore("items", { keyPath: "_id" })
-            //.createIndex("updated", "updated", { unique: false })
-            .createIndex("projectid", "projectid", { unique: false });
-          db
-            .createObjectStore("groups", { keyPath: "_id" })
-            //.createIndex("updated", "updated", { unique: false })
-            .createIndex("projectid", "projectid", { unique: false });
-        };
-        request.onsuccess = function(event) {
-            self._db = event.target.result;
-            resolve(); //We're not sending back the result since we handle the db as private
-        };
+    
+    var dbUrl = "NO DB WILL BE USED";
+    if (!dbUrl){
+    	throw('No global dbUrl set. Should be like: "tcp://user:pass@ip/dir"');
+    }
+    this._schema = self._dbname;
+    this._openpromise = new Promise(function(resolve, reject){
+        resolve();
     });
 };
 
@@ -655,52 +617,30 @@ Cow.localdb.prototype.write = function(config){
     var projectid = config.projectid;
     record._id = record._id.toString();
     record.projectid = projectid;
-    
     var promise = new Promise(function(resolve, reject){
-        var trans = self._db.transaction([storename], "readwrite");
-        trans.onabort = function(e){
-            console.warn('Abort error');
-        };
-        var store = trans.objectStore(storename);
-        var request = store.put(record);
-        request.onsuccess = function(e) {
-            resolve(request.result);
-        };
-        request.onerror = function(e) {
-            console.warn('IDB Error: ',e.value);
-            reject("Couldn't add the passed item");
-        };
+          resolve();
     });
     return promise;
 };
 
+//This is different from the idb approach since we don't care about the transaction in postgres
+//We just redirect every record to a .write function
 Cow.localdb.prototype.writeAll = function(config){
     var self = this;
     var storename = config.storename;
     var list = config.data;
     var projectid = config.projectid;
-    var promise = new Promise(function(resolve, reject){
-        var trans = self._db.transaction([storename], "readwrite");
-        trans.onabort = function(e){
-            console.warn('Abort error');
-            reject();
-        };
-        var store = trans.objectStore(storename);
-        for (var i = 0;i< list.length;i++){
-            var record = list[i];
-            record._id = record._id.toString();
-            record.projectid = projectid;
-            var request = store.put(record);
-            request.onsuccess = function(e) {
-                //continue
-            };
-            request.onerror = function(e) {
-                console.warn('IDB Error: ',e.value);
-                reject("Couldn't add the passed item");
-            };
-        }
-        resolve();
-    });
+    var promisearray = [];
+    for (var i = 0;i< list.length;i++){
+        var record = list[i];
+        var subpromise = this.write({
+            storename: storename,
+            projectid: projectid,
+            data: record
+        });
+        promisearray.push(subpromise);
+    }
+    var promise = Promise.all(promisearray);
     return promise;
 };
 
@@ -708,131 +648,30 @@ Cow.localdb.prototype.getRecord = function(config){
     var self = this;
     var storename = config.storename;
     var id = config.id;
+    
     var promise = new Promise(function(resolve, reject){
-            var trans = self._db.transaction([storename]);
-            trans.onabort = function(e){
-                console.warn('Abort error');
-            };
-            var store = trans.objectStore(storename);
-
-            var request = store.get(id);
-            request.onsuccess = function(){
-                resolve(request.result);
-            };
-            request.onerror = function(e){
-                console.warn('IDB Error: ',e.value);
-                reject(e);
-            };
+          resolve();
     });
     return promise;
+    
 };
 
 Cow.localdb.prototype.getRecords = function(config){
+    var self = this;
     var storename = config.storename;
     var projectid = config.projectid;
-    
-    var key,index;
-    var trans = this._db.transaction([storename]);
-    trans.onabort = function(e){
-        console.warn('Abort error');
-    };
-    var store = trans.objectStore(storename);
-    if (projectid){
-        key = IDBKeyRange.only(projectid);
-        index = store.index("projectid");
-    }
-    else {
-        index = store;
-    }
+    var query;
+
     var promise = new Promise(function(resolve, reject){
-        var result = [];
-        var request;
-        if (key){ //Solution to make it work on IE, since openCursor(undefined) gives an error
-            request = index.openCursor(key);
-        }
-        else{
-            request = index.openCursor();
-        }
-        request.onsuccess = function(event) {
-          var cursor = event.target.result;
-          if (cursor) {
-            result.push(cursor.value);
-            cursor.continue();
-          }
-          else{
-              //console.log(result.length, storename, 'in', projectid);
-              resolve(result);
-          }
-        };
-        request.onerror = function(e){
-            console.warn('IDB Error: ',e.value);
-            reject(e);
-        };
+        resolve([]);
     });
     return promise;
 };
 
 Cow.localdb.prototype.delRecord = function(config){
-    var self = this;
-    var storename = config.storename;
-    var projectid = config.projectid;
-    var id = config.id;
     var promise = new Promise(function(resolve, reject){
-        var trans = self._db.transaction([storename], "readwrite");
-        trans.onabort = function(e){
-            console.warn('Abort error');
-        };
-        var store = trans.objectStore(storename);
-        var request = store.delete(id);
-        request.onsuccess = function(event){
-            resolve();
-        };
-        request.onerror = function(e){
-            console.warn('IDB Error: ',e.value);
-            reject(e);
-        };
-    });
-    return promise;
-};
-
-Cow.localdb.prototype.clear = function(config){
-    var storename = config.storename;
-    var projectid = config.projectid;
-    var key,index;
-    var trans = this._db.transaction([storename], "readwrite");
-    trans.onabort = function(e){
-        console.warn('Abort error');
-    };
-    var store = trans.objectStore(storename);
-    if (projectid){
-        key = IDBKeyRange.only(projectid);
-        index = store.index("projectid");
-    }
-    else {
-        index = store;
-    }
-    var promise = new Promise(function(resolve, reject){
-        var request;
-        if (key){ //Solution to make it work on IE, since openCursor(undefined) gives an error
-            request = index.openCursor(key);
-        }
-        else{
-            request = index.openCursor();
-        }
-        request.onsuccess = function(event) {
-          var cursor = event.target.result;
-          if (cursor) {
-            store.delete(cursor.primaryKey);
-            cursor.continue();
-          }
-          else{
-              resolve();
-          }
-        };
-        request.onerror = function(e){
-            console.warn('IDB Error: ',e.value);
-            reject(e);
-        };
+            //console.warn('delRecord not used with postgres');
+            reject();
     });
     return promise;
 };
@@ -2238,7 +2077,6 @@ Cow.websocket.prototype.disconnect = function() {
     if (this._connection){
         this._connection.close();    
         this._connection = null;
-        this._connected = false;
     }
     else { 
         console.log('No websocket active');
@@ -2255,30 +2093,37 @@ Cow.websocket.prototype.connect = function() {
         if (core.socketserver()){
             self._url = core.socketserver().url(); //get url from list of socketservers
         }
-        else {
-            console.warn('No valid socketserver selected');
-            self._url = null;
-        }
         
         if (!self._url) {
             console.warn('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');
             reject();
+            return false;
         }
-        
-        var connectpromise;
+    
         if (!self._connection || self._connection.readyState != 1 || self._connection.state != 'open') //if no connection
         {
             if(self._url.indexOf('ws') === 0) {
                 var connection = null;
-                //In case of nodejs....
-                connection = new WebSocket(self._url, 'connect');
-                connection.onopen = self._onOpen;
-                connection.onmessage = self._onMessage;
-                connection.onclose = self._onClose;    
-                connection.onerror = self._onError;
-                connection._core = self._core;
-                self._connection = connection;
-                self._connected = true;//TODO, perhaps better to check if the connection really works
+                connection = new WebSocket();
+                connection.on('connectFailed', function(error) {
+                    console.log('Connect Error: ' + error.toString());
+                });
+                connection.on('connect', function(conn) {
+                    console.log('WebSocket client connected');
+                    conn.on('error', self._onError);
+                    conn.on('message', function(message) {
+                        if (message.type === 'utf8') {
+                            //console.log("Received: '" + message.utf8Data + "'");
+                            self._onMessage({data:message.utf8Data});
+                        }
+                    });
+                    conn.obj = self;
+                    self._connection = conn;
+                });
+                //TODO: there is some issue with the websocket module,ssl and certificates
+                //This param should be added: {rejectUnauthorized: false}
+                //according to: http://stackoverflow.com/questions/18461979/node-js-error-with-ssl-unable-to-verify-leaf-signature#20408031
+                connection.connect(self._url, 'connect');
             }
             else {
                 console.warn('Incorrect URL: ' + self._url);
@@ -2288,7 +2133,7 @@ Cow.websocket.prototype.connect = function() {
         else {
             connection = self._connection;
         }
-        resolve(connection);
+        recolve(connection);
     });
     return promise;
 };
@@ -2304,9 +2149,6 @@ Cow.websocket.prototype.send = function(message){
         this._connection.send(message);
     }
 };
-Cow.websocket.prototype._onOpen = function(){
-	this._core.websocket().trigger('connected');
-};
 
 Cow.websocket.prototype._onMessage = function(message){
     this._core.websocket().trigger('message',message);
@@ -2316,38 +2158,11 @@ Cow.websocket.prototype._onError = function(e){
     this._core.peerStore().clear();
     this._connected = false;
     console.warn('error in websocket connection: ' + e.type);
-    this._core.websocket().trigger('error',e);
+    this._core.websocket().trigger('error');
 };
-
-Cow.websocket.prototype._onClose = function(event){
-    this._core.websocket().trigger('closed',event);
-    var code = event.code;
-    var reason = event.reason;
-    var wasClean = event.wasClean;
-    
-    console.log('WS disconnected:' , code, reason);
-    this._core.peerStore().clear();
-    this._connected = false;
-    var self = this;
-    var restart = function(){
-        try{
-            console.log('Trying to reconnect');
-            self._core.websocket().disconnect();
-        }
-        catch(err){
-            console.warn(err);
-        }
-        self._core.websocket().connect().then(function(d){
-           self._connection = d;
-        }, function(e){
-            console.warn('connection failed',e);
-        });
-    };
-    if (this._core._autoReconnect){
-    	window.setTimeout(restart,5000);
-    }
+Cow.websocket.prototype._onError = function(e){
+    console.log('closed');
 };
-
 _.extend(Cow.websocket.prototype, Events);
 }.call(this));
 /*TT:

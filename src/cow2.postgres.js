@@ -37,6 +37,7 @@ Cow.localdb = function(config){
                 if (err){
                     console.log('meeh',err);
                     reject(err);
+                    return;
                 }
                 self._db = client;
                 
