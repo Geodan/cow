@@ -7,3 +7,4 @@ tmp
 demo.obs
 *.log
 config
+/.idea
