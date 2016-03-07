@@ -1,11 +1,8 @@
 ## Grunt ##
-#Gruntfile.js
-#package.json
 bower_components
 node_modules
 .npm-debug.log
 tmp
-demo.obs
 *.log
 config
 /.idea
