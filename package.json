@@ -6,7 +6,6 @@
   "devDependencies": {
     "grunt": "~0.4.0",
     "grunt-contrib-uglify": "*",
-    "grunt-contrib-concat": "*",
-    "pg": "*"
+    "grunt-contrib-concat": "*"
   }
 }

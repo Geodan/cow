@@ -1,6 +1,7 @@
 {
   "name": "cow",
   "version": "2.2.3",
+  "main": "dist/cow.min.js",
   "homepage": "https://github.com/Geodan/cow",
   "description": "Concurrent Online WebGIS",
   "authors": [
@@ -13,6 +14,19 @@
     "node_modules",
     "bower_components",
     "test",
-    "tests"
-  ]
+    "tests",
+    "src",
+    "config",
+		".bowerrc",
+		".gitignore",
+		".jshintignore",
+		".jshintrc",
+		"bower.json",
+		"gruntfile.js",
+		"package.json",
+		"README.md"
+  ],
+  "dependencies": {
+  	"underscore": "~1.5.2"
+  }
 }
