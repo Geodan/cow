@@ -1,13 +1,12 @@
 {
-    "name" : "cow",
-    "version" : "2.2.2-dev",
-    "author" : "Geodan Research",
-    "private" : true,
-
-    "devDependencies" : {
-        "grunt" :                   "~0.4.0",
-        "grunt-contrib-uglify":         "*",
-        "grunt-contrib-concat":         "*",
-        "pg": "*"
-    }
+  "name": "cow",
+  "version": "2.2.3",
+  "author": "Geodan Research",
+  "private": true,
+  "devDependencies": {
+    "grunt": "~0.4.0",
+    "grunt-contrib-uglify": "*",
+    "grunt-contrib-concat": "*",
+    "pg": "*"
+  }
 }

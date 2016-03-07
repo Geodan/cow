@@ -1,8 +1,8 @@
 {
   "name": "cow",
-  "version": "2.2.2-dev",
+  "version": "2.2.3",
   "homepage": "https://github.com/Geodan/cow",
-  "description": "Release for Eagle water",
+  "description": "Concurrent Online WebGIS",
   "authors": [
     "Tom van Tilburg",
     "Steven Ottens"
