@@ -214,13 +214,13 @@ if (typeof exports !== 'undefined') {
     if (typeof module !== 'undefined' && module.exports) {
       exports = module.exports = Cow || {};
     }
-    exports.Cow = Cow || {}; 
+    exports.Cow = Cow || {};
 } else {
     root.Cow = Cow || {};
 }
 
 Cow.record = function(){
-    //FIXME: 'this' object is being overwritten by its children 
+    //FIXME: 'this' object is being overwritten by its children
     this._id    = null  || new Date().getTime().toString();
     this._status= 'dirty'; //deprecated, replaced by _dirty
     this._dirty = false;
@@ -232,26 +232,26 @@ Cow.record = function(){
     this._deltas = []; //all deltas
     this._deltasforupload = []; //deltas we still need to give to other peers
 };
-Cow.record.prototype = 
+Cow.record.prototype =
 {
     sync: function(){
         var now = new Date().getTime();
-        var userid = this._store._core.user() ? this._store._core.user().id() : null; 
+        var userid = this._store._core.user() ? this._store._core.user().id() : null;
         //TT: dirty should be enough to add delta //if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
         if ( this._dirty && !this._store.noDeltas){ //avoid empty deltas
-            this.deltas(now, this._deltaq, this._deleted, userid); //add deltas from queue 
+            this.deltas(now, this._deltaq, this._deleted, userid); //add deltas from queue
         }
         this._deltaq = {}; //reset deltaq
         return this._store.syncRecord(this);
     },
-    
+
     id: function(x){
         if (x){
             console.warn("You can't set an id afterwards, that only happens when object is created (ignoring)");
         }
         return this._id.toString();
     },
-    /** 
+    /**
         created() - returns the timestamp of creation
     **/
     created: function(x){
@@ -310,7 +310,7 @@ Cow.record.prototype =
         }
     },
     /**
-        touch() - reset the update time to now, returns record 
+        touch() - reset the update time to now, returns record
     **/
     touch: function(){
         this.updated(new Date().getTime());
@@ -344,10 +344,10 @@ Cow.record.prototype =
     dirty: function(truefalse){
         if (truefalse !== undefined){
             this._dirty = truefalse;
-            
+
             if (this._dirty) this._status = 'dirty'; //to be removed when status becomes deprecated
             else this._status = 'clean';
-            
+
             this.updated(new Date().getTime());
             return this;
         }
@@ -355,16 +355,16 @@ Cow.record.prototype =
             return this._dirty;
         }
     },
-    // Status is going to be deprecated. 
+    // Status is going to be deprecated.
     //Functionality is still here to address clients that still transmit a status instead of dirty
     status: function(status){
         console.warn('status() has been deprecated. Use dirty() instead like: \n set: dirty(boolean) \n get: dirty() returns boolean.');
         if (status){
             this._status = status;
-            
+
             if (this._status == 'dirty') this._dirty = true;
             else this._dirty = false;
-            
+
             this.updated(new Date().getTime());
             return this;
         }
@@ -391,7 +391,7 @@ Cow.record.prototype =
             this._data = param;
             this._deltaq = param;
             this.dirty(true);
-            //console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data'); 
+            //console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data');
             return this;
         }
         else if (param && typeof(param) == 'string' && typeof(value) == 'undefined'){
@@ -407,7 +407,7 @@ Cow.record.prototype =
             this._data[param] = value;
             this._deltaq[param] = value;
             this.dirty(true);
-            return this; 
+            return this;
         }
     },
     /**
@@ -475,7 +475,7 @@ Cow.record.prototype =
             var deltas = _.sortBy(this.deltas(), function(d){return d.timestamp;});
             deltas.forEach(function(d){
                 if (d.timestamp <= timestamp){
-                    //FIXME: return the updater 
+                    //FIXME: return the updater
                 }
             });
             return null; //no data found
@@ -483,7 +483,7 @@ Cow.record.prototype =
     },
     /**
         Deltas are written at the moment of sync, only to be used from client API
-        
+
         deltas() - returns array of all deltas objects
         deltas(time) - returns deltas object from specific time
         deltas(time, data) - adds a new deltas objects (only done at sync)
@@ -500,7 +500,7 @@ Cow.record.prototype =
                     return this._deltas[i];
                 }
             }
-            return null; 
+            return null;
         }
         else if (time && data){
             var existing = false;
@@ -519,10 +519,10 @@ Cow.record.prototype =
             }
             return this;
         }
-        
+
     },
     /**
-        deflate() - create a json out of a record object 
+        deflate() - create a json out of a record object
     **/
     deflate: function(){
         return {
@@ -534,7 +534,7 @@ Cow.record.prototype =
             updated: this._updated,
             data: this._data,
             deltas: this._deltas
-        }; 
+        };
     },
     /**
         inflate(config) - create a record object out of json
@@ -574,7 +574,10 @@ Cow.record.prototype =
     }
 
 };
+//Adding some Backbone event binding functionality to the record
+_.extend(Cow.record.prototype, Events);
 }.call(this));
+
 (function(){
 
 var root = this;
