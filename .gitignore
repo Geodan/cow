@@ -1,8 +1,7 @@
-## Grunt ##
-bower_components
 node_modules
 .npm-debug.log
-tmp
-*.log
-config
-/.idea
+cow.js
+cow.min.js
+cow.nodb.js
+cow.node.js
+cow.node.min.js
