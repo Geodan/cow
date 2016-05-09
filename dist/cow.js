@@ -848,7 +848,7 @@ if (typeof exports !== 'undefined') {
     if (typeof module !== 'undefined' && module.exports) {
       exports = module.exports = Cow || {};
     }
-    exports.Cow = Cow || {}; 
+    exports.Cow = Cow || {};
 } else {
     root.Cow = Cow || {};
 }
@@ -865,9 +865,9 @@ Cow.syncstore =  function(config){
     this.syncinfo = {
         toReceive: [],
         toSent: [],
-        received: 0, 
+        received: 0,
         send: 0
-    };      
+    };
     if (!this.noIDB){
         this.localdb = this._core.localdb();//new Cow.localdb(config, this);
         this._commitqueue = {
@@ -881,18 +881,18 @@ Cow.syncstore =  function(config){
             self._core.dbopen()
               .then(function(){
                 self.localdb.getRecords({
-                        storename: self._storename, 
+                        storename: self._storename,
                         projectid: self._projectid
                     })
                   .then(function(rows){
-                    
+
                     rows.forEach(function(d){
                          var record = self._recordproto(d._id);
                          record.inflate(d);
                          var lastupdate = record.updated();
                          var now = new Date().getTime();
                          var staleness = now - lastupdate;
-                         var existing = false; 
+                         var existing = false;
                          //Not likely to exist in the _records at this time but better safe then sorry..
                          for (var i=0;i<self._records.length;i++){
                             if (self._records[i]._id == record._id) {
@@ -915,7 +915,7 @@ Cow.syncstore =  function(config){
                     self.trigger('datachange');
                     self._isloaded = true;
                     resolve();
-                },function(d){ 
+                },function(d){
                     console.warn('DB Fail');
                     reject(d);
                 });
@@ -941,14 +941,14 @@ Cow.syncstore =  function(config){
             reject();
         });
     });
-}; 
+};
 /**
-    See for use of promises: 
+    See for use of promises:
         1. http://www.html5rocks.com/en/tutorials/es6/promises/
         2. https://github.com/jakearchibald/ES6-Promises
 **/
 
-Cow.syncstore.prototype =  
+Cow.syncstore.prototype =
 {
     /** NOT USED AT THE MOMENT **/
     /*
@@ -976,27 +976,27 @@ Cow.syncstore.prototype =
         });
       }, //returns promise
       */
-      /** 
+      /**
         _loadFromDb() - This will start the process of getting records from db (returns promise)
             experimental, used for nodejs client
       **/
-      
-    _loadFromDb: function(){ 
+
+    _loadFromDb: function(){
         var self = this;
         return new Promise(function(resolve, reject){
             self.localdb.getRecords({
-                    storename: self._storename, 
+                    storename: self._storename,
                     projectid: self._projectid
                 })
               .then(function(rows){
-                
+
                 rows.forEach(function(d){
                      var record = self._recordproto(d._id);
                      record.inflate(d);
                      var lastupdate = record.updated();
                      var now = new Date().getTime();
                      var staleness = now - lastupdate;
-                     var existing = false; 
+                     var existing = false;
                      //Not likely to exist in the _records at this time but better safe then sorry..
                      for (var i=0;i<self._records.length;i++){
                          //Object exists but is newer (only happens if localdb is updated from outside
@@ -1023,13 +1023,13 @@ Cow.syncstore.prototype =
                  });
                 self.trigger('datachange');
                 resolve();
-            },function(d){ 
+            },function(d){
                 console.warn('DB Fail');
                 reject(d);
             });
         });
      },
-     
+
     //_getRecords([<string>]) - return all records, if ID array is filled, only return that records
     _getRecords: function(idarray){
         var returnArray = [];
@@ -1100,9 +1100,9 @@ Cow.syncstore.prototype =
                 this._commitqueue.data.push(record.deflate());
             }
             this._records.push(record); //Adding to the list
-            //console.log(this._records.length); 
+            //console.log(this._records.length);
         }
-        
+        record.trigger('datachange');
         return record;
     },
     /**
@@ -1115,11 +1115,11 @@ Cow.syncstore.prototype =
             this.localdb.writeAll(this._commitqueue);
             this._commitqueue.data = [];
         }
-        
+
     },
-    
+
     /**
-        _getRecordsOn(timestamp) - 
+        _getRecordsOn(timestamp) -
     **/
     _getRecordsOn: function(timestamp){
         var returnarr = [];
@@ -1140,7 +1140,7 @@ Cow.syncstore.prototype =
     },
    /**
         Only to be used from client API
-   
+
         records() - returns array of all records
         records(timestamp) - returns array of records created before timestamp
         records(id) - returns record with id (or null)
@@ -1186,7 +1186,7 @@ Cow.syncstore.prototype =
             self.trigger('datachange');
             if (self.localdb){
                 self.localdb.clear({
-                    storename: self._storename, 
+                    storename: self._storename,
                     projectid: self._projectid
                 }).then(function(){
                         resolve(); //empty dbase from items
@@ -1217,7 +1217,7 @@ Cow.syncstore.prototype =
         var message = {};
         message.syncType = this._type;
         record.dirty(false);
-        
+
         if (this._projectid){ //parent store
             message.project = this._projectid;
         }
@@ -1240,7 +1240,7 @@ Cow.syncstore.prototype =
         });
         return record;
     },
-    
+
     /**
     syncRecords() - looks for dirty records and returns them all at once for syncing them
     TT: this function does *not* update the localdb and does *not* trigger a datachange.
@@ -1264,20 +1264,20 @@ Cow.syncstore.prototype =
         };
         this._core.messenger().sendData(data, 'requestedRecords');
     },
-    
+
     /**
     deltaList() - needed to sync the delta's
     **/
     deltaList: function(){
-        
+
     },
-    
+
     /**
     **/
     compareDeltas: function(){
-        
+
     },
-    
+
     /**
     sync() - sync the whole store, not only dirty records
     **/
@@ -1289,17 +1289,17 @@ Cow.syncstore.prototype =
             message.project = self._projectid;
             message.list = self.idList();
             self._core.messenger().sendData(message, 'newList');
-            
+
         });
         self.loaded.catch(function(e){
                 console.error(e.message);
                 reject();
         });
     },
-    
+
     /**
     idList() - needed to start the syncing with other peers
-                only makes sense after fully loading the indexeddb 
+                only makes sense after fully loading the indexeddb
     **/
     idList: function(){
         var fids = [];
@@ -1309,12 +1309,12 @@ Cow.syncstore.prototype =
             iditem._id = item._id;
             iditem.timestamp = item.updated();
             iditem.deleted = item.deleted();
-            fids.push(iditem);    
+            fids.push(iditem);
         }
         return fids;
     },
     /**
-    requestItems(array) - returns the items that were requested 
+    requestItems(array) - returns the items that were requested
     **/
     requestRecords: function(fidlist){
 		var pushlist = [];
@@ -1381,9 +1381,9 @@ Cow.syncstore.prototype =
 		//Add remainder of copyof_rem_list to requestlist
 		for (i=0;i<copyof_rem_list.length;i++){
 		    var val = copyof_rem_list[i];
-			returndata.requestlist.push(val);	
+			returndata.requestlist.push(val);
 		}
-		
+
   //This part is only for sending the data
   /* Obsolete by new websocket prototcol. Still interesting for partial syncing method though.
 		var message = {};
@@ -1413,11 +1413,12 @@ Cow.syncstore.prototype =
     */
    //end of sending data
         return returndata;
-    } 
+    }
 };
 //Adding some Backbone event binding functionality to the store
 _.extend(Cow.syncstore.prototype, Events);
 }.call(this));
+
 (function(){
 
 var root = this;
@@ -2990,7 +2991,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.2.3';
+    this._version = '2.2.4';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
