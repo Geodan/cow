@@ -27,6 +27,6 @@
 		"README.md"
   ],
   "dependencies": {
-  	"underscore": "~1.5.2"
+  	"underscore": "~1"
   }
 }
