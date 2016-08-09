@@ -2635,7 +2635,7 @@ Cow.messenger.prototype._onPeerGone = function(payload) {
     if (this._core.peers(peerGone)){
         this._core.peers(peerGone).deleted(true).sync();
     }
-    //this._core.peerStore().removePeer(peerGone);        
+    this._core.peerStore().removePeer(peerGone);        
     //TODO this.core.trigger('ws-peerGone',payload); 
 };
 
