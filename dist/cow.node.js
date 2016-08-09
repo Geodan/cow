@@ -2588,7 +2588,12 @@ Cow.messenger.prototype._onConnect = function(payload){
 				]);
             }
         }
-        Promise.all(loadarray).then(syncAll);
+        //Only start syncing when we are not alpha
+        if (!self._amIAlpha()){
+        	Promise.all(loadarray).then(syncAll);
+        } else {
+        	console.log("No sync needed since I am the Alpha peer");
+        }
     });
     
     syncarray = [
@@ -2630,7 +2635,7 @@ Cow.messenger.prototype._onPeerGone = function(payload) {
     if (this._core.peers(peerGone)){
         this._core.peers(peerGone).deleted(true).sync();
     }
-    //this._core.peerStore().removePeer(peerGone);        
+    this._core.peerStore().removePeer(peerGone);        
     //TODO this.core.trigger('ws-peerGone',payload); 
 };
 
