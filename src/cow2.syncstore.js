@@ -366,6 +366,25 @@ Cow.syncstore.prototype =
         return this;
     },
     /**
+    	pruneDeleted() - remove all deleted records from cache and dbase
+    		Only makes sense when all peers are synced and/or no dbase is used 
+    **/
+    pruneDeleted: function(){
+    	var self = this;
+    	this._records.filter(function(d){
+    		return d.deleted();
+    	}).forEach(function(d){
+    		self._removeRecord(d.id());
+    		if (self.localdb){
+				self.localdb.delRecord({
+					storename:self._storename,
+					projectid: self._projectid,
+					id: d.id()
+				});
+			}
+    	});
+    },
+    /**
     syncRecord() - sync 1 record, returns record
     **/
     syncRecord: function(record){

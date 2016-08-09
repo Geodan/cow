@@ -1209,6 +1209,25 @@ Cow.syncstore.prototype =
         return this;
     },
     /**
+    	pruneDeleted() - remove all deleted records from cache and dbase
+    		Only makes sense when all peers are synced and/or no dbase is used 
+    **/
+    pruneDeleted: function(){
+    	var self = this;
+    	this._records.filter(function(d){
+    		return d.deleted();
+    	}).forEach(function(d){
+    		self._removeRecord(d.id());
+    		if (self.localdb){
+				self.localdb.delRecord({
+					storename:self._storename,
+					projectid: self._projectid,
+					id: d.id()
+				});
+			}
+    	});
+    },
+    /**
     syncRecord() - sync 1 record, returns record
     **/
     syncRecord: function(record){
@@ -2663,11 +2682,11 @@ Cow.messenger.prototype._onConnect = function(payload){
             }
         }
         //Only start syncing when we are not alpha
-        if (!self._amIAlpha()){
+        //if (!self._amIAlpha()){
         	Promise.all(loadarray).then(syncAll);
-        } else {
-        	console.log("No sync needed since I am the Alpha peer");
-        }
+        //} else {
+        	//console.log("No sync needed since I am the Alpha peer");
+        //}
     });
     
     syncarray = [
@@ -2709,7 +2728,7 @@ Cow.messenger.prototype._onPeerGone = function(payload) {
     if (this._core.peers(peerGone)){
         this._core.peers(peerGone).deleted(true).sync();
     }
-    this._core.peerStore().removePeer(peerGone);        
+    this._core.peerStore().pruneDeleted();        
     //TODO this.core.trigger('ws-peerGone',payload); 
 };
 
