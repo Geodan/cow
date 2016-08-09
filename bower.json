@@ -27,7 +27,7 @@
     "README.md"
   ],
   "dependencies": {
-    "underscore": "~1.5.2",
-    "es6-promise": "^3.2.1"
+    "es6-promise": "^3.2.1",
+    "underscore": "~1"
   }
 }
