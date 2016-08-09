@@ -235,14 +235,20 @@ Cow.record = function(){
 Cow.record.prototype =
 {
     sync: function(){
-        var now = new Date().getTime();
-        var userid = this._store._core.user() ? this._store._core.user().id() : null;
-        //TT: dirty should be enough to add delta //if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
-        if ( this._dirty && !this._store.noDeltas){ //avoid empty deltas
-            this.deltas(now, this._deltaq, this._deleted, userid); //add deltas from queue
-        }
-        this._deltaq = {}; //reset deltaq
-        return this._store.syncRecord(this);
+    	if (this._dirty){
+			var now = new Date().getTime();
+			var userid = this._store._core.user() ? this._store._core.user().id() : null;
+			//TT: dirty should be enough to add delta //if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
+			if ( this._dirty && !this._store.noDeltas){ //avoid empty deltas
+				this.deltas(now, this._deltaq, this._deleted, userid); //add deltas from queue
+			}
+			this._deltaq = {}; //reset deltaq
+			return this._store.syncRecord(this);
+		}
+		else {
+			console.log('Not syncing because record not dirty');
+			return this;
+		}
     },
 
     id: function(x){
@@ -324,9 +330,12 @@ Cow.record.prototype =
     **/
     deleted: function(truefalse){
         if (truefalse !== undefined && typeof(truefalse) == 'boolean'){
-            this._deleted = truefalse;
-            this.updated(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
-            this._dirty = true;
+        	//only updated when changed
+        	if (this._deleted !== truefalse){
+				this._deleted = truefalse;
+				this.updated(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
+				this._dirty = true;
+			}
             return this;
         }
         //if a timestamp instead of boolean is given
@@ -343,12 +352,15 @@ Cow.record.prototype =
     **/
     dirty: function(truefalse){
         if (truefalse !== undefined){
-            this._dirty = truefalse;
+        	//only updated when changed
+        	if (this._dirty !== truefalse){
+        		this._dirty = truefalse;
 
-            if (this._dirty) this._status = 'dirty'; //to be removed when status becomes deprecated
-            else this._status = 'clean';
+        		if (this._dirty) this._status = 'dirty'; //to be removed when status becomes deprecated
+        		else this._status = 'clean';
 
-            this.updated(new Date().getTime());
+        		this.updated(new Date().getTime());
+        	}
             return this;
         }
         else {
@@ -404,9 +416,12 @@ Cow.record.prototype =
             if (typeof(value) == 'object'){
                 value = JSON.parse(JSON.stringify(value));
             }
-            this._data[param] = value;
-            this._deltaq[param] = value;
-            this.dirty(true);
+            //only updated when changed
+            if (this._data[param] != value){ 
+            	this._data[param] = value;
+            	this._deltaq[param] = value;
+            	this.dirty(true);
+            }
             return this;
         }
     },
@@ -1041,10 +1056,8 @@ Cow.syncstore.prototype =
     **/
     deleteAll: function(){
         for (var i=0;i<this._records.length;i++){
-            this._records[i].deleted(true);
+            this._records[i].deleted(true).sync();
         }
-        this.syncRecords();//FIXME: syncrecords is not perfect yet (see below)
-        this.trigger('datachange');
         return this;
     },
     /**
@@ -1101,9 +1114,7 @@ Cow.syncstore.prototype =
 
     /**
     syncRecords() - looks for dirty records and returns them all at once for syncing them
-    TT: this function does *not* update the localdb and does *not* trigger a datachange.
-    	Therefore it is unsuited for use at the moment.
-    **/
+    TT: this function became OBSOLETE since it does *not* update the localdb and does *not* trigger a datachange.
     syncRecords: function(){
     	console.warn('syncRecords is not fully functional!. Please sync record by record.');
         var pushlist = [];
@@ -1122,7 +1133,8 @@ Cow.syncstore.prototype =
         };
         this._core.messenger().sendData(data, 'requestedRecords');
     },
-
+    **/
+    
     /**
     deltaList() - needed to sync the delta's
     **/
