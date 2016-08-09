@@ -222,7 +222,6 @@ if (typeof exports !== 'undefined') {
 Cow.record = function(){
     //FIXME: 'this' object is being overwritten by its children
     this._id    = null  || new Date().getTime().toString();
-    this._status= 'dirty'; //deprecated, replaced by _dirty
     this._dirty = false;
     this._deleted= false;
     this._created= new Date().getTime();
@@ -292,16 +291,6 @@ Cow.record.prototype =
 			return null;
     	}
     },
-    timestamp: function(timestamp){
-        console.warn('timestamp() has been deprecated. Use updated() instead');
-        if (timestamp) {
-            this._updated = timestamp;
-            return this;
-        }
-        else {
-            return this._updated;
-        }
-    },
     /**
         updated() - returns the timestamp of last update
         updated(timestamp) - sets the updated time to timestamp, returns record
@@ -355,33 +344,12 @@ Cow.record.prototype =
         	//only updated when changed
         	if (this._dirty !== truefalse){
         		this._dirty = truefalse;
-
-        		if (this._dirty) this._status = 'dirty'; //to be removed when status becomes deprecated
-        		else this._status = 'clean';
-
         		this.updated(new Date().getTime());
         	}
             return this;
         }
         else {
             return this._dirty;
-        }
-    },
-    // Status is going to be deprecated.
-    //Functionality is still here to address clients that still transmit a status instead of dirty
-    status: function(status){
-        console.warn('status() has been deprecated. Use dirty() instead like: \n set: dirty(boolean) \n get: dirty() returns boolean.');
-        if (status){
-            this._status = status;
-
-            if (this._status == 'dirty') this._dirty = true;
-            else this._dirty = false;
-
-            this.updated(new Date().getTime());
-            return this;
-        }
-        else {
-            return this._status;
         }
     },
     /**
@@ -403,7 +371,6 @@ Cow.record.prototype =
             this._data = param;
             this._deltaq = param;
             this.dirty(true);
-            //console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data');
             return this;
         }
         else if (param && typeof(param) == 'string' && typeof(value) == 'undefined'){
@@ -542,7 +509,6 @@ Cow.record.prototype =
     deflate: function(){
         return {
             _id: this._id,
-            status: this._status,
             dirty: this._dirty,
             created: this._created,
             deleted: this._deleted,
@@ -556,14 +522,10 @@ Cow.record.prototype =
     **/
     inflate: function(config){
         this._id = config._id || this._id;
-        this._status = config.status || this._status; //to be deprecated
         if (config.dirty !== undefined){
             this._dirty = config.dirty;
         }
-        else { //remove this when status is deprecated
-            if (this._status == 'clean') this._dirty = false;
-            else this._dirty = true;
-        }
+        
         this._created = config.created || this._created;
         if (config.deleted !== undefined){
             this._deleted = config.deleted;
@@ -1274,29 +1236,6 @@ Cow.syncstore.prototype =
     },
 
     /**
-    syncRecords() - looks for dirty records and returns them all at once for syncing them
-    TT: this function became OBSOLETE since it does *not* update the localdb and does *not* trigger a datachange.
-    syncRecords: function(){
-    	console.warn('syncRecords is not fully functional!. Please sync record by record.');
-        var pushlist = [];
-        for (var i=0;i<this._records.length;i++){
-            var record = this._records[i];
-            if (record.dirty()) {
-                //this.syncRecord(record);
-                record.dirty(false);
-                pushlist.push(record.deflate());
-            }
-        }
-        var data =  {
-            "syncType" : this._type,
-            "project" : this._projectid,
-            "list" : pushlist
-        };
-        this._core.messenger().sendData(data, 'requestedRecords');
-    },
-    **/
-    
-    /**
     deltaList() - needed to sync the delta's
     **/
     deltaList: function(){
@@ -1402,7 +1341,6 @@ Cow.syncstore.prototype =
 									returndata.requestlist.push(rem_val._id);
 								}
 								//remove from copyremotelist
-								//OBS var tmppos = $.inArray(local_item._id,copyof_rem_list);
 								var tmppos = copyof_rem_list.indexOf(local_item._id);
 								if (tmppos >= 0){
 									copyof_rem_list.splice(tmppos,1);
@@ -1529,7 +1467,6 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.socketserver = function(config){
-     //if (!config._id) {throw 'No _id given for socketserver';}
     this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     this._core = this._store._core;
@@ -1576,7 +1513,6 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.user = function(config){
-    //if (!config._id) {throw 'No _id given for user';}
     this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     
@@ -1594,21 +1530,6 @@ Cow.user = function(config){
 };
 Cow.user.prototype = 
 {
-    /*
-    TT: made obsolete, not in the scope of cow
-    name: function(name){
-        if (name){
-            return this.data('name', name);
-        }
-        return this.data('name');
-    },
-    mail: function(mail){
-        if (mail){
-            return this.data('mail', mail);
-        }
-        return this.data('mail');
-    },
-    */
     /**
         isActive() - returns wether or not the user is connected to a peer at the moment
         TT: Might be obsolete, was used by core.activeUsers()
@@ -1641,45 +1562,6 @@ Cow.user.prototype =
         }
         return returnArr;
     }
-    /** 
-        activeprojects() - returns array of active projects
-        activeprojects(id) - adds project to array of active projects
-        activeprojects(id,true) - removes project from array of active projects
-    **/
-    /* TT: obsolete
-    activeprojects: function(projectid, deleteme){
-        var projectarr = this.data('activeprojects') || [];
-        if (projectid && deleteme){
-            var idx = projectarr.indexOf(projectid);
-            projectarr.splice(idx,1);
-            return this.data('activeprojects',projectarr);
-        }
-        if (projectid){
-            projectarr.push(projectid);
-            return this.data('activeprojects',projectarr);
-        }
-        return this.data('activeprojects') || [];
-    },*/
-    /** 
-        mutedprojects() - returns array of muted projects
-        mutedprojects(id) - adds project to array of muted projects
-        mutedprojects(id,true) - removes project from array of muted projects
-    **/
-    /* TT: obsolete
-    mutedprojects: function(projectid, deleteme){
-        var projectarr = this.data('mutedprojects') || [];
-        if (projectid && deleteme){
-            var idx = projectarr.indexOf(projectid);
-            projectarr.splice(idx,1);
-            return this.data('mutedprojects',projectarr);
-        }
-        if (projectid){
-            projectarr.push(projectid);
-            return this.data('mutedprojects',projectarr);
-        }
-        return this.data('mutedprojects') || [];
-    }*/
-    
 };
 _.extend(Cow.user.prototype, Cow.record.prototype);
 }.call(this));
@@ -1697,7 +1579,6 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.group = function(config){
-    //if (!config._id) {throw 'No _id given for group';}
     this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     
@@ -1734,7 +1615,6 @@ Cow.group.prototype =
                        var d = userid[i];
                        self._addMember(d);
                    }
-                   //return this._getMembers();
                    return this;
                 }
                 else {
@@ -2136,7 +2016,6 @@ if (typeof exports !== 'undefined') {
 
 Cow.project = function(config){
     var self = this;
-    //if (!config._id) {throw 'No _id given for project';}
     this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     this._core = this._store._core;
@@ -2153,7 +2032,6 @@ Cow.project = function(config){
     this._deltasforupload = []; //deltas we still need to give to other peers
     //END OF FIXME
     
-    //var dbname = 'groups_' + config._id;
     var dbname = 'groups';
     this._groupStore = _.extend(
         new Cow.syncstore({dbname: dbname, noIDB: false, core: self._core, maxAge: this._maxAge}),{
@@ -2167,7 +2045,6 @@ Cow.project = function(config){
         }
     });
     
-    //dbname = 'items_' + config._id;
     dbname = 'items';
     this._itemStore = _.extend(
         new Cow.syncstore({dbname: dbname, noIDB: false, core: self._core, maxAge: this._maxAge}),{
@@ -2534,8 +2411,6 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     message.sender = this._core.peerid();
     message.target = target;
     message.action = action;
-    //message.payload = data;
-    //TT: newly added lzw compression in 2.2.0. This breaks COW versions!
     message.payload = lzw_encode(encode_utf8(JSON.stringify(data)));
     var stringified;
     var endcoded;
@@ -2691,7 +2566,7 @@ Cow.messenger.prototype._onConnect = function(payload){
         var loadarray = [];
         for (var i=0;i<projects.length;i++){
             var project = projects[i];
-            //20150731 TT: stopping the syncing of items and groups in deleted projects
+            //Only sync items and groups in non-deleted projects
             if (!project.deleted()){
 				loadarray.push([
 					project.itemStore().loaded,
@@ -2699,12 +2574,7 @@ Cow.messenger.prototype._onConnect = function(payload){
 				]);
             }
         }
-        //Only start syncing when we are not alpha
-        //if (!self._amIAlpha()){
-        	Promise.all(loadarray).then(syncAll);
-        //} else {
-        	//console.log("No sync needed since I am the Alpha peer");
-        //}
+        Promise.all(loadarray).then(syncAll);
     });
     
     syncarray = [
@@ -2725,7 +2595,7 @@ Cow.messenger.prototype._onConnect = function(payload){
             var projects = self._core.projects();
             for (var i=0;i<projects.length;i++){
                 var project = projects[i];
-                //20150731 TT: stopping the syncing of items and groups in deleted projects
+                //Only sync items and groups in non-deleted projects
                 if (!project.deleted()){
 					syncarray.push([project.itemStore().synced,project.groupStore().synced]); 
 					project.itemStore().sync();
@@ -2770,15 +2640,6 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
-            /* TT: 20150731
-            	Disabled because potentially dangerous!
-            	When a client is fresh (meaning no data) and receives an item before
-            	it receives the corresponding project, the project will be created as new
-            	and subsequently overwrite the original one.
-            */
-            //else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
-            //    project = this._core.projects({_id:projectid});
-            //}
             else {
                 throw "No project with id "+projectid+" Indexeddb too slow with loading?";
             }
@@ -2790,15 +2651,6 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
-            /* TT: 20150731
-            	Disabled because potentially dangerous!
-            	When a client is fresh (meaning no data) and receives an item before
-            	it receives the corresponding project, the project will be created as new
-            	and subsequently overwrite the original one.
-            */
-            //else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
-            //    project = this._core.projects({_id:projectid});
-            //}
             else {
                 throw "No project with id "+projectid+" Indexeddb too slow with loading?";
             }
@@ -2839,10 +2691,6 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             this.sendData(data, 'wantedList', sender);
         }
         
-        /* 20150730 TT: 
-        Changed the way of syncing by sending records 1 by 1. This slows down the total but should be 
-        more stable since we reduce the risk of passing the max message size for websockets 
-        */
         syncobject.pushlist.forEach(function(d){
             msg = {
                 "syncType" : payload.syncType,
@@ -2879,10 +2727,6 @@ Cow.messenger.prototype._onWantedList = function(payload) {
     var self = this;
     var store = this._getStore(payload);
     var returnlist = store.requestRecords(payload.list);
-    /* 20150730 TT: 
-        Changed the way of syncing by sending records 1 by 1. This slows down the total but should be 
-        more stable since we reduce the risk of passing the max message size for websockets 
-    */
     returnlist.forEach(function(d){
 		msg = {
 			"syncType" : payload.syncType,
@@ -3028,7 +2872,6 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.core = function(config){
-    //log.setLevel('warn');
     var self = this;
     if (typeof(config) == 'undefined' ) {
         config = {};
@@ -3091,7 +2934,6 @@ Cow.core = function(config){
     });
     
     /*WEBSOCKET*/
-    //this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     this._websocket = new Cow.websocket({core: this, url: this._wsUrl});
     
     /*MESSENGER*/

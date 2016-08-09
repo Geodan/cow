@@ -12,7 +12,6 @@ if (typeof exports !== 'undefined') {
 
 Cow.project = function(config){
     var self = this;
-    //if (!config._id) {throw 'No _id given for project';}
     this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     this._core = this._store._core;
@@ -29,7 +28,6 @@ Cow.project = function(config){
     this._deltasforupload = []; //deltas we still need to give to other peers
     //END OF FIXME
     
-    //var dbname = 'groups_' + config._id;
     var dbname = 'groups';
     this._groupStore = _.extend(
         new Cow.syncstore({dbname: dbname, noIDB: false, core: self._core, maxAge: this._maxAge}),{
@@ -43,7 +41,6 @@ Cow.project = function(config){
         }
     });
     
-    //dbname = 'items_' + config._id;
     dbname = 'items';
     this._itemStore = _.extend(
         new Cow.syncstore({dbname: dbname, noIDB: false, core: self._core, maxAge: this._maxAge}),{
