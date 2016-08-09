@@ -359,11 +359,28 @@ Cow.syncstore.prototype =
     **/
     deleteAll: function(){
         for (var i=0;i<this._records.length;i++){
-            this._records[i].deleted(true);
+            this._records[i].deleted(true).sync();
         }
-        this.syncRecords();//FIXME: syncrecords is not perfect yet (see below)
-        this.trigger('datachange');
         return this;
+    },
+    /**
+    	pruneDeleted() - remove all deleted records from cache and dbase
+    		Only makes sense when all peers are synced and/or no dbase is used 
+    **/
+    pruneDeleted: function(){
+    	var self = this;
+    	this._records.filter(function(d){
+    		return d.deleted();
+    	}).forEach(function(d){
+    		self._removeRecord(d.id());
+    		if (self.localdb){
+				self.localdb.delRecord({
+					storename:self._storename,
+					projectid: self._projectid,
+					id: d.id()
+				});
+			}
+    	});
     },
     /**
     syncRecord() - sync 1 record, returns record
@@ -400,9 +417,7 @@ Cow.syncstore.prototype =
 
     /**
     syncRecords() - looks for dirty records and returns them all at once for syncing them
-    TT: this function does *not* update the localdb and does *not* trigger a datachange.
-    	Therefore it is unsuited for use at the moment.
-    **/
+    TT: this function became OBSOLETE since it does *not* update the localdb and does *not* trigger a datachange.
     syncRecords: function(){
     	console.warn('syncRecords is not fully functional!. Please sync record by record.');
         var pushlist = [];
@@ -421,7 +436,8 @@ Cow.syncstore.prototype =
         };
         this._core.messenger().sendData(data, 'requestedRecords');
     },
-
+    **/
+    
     /**
     deltaList() - needed to sync the delta's
     **/
@@ -464,7 +480,8 @@ Cow.syncstore.prototype =
             var item = this._records[i];
             var iditem = {};
             iditem._id = item._id;
-            iditem.timestamp = item.updated();
+            iditem.timestamp = item.updated(); //TT: Deprecated, to be removed when timestamp is obsolete
+            iditem.updated = item.updated();
             iditem.deleted = item.deleted();
             fids.push(iditem);
         }
@@ -487,7 +504,7 @@ Cow.syncstore.prototype =
 		return pushlist;
 	},
     /**
-	compareRecords(config) - compares incoming idlist with idlist from current stack based on timestamp and dirtystatus
+	compareRecords(config) - compares incoming idlist with idlist from current stack based on updated time and dirtystatus
 					generates 2 lists: requestlist and pushlist
 	**/
     compareRecords: function(config){
@@ -513,12 +530,17 @@ Cow.syncstore.prototype =
 							var rem_val = fidlist[j];
 							if (rem_val._id == local_item._id){
 								found = 1;
+								//TT: temporary hack to deal with deprecated timestamp
+								if (!rem_val.updated){
+									rem_val.updated = rem_val.timestamp;
+								}
+								
 								//local is newer
-								if (rem_val.timestamp < local_item._updated){
+								if (rem_val.updated < local_item._updated){
 									returndata.pushlist.push(local_item.deflate());
 								}
 								//remote is newer
-								else if (rem_val.timestamp > local_item._updated){
+								else if (rem_val.updated > local_item._updated){
 									returndata.requestlist.push(rem_val._id);
 								}
 								//remove from copyremotelist

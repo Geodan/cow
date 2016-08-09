@@ -235,14 +235,20 @@ Cow.record = function(){
 Cow.record.prototype =
 {
     sync: function(){
-        var now = new Date().getTime();
-        var userid = this._store._core.user() ? this._store._core.user().id() : null;
-        //TT: dirty should be enough to add delta //if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
-        if ( this._dirty && !this._store.noDeltas){ //avoid empty deltas
-            this.deltas(now, this._deltaq, this._deleted, userid); //add deltas from queue
-        }
-        this._deltaq = {}; //reset deltaq
-        return this._store.syncRecord(this);
+    	if (this._dirty){
+			var now = new Date().getTime();
+			var userid = this._store._core.user() ? this._store._core.user().id() : null;
+			//TT: dirty should be enough to add delta //if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
+			if ( this._dirty && !this._store.noDeltas){ //avoid empty deltas
+				this.deltas(now, this._deltaq, this._deleted, userid); //add deltas from queue
+			}
+			this._deltaq = {}; //reset deltaq
+			return this._store.syncRecord(this);
+		}
+		else {
+			console.log('Not syncing because record not dirty');
+			return this;
+		}
     },
 
     id: function(x){
@@ -324,9 +330,12 @@ Cow.record.prototype =
     **/
     deleted: function(truefalse){
         if (truefalse !== undefined && typeof(truefalse) == 'boolean'){
-            this._deleted = truefalse;
-            this.updated(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
-            this._dirty = true;
+        	//only updated when changed
+        	if (this._deleted !== truefalse){
+				this._deleted = truefalse;
+				this.updated(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
+				this._dirty = true;
+			}
             return this;
         }
         //if a timestamp instead of boolean is given
@@ -343,12 +352,15 @@ Cow.record.prototype =
     **/
     dirty: function(truefalse){
         if (truefalse !== undefined){
-            this._dirty = truefalse;
+        	//only updated when changed
+        	if (this._dirty !== truefalse){
+        		this._dirty = truefalse;
 
-            if (this._dirty) this._status = 'dirty'; //to be removed when status becomes deprecated
-            else this._status = 'clean';
+        		if (this._dirty) this._status = 'dirty'; //to be removed when status becomes deprecated
+        		else this._status = 'clean';
 
-            this.updated(new Date().getTime());
+        		this.updated(new Date().getTime());
+        	}
             return this;
         }
         else {
@@ -404,9 +416,12 @@ Cow.record.prototype =
             if (typeof(value) == 'object'){
                 value = JSON.parse(JSON.stringify(value));
             }
-            this._data[param] = value;
-            this._deltaq[param] = value;
-            this.dirty(true);
+            //only updated when changed
+            if (this._data[param] != value){ 
+            	this._data[param] = value;
+            	this._deltaq[param] = value;
+            	this.dirty(true);
+            }
             return this;
         }
     },
@@ -1202,11 +1217,28 @@ Cow.syncstore.prototype =
     **/
     deleteAll: function(){
         for (var i=0;i<this._records.length;i++){
-            this._records[i].deleted(true);
+            this._records[i].deleted(true).sync();
         }
-        this.syncRecords();//FIXME: syncrecords is not perfect yet (see below)
-        this.trigger('datachange');
         return this;
+    },
+    /**
+    	pruneDeleted() - remove all deleted records from cache and dbase
+    		Only makes sense when all peers are synced and/or no dbase is used 
+    **/
+    pruneDeleted: function(){
+    	var self = this;
+    	this._records.filter(function(d){
+    		return d.deleted();
+    	}).forEach(function(d){
+    		self._removeRecord(d.id());
+    		if (self.localdb){
+				self.localdb.delRecord({
+					storename:self._storename,
+					projectid: self._projectid,
+					id: d.id()
+				});
+			}
+    	});
     },
     /**
     syncRecord() - sync 1 record, returns record
@@ -1243,9 +1275,7 @@ Cow.syncstore.prototype =
 
     /**
     syncRecords() - looks for dirty records and returns them all at once for syncing them
-    TT: this function does *not* update the localdb and does *not* trigger a datachange.
-    	Therefore it is unsuited for use at the moment.
-    **/
+    TT: this function became OBSOLETE since it does *not* update the localdb and does *not* trigger a datachange.
     syncRecords: function(){
     	console.warn('syncRecords is not fully functional!. Please sync record by record.');
         var pushlist = [];
@@ -1264,7 +1294,8 @@ Cow.syncstore.prototype =
         };
         this._core.messenger().sendData(data, 'requestedRecords');
     },
-
+    **/
+    
     /**
     deltaList() - needed to sync the delta's
     **/
@@ -1307,7 +1338,8 @@ Cow.syncstore.prototype =
             var item = this._records[i];
             var iditem = {};
             iditem._id = item._id;
-            iditem.timestamp = item.updated();
+            iditem.timestamp = item.updated(); //TT: Deprecated, to be removed when timestamp is obsolete
+            iditem.updated = item.updated();
             iditem.deleted = item.deleted();
             fids.push(iditem);
         }
@@ -1330,7 +1362,7 @@ Cow.syncstore.prototype =
 		return pushlist;
 	},
     /**
-	compareRecords(config) - compares incoming idlist with idlist from current stack based on timestamp and dirtystatus
+	compareRecords(config) - compares incoming idlist with idlist from current stack based on updated time and dirtystatus
 					generates 2 lists: requestlist and pushlist
 	**/
     compareRecords: function(config){
@@ -1356,12 +1388,17 @@ Cow.syncstore.prototype =
 							var rem_val = fidlist[j];
 							if (rem_val._id == local_item._id){
 								found = 1;
+								//TT: temporary hack to deal with deprecated timestamp
+								if (!rem_val.updated){
+									rem_val.updated = rem_val.timestamp;
+								}
+								
 								//local is newer
-								if (rem_val.timestamp < local_item._updated){
+								if (rem_val.updated < local_item._updated){
 									returndata.pushlist.push(local_item.deflate());
 								}
 								//remote is newer
-								else if (rem_val.timestamp > local_item._updated){
+								else if (rem_val.updated > local_item._updated){
 									returndata.requestlist.push(rem_val._id);
 								}
 								//remove from copyremotelist
@@ -2663,11 +2700,11 @@ Cow.messenger.prototype._onConnect = function(payload){
             }
         }
         //Only start syncing when we are not alpha
-        if (!self._amIAlpha()){
+        //if (!self._amIAlpha()){
         	Promise.all(loadarray).then(syncAll);
-        } else {
-        	console.log("No sync needed since I am the Alpha peer");
-        }
+        //} else {
+        	//console.log("No sync needed since I am the Alpha peer");
+        //}
     });
     
     syncarray = [
@@ -2709,7 +2746,7 @@ Cow.messenger.prototype._onPeerGone = function(payload) {
     if (this._core.peers(peerGone)){
         this._core.peers(peerGone).deleted(true).sync();
     }
-    this._core.peerStore().removePeer(peerGone);        
+    this._core.peerStore().pruneDeleted();        
     //TODO this.core.trigger('ws-peerGone',payload); 
 };
 
