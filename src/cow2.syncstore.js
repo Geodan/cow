@@ -359,10 +359,8 @@ Cow.syncstore.prototype =
     **/
     deleteAll: function(){
         for (var i=0;i<this._records.length;i++){
-            this._records[i].deleted(true);
+            this._records[i].deleted(true).sync();
         }
-        this.syncRecords();//FIXME: syncrecords is not perfect yet (see below)
-        this.trigger('datachange');
         return this;
     },
     /**
@@ -419,9 +417,7 @@ Cow.syncstore.prototype =
 
     /**
     syncRecords() - looks for dirty records and returns them all at once for syncing them
-    TT: this function does *not* update the localdb and does *not* trigger a datachange.
-    	Therefore it is unsuited for use at the moment.
-    **/
+    TT: this function became OBSOLETE since it does *not* update the localdb and does *not* trigger a datachange.
     syncRecords: function(){
     	console.warn('syncRecords is not fully functional!. Please sync record by record.');
         var pushlist = [];
@@ -440,7 +436,8 @@ Cow.syncstore.prototype =
         };
         this._core.messenger().sendData(data, 'requestedRecords');
     },
-
+    **/
+    
     /**
     deltaList() - needed to sync the delta's
     **/
