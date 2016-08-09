@@ -11,7 +11,6 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.core = function(config){
-    //log.setLevel('warn');
     var self = this;
     if (typeof(config) == 'undefined' ) {
         config = {};
@@ -74,7 +73,6 @@ Cow.core = function(config){
     });
     
     /*WEBSOCKET*/
-    //this._websocket = new Cow.websocket({url: this._wsUrl, core: this});
     this._websocket = new Cow.websocket({core: this, url: this._wsUrl});
     
     /*MESSENGER*/

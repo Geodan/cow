@@ -416,29 +416,6 @@ Cow.syncstore.prototype =
     },
 
     /**
-    syncRecords() - looks for dirty records and returns them all at once for syncing them
-    TT: this function became OBSOLETE since it does *not* update the localdb and does *not* trigger a datachange.
-    syncRecords: function(){
-    	console.warn('syncRecords is not fully functional!. Please sync record by record.');
-        var pushlist = [];
-        for (var i=0;i<this._records.length;i++){
-            var record = this._records[i];
-            if (record.dirty()) {
-                //this.syncRecord(record);
-                record.dirty(false);
-                pushlist.push(record.deflate());
-            }
-        }
-        var data =  {
-            "syncType" : this._type,
-            "project" : this._projectid,
-            "list" : pushlist
-        };
-        this._core.messenger().sendData(data, 'requestedRecords');
-    },
-    **/
-    
-    /**
     deltaList() - needed to sync the delta's
     **/
     deltaList: function(){
@@ -544,7 +521,6 @@ Cow.syncstore.prototype =
 									returndata.requestlist.push(rem_val._id);
 								}
 								//remove from copyremotelist
-								//OBS var tmppos = $.inArray(local_item._id,copyof_rem_list);
 								var tmppos = copyof_rem_list.indexOf(local_item._id);
 								if (tmppos >= 0){
 									copyof_rem_list.splice(tmppos,1);

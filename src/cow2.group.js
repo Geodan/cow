@@ -12,7 +12,6 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.group = function(config){
-    //if (!config._id) {throw 'No _id given for group';}
     this._id = config._id  || new Date().getTime().toString();
     this._store = config.store;
     
@@ -49,7 +48,6 @@ Cow.group.prototype =
                        var d = userid[i];
                        self._addMember(d);
                    }
-                   //return this._getMembers();
                    return this;
                 }
                 else {
