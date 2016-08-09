@@ -1338,7 +1338,8 @@ Cow.syncstore.prototype =
             var item = this._records[i];
             var iditem = {};
             iditem._id = item._id;
-            iditem.timestamp = item.updated();
+            iditem.timestamp = item.updated(); //TT: Deprecated, to be removed when timestamp is obsolete
+            iditem.updated = item.updated();
             iditem.deleted = item.deleted();
             fids.push(iditem);
         }
@@ -1361,7 +1362,7 @@ Cow.syncstore.prototype =
 		return pushlist;
 	},
     /**
-	compareRecords(config) - compares incoming idlist with idlist from current stack based on timestamp and dirtystatus
+	compareRecords(config) - compares incoming idlist with idlist from current stack based on updated time and dirtystatus
 					generates 2 lists: requestlist and pushlist
 	**/
     compareRecords: function(config){
@@ -1387,12 +1388,17 @@ Cow.syncstore.prototype =
 							var rem_val = fidlist[j];
 							if (rem_val._id == local_item._id){
 								found = 1;
+								//TT: temporary hack to deal with deprecated timestamp
+								if (!rem_val.updated){
+									rem_val.updated = rem_val.timestamp;
+								}
+								
 								//local is newer
-								if (rem_val.timestamp < local_item._updated){
+								if (rem_val.updated < local_item._updated){
 									returndata.pushlist.push(local_item.deflate());
 								}
 								//remote is newer
-								else if (rem_val.timestamp > local_item._updated){
+								else if (rem_val.updated > local_item._updated){
 									returndata.requestlist.push(rem_val._id);
 								}
 								//remove from copyremotelist
