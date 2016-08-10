@@ -14,6 +14,7 @@ Cow.record = function(){
     //FIXME: 'this' object is being overwritten by its children
     this._id    = null  || new Date().getTime().toString();
     this._dirty = false;
+    this._ttl = null;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -142,6 +143,33 @@ Cow.record.prototype =
         else {
             return this._dirty;
         }
+    },
+    /**
+    	ttl() - returns the timetolive in milliseconds
+    	ttl(int) - sets the timetolive in milliseconds, returns record
+    **/
+    ttl: function(time){
+    	if (time !== undefined){
+    		if (this._ttl !== time){
+    			this._ttl = time;
+    		}
+    		return this;
+    	}
+    	else {
+    		return this._ttl;
+    	}
+    },
+    /**
+    	expired() - returns boolean whether record is past ttl
+    **/
+    expired: function(){
+    	var staleness = new Date().getTime() - this.updated();
+    	if (this._ttl && staleness > this._ttl){
+    		return true
+    	}
+    	else {
+    		return false;
+    	}
     },
     /**
         data() - returns data object
@@ -301,6 +329,7 @@ Cow.record.prototype =
         return {
             _id: this._id,
             dirty: this._dirty,
+            ttl: this._ttl,
             created: this._created,
             deleted: this._deleted,
             updated: this._updated,
@@ -316,7 +345,7 @@ Cow.record.prototype =
         if (config.dirty !== undefined){
             this._dirty = config.dirty;
         }
-        
+        this._ttl = config.ttl || this._ttl;
         this._created = config.created || this._created;
         if (config.deleted !== undefined){
             this._deleted = config.deleted;

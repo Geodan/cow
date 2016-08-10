@@ -18,7 +18,7 @@ Cow.syncstore =  function(config){
     this._core = config.core;
     this.noDeltas = config.noDeltas || false;
     this.noIDB = config.noIDB || false;
-    this.maxStaleness = config.maxAge || null;
+    this._maxAge = config.maxAge; 
     this.syncinfo = {
         toReceive: [],
         toSent: [],
@@ -57,11 +57,11 @@ Cow.syncstore =  function(config){
                                 //record = -1;
                             }
                          }//Object should be non existing yet and not older than some max setting
-                         if (!existing && (staleness <= self.maxStaleness || self.maxStaleness === null)){
+                         if (!existing && (staleness <= record._ttl || self._ttl === null)){
                              self._records.push(record); //Adding to the list
                          }
                          //If it is stale, than remove it from the database
-                         if(self.maxStaleness && staleness > self.maxStaleness){
+                         if(record._ttl && staleness > record._ttl){
                              self.localdb.delRecord({
                                 storename:self._storename,
                                 projectid: self._projectid,
@@ -166,11 +166,11 @@ Cow.syncstore.prototype =
                             //record = -1;
                         }
                      }//Object should be non existing yet and not older than some max setting
-                     if (!existing && (staleness <= self.maxStaleness || self.maxStaleness === null)){
+                     if (!existing && (staleness <= record._ttl || record._ttl === null)){
                          self._records.push(record); //Adding to the list
                      }
                      //If it is stale, than remove it from the database
-                     else if(self.maxStaleness && staleness > self.maxStaleness){
+                     else if(record._ttl && staleness > record._ttl){
                          self.localdb.delRecord({
                             storename:self._storename,
                             projectid: self._projectid,
@@ -527,8 +527,8 @@ Cow.syncstore.prototype =
 								}
 							}
 					}
-					//local but not remote and not deleted
-					if (found == -1 && local_item.deleted() != 'true'){
+					//local but not remote and not deleted and not over ttl
+					if (found == -1 && !local_item.deleted() && !local_item.expired()){
 						returndata.pushlist.push(local_item.deflate());
 					}
 			}

@@ -21,6 +21,7 @@ Cow.peer = function(config){
     
     //FIXME: this might be inherited from cow.record 
     this._dirty= 'true';
+    this._ttl = this._store._maxAge;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();

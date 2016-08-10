@@ -223,6 +223,7 @@ Cow.record = function(){
     //FIXME: 'this' object is being overwritten by its children
     this._id    = null  || new Date().getTime().toString();
     this._dirty = false;
+    this._ttl = null;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -351,6 +352,33 @@ Cow.record.prototype =
         else {
             return this._dirty;
         }
+    },
+    /**
+    	ttl() - returns the timetolive in milliseconds
+    	ttl(int) - sets the timetolive in milliseconds, returns record
+    **/
+    ttl: function(time){
+    	if (time !== undefined){
+    		if (this._ttl !== time){
+    			this._ttl = time;
+    		}
+    		return this;
+    	}
+    	else {
+    		return this._ttl;
+    	}
+    },
+    /**
+    	expired() - returns boolean whether record is past ttl
+    **/
+    expired: function(){
+    	var staleness = new Date().getTime() - this.updated();
+    	if (this._ttl && staleness > this._ttl){
+    		return true
+    	}
+    	else {
+    		return false;
+    	}
     },
     /**
         data() - returns data object
@@ -510,6 +538,7 @@ Cow.record.prototype =
         return {
             _id: this._id,
             dirty: this._dirty,
+            ttl: this._ttl,
             created: this._created,
             deleted: this._deleted,
             updated: this._updated,
@@ -525,7 +554,7 @@ Cow.record.prototype =
         if (config.dirty !== undefined){
             this._dirty = config.dirty;
         }
-        
+        this._ttl = config.ttl || this._ttl;
         this._created = config.created || this._created;
         if (config.deleted !== undefined){
             this._deleted = config.deleted;
@@ -838,7 +867,7 @@ Cow.syncstore =  function(config){
     this._core = config.core;
     this.noDeltas = config.noDeltas || false;
     this.noIDB = config.noIDB || false;
-    this.maxStaleness = config.maxAge || null;
+    this._maxAge = config.maxAge; 
     this.syncinfo = {
         toReceive: [],
         toSent: [],
@@ -877,11 +906,11 @@ Cow.syncstore =  function(config){
                                 //record = -1;
                             }
                          }//Object should be non existing yet and not older than some max setting
-                         if (!existing && (staleness <= self.maxStaleness || self.maxStaleness === null)){
+                         if (!existing && (staleness <= record._ttl || self._ttl === null)){
                              self._records.push(record); //Adding to the list
                          }
                          //If it is stale, than remove it from the database
-                         if(self.maxStaleness && staleness > self.maxStaleness){
+                         if(record._ttl && staleness > record._ttl){
                              self.localdb.delRecord({
                                 storename:self._storename,
                                 projectid: self._projectid,
@@ -986,11 +1015,11 @@ Cow.syncstore.prototype =
                             //record = -1;
                         }
                      }//Object should be non existing yet and not older than some max setting
-                     if (!existing && (staleness <= self.maxStaleness || self.maxStaleness === null)){
+                     if (!existing && (staleness <= record._ttl || record._ttl === null)){
                          self._records.push(record); //Adding to the list
                      }
                      //If it is stale, than remove it from the database
-                     else if(self.maxStaleness && staleness > self.maxStaleness){
+                     else if(record._ttl && staleness > record._ttl){
                          self.localdb.delRecord({
                             storename:self._storename,
                             projectid: self._projectid,
@@ -1347,8 +1376,8 @@ Cow.syncstore.prototype =
 								}
 							}
 					}
-					//local but not remote and not deleted
-					if (found == -1 && local_item.deleted() != 'true'){
+					//local but not remote and not deleted and not over ttl
+					if (found == -1 && !local_item.deleted() && !local_item.expired()){
 						returndata.pushlist.push(local_item.deflate());
 					}
 			}
@@ -1417,6 +1446,7 @@ Cow.peer = function(config){
     
     //FIXME: this might be inherited from cow.record 
     this._dirty= 'true';
+    this._ttl = this._store._maxAge;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -1518,6 +1548,7 @@ Cow.user = function(config){
     
     //FIXME: this might be inherited from cow.record 
     this._dirty= true;
+    this._ttl = this._store.maxStaleness;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -1584,6 +1615,7 @@ Cow.group = function(config){
     
     //FIXME: this might be inherited from cow.record 
     this._dirty= 'true';
+    this._ttl = this._store.maxStaleness;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -1772,6 +1804,7 @@ Cow.item = function(config){
     
     //FIXME: this might be inherited from cow.record 
     this._dirty= 'true';
+    this._ttl = this._store.maxStaleness;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -2023,6 +2056,7 @@ Cow.project = function(config){
     
     //FIXME: this might be inherited from cow.record 
     this._dirty= 'true';
+    this._ttl = this._store._maxAge;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -2883,7 +2917,7 @@ Cow.core = function(config){
     this._projectid = null;
     this._wsUrl = null;
     this._peerid = null;
-    this._maxAge = config.maxage || 1000 * 60 * 60 * 24 * 120; //120 days in mseconds
+    this._maxAge = config.maxAge || 1000 * 60 * 60 * 24 * 120; //120 days in mseconds
     this._autoReconnect = config.autoReconnect || true;
     
     /*LOCALDB*/
@@ -2901,7 +2935,7 @@ Cow.core = function(config){
     
     /*PEERS*/
     this._peerStore =  _.extend(
-        new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this, maxAge: this._maxAge}), {
+        new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
          _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.peer({_id: _id, store: this});}, 
@@ -2915,7 +2949,7 @@ Cow.core = function(config){
     
     /*USERS*/
     this._userStore =  _.extend(
-        new Cow.syncstore({dbname: 'users', noIDB: false, noDeltas: true, core: this, maxAge: null}), {
+        new Cow.syncstore({dbname: 'users', noIDB: false, noDeltas: true, core: this}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
@@ -2925,7 +2959,7 @@ Cow.core = function(config){
     
     /*SOCKETSERVERS*/
     this._socketserverStore =  _.extend(
-        new Cow.syncstore({dbname: 'socketservers', noIDB: false, noDeltas: true, core: this, maxAge: null}), {
+        new Cow.syncstore({dbname: 'socketservers', noIDB: false, noDeltas: true, core: this}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.socketserver({_id: _id, store: this});},     

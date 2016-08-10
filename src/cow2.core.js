@@ -22,7 +22,7 @@ Cow.core = function(config){
     this._projectid = null;
     this._wsUrl = null;
     this._peerid = null;
-    this._maxAge = config.maxage || 1000 * 60 * 60 * 24 * 120; //120 days in mseconds
+    this._maxAge = config.maxAge || 1000 * 60 * 60 * 24 * 120; //120 days in mseconds
     this._autoReconnect = config.autoReconnect || true;
     
     /*LOCALDB*/
@@ -40,7 +40,7 @@ Cow.core = function(config){
     
     /*PEERS*/
     this._peerStore =  _.extend(
-        new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this, maxAge: this._maxAge}), {
+        new Cow.syncstore({dbname: 'peers', noIDB: true, noDeltas: true, core: this}), {
          _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.peer({_id: _id, store: this});}, 
@@ -54,7 +54,7 @@ Cow.core = function(config){
     
     /*USERS*/
     this._userStore =  _.extend(
-        new Cow.syncstore({dbname: 'users', noIDB: false, noDeltas: true, core: this, maxAge: null}), {
+        new Cow.syncstore({dbname: 'users', noIDB: false, noDeltas: true, core: this}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.user({_id: _id, store: this});},     
@@ -64,7 +64,7 @@ Cow.core = function(config){
     
     /*SOCKETSERVERS*/
     this._socketserverStore =  _.extend(
-        new Cow.syncstore({dbname: 'socketservers', noIDB: false, noDeltas: true, core: this, maxAge: null}), {
+        new Cow.syncstore({dbname: 'socketservers', noIDB: false, noDeltas: true, core: this}), {
         _records: [],
         //prototype for record
         _recordproto:   function(_id){return new Cow.socketserver({_id: _id, store: this});},     
