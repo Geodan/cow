@@ -401,7 +401,7 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
         //Give the peer information on what will be synced
         var syncinfo = {
             IWillSent: _.pluck(syncobject.pushlist,"_id"),
-            IShallReceive: _.pluck(syncobject.requestlist,"_id") //TODO: hey, this seems like doubling the functionality of 'wantedList'
+            IShallReceive: syncobject.requestlist //TODO: hey, this seems like doubling the functionality of 'wantedList'
         };
         data = {
             "syncType" : payload.syncType,
