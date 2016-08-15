@@ -11,7 +11,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.peer = function(config){
-    this._id = config._id  || new Date().getTime().toString();
+    this._id = config._id  || Cow.utils.idgen();;
     this._store = config.store;
     this._core = this._store._core;
     this._data = {

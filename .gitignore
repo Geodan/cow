@@ -1,7 +1,9 @@
 node_modules
+bower_components
 .npm-debug.log
 cow.js
 cow.min.js
 cow.nodb.js
 cow.node.js
 cow.node.min.js
+*.*~

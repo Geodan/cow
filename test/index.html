@@ -8,11 +8,11 @@
   <!-- Bootstrap -->
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
-  
-  <script src="../bower_componets/underscore/underscore-min.js"></script>
-  
+
+  <script src="../bower_components/underscore/underscore-min.js"></script>
+
   <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-  
+
   <script src="../dist/cow.js"></script>
   <script src="../test/cow.data.js"></script>
   <script src="../test/cow.testsuite.js"></script>
@@ -20,7 +20,7 @@
   </style>
   </head>
   <body>
-  
+
    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
         <div class="navbar-header">
           <a class="navbar-brand" href="#">Cow dashboard</a>
@@ -36,6 +36,7 @@
     <div><!--STUPID!! --><br><br></div>
 
    <a id="sockets"></a>
+   
    <div class="row">
     <div class="col-lg-2">
         <h2>Socket servers</h2>
@@ -74,10 +75,10 @@
         <h2>Users</h2>
         <ul id='userlist' class="list-group"></ul>
     </div>
-    
+
    </div>
    </div><!-- /container -->
-   
+
    <div class="container">
    <div class="row">
     <a id="tests"></a>
@@ -90,7 +91,7 @@
         <div class="btn-group">
          <button type="button" class="btn btn-default btn-lg" onclick="tests.analyzeStore()">Analyze</button>
         </div>
-        <div class="btn-group">     
+        <div class="btn-group">
          <button type="button" class="btn btn-default btn-lg" onclick="tests.pingtest()">Pingtest</button>
         </div>
         <div class="btn-group">
@@ -107,15 +108,15 @@
         <div id="console" class="well"></div>
    </div>
    </div>
-   
-  
+
+
   <script type="text/javascript">
   var us = _;
   var core = new Cow.core({
-    herdname: 'eagle',
+    herdname: 'swappdemo',//'eagle',
     maxage: 1000 * 60 * 60 * 24 * 30 //30 days
   });
-  
+
   core.projectStore().on('synced', function(){
           console.log('projectstore synced');
   });
@@ -132,16 +133,17 @@
                   core.project().items({}).data('test', 'test1').sync();
           };
   });
-  
+
   //add a default socketserver
   core.socketservers({
-    _id: 'default', 
-    data: {protocol:'wss',ip:'websocket.geodan.nl', port:443, dir: 'eagle'}
+    _id: 'default',
+    //data: {protocol:'wss',ip:'websocket.geodan.nl', port:443, dir: 'eagle'}
+    data: {protocol:'wss',ip:'websocket.geodan.nl', port:443, dir: 'swappdemo'}
     //data: {protocol:'ws',ip:'192.168.24.95', port:8081}
   });
   core.socketserver('default');
   var data = new Cow.data(core);
-  
+
   function addserver(){
       var protocol = d3.select('#newserverprot')[0][0].value;
       var ip = d3.select('#newserverip')[0][0].value;
@@ -156,23 +158,23 @@
       } else {
           console.warn('IP not valid');
       }
-      
+
   }
-  
-  /** 
-    upgrade_ip() - see if the server we're using now broadcasts a different IP than what we added 
+
+  /**
+    upgrade_ip() - see if the server we're using now broadcasts a different IP than what we added
   **/
   function upgrade_ip(){
-      var server = core.socketserver(); 
+      var server = core.socketserver();
       var url = server.url();
       var c = new WebSocket(url, 'connect');
       c.onopen = onopen();
-      c.onmessage = onmessage(); 
+      c.onmessage = onmessage();
       c.onerror = onerror();
   }
-  
-  /** 
-    reload_serverlist() - 
+
+  /**
+    reload_serverlist() -
   **/
   function reload_serverlist(){
       //Get all known servers
@@ -189,7 +191,7 @@
             });
       newservers.append('span').classed('glyphicon glyphicon-eye-close',true)
             .on('click', function(d){console.log(d)});
-          
+
       servers.exit().remove();
       servers.classed('active', function(d){
                 if (d.url() == core.websocket()._url){
@@ -202,7 +204,7 @@
       servers.each(function(d){
                   var self = this;
                   var c = new WebSocket(d.url(), 'connect');
-                  
+
                   var onopen = function(){
                       //Yep, it is online. Make it green.
                       return function(d){
@@ -211,7 +213,7 @@
                           c.target = d.target;
                       }
                   }
-                  
+
                   var onmessage = function(){
                       return function(d){
                           c.target.close();
@@ -220,7 +222,7 @@
                           if (data.action = 'connect'){
                             //TODO: this doesn't work yet
                             //Rebrand the socketserver to the IP it returns
-                            //var server = core.socketserver(); 
+                            //var server = core.socketserver();
                             //var ip = payload.server_ip;
                             //var serverkey = payload.server_key;
                             //
@@ -229,8 +231,8 @@
                             //data.ip = ip;
                             //server.deleted(true);
                             //core.socketservers({_id: newid, data: data}).sync();
-                              
-                              
+
+
                               var serverkey = payload.server_key;
                               if (serverkey == 'test') { //TODO make key variable
                                   d3.select(self).select('.glyphicon')
@@ -245,7 +247,7 @@
                           }
                       }
                   }
-                  
+
                   var onerror = function(){
                       //Nope, not online. Make it red.
                       return function(d){
@@ -253,10 +255,10 @@
                           d3.select(self).classed('list-group-item-success',false);
                       }
                   }
-                  
+
                   c.onopen = onopen();
-                  c.onmessage = onmessage(); 
-                  c.onerror = onerror(); 
+                  c.onmessage = onmessage();
+                  c.onerror = onerror();
           });
           */
   }
@@ -274,7 +276,7 @@
                     else {return false;}
           });
   }
-  
+
   function reload_userlist(){
       var list = data.users();
       var items = d3.select('#userlist').selectAll('li')
@@ -289,8 +291,8 @@
           //          else {return false;}
           //});
   }
-  
-  
+
+
   function reload_projectlist(){
       var list = data.projects();//_.filter(core.projects(), function(d){return !d.deleted()});
       var items = d3.select('#projectlist').selectAll('li')
@@ -308,29 +310,29 @@
                       var numitems = d.items().length;
                       d3.select(self).select('.badge').html(numitems);
                   });
-                  
+
           });
   }
-  
+
   core.connect();
   core.socketserverStore().loaded.then(reload_serverlist);
   core.socketserverStore().on('datachange', reload_serverlist);
-  
+
   core.peerStore().loaded.then(reload_peerlist);
   core.peerStore().on('datachange', reload_peerlist);
-  
+
   core.userStore().loaded.then(reload_userlist);
   core.userStore().on('datachange', reload_userlist);
-  
+
   core.projectStore().loaded.then(reload_projectlist);
   core.projectStore().on('datachange', reload_projectlist);
-  
+
   var tests = new Cow.testsuite(core);
-  
+
   //tests.analyzeStore();
   //tests.lifecycle();
-  
-  
+
+
   </script>
   </body>
   </html>

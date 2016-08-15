@@ -13,7 +13,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.group = function(config){
     //if (!config._id) {throw 'No _id given for group';}
-    this._id = config._id  || new Date().getTime().toString();
+    this._id = config._id  || Cow.utils.idgen();
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 

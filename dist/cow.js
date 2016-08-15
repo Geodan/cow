@@ -202,8 +202,7 @@ if (typeof exports !== 'undefined') {
 Cow.utils = {
     //Generate a unique id
     idgen: function(){
-        //TODO: add some randomness
-        return new Date().getTime().toString();
+        return 'ID'+(Math.random() * 1e16).toString();
     }
 };
 }.call(this));
@@ -1432,7 +1431,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.peer = function(config){
-    this._id = config._id  || new Date().getTime().toString();
+    this._id = config._id  || Cow.utils.idgen();;
     this._store = config.store;
     this._core = this._store._core;
     this._data = {
@@ -1493,7 +1492,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.socketserver = function(config){
      //if (!config._id) {throw 'No _id given for socketserver';}
-    this._id = config._id  || new Date().getTime().toString();
+    this._id = config._id  || Cow.utils.idgen();;
     this._store = config.store;
     this._core = this._store._core;
     this._data = {
@@ -1540,7 +1539,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.user = function(config){
     //if (!config._id) {throw 'No _id given for user';}
-    this._id = config._id  || new Date().getTime().toString();
+    this._id = config._id  || Cow.utils.idgen();;
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 
@@ -1661,7 +1660,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.group = function(config){
     //if (!config._id) {throw 'No _id given for group';}
-    this._id = config._id  || new Date().getTime().toString();
+    this._id = config._id  || Cow.utils.idgen();
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 
@@ -1850,7 +1849,7 @@ if (typeof exports !== 'undefined') {
 
 Cow.item = function(config){
     //if (!config || !config._id) {throw 'No _id given for item';}
-    this._id = config._id  || new Date().getTime().toString();
+    this._id = config._id  || Cow.utils.idgen();
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 
@@ -2100,7 +2099,7 @@ if (typeof exports !== 'undefined') {
 Cow.project = function(config){
     var self = this;
     //if (!config._id) {throw 'No _id given for project';}
-    this._id = config._id  || new Date().getTime().toString();
+    this._id = config._id  || Cow.utils.idgen();;
     this._store = config.store;
     this._core = this._store._core;
     this._maxAge = this._core._maxAge;
