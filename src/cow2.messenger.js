@@ -141,8 +141,6 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     message.sender = this._core.peerid();
     message.target = target;
     message.action = action;
-    //message.payload = data;
-    //TT: newly added lzw compression in 2.2.0. This breaks COW versions!
     message.payload = lzw_encode(encode_utf8(JSON.stringify(data)));
     var stringified;
     var endcoded;
@@ -298,7 +296,7 @@ Cow.messenger.prototype._onConnect = function(payload){
         var loadarray = [];
         for (var i=0;i<projects.length;i++){
             var project = projects[i];
-            //20150731 TT: stopping the syncing of items and groups in deleted projects
+            //Only sync items and groups in non-deleted projects
             if (!project.deleted()){
 				loadarray.push([
 					project.itemStore().loaded,
@@ -327,7 +325,7 @@ Cow.messenger.prototype._onConnect = function(payload){
             var projects = self._core.projects();
             for (var i=0;i<projects.length;i++){
                 var project = projects[i];
-                //20150731 TT: stopping the syncing of items and groups in deleted projects
+                //Only sync items and groups in non-deleted projects
                 if (!project.deleted()){
 					syncarray.push([project.itemStore().synced,project.groupStore().synced]); 
 					project.itemStore().sync();
@@ -348,7 +346,7 @@ Cow.messenger.prototype._onPeerGone = function(payload) {
     if (this._core.peers(peerGone)){
         this._core.peers(peerGone).deleted(true).sync();
     }
-    //this._core.peerStore().removePeer(peerGone);        
+    this._core.peerStore().pruneDeleted();        
     //TODO this.core.trigger('ws-peerGone',payload); 
 };
 
@@ -372,15 +370,6 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
-            /* TT: 20150731
-            	Disabled because potentially dangerous!
-            	When a client is fresh (meaning no data) and receives an item before
-            	it receives the corresponding project, the project will be created as new
-            	and subsequently overwrite the original one.
-            */
-            //else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
-            //    project = this._core.projects({_id:projectid});
-            //}
             else {
                 throw "No project with id "+projectid+" Indexeddb too slow with loading?";
             }
@@ -392,15 +381,6 @@ Cow.messenger.prototype._getStore = function(payload){
             if (this._core.projects(projectid)){
                 project = this._core.projects(projectid);
             }
-            /* TT: 20150731
-            	Disabled because potentially dangerous!
-            	When a client is fresh (meaning no data) and receives an item before
-            	it receives the corresponding project, the project will be created as new
-            	and subsequently overwrite the original one.
-            */
-            //else if (this._core.projectStore()._isloaded){ //workaround to check if indexeddb is loaded, issue #143
-            //    project = this._core.projects({_id:projectid});
-            //}
             else {
                 throw "No project with id "+projectid+" Indexeddb too slow with loading?";
             }
@@ -421,7 +401,7 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
         //Give the peer information on what will be synced
         var syncinfo = {
             IWillSent: _.pluck(syncobject.pushlist,"_id"),
-            IShallReceive: _.pluck(syncobject.requestlist,"_id") //TODO: hey, this seems like doubling the functionality of 'wantedList'
+            IShallReceive: syncobject.requestlist //TODO: hey, this seems like doubling the functionality of 'wantedList'
         };
         data = {
             "syncType" : payload.syncType,
@@ -441,10 +421,6 @@ Cow.messenger.prototype._onNewList = function(payload,sender) {
             this.sendData(data, 'wantedList', sender);
         }
         
-        /* 20150730 TT: 
-        Changed the way of syncing by sending records 1 by 1. This slows down the total but should be 
-        more stable since we reduce the risk of passing the max message size for websockets 
-        */
         syncobject.pushlist.forEach(function(d){
             msg = {
                 "syncType" : payload.syncType,
@@ -481,10 +457,6 @@ Cow.messenger.prototype._onWantedList = function(payload) {
     var self = this;
     var store = this._getStore(payload);
     var returnlist = store.requestRecords(payload.list);
-    /* 20150730 TT: 
-        Changed the way of syncing by sending records 1 by 1. This slows down the total but should be 
-        more stable since we reduce the risk of passing the max message size for websockets 
-    */
     returnlist.forEach(function(d){
 		msg = {
 			"syncType" : payload.syncType,

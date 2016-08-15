@@ -13,8 +13,8 @@ if (typeof exports !== 'undefined') {
 Cow.record = function(){
     //FIXME: 'this' object is being overwritten by its children
     this._id    = null  || new Date().getTime().toString();
-    this._status= 'dirty'; //deprecated, replaced by _dirty
     this._dirty = false;
+    this._ttl = null;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -26,14 +26,20 @@ Cow.record = function(){
 Cow.record.prototype =
 {
     sync: function(){
-        var now = new Date().getTime();
-        var userid = this._store._core.user() ? this._store._core.user().id() : null;
-        //TT: dirty should be enough to add delta //if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
-        if ( this._dirty && !this._store.noDeltas){ //avoid empty deltas
-            this.deltas(now, this._deltaq, this._deleted, userid); //add deltas from queue
-        }
-        this._deltaq = {}; //reset deltaq
-        return this._store.syncRecord(this);
+    	if (this._dirty){
+			var now = new Date().getTime();
+			var userid = this._store._core.user() ? this._store._core.user().id() : null;
+			//TT: dirty should be enough to add delta //if ( _(this._deltaq).size() > 0 && !this._store.noDeltas){ //avoid empty deltas
+			if ( this._dirty && !this._store.noDeltas){ //avoid empty deltas
+				this.deltas(now, this._deltaq, this._deleted, userid); //add deltas from queue
+			}
+			this._deltaq = {}; //reset deltaq
+			return this._store.syncRecord(this);
+		}
+		else {
+			console.log('Not syncing because record not dirty');
+			return this;
+		}
     },
 
     id: function(x){
@@ -77,16 +83,6 @@ Cow.record.prototype =
 			return null;
     	}
     },
-    timestamp: function(timestamp){
-        console.warn('timestamp() has been deprecated. Use updated() instead');
-        if (timestamp) {
-            this._updated = timestamp;
-            return this;
-        }
-        else {
-            return this._updated;
-        }
-    },
     /**
         updated() - returns the timestamp of last update
         updated(timestamp) - sets the updated time to timestamp, returns record
@@ -115,9 +111,12 @@ Cow.record.prototype =
     **/
     deleted: function(truefalse){
         if (truefalse !== undefined && typeof(truefalse) == 'boolean'){
-            this._deleted = truefalse;
-            this.updated(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
-            this._dirty = true;
+        	//only updated when changed
+        	if (this._deleted !== truefalse){
+				this._deleted = truefalse;
+				this.updated(new Date().getTime()); //TT: added this because otherwhise deleted objects do not sync
+				this._dirty = true;
+			}
             return this;
         }
         //if a timestamp instead of boolean is given
@@ -134,34 +133,43 @@ Cow.record.prototype =
     **/
     dirty: function(truefalse){
         if (truefalse !== undefined){
-            this._dirty = truefalse;
-
-            if (this._dirty) this._status = 'dirty'; //to be removed when status becomes deprecated
-            else this._status = 'clean';
-
-            this.updated(new Date().getTime());
+        	//only updated when changed
+        	if (this._dirty !== truefalse){
+        		this._dirty = truefalse;
+        		this.updated(new Date().getTime());
+        	}
             return this;
         }
         else {
             return this._dirty;
         }
     },
-    // Status is going to be deprecated.
-    //Functionality is still here to address clients that still transmit a status instead of dirty
-    status: function(status){
-        console.warn('status() has been deprecated. Use dirty() instead like: \n set: dirty(boolean) \n get: dirty() returns boolean.');
-        if (status){
-            this._status = status;
-
-            if (this._status == 'dirty') this._dirty = true;
-            else this._dirty = false;
-
-            this.updated(new Date().getTime());
-            return this;
-        }
-        else {
-            return this._status;
-        }
+    /**
+    	ttl() - returns the timetolive in milliseconds
+    	ttl(int) - sets the timetolive in milliseconds, returns record
+    **/
+    ttl: function(time){
+    	if (time !== undefined){
+    		if (this._ttl !== time){
+    			this._ttl = time;
+    		}
+    		return this;
+    	}
+    	else {
+    		return this._ttl;
+    	}
+    },
+    /**
+    	expired() - returns boolean whether record is past ttl
+    **/
+    expired: function(){
+    	var staleness = new Date().getTime() - this.updated();
+    	if (this._ttl && staleness > this._ttl){
+    		return true
+    	}
+    	else {
+    		return false;
+    	}
     },
     /**
         data() - returns data object
@@ -182,7 +190,6 @@ Cow.record.prototype =
             this._data = param;
             this._deltaq = param;
             this.dirty(true);
-            //console.error('Obsolete: .data(' + JSON.stringify(param) + ' Don\'t use an object to fill the data');
             return this;
         }
         else if (param && typeof(param) == 'string' && typeof(value) == 'undefined'){
@@ -195,9 +202,12 @@ Cow.record.prototype =
             if (typeof(value) == 'object'){
                 value = JSON.parse(JSON.stringify(value));
             }
-            this._data[param] = value;
-            this._deltaq[param] = value;
-            this.dirty(true);
+            //only updated when changed
+            if (this._data[param] != value){ 
+            	this._data[param] = value;
+            	this._deltaq[param] = value;
+            	this.dirty(true);
+            }
             return this;
         }
     },
@@ -318,8 +328,8 @@ Cow.record.prototype =
     deflate: function(){
         return {
             _id: this._id,
-            status: this._status,
             dirty: this._dirty,
+            ttl: this._ttl,
             created: this._created,
             deleted: this._deleted,
             updated: this._updated,
@@ -332,14 +342,10 @@ Cow.record.prototype =
     **/
     inflate: function(config){
         this._id = config._id || this._id;
-        this._status = config.status || this._status; //to be deprecated
         if (config.dirty !== undefined){
             this._dirty = config.dirty;
         }
-        else { //remove this when status is deprecated
-            if (this._status == 'clean') this._dirty = false;
-            else this._dirty = true;
-        }
+        this._ttl = config.ttl || this._ttl;
         this._created = config.created || this._created;
         if (config.deleted !== undefined){
             this._deleted = config.deleted;

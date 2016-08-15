@@ -18,7 +18,7 @@ Cow.syncstore =  function(config){
     this._core = config.core;
     this.noDeltas = config.noDeltas || false;
     this.noIDB = config.noIDB || false;
-    this.maxStaleness = config.maxAge || null;
+    this._maxAge = config.maxAge; 
     this.syncinfo = {
         toReceive: [],
         toSent: [],
@@ -57,11 +57,11 @@ Cow.syncstore =  function(config){
                                 //record = -1;
                             }
                          }//Object should be non existing yet and not older than some max setting
-                         if (!existing && (staleness <= self.maxStaleness || self.maxStaleness === null)){
+                         if (!existing && (staleness <= record._ttl || self._ttl === null)){
                              self._records.push(record); //Adding to the list
                          }
                          //If it is stale, than remove it from the database
-                         if(self.maxStaleness && staleness > self.maxStaleness){
+                         if(record._ttl && staleness > record._ttl){
                              self.localdb.delRecord({
                                 storename:self._storename,
                                 projectid: self._projectid,
@@ -166,11 +166,11 @@ Cow.syncstore.prototype =
                             //record = -1;
                         }
                      }//Object should be non existing yet and not older than some max setting
-                     if (!existing && (staleness <= self.maxStaleness || self.maxStaleness === null)){
+                     if (!existing && (staleness <= record._ttl || record._ttl === null)){
                          self._records.push(record); //Adding to the list
                      }
                      //If it is stale, than remove it from the database
-                     else if(self.maxStaleness && staleness > self.maxStaleness){
+                     else if(record._ttl && staleness > record._ttl){
                          self.localdb.delRecord({
                             storename:self._storename,
                             projectid: self._projectid,
@@ -359,11 +359,28 @@ Cow.syncstore.prototype =
     **/
     deleteAll: function(){
         for (var i=0;i<this._records.length;i++){
-            this._records[i].deleted(true);
+            this._records[i].deleted(true).sync();
         }
-        this.syncRecords();//FIXME: syncrecords is not perfect yet (see below)
-        this.trigger('datachange');
         return this;
+    },
+    /**
+    	pruneDeleted() - remove all deleted records from cache and dbase
+    		Only makes sense when all peers are synced and/or no dbase is used 
+    **/
+    pruneDeleted: function(){
+    	var self = this;
+    	this._records.filter(function(d){
+    		return d.deleted();
+    	}).forEach(function(d){
+    		self._removeRecord(d.id());
+    		if (self.localdb){
+				self.localdb.delRecord({
+					storename:self._storename,
+					projectid: self._projectid,
+					id: d.id()
+				});
+			}
+    	});
     },
     /**
     syncRecord() - sync 1 record, returns record
@@ -396,30 +413,6 @@ Cow.syncstore.prototype =
             console.warn(err);
         });
         return record;
-    },
-
-    /**
-    syncRecords() - looks for dirty records and returns them all at once for syncing them
-    TT: this function does *not* update the localdb and does *not* trigger a datachange.
-    	Therefore it is unsuited for use at the moment.
-    **/
-    syncRecords: function(){
-    	console.warn('syncRecords is not fully functional!. Please sync record by record.');
-        var pushlist = [];
-        for (var i=0;i<this._records.length;i++){
-            var record = this._records[i];
-            if (record.dirty()) {
-                //this.syncRecord(record);
-                record.dirty(false);
-                pushlist.push(record.deflate());
-            }
-        }
-        var data =  {
-            "syncType" : this._type,
-            "project" : this._projectid,
-            "list" : pushlist
-        };
-        this._core.messenger().sendData(data, 'requestedRecords');
     },
 
     /**
@@ -464,7 +457,8 @@ Cow.syncstore.prototype =
             var item = this._records[i];
             var iditem = {};
             iditem._id = item._id;
-            iditem.timestamp = item.updated();
+            iditem.timestamp = item.updated(); //TT: Deprecated, to be removed when timestamp is obsolete
+            iditem.updated = item.updated();
             iditem.deleted = item.deleted();
             fids.push(iditem);
         }
@@ -487,7 +481,7 @@ Cow.syncstore.prototype =
 		return pushlist;
 	},
     /**
-	compareRecords(config) - compares incoming idlist with idlist from current stack based on timestamp and dirtystatus
+	compareRecords(config) - compares incoming idlist with idlist from current stack based on updated time and dirtystatus
 					generates 2 lists: requestlist and pushlist
 	**/
     compareRecords: function(config){
@@ -513,24 +507,28 @@ Cow.syncstore.prototype =
 							var rem_val = fidlist[j];
 							if (rem_val._id == local_item._id){
 								found = 1;
+								//TT: temporary hack to deal with deprecated timestamp
+								if (!rem_val.updated){
+									rem_val.updated = rem_val.timestamp;
+								}
+								
 								//local is newer
-								if (rem_val.timestamp < local_item._updated){
+								if (rem_val.updated < local_item._updated){
 									returndata.pushlist.push(local_item.deflate());
 								}
 								//remote is newer
-								else if (rem_val.timestamp > local_item._updated){
+								else if (rem_val.updated > local_item._updated){
 									returndata.requestlist.push(rem_val._id);
 								}
 								//remove from copyremotelist
-								//OBS var tmppos = $.inArray(local_item._id,copyof_rem_list);
 								var tmppos = copyof_rem_list.indexOf(local_item._id);
 								if (tmppos >= 0){
 									copyof_rem_list.splice(tmppos,1);
 								}
 							}
 					}
-					//local but not remote and not deleted
-					if (found == -1 && local_item.deleted() != 'true'){
+					//local but not remote and not deleted and not over ttl
+					if (found == -1 && !local_item.deleted() && !local_item.expired()){
 						returndata.pushlist.push(local_item.deflate());
 					}
 			}

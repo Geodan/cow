@@ -12,12 +12,12 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.group = function(config){
-    //if (!config._id) {throw 'No _id given for group';}
     this._id = config._id  || Cow.utils.idgen();
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 
     this._dirty= 'true';
+    this._ttl = this._store.maxStaleness;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
@@ -49,7 +49,6 @@ Cow.group.prototype =
                        var d = userid[i];
                        self._addMember(d);
                    }
-                   //return this._getMembers();
                    return this;
                 }
                 else {
