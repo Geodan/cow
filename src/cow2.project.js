@@ -12,13 +12,14 @@ if (typeof exports !== 'undefined') {
 
 Cow.project = function(config){
     var self = this;
-    this._id = config._id  || new Date().getTime().toString();
+    this._id = config._id  || Cow.utils.idgen();;
     this._store = config.store;
     this._core = this._store._core;
     this._maxAge = this._core._maxAge;
     
     //FIXME: this might be inherited from cow.record 
     this._dirty= 'true';
+    this._ttl = this._store._maxAge;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();

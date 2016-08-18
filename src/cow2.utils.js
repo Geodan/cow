@@ -16,8 +16,7 @@ if (typeof exports !== 'undefined') {
 Cow.utils = {
     //Generate a unique id
     idgen: function(){
-        //TODO: add some randomness
-        return new Date().getTime().toString();
+        return 'ID'+(Math.random() * 1e16).toString();
     }
 };
 }.call(this));

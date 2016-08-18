@@ -11,7 +11,7 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.peer = function(config){
-    this._id = config._id  || new Date().getTime().toString();
+    this._id = config._id  || Cow.utils.idgen();
     this._store = config.store;
     this._core = this._store._core;
     this._data = {
@@ -21,6 +21,7 @@ Cow.peer = function(config){
     
     //FIXME: this might be inherited from cow.record 
     this._dirty= 'true';
+    this._ttl = this._store._maxAge;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();

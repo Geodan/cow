@@ -11,21 +11,23 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.socketserver = function(config){
-    this._id = config._id  || new Date().getTime().toString();
+    this._id = config._id  || Cow.utils.idgen();;
     this._store = config.store;
     this._core = this._store._core;
+    this._maxAge = this._core._maxAge;
+    
+    //FIXME: this might be inherited from cow.record 
+    this._dirty= true;
+    this._ttl = this._store._maxAge;
+    this._deleted= false;
+    this._created= new Date().getTime();
+    this._updated= new Date().getTime();
     this._data = {
         protocol: null,
         ip: null,
         port: null,
         dir: null
     };
-    
-    //FIXME: this might be inherited from cow.record 
-    this._dirty= true;
-    this._deleted= false;
-    this._created= new Date().getTime();
-    this._updated= new Date().getTime();
     this._deltaq = {}; //delta values to be synced
     this._deltas = []; //all deltas
     this._deltasforupload = []; //deltas we still need to give to other peers

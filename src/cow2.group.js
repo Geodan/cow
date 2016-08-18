@@ -12,11 +12,12 @@ if (typeof exports !== 'undefined') {
 }
 
 Cow.group = function(config){
-    this._id = config._id  || new Date().getTime().toString();
+    this._id = config._id  || Cow.utils.idgen();
     this._store = config.store;
     
     //FIXME: this might be inherited from cow.record 
     this._dirty= 'true';
+    this._ttl = this._store.maxStaleness;
     this._deleted= false;
     this._created= new Date().getTime();
     this._updated= new Date().getTime();
