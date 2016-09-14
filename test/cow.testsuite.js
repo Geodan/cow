@@ -57,6 +57,11 @@ Cow.testsuite.prototype.lifecycle = function(){
     var self = this;
     var starttime = new Date();
     
+    if (core.messenger()._amIAlpha()){
+    	mylog('This test can only be done from non-alpha peers');
+    	return;
+    }
+    
     mylog('Starting lifecycle test. Creating and syncing 100 items');
     core.projectStore().loaded.then(function(foo){
         var project = core.projects({_id: 'test'});
