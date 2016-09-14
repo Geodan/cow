@@ -57,7 +57,7 @@ Cow.syncstore =  function(config){
                                 //record = -1;
                             }
                          }//Object should be non existing yet and not older than some max setting
-                         if (!existing && (staleness <= record._ttl || self._ttl === null)){
+                         if (!existing && (staleness <= record._ttl || !record._ttl)){
                              self._records.push(record); //Adding to the list
                          }
                          //If it is stale, than remove it from the database
@@ -166,7 +166,7 @@ Cow.syncstore.prototype =
                             //record = -1;
                         }
                      }//Object should be non existing yet and not older than some max setting
-                     if (!existing && (staleness <= record._ttl || record._ttl === null)){
+                     if (!existing && (staleness <= record._ttl || !record._ttl)){
                          self._records.push(record); //Adding to the list
                      }
                      //If it is stale, than remove it from the database
