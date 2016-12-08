@@ -2062,6 +2062,9 @@ Cow.websocket.prototype.connect = function() {
                 });
                 connection.on('connect', function(conn) {
                     conn.on('error', self._onError);
+                    conn.on('close', function(){
+                    	core.websocket().trigger('notice','socket closed');
+                    });
                     conn.on('message', function(message) {
                         if (message.type === 'utf8') {
                             //console.log("Received: '" + message.utf8Data + "'");
@@ -2112,11 +2115,9 @@ Cow.websocket.prototype._onError = function(e){
     this._connected = false;
     this._core.websocket().trigger('error','error in websocket connection: ' + e.type);
 };
-Cow.websocket.prototype._onError = function(e){
-    this._core.websocket().trigger('notice','socket error' + e);
-};
+
 Cow.websocket.prototype._onClose = function(event){
-	this._core.websocket().trigger('notice','socket closed');
+	this.trigger('notice','socket closed');
 };
 _.extend(Cow.websocket.prototype, Events);
 }.call(this));

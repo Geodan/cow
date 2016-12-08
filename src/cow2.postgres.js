@@ -22,8 +22,7 @@ Cow.localdb = function(config){
     this._core = config.core;
     this._db = null;
     var version = 2;
-    //var dbUrl = "tcp://osgis:osgis@osgis.geodan.nl/osgis2";
-    //var dbUrl = "tcp://geodan:Gehijm@192.168.24.15/cow";
+    
     if (!dbUrl){
     	throw('No global dbUrl set. Should be like: "tcp://user:pass@ip/dir"');
     }
@@ -33,9 +32,7 @@ Cow.localdb = function(config){
           console.log('Database error!', err);
         });
         var request = pg.connect(dbUrl, function(err, client) {
-                
                 if (err){
-                    console.log('meeh',err);
                     reject(err);
                     return;
                 }
@@ -45,7 +42,6 @@ Cow.localdb = function(config){
                 var create_schema = 'CREATE SCHEMA IF NOT EXISTS ' + self._schema;
                 client.query(create_schema, function(err, result){
                     if (err){
-                        console.log('meeh',err);
                         reject(err); 
                         return;
                     }
