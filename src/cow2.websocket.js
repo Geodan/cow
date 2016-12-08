@@ -31,9 +31,6 @@ Cow.websocket.prototype.disconnect = function() {
         this._connection = null;
         this._connected = false;
     }
-    else { 
-        console.log('No websocket active');
-    }
 };
 
     /**
@@ -47,13 +44,12 @@ Cow.websocket.prototype.connect = function() {
             self._url = core.socketserver().url(); //get url from list of socketservers
         }
         else {
-            console.warn('No valid socketserver selected');
             self._url = null;
+            reject('No valid socketserver selected');
         }
         
         if (!self._url) {
-            console.warn('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');
-            reject();
+            reject('No URL given to connect to. Make sure you give a valid socketserver id as connect(id)');
         }
         
         var connectpromise;
@@ -72,8 +68,7 @@ Cow.websocket.prototype.connect = function() {
                 self._connected = true;//TODO, perhaps better to check if the connection really works
             }
             else {
-                console.warn('Incorrect URL: ' + self._url);
-                reject();
+                reject('Incorrect URL: ' + self._url);
             }
         }
         else {
@@ -106,7 +101,6 @@ Cow.websocket.prototype._onMessage = function(message){
 Cow.websocket.prototype._onError = function(e){
     this._core.peerStore().clear();
     this._connected = false;
-    console.warn('error in websocket connection: ' + e.type);
     this._core.websocket().trigger('error',e);
 };
 
@@ -116,22 +110,23 @@ Cow.websocket.prototype._onClose = function(event){
     var reason = event.reason;
     var wasClean = event.wasClean;
     
-    console.log('WS disconnected:' , code, reason);
+    var notice = 'WS disconnected: ' + code + reason;
+    this._core.websocket().trigger('notice',notice);
     this._core.peerStore().clear();
     this._connected = false;
     var self = this;
     var restart = function(){
         try{
-            console.log('Trying to reconnect');
+        	this._core.websocket().trigger('notice','Trying to reconnect');
             self._core.websocket().disconnect();
         }
         catch(err){
-            console.warn(err);
+        	this._core.websocket().trigger('notice',err);
         }
         self._core.websocket().connect().then(function(d){
            self._connection = d;
         }, function(e){
-            console.warn('connection failed',e);
+        	this._core.websocket().trigger('notice',e);
         });
     };
     if (this._core._autoReconnect){

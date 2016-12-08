@@ -2031,9 +2031,6 @@ Cow.websocket.prototype.disconnect = function() {
         this._connection.close();    
         this._connection = null;
     }
-    else { 
-        console.log('No websocket active');
-    }
 };
 
     /**
@@ -2046,11 +2043,13 @@ Cow.websocket.prototype.connect = function() {
         if (core.socketserver()){
             self._url = core.socketserver().url(); //get url from list of socketservers
         }
+        else {
+            self._url = null;
+            reject('No valid socketserver selected');
+        }
         
         if (!self._url) {
-            console.warn('Nu URL given to connect to. Make sure you give a valid socketserver id as connect(id)');
-            reject();
-            return false;
+            reject('No URL given to connect to. Make sure you give a valid socketserver id as connect(id)');
         }
     
         if (!self._connection || self._connection.readyState != 1 || self._connection.state != 'open') //if no connection
@@ -2059,10 +2058,9 @@ Cow.websocket.prototype.connect = function() {
                 var connection = null;
                 connection = new WebSocket();
                 connection.on('connectFailed', function(error) {
-                    console.log('Connect Error: ' + error.toString());
+                    reject('Connect Error: ' + error.toString());
                 });
                 connection.on('connect', function(conn) {
-                    console.log('WebSocket client connected');
                     conn.on('error', self._onError);
                     conn.on('message', function(message) {
                         if (message.type === 'utf8') {
@@ -2072,21 +2070,23 @@ Cow.websocket.prototype.connect = function() {
                     });
                     conn.obj = self;
                     self._connection = conn;
+                    resolve(self._connection);
                 });
                 //TODO: there is some issue with the websocket module,ssl and certificates
                 //This param should be added: {rejectUnauthorized: false}
                 //according to: http://stackoverflow.com/questions/18461979/node-js-error-with-ssl-unable-to-verify-leaf-signature#20408031
                 connection.connect(self._url, 'connect');
+                
             }
             else {
-                console.warn('Incorrect URL: ' + self._url);
-                reject();
+                reject('Incorrect URL: ' + self._url);
             }
         }
         else {
             connection = self._connection;
+            resolve(self._connection);
         }
-        recolve(connection);
+        
     });
     return promise;
 };
@@ -2110,11 +2110,13 @@ Cow.websocket.prototype._onMessage = function(message){
 Cow.websocket.prototype._onError = function(e){
     this._core.peerStore().clear();
     this._connected = false;
-    console.warn('error in websocket connection: ' + e.type);
-    this._core.websocket().trigger('error');
+    this._core.websocket().trigger('error','error in websocket connection: ' + e.type);
 };
 Cow.websocket.prototype._onError = function(e){
-    console.log('closed');
+    this._core.websocket().trigger('notice','socket error' + e);
+};
+Cow.websocket.prototype._onClose = function(event){
+	this._core.websocket().trigger('notice','socket closed');
 };
 _.extend(Cow.websocket.prototype, Events);
 }.call(this));
@@ -2275,6 +2277,10 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     this._amountsend = +stringified.length;
 };
 
+Cow.messenger.prototype._onError = function(error){
+	//TODO: propagate
+};
+
 Cow.messenger.prototype._onMessage = function(message){
     var core = this._core;
     var data = JSON.parse(message.data); //TODO: catch parse errors
@@ -2290,7 +2296,6 @@ Cow.messenger.prototype._onMessage = function(message){
     var payload = data.payload;
     var target = data.target;
     if (sender != PEERID){
-        //console.info('Receiving '+JSON.stringify(data));
         this._core.messenger()._numreqs++;
         this._core.messenger()._amountreq = +message.data.length;
     }
@@ -2373,7 +2378,6 @@ _onConnect handles 2 things
 **/
 
 Cow.messenger.prototype._onConnect = function(payload){
-    console.log('connected!');
     this._connected = true;
     var self = this;
     this._core.peerid(payload.peerID);
@@ -2384,13 +2388,13 @@ Cow.messenger.prototype._onConnect = function(payload){
     var now = new Date().getTime();
     var maxdiff = 1000 * 60 * 5; //5 minutes
     if (Math.abs(servertime - now) > maxdiff){
-        console.warn('Time difference between server and client larger ('+Math.abs(servertime-now)+'ms) than allowed ('+maxdiff+' ms).');
+        self.trigger('notice','Time difference between server and client larger ('+Math.abs(servertime-now)+'ms) than allowed ('+maxdiff+' ms).');
         self.ws.disconnect();
         return;
     }
             
     if (serverkey !== undefined && serverkey != this._core._herdname){
-        console.warn('Key on server ('+serverkey+') not the same as client key ('+this._core._herdname+').');
+        self.trigger('notice','Key on server ('+serverkey+') not the same as client key ('+this._core._herdname+').');
         self.ws.disconnect();
         return;
     }
