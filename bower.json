@@ -27,8 +27,8 @@
     "README.md"
   ],
   "dependencies": {
-    "es6-promise": "^3.2.1",
-    "underscore": "~1",
-    "lzwCompress.js": "lzwcompress#^0.2.4"
+    "es6-promise": "3.2.1",
+    "underscore": "1.8.3",
+    "lzwCompress.js": "lzwcompress#0.2.4"
   }
 }
