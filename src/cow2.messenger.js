@@ -141,7 +141,8 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     message.sender = this._core.peerid();
     message.target = target;
     message.action = action;
-    message.payload = lzw_encode(encode_utf8(JSON.stringify(data)));
+    //message.payload = lzw_encode(encode_utf8(JSON.stringify(data)));
+    message.payload = lzwCompress.pack(data);
     var stringified;
     var endcoded;
     try {
@@ -161,11 +162,19 @@ Cow.messenger.prototype._onMessage = function(message){
     var sender = data.sender;
     var PEERID = core.peerid(); 
     var action = data.action;        
-    if (typeof(data.payload) == 'object'){
-    	data.payload = data.payload;
+    //if (typeof(data.payload) == 'object'){
+    if (data.action == 'connected'){
+		data.payload = data.payload;
     }
     else {
-    	data.payload = JSON.parse(decode_utf8(lzw_decode(data.payload)));
+    	try {
+    		//data.payload = JSON.parse(decode_utf8(lzw_decode(data.payload)));
+    		data.payload = lzwCompress.unpack(data.payload);
+    	}
+    	catch(e){
+    		window.tmp = data.payload;
+    		console.warn(e);
+    	}
     }
     var payload = data.payload;
     var target = data.target;

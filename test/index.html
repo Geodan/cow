@@ -8,16 +8,8 @@
   <!-- Bootstrap -->
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
-<<<<<<< HEAD
-
   <script src="../bower_components/underscore/underscore-min.js"></script>
-
-=======
-  
-  <script src="../bower_components/underscore/underscore-min.js"></script>
-  <script src="../bower_components/es6-promise/promise.min.js"></script>
-  
->>>>>>> c8e6543c962e6cc02bf43beeac0581cc29193452
+  <script src="../bower_components/lzwCompress.js/lzwCompress.js"></script>
   <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 
   <script src="../dist/cow.js"></script>
@@ -129,6 +121,7 @@
   });
   core.projectStore().loaded.then(function(){
           console.log('Projectstore loaded');
+          /*
           if (core.projects()[0]){
               core.project(core.projects()[0].id());
               core.project().itemStore().on('datachange', function(){
@@ -139,6 +132,7 @@
               else
                   core.project().items({}).data('test', 'test1').sync();
           };
+          */
   });
 
   //add a default socketserver
@@ -146,7 +140,7 @@
     _id: 'default',
     //data: {protocol:'wss',ip:'websocket.geodan.nl', port:443, dir: 'eagle'}
     data: {protocol:'wss',ip:'websocket.geodan.nl', port:443, dir: 'swappdemo'}
-    //data: {protocol:'ws',ip:'192.168.24.95', port:8081}
+    //data: {protocol:'ws',ip:'eaglewater-ontw.geodan.nl', port:8081, dir: 'ontw'}
   });
   core.socketserver('default');
   var data = new Cow.data(core);
