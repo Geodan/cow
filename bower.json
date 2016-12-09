@@ -1,6 +1,6 @@
 {
   "name": "cow",
-  "version": "2.2.5",
+  "version": "2.3.0-beta",
   "main": "dist/cow.js",
   "homepage": "https://github.com/Geodan/cow",
   "description": "Concurrent Online WebGIS",
@@ -27,7 +27,8 @@
     "README.md"
   ],
   "dependencies": {
-    "es6-promise": "^3.2.1",
-    "underscore": "~1"
+    "es6-promise": "3.2.1",
+    "underscore": "1.8.3",
+    "lzwCompress.js": "lzwcompress#0.2.4"
   }
 }

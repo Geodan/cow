@@ -141,7 +141,8 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     message.sender = this._core.peerid();
     message.target = target;
     message.action = action;
-    message.payload = lzw_encode(encode_utf8(JSON.stringify(data)));
+    //message.payload = lzw_encode(encode_utf8(JSON.stringify(data)));
+    message.payload = lzwCompress.pack(data);
     var stringified;
     var endcoded;
     try {
@@ -155,22 +156,32 @@ Cow.messenger.prototype.sendData = function(data, action, target){
     this._amountsend = +stringified.length;
 };
 
+Cow.messenger.prototype._onError = function(error){
+	//TODO: propagate
+};
+
 Cow.messenger.prototype._onMessage = function(message){
     var core = this._core;
     var data = JSON.parse(message.data); //TODO: catch parse errors
     var sender = data.sender;
     var PEERID = core.peerid(); 
     var action = data.action;        
-    if (typeof(data.payload) == 'object'){
-    	data.payload = data.payload;
+    //if (typeof(data.payload) == 'object'){
+    if (data.action == 'connected'){
+		data.payload = data.payload;
     }
     else {
-    	data.payload = JSON.parse(decode_utf8(lzw_decode(data.payload)));
+    	try {
+    		//data.payload = JSON.parse(decode_utf8(lzw_decode(data.payload)));
+    		data.payload = lzwCompress.unpack(data.payload);
+    	}
+    	catch(e){
+    		this.trigger('notice','Error in lzwCompress ' + e);
+    	}
     }
     var payload = data.payload;
     var target = data.target;
     if (sender != PEERID){
-        //console.info('Receiving '+JSON.stringify(data));
         this._core.messenger()._numreqs++;
         this._core.messenger()._amountreq = +message.data.length;
     }
@@ -253,7 +264,6 @@ _onConnect handles 2 things
 **/
 
 Cow.messenger.prototype._onConnect = function(payload){
-    console.log('connected!');
     this._connected = true;
     var self = this;
     this._core.peerid(payload.peerID);
@@ -264,13 +274,13 @@ Cow.messenger.prototype._onConnect = function(payload){
     var now = new Date().getTime();
     var maxdiff = 1000 * 60 * 5; //5 minutes
     if (Math.abs(servertime - now) > maxdiff){
-        console.warn('Time difference between server and client larger ('+Math.abs(servertime-now)+'ms) than allowed ('+maxdiff+' ms).');
+        self.trigger('notice','Time difference between server and client larger ('+Math.abs(servertime-now)+'ms) than allowed ('+maxdiff+' ms).');
         self.ws.disconnect();
         return;
     }
             
     if (serverkey !== undefined && serverkey != this._core._herdname){
-        console.warn('Key on server ('+serverkey+') not the same as client key ('+this._core._herdname+').');
+        self.trigger('notice','Key on server ('+serverkey+') not the same as client key ('+this._core._herdname+').');
         self.ws.disconnect();
         return;
     }
