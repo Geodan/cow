@@ -176,8 +176,7 @@ Cow.messenger.prototype._onMessage = function(message){
     		data.payload = lzwCompress.unpack(data.payload);
     	}
     	catch(e){
-    		window.tmp = data.payload;
-    		console.warn(e);
+    		this.trigger('notice','Error in lzwCompress ' + e);
     	}
     }
     var payload = data.payload;

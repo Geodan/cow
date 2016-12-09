@@ -2299,8 +2299,7 @@ Cow.messenger.prototype._onMessage = function(message){
     		data.payload = lzwCompress.unpack(data.payload);
     	}
     	catch(e){
-    		window.tmp = data.payload;
-    		console.warn(e);
+    		this.trigger('notice','Error in lzwCompress ' + e);
     	}
     }
     var payload = data.payload;
@@ -2740,7 +2739,7 @@ Cow.core = function(config){
     if (typeof(config) == 'undefined' ) {
         config = {};
     }
-    this._version = '2.2.5';
+    this._version = '2.3.0-beta';
     this._herdname = config.herdname || 'cow';
     this._userid = null;
     this._socketserverid = null;
