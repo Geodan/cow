@@ -117,16 +117,16 @@ Cow.websocket.prototype._onClose = function(event){
     var self = this;
     var restart = function(){
         try{
-        	this._core.websocket().trigger('notice','Trying to reconnect');
+        	self._core.websocket().trigger('notice','Trying to reconnect');
             self._core.websocket().disconnect();
         }
         catch(err){
-        	this._core.websocket().trigger('notice',err);
+        	self._core.websocket().trigger('notice',err);
         }
         self._core.websocket().connect().then(function(d){
            self._connection = d;
         }, function(e){
-        	this._core.websocket().trigger('notice',e);
+        	self._core.websocket().trigger('notice',e);
         });
     };
     if (this._core._autoReconnect){
