@@ -112,7 +112,7 @@
   <script type="text/javascript">
   var us = _;
   var core = new Cow.core({
-    herdname: 'swappdemo',//'eagle',
+    herdname: 'ontw',//'eagle',
     maxage: 1000 * 60 * 60 * 24 * 30 //30 days
   });
 
@@ -139,8 +139,8 @@
   core.socketservers({
     _id: 'default',
     //data: {protocol:'wss',ip:'websocket.geodan.nl', port:443, dir: 'eagle'}
-    data: {protocol:'wss',ip:'websocket.geodan.nl', port:443, dir: 'swappdemo'}
-    //data: {protocol:'ws',ip:'eaglewater-ontw.geodan.nl', port:8081, dir: 'ontw'}
+    //data: {protocol:'wss',ip:'websocket.geodan.nl', port:443, dir: 'swappdemo'}
+    data: {protocol:'ws',ip:'eaglewater-ontw.geodan.nl', port:8081, dir: 'ontw2'}
   });
   core.socketserver('default');
   var data = new Cow.data(core);

@@ -85,7 +85,8 @@ Cow.localdb.prototype.write = function(config){
             console.warn('Abort error');
         };
         var store = trans.objectStore(storename);
-        var request = store.put(record);
+        //parse / stringify will remove artifacts from other libs
+        var request = store.put(JSON.parse(JSON.stringify(record)));
         request.onsuccess = function(e) {
             resolve(request.result);
         };
@@ -113,8 +114,9 @@ Cow.localdb.prototype.writeAll = function(config){
             var record = list[i];
             record._id = record._id.toString();
             record.projectid = projectid;
-            var request = store.put(record);
-            request.onsuccess = function(e) {
+            //parse / stringify will remove artifacts from other libs
+            var request = store.put(JSON.parse(JSON.stringify(record)));
+        	request.onsuccess = function(e) {
                 //continue
             };
             request.onerror = function(e) {
