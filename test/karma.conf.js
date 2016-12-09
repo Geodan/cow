@@ -6,6 +6,7 @@ module.exports = function (config) {
 
 		// list of files / patterns to load in the browser
 		files: [
+			'http://d3js.org/d3.v3.min.js',
 		    'bower_components/underscore/underscore.js',
 			'src/events.js',
 			'src/cow2.utils.js',
@@ -21,8 +22,8 @@ module.exports = function (config) {
 			'src/cow2.websocket.js',
 			'src/cow2.messenger.js',
 			'src/cow2.core.js',
-			'src/*.spec.js'
-			// {pattern: 'bower_components/sw-*/dist/sw-*.js', included: true},
+			'src/*.spec.js',
+			{pattern: 'test/data/*', included: false},
 			// {pattern: 'bower_components/sw-*/dist/sw-*.js.map', included: false}
 		],
 
