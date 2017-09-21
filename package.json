@@ -1,6 +1,6 @@
 {
   "name": "cow",
-  "version": "2.3.0-rc1",
+  "version": "2.3.0",
   "author": "Geodan Research",
   "private": true,
   "devDependencies": {
